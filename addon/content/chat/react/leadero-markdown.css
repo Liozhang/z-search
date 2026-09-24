@@ -1,0 +1,688 @@
+/* ================================================================
+   leadero-markdown.css — 学术编辑部排版层（prose 基座之上）【第 10 件基建】
+   Container class: .leadero-markdown.prose（MarkdownRenderer 注入 prose）
+
+   2026-08-18 补 S 基建重分类：本文件的目标元素（p/h1/code/table/KaTeX/GFM
+   task-list 等）全部由 rehype/remark 在运行时产出，不经过任何 JSX className
+   ——utility 引擎对其无表达力（与 leadero-thread.css 的 <mark> 同理）。
+   故与 tokens/layout/shared/baseui/animations/theme-fallback/shadcn-utils/
+   tw-source/hub-palette 并列为基建层，豁免双引擎收敛，不参与业务迁移排期。
+
+   2026-08-15 内容区换血：基座 = 官方 @tailwindcss/typography .prose
+   （tw.css，注入顺序最后）；本文件用 .leadero-markdown.prose 复合选择器
+   抬升特异性压过 prose 默认值，学术数值来源 Distill/Tufte/Anthropic
+   实测（docs/editorial-academic-ui-research-2026-08-15.md）。
+
+   仅排版（标题/段落/列表/表格/引用/KaTeX/结构化卡片）+ GFM 增强。
+   代码块高亮样式在本文件；主题变量 fallback 见 leadero-tokens.css / leadero-theme.css。
+   ================================================================ */
+
+/* ── Base（学术正文：衬线 13.5px/1.65 + 三级墨色 + oldstyle 数字）── */
+.leadero-root .leadero-markdown.prose {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: none; /* prose 自带 65ch 交给消息列布局控制 */
+  font: var(
+    --ui-font-body
+  ); /* 批5 排印迁移 2026-09-19：body 角色档单源（Newsreader 14/1.65，v1.69 的 13.5 三行散写退役） */
+  font-variant-numeric: oldstyle-nums;
+  text-wrap: pretty;
+
+  /* 学术墨色（官方 prose 变量 → leadero 令牌，暗色随遮蔽层自动翻转） */
+  --tw-prose-body: var(--text-secondary); /* 正文 = stone-600 三级墨之一 */
+  --tw-prose-headings: var(--text-primary); /* 标题 = stone-900 近黑 */
+  --tw-prose-lead: var(--text-secondary);
+  --tw-prose-links: var(--data-blue);
+  --tw-prose-bold: var(--text-primary);
+  --tw-prose-counters: var(--text-tertiary);
+  --tw-prose-bullets: var(--text-tertiary);
+  --tw-prose-hr: var(--border-subtle); /* hairline */
+  --tw-prose-quotes: var(--text-secondary);
+  --tw-prose-quote-borders: var(--border-subtle);
+  --tw-prose-captions: var(--text-tertiary);
+  --tw-prose-code: var(--text-primary);
+  --tw-prose-th-borders: var(--border-subtle);
+  --tw-prose-td-borders: var(--border-subtle);
+}
+.leadero-root .leadero-markdown.prose > *:first-child {
+  margin-top: 0 !important;
+}
+.leadero-root .leadero-markdown.prose > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ── Paragraphs ── */
+.leadero-root .leadero-markdown.prose p {
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+}
+
+/* ── Headings（学术降级：h1 按 h2 视觉级渲染，修复 §17-C3；克制不用 700）── */
+.leadero-root .leadero-markdown.prose h1,
+.leadero-root .leadero-markdown.prose h2,
+.leadero-root .leadero-markdown.prose h3,
+.leadero-root .leadero-markdown.prose h4,
+.leadero-root .leadero-markdown.prose h5,
+.leadero-root .leadero-markdown.prose h6 {
+  font-family: var(--font-serif);
+  font-weight: var(--font-weight-semibold); /* 学术克制：600，不用 bold */
+  line-height: 1.3;
+  text-wrap: balance;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  letter-spacing: -0.1px; /* 标题负字距（apple.com 手法） */
+}
+.leadero-root .leadero-markdown.prose h1 {
+  font-size: 1.4em;
+} /* 原 1.5em 降级 */
+.leadero-root .leadero-markdown.prose h2 {
+  font-size: 1.2em;
+} /* 原 1.25em 降级 */
+.leadero-root .leadero-markdown.prose h3 {
+  font-size: 1.05em;
+}
+.leadero-root .leadero-markdown.prose h4 {
+  font-size: 0.95em;
+}
+.leadero-root .leadero-markdown.prose h5 {
+  font-size: 0.9em;
+}
+.leadero-root .leadero-markdown.prose h6 {
+  font-size: 0.85em;
+  color: var(--text-tertiary);
+}
+/* 学术期刊不使用 GitHub 式标题下划线 */
+
+/* ── Code blocks (fixed size, independent of parent inheritance) ── */
+.leadero-root .leadero-markdown.prose pre {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  overflow: auto;
+  max-width: 100%;
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  border-radius: var(--radius-md);
+}
+.leadero-root .leadero-markdown.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 100%;
+  border-radius: 0;
+}
+
+/* ── Inline code (85%, serif 环境中的等宽点缀) ── */
+.leadero-root .leadero-markdown.prose :not(pre) > code {
+  padding: 0.15em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  font-family: var(--font-mono);
+  background-color: transparent;
+  border-radius: var(--radius-sm);
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+/* ── Bold/Italic/Strike — XUL-safe replacements ── */
+.leadero-root .leadero-markdown .md-bold {
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .leadero-markdown .md-italic {
+  font-style: italic;
+}
+.leadero-root .leadero-markdown .md-strike {
+  text-decoration: line-through;
+}
+
+/* ── Links（学术蓝灰，hover 下划线）── */
+.leadero-root .leadero-markdown.prose a {
+  color: var(--data-blue-dark);
+  text-decoration: none;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+.leadero-root .leadero-markdown.prose a:hover {
+  text-decoration: underline;
+}
+
+/* ── Citations ── */
+.leadero-root .leadero-markdown .citation-link {
+  font-size: 0.8em;
+  margin-left: 0.15em;
+  background: transparent;
+  padding: 0.05em 0.4em;
+  border-radius: var(--radius-md);
+  border: none;
+  color: var(--data-blue-dark);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .leadero-markdown .citation-link:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* ── Verification chips (inline verifier markers) ──
+   [INVALID] / [UNREAD_SOURCE] / [UNVERIFIED_CLAIM] rewritten by
+   preprocess/verificationTags.ts into .verification-tag spans. */
+.leadero-root .leadero-markdown .verification-tag {
+  display: inline-block;
+  font-size: 0.72em;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+  margin-left: 0.2em;
+  padding: 0.05em 0.5em;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  vertical-align: baseline;
+  cursor: help;
+  user-select: none;
+  white-space: nowrap;
+}
+.leadero-root .leadero-markdown .verification-tag-invalid {
+  color: var(--signal-red-strong);
+  background: var(--signal-red-bg);
+  border-color: var(--signal-red-ring);
+}
+.leadero-root .leadero-markdown .verification-tag-unread {
+  color: var(--signal-yellow-text);
+  background: var(--signal-yellow-bg);
+  border-color: var(--signal-yellow-bg);
+}
+.leadero-root .leadero-markdown .verification-tag-unverified {
+  color: var(--text-tertiary);
+  background: transparent;
+  border-color: var(--border-subtle);
+}
+.leadero-root .leadero-markdown .verification-tag-polarity {
+  color: var(--signal-yellow-text);
+  background: var(--signal-yellow-bg);
+  border-color: var(--signal-red-ring);
+}
+
+/* ── (Author, Year) click resolution (A1) ── */
+.leadero-root .leadero-markdown .citation-author-year {
+  cursor: pointer;
+}
+.leadero-root .leadero-markdown .citation-resolving {
+  opacity: 0.55;
+}
+
+/* Disambiguation picker for multi-match (Author, Year) clicks.
+   Appended inside .leadero-root (descendant selector required by scope policy). */
+.leadero-root .citation-picker {
+  position: fixed;
+  z-index: var(--z-topmost);
+  max-width: 424px; /* §13.5 八档进一（2026-09-02）：原 420 */
+  min-width: 220px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.leadero-root .citation-picker-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .citation-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-px);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.leadero-root .citation-picker-item:hover {
+  background: var(--hub-bg-hover);
+}
+.leadero-root .citation-picker-title {
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.leadero-root .citation-picker-meta {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+/* ── Lists（学术：2em 缩进，紧凑项距）── */
+.leadero-root .leadero-markdown.prose ul,
+.leadero-root .leadero-markdown.prose ol {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  padding-left: 2em;
+}
+.leadero-root .leadero-markdown.prose ul {
+  list-style-type: disc;
+}
+.leadero-root .leadero-markdown.prose ol {
+  list-style-type: decimal;
+}
+.leadero-root .leadero-markdown.prose li {
+  margin-bottom: 0.25em;
+}
+.leadero-root .leadero-markdown.prose li > p {
+  margin-top: var(--space-4);
+}
+.leadero-root .leadero-markdown.prose li + li {
+  margin-top: 0.25em;
+}
+
+/* ── Blockquote（学术化：斜体衬线 + 左缩进 + hairline，
+   取代 GitHub 背景色块；「边界消融」降级为可选项）── */
+.leadero-root .leadero-markdown.prose blockquote {
+  margin: 0 0 0.75em 0;
+  padding: 0 0 0 1.5em;
+  font-style: italic;
+  color: var(--text-secondary);
+  background: none;
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 0;
+  overflow-wrap: break-word;
+}
+.leadero-root .leadero-markdown.prose blockquote > :first-child {
+  margin-top: 0;
+}
+.leadero-root .leadero-markdown.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+.leadero-root .leadero-markdown.prose blockquote cite {
+  display: block;
+  text-align: right;
+  font-style: normal;
+  font-size: 0.8em;
+  font-variant: small-caps;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-top: 0.5em;
+}
+
+/* ── Images ── */
+.leadero-root .leadero-markdown.prose img {
+  max-width: 100%;
+  box-sizing: content-box;
+  background-color: transparent;
+}
+
+/* ── Horizontal rule（报纸 hairline：1px 细线，不用粗色条）── */
+.leadero-root .leadero-markdown.prose hr {
+  height: var(--space-px);
+  margin: var(--space-6) 0;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
+}
+
+/* ── Tables（学术：hairline 边框 + 斑马纹；字号随衬线正文收半档）── */
+.leadero-root .leadero-markdown.prose table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  /* 2026-09-07 布局审计：补 max-height 激活 sticky 表头——原 scrollport 纵向
+     永不滚动，components.css 的 table th{position:sticky} 恒 no-op（静默死特性）。
+     60vh 内长表转自身内滚 + 表头驻留；矮表无变化。 */
+  max-height: 60vh;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  /* v1.73（2026-08-26 用户裁决「表格圆角化」）：display:block + overflow
+     裁角（collapse 表格逐格加 radius 无效）；卡片档 6px 对齐梯子。 */
+  border-radius: var(--card-radius);
+}
+.leadero-root .leadero-markdown.prose table th {
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border-subtle) !important;
+}
+.leadero-root .leadero-markdown.prose table td {
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border-subtle) !important;
+}
+.leadero-root .leadero-markdown.prose table tr {
+  border-top: 1px solid var(--border-subtle) !important;
+}
+.leadero-root .leadero-markdown.prose table tr:nth-child(2n) {
+  background-color: transparent;
+}
+
+/* ── KaTeX math（自带字体；oldstyle 数字继承在此复位）── */
+.leadero-root .leadero-markdown .katex {
+  display: inline-block;
+  margin: 0 0.1em;
+  font-size: 1.05em !important;
+  font-variant-numeric: normal;
+  max-width: 100%;
+  overflow: auto;
+}
+.leadero-root .leadero-markdown .katex-display {
+  padding: 0.75em 0;
+  overflow: auto;
+}
+.leadero-root .leadero-markdown .katex-display > .katex {
+  display: block;
+  margin: 0;
+  max-width: 100%;
+  overflow: auto;
+}
+
+/* ── Structured card blocks (```card) ── */
+.leadero-root .leadero-markdown .structured-card {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+}
+/* Variant modifiers share the base shell above; explicit selectors kept for clarity. */
+.leadero-root .leadero-markdown .paper-card,
+.leadero-root .leadero-markdown .progress-card,
+.leadero-root .leadero-markdown .code-card,
+.leadero-root .leadero-markdown .error-card {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+}
+
+/* Card element typography */
+.leadero-root .leadero-markdown .sc-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+  line-height: 1.4;
+}
+.leadero-root .leadero-markdown .sc-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-1);
+}
+.leadero-root .leadero-markdown .sc-abstract {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  margin: var(--space-1) 0 0 0;
+}
+.leadero-root .leadero-markdown .sc-doi {
+  font-size: var(--text-xs);
+  color: var(--data-blue-dark);
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+}
+.leadero-root .leadero-markdown .sc-error-msg {
+  font-size: var(--text-sm);
+  color: var(--signal-red-strong);
+  margin-top: var(--space-1);
+}
+
+/* Progress card */
+.leadero-root .leadero-markdown .sc-progress-bar {
+  height: var(--space-1);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  overflow: hidden;
+  margin: var(--space-1) 0;
+}
+.leadero-root .leadero-markdown .sc-progress-fill {
+  height: 100%;
+  background: var(--data-blue);
+  border-radius: var(--radius-xs);
+  transition: width var(--transition-fast);
+}
+.leadero-root .leadero-markdown .sc-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  margin-top: var(--space-1);
+}
+.leadero-root .leadero-markdown .sc-step {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.leadero-root .leadero-markdown .sc-step.done {
+  color: var(--signal-green-dark);
+}
+
+/* Code card */
+.leadero-root .leadero-markdown .sc-lang {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-1);
+}
+.leadero-root .leadero-markdown .sc-code {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Error card: tint the shell red */
+.leadero-root .leadero-markdown .error-card {
+  border-color: var(--signal-red-bg);
+}
+
+/* ── GFM table enhancements ── */
+.leadero-root .leadero-markdown table tr:nth-child(even) {
+  background-color: var(--doc-table-alt-bg);
+}
+.leadero-root .leadero-markdown table tr:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* ── GFM task list ── */
+.leadero-root .leadero-markdown .task-list-item {
+  list-style: none;
+  margin-left: -1.5em;
+}
+.leadero-root
+  .leadero-markdown
+  .task-list-item
+  input[type="checkbox"]:not([data-slot]) {
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+/* ── Mermaid diagram styles（合并自 addon/content/css/markdown.css） ── */
+.leadero-root .leadero-markdown .mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1em 0;
+  overflow-x: auto;
+  padding: 0.75em;
+  border-radius: var(--radius-md);
+}
+
+.leadero-root .leadero-markdown .mermaid-error {
+  display: block;
+  background: var(--signal-red-bg);
+  padding: 0.75em;
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  color: var(--signal-red-strong);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.leadero-root .leadero-markdown .mermaid svg {
+  max-width: none;
+  height: auto;
+}
+
+/* ── Mermaid interactive container ── */
+
+.leadero-root .leadero-markdown .mermaid-container {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin: var(--space-3) 0;
+  background: var(--card-bg);
+}
+
+/* Toolbar */
+.leadero-root .leadero-markdown .mermaid-toolbar {
+  display: flex;
+  align-items: center;
+  /* 2026-09-07 布局审计：按钮 nowrap 且英文标签 min-content 总宽 ~340-460px，
+     窄容器（360px 侧栏消息列）下被 .mermaid-container{overflow:hidden} 静默裁尾
+     （复制 SVG/下载不可达）。wrap 换行替代裁切；宽容器单行无变化。 */
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+  padding: var(--space-1-25) var(--space-2);
+  background: var(--border-subtle);
+}
+
+.leadero-root .leadero-markdown .mermaid-toolbar button {
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  line-height: var(--leading-comfortable);
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.leadero-root .leadero-markdown .mermaid-toolbar button:hover {
+  background: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.leadero-root .leadero-markdown .mermaid-toolbar button:active {
+  background: var(--text-tertiary);
+}
+
+/* Zoom group */
+.leadero-root .leadero-markdown .mermaid-zoom-btn {
+  min-width: var(--space-5);
+  text-align: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-sm);
+}
+
+/* Action buttons */
+.leadero-root .leadero-markdown .mermaid-action-btn {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+}
+
+/* Viewport (scrollable area for diagram) */
+.leadero-root .leadero-markdown .mermaid-viewport {
+  overflow: auto;
+  max-height: 360px;
+}
+
+/* Display iframe — renders SVG directly via innerHTML */
+.leadero-root .leadero-markdown .mermaid-iframe {
+  border: none;
+  width: 100%;
+  display: block;
+}
+
+/* Source code view */
+.leadero-root .leadero-markdown .mermaid-source-view {
+  padding: var(--space-3);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  background: var(--border-subtle);
+  max-height: 160px;
+  overflow: auto;
+}
+
+.leadero-root .leadero-markdown .mermaid-source-view code {
+  font-family: var(
+    --font-mono
+  ); /* 2026-08-31 接线：原手写栈缺 ui-monospace/Menlo 前缀，token 为正源 */
+}
+
+/* ── Mermaid error display ── */
+
+.leadero-root .leadero-markdown .mermaid-error pre {
+  margin: 0 0 var(--space-2);
+  white-space: pre-wrap;
+  font-size: var(--text-xs);
+}
+
+.leadero-root .leadero-markdown .mermaid-error-msg {
+  font-size: var(--text-2xs);
+  color: var(--signal-red-strong);
+}
+
+/* ── Mermaid toolbar spacer (flex: 1) ── */
+
+.leadero-root .leadero-markdown .mermaid-toolbar-spacer {
+  flex: 1;
+}
+
+/* ── Mermaid zoom target (transition) ── */
+
+.leadero-root .leadero-markdown .mermaid-zoom-target {
+  transition: transform 0.15s ease;
+}
+
+/* ── Mermaid viewport hidden state (showCode active) ── */
+
+.leadero-root .leadero-markdown .mermaid-viewport-hidden {
+  display: none;
+}
+
+/* ── shiki 代码高亮（借鉴 ZCode 批 2026-09-07）──
+   CodeBlock 高亮态把 shiki 输出的 <pre><code> 包在 .le-shiki div 里；
+   外层 div 复用原 <pre> 的 utility（padding/滚动/字体），这里只中和
+   shiki 自带的 pre 内联样式，并把主题色切到 CSS 变量（明暗随系统）。 */
+
+.leadero-root .le-shiki {
+  /* 双主题色变量兜底：span 上有 shiki 内联值时被覆盖；缺失时回落正文色
+     （同时满足 check-tokens 对 authored CSS 的静态可解析要求） */
+  --shiki-light: var(--text-primary);
+  --shiki-dark: var(--text-primary);
+}
+
+.leadero-root .le-shiki > pre {
+  margin: 0;
+  padding: 0;
+  background: transparent !important; /* shiki 在 pre 上内联主题底色，外层卡面色由消费点承担 */
+  overflow: visible;
+  border-radius: 0;
+}
+
+.leadero-root .le-shiki code {
+  display: block;
+  min-width: max-content;
+}
+
+.leadero-root .le-shiki span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  .leadero-root .le-shiki span {
+    color: var(--shiki-dark);
+  }
+}

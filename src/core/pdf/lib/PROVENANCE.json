@@ -1,0 +1,34 @@
+{
+  "artifact": "org.opendataloader:opendataloader-pdf-cli:2.5.0",
+  "name": "OpenDataLoader PDF CLI",
+  "version": "2.5.0",
+  "file": "opendataloader-pdf-cli.jar",
+  "sha256": "516ce47832a6726e87cb17db77c20174ca8cabbe9a6b56db1418babc7c9ddcba",
+  "bytes": 24102188,
+  "mainClass": "org.opendataloader.pdf.cli.CLIMain",
+  "jarRequiresJava": 11,
+  "builtWithJdk": 21,
+  "bundledLicenses": [
+    "Apache-2.0 (project)",
+    "ISC",
+    "PSF-2.0",
+    "Blue-Oak-1.0.0",
+    "EDL-1.0",
+    "CDDL-1.1",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "MPL-2.0",
+    "EPL-1.0",
+    "EPL-2.0"
+  ],
+  "licenseSource": "jar 内 META-INF/THIRD_PARTY/licenses/ 与 META-INF/maven/.../pom.xml —— 这些值全部从 jar 自身读出，非人工转录",
+  "consumedBy": "src/core/pdf/OpenDataLoaderPdfClient.ts（java -jar 子进程，PDF 解析默认后端）",
+  "whyInSourceTree": "运行期真实依赖：解析 PDF 时必须能在磁盘上找到这个 jar。当前由 git 直接承载（24MB）。",
+  "howToUpdate": [
+    "1. 用新 jar 替换本目录文件",
+    "2. 更新本文件的 version / sha256 / bytes / jarRequiresJava / builtWithJdk / bundledLicenses（从新 jar 的 META-INF 读出，别手抄）",
+    "3. 跑 node scripts/check-jar-provenance.cjs —— 它按 sha256 + 字节数对账，不一致即红"
+  ],
+  "openQuestion": "24MB 二进制入库让每次 clone 都要拉它。是否改为 Release 资产/首次运行下载/git-lfs 属分发策略决策，尚未拍板（审计 G-07）。"
+}

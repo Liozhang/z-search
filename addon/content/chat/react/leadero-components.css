@@ -1,0 +1,2472 @@
+/*
+ * Section A — 原 leadero-cards.css（v1.33 合并至此）。
+ * Search, approval cards, setup wizard, chevron toggle, research cards, research progress, message item.
+ *
+ * 残留规则：仅保留带状态/伪类/动画/后代选择器的类。简单单元素类已迁移至
+ * Tailwind（见各 Cards/* 与 Search/* 组件）。
+ */
+
+/* ==================== Component-local contracts（2026-08-25 五问审计批下放）====================
+   badge/bubble/timestamp/timeline-tool/doc 系列均为本文件单消费契约，
+   自 leadero-tokens.css 下放至此；AgentRun/LiveProgress 的 TSX 消费同
+   bundle 文档作用域，此处定义即可解析。 */
+.leadero-root {
+  --badge-offset: 2px;
+  --bubble-bg: color-mix(in srgb, var(--surface-tint) 40%, transparent);
+  --timestamp-color: var(--text-tertiary);
+  --timestamp-font-size: var(--text-2xs);
+  --timeline-tool-bg: var(--surface-tint);
+  --timeline-tool-border: var(--border-subtle);
+  --doc-citation-bg: var(
+    --data-blue-faint
+  ); /* 2026-08-30 token 审计批：原 4% 裸值并入 data-blue 阶梯既有 faint 档 */
+  --doc-table-header-bg: var(--surface-tint);
+}
+
+/* ==================== Search ==================== */
+/* search-bar / search-bar-icon: migrated. Kept: input (:focus), clear (:hover). */
+.leadero-root .search-bar-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-8);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  outline: none;
+  box-sizing: border-box;
+}
+.leadero-root .search-bar-input:focus {
+  border-color: var(--data-blue);
+  box-shadow: var(--focus-ring-subtle);
+}
+.leadero-root .search-bar-clear {
+  position: absolute;
+  right: calc(var(--space-3) + var(--space-2));
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-0-5);
+  border-radius: var(--radius-btn);
+}
+.leadero-root .search-bar-clear:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .search-results-close {
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: var(--space-0-5);
+  border-radius: var(--radius-btn);
+  display: flex;
+}
+.leadero-root .search-results-close:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* ==================== Overlay Card (shared base) ====================
+   v1.33 V6/G5 完成：ApprovalCard / GrillCard / ReviewCard / ResearchResumeCard
+   four cards now all carry .leadero-overlay-card as the single base shell.
+   Per-card selectors (.approval-card / .grill-card) retained only for future
+   card-specific overrides (currently empty — base recipe fully shared). */
+.leadero-root .leadero-overlay-card,
+.leadero-root .grill-card {
+  margin: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--card-radius);
+  background-color: var(--card-bg);
+  animation: leadero-fade-in var(--transition-normal);
+  /* overlay-zone 挂 pointer-events:none（透点下层消息列表）；豁免收在基类单点，
+     否则新卡必漏——此前仅 Approval/Continuation 逐卡补丁，其余 6 卡按钮全部
+     点击穿透（2026-09-07 布局审计 P0）。子级无需再逐卡补 pointer-events-auto。 */
+  pointer-events: auto;
+}
+
+/* ==================== Chevron Toggle ==================== */
+/* State-driven (.expanded). Used by 6 call sites — keep coherent in CSS. */
+.leadero-root .chevron-toggle {
+  transition: transform var(--transition-normal);
+}
+.leadero-root .chevron-toggle.expanded {
+  transform: rotate(180deg);
+}
+
+/* ==================== Research Cards ==================== */
+/* Siblings migrated. research-resume-item keeps :hover/:active. */
+.leadero-root .research-resume-item:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .research-resume-item:active {
+  background-color: var(--hub-bg-hover);
+}
+
+/* ==================== ResearchProgressView ==================== */
+/* 5-phase progress bar — interrelated state machine + spinner animation.
+   Base/simple siblings migrated; this whole family stays in CSS for coherence.
+   ── 色词汇立法（2026-09-02 用户拍板「统一墨色照原型 .flow」，翻转 2026-08-30
+   双轨制）── Agent 相位条与 Hub 研究页 flow/stage 族（leadero-research-dash.css）
+   同归墨色单轨：done=ink 实心（--text-primary，原型 --ink 的 app 映射先例
+   hub-research.css）/ active=ink 描边（20px 紧凑点不展开 outline 聚焦环，
+   34px flow 族展开）/ pending=border-strong。
+   ✓ 行级勾选（.research-subtask-* signal-green-dark）系独立立法不在本拍板辖域。 */
+.leadero-root .research-phase-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: var(--space-2) 0;
+}
+.leadero-root .research-phase-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+.leadero-root .research-phase-dot {
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-strong);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-2xs);
+  color: var(--text-on-accent);
+}
+.leadero-root .research-phase-step.completed .research-phase-dot {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+}
+.leadero-root .research-phase-step.active .research-phase-dot {
+  border-color: var(--text-primary);
+  background: transparent;
+  color: var(--text-primary);
+}
+.leadero-root .research-phase-label {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  text-align: center; /* 2026-09-07 布局审计：nowrap 退役——en 标签 min-content 总宽在 360px 侧栏超出卡内宽把末段挤出；允许换行（zh 四字标签不受影响） */
+}
+.leadero-root .research-phase-step.active .research-phase-label {
+  color: var(--action-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .research-phase-step.completed .research-phase-label {
+  color: var(--text-secondary);
+}
+/* 2026-08-30 审计批②：原类名 .research-phase-connector 与 leadero-research-dash.css
+   的 FlowCard 连接线同名，两文件全局加载属性互相渗透（本族被加宽到 space-8、
+   margin-top/bottom 双边距叠加）→ 改名 -bar-connector 隔离。唯一消费者
+   ResearchProgressView.tsx 已同步。 */
+.leadero-root .research-phase-bar-connector {
+  width: var(--space-5);
+  height: var(--space-0-5);
+  background: var(--border-strong);
+  margin-bottom: var(--space-4-5);
+}
+.leadero-root .research-phase-bar-connector.completed {
+  background: var(--text-primary);
+}
+/* Subtask list (dimensions / sections) — item/label/icon are state-coupled.
+   2026-08-30 对齐原型 .sub：36 密集档 + 行间分隔线；状态语义=待办淡、完成/激活主色（与旧实现相反）；
+   ✓ 绿走 signal-green-dark（signal-green 亮底 2.6:1 立法，dark 模式自适配 #4ade80）。 */
+.leadero-root .research-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  min-height: var(--row-height-sm);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.leadero-root .research-subtask-item + .research-subtask-item {
+  border-top: var(--stroke-thin) solid var(--border-subtle);
+}
+.leadero-root .research-subtask-label {
+  color: var(--text-tertiary);
+}
+.leadero-root .research-subtask-item.completed .research-subtask-label,
+.leadero-root .research-subtask-item.active .research-subtask-label {
+  color: var(--text-primary);
+}
+.leadero-root .research-subtask-icon {
+  width: var(--icon-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+.leadero-root .research-subtask-item.completed .research-subtask-icon {
+  color: var(--signal-green-dark);
+}
+.leadero-root .research-subtask-dur {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ==================== ReviewCard (literature search results) ==================== */
+/* Base card uses .leadero-overlay-card. Kept: select-all (:hover), row (:hover/:active), checkbox ([aria-checked]). */
+.leadero-root .review-card-select-all {
+  /* 2026-09-11 拥挤审计：font-size 11px 覆盖退役（Button sm 12px 归位，
+     可交互文字 ≥12px 立法） */
+  font-weight: var(--font-weight-regular);
+  color: var(--data-blue-dark);
+  cursor: pointer;
+}
+.leadero-root .review-card-select-all:hover {
+  text-decoration: underline;
+}
+.leadero-root .review-card-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  min-width: 0;
+  overflow: hidden;
+}
+.leadero-root .review-card-row:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .review-card-row:active {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .review-checkbox {
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.leadero-root .review-checkbox[aria-checked="true"] {
+  background-color: var(--action-primary);
+  border-color: var(--action-primary);
+}
+
+/* ==================== GrillCard ==================== */
+/* grill-card base keeps fade-in animation. Children migrated.
+   Kept: recommended-toggle (:hover), textarea (:focus/::placeholder). */
+/* v1.33 V6/G5：grill-card 与基座逐字相同，并入基座选择器（纯 CSS 无 composes） */
+/* background/border/padding 由 shadcn Button ghost variant 内置 */
+.leadero-root .grill-card-recommended-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  /* 2026-09-11 拥挤审计：font-size 11px 覆盖退役（ Button sm 12px 归位，可交互
+     文字 ≥12px 立法）；颜色 tertiary→secondary 提对比 */
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.leadero-root .grill-card-recommended-toggle:hover {
+  color: var(--text-primary);
+}
+/* chevron 旋转动画：展开时旋转 180° */
+.leadero-root .grill-card-chevron {
+  /* v1.48 审计收口 §15-95：0.15s ease 裸值 → --transition-fast（150ms/ease-out 同值令牌） */
+  transition: transform var(--transition-fast);
+}
+.leadero-root .grill-card-chevron.expanded {
+  transform: rotate(180deg);
+}
+/* padding/border/border-radius/outline/focus/placeholder 由 shadcn Textarea 组件内置 */
+.leadero-root .grill-card-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+}
+/*
+ * Section B — 原 leadero-input.css（v1.33 合并至此）。
+ * Toolbar, chat input, send button, attachment preview, toasts, agent status bar.
+ * Custom instructions editor, slash hint, model quick switch.
+ */
+
+/* ==================== AgentStatusBar ==================== */
+/* AgentStatusBar (.chat-status / .status-* / .tool-badge / .tool-overflow) migrated
+ * to inline Tailwind classes. The chat-status-generating / chat-status-approving
+ * strings remain as i18n keys used by RunStatusIndicator and MessageList. */
+
+/* ==================== Unified Input Area ==================== */
+/* Toolbar + ChatInput merged into one visual container */
+.leadero-root .leadero-input-area {
+  flex-shrink: 0;
+  margin: var(--space-1-5) 0 var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  min-width: 0;
+  position: relative;
+  z-index: var(--z-input);
+}
+/* ==================== Toolbar (integrated into input area) ==================== */
+.leadero-root .leadero-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  margin: 0 0 var(--space-1) 0;
+  flex-shrink: 0;
+}
+.leadero-root .toolbar-select {
+  position: relative;
+}
+.leadero-root .toolbar-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+.leadero-root .toolbar-select-trigger:hover {
+  border-color: var(--data-blue);
+  color: var(--text-primary);
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .toolbar-select-dropdown {
+  min-width: 200px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-md);
+  max-height: var(--dropdown-max-height);
+  overflow-y: auto;
+  padding: var(--space-1);
+  animation: leadero-fade-in var(--transition-fast);
+}
+/* toolbar-option-group: dead (0 consumers) — removed. */
+/* ===== Accordion header (clickable section toggle) ===== */
+.leadero-root .toolbar-accordion-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1-5) var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+  user-select: none;
+}
+.leadero-root .toolbar-accordion-header:hover {
+  background-color: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .toolbar-accordion-header.expanded {
+  color: var(--action-primary);
+}
+.leadero-root .toolbar-accordion-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-base);
+  height: var(--icon-base);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+.leadero-root .toolbar-accordion-header.expanded .toolbar-accordion-chevron {
+  color: var(--action-primary);
+}
+.leadero-root .toolbar-accordion-title {
+  flex: 1;
+}
+/* ===== Accordion body (expandable content area) ===== */
+.leadero-root .toolbar-accordion-body {
+  animation: leadero-accordion-in var(--dur-1) var(--ease-standard);
+}
+/* Sub-category label inside accordion body */
+.leadero-root .toolbar-option-subgroup {
+  padding: var(--space-0-5) var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-wide);
+}
+
+.leadero-root .toolbar-option {
+  /* v1.67：菜单项 14px 控件档（原 text-xs 12）；圆角归小件族 4px（原 radius-btn 系错挂容器档） */
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-control);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+.leadero-root .toolbar-option:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .toolbar-option.active {
+  color: var(--action-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .toolbar-option.disabled {
+  color: var(--text-tertiary);
+  cursor: default;
+  opacity: 0.5;
+}
+.leadero-root .toolbar-option.disabled:hover {
+  background-color: transparent;
+}
+.leadero-root .toolbar-option-disabled-tag {
+  margin-left: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.leadero-root .toolbar-select-trigger.agent-selected {
+  border-color: var(--action-primary);
+  color: var(--action-primary);
+}
+.leadero-root .toolbar-agent-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .toolbar-divider {
+  height: var(--stroke-thin);
+  background: var(--border-subtle);
+  margin: var(--space-1) var(--space-2);
+}
+/* toolbar-icon-btn (+ :hover, .active): dead (0 consumers) — removed. */
+
+/* ==================== Toolbar Row (toolbar + model switch) ==================== */
+.leadero-root .leadero-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 0 var(--space-1-5);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* ==================== ModelQuickSwitch ==================== */
+.leadero-root .model-quick-switch {
+  position: relative;
+  margin-left: auto;
+}
+/* padding/border/border-radius/transition 由 shadcn Button 组件内置 */
+.leadero-root .model-quick-switch-dot {
+  /* 原型 :1968 cdot：data-blue 色点（BrainIcon 退役） */
+  width: var(--hub-dot-size);
+  height: var(--hub-dot-size);
+  border-radius: var(--radius-full);
+  background: var(--data-blue);
+  flex-shrink: 0;
+}
+.leadero-root .model-quick-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  max-width: 160px;
+}
+.leadero-root .model-quick-switch-btn:hover {
+  color: var(--text-secondary);
+  background-color: var(--hub-bg-hover);
+  border-color: var(--border-subtle);
+}
+.leadero-root .model-quick-switch-btn.switching {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+.leadero-root .model-quick-switch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+.leadero-root .model-quick-switch-btn .expanded {
+  transform: rotate(180deg);
+}
+.leadero-root .model-quick-switch-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  max-width: var(--layout-model-switch-max);
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-md);
+  max-height: var(--dropdown-max-height);
+  overflow-y: auto;
+  padding: var(--space-1);
+  animation: leadero-fade-in var(--transition-fast);
+}
+.leadero-root .model-quick-switch-group {
+  /* no extra spacing */
+}
+.leadero-root .model-quick-switch-group-label {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.leadero-root .model-quick-switch-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-control); /* v1.67 菜单项 14px（原 text-xs 12） */
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  background: transparent;
+  border: none;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .model-quick-switch-item:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .model-quick-switch-item[data-active="true"] {
+  background-color: var(--hub-bg-hover);
+  outline: none;
+} /* B7 键盘高亮与 hover 同罩 */
+.leadero-root .model-quick-switch-item.selected {
+  color: var(--action-primary);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .model-quick-switch-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==================== 排队面板（steering 队列物化，借鉴 ZCode 批 2026-09-07）==================== */
+/* 运行中提交的消息在入队后在此列出；暂停态=用户取消过当前回合（停止≠清队列） */
+.leadero-root .le-queue-panel {
+  flex-shrink: 0;
+  margin-bottom: var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  background: var(--surface-tint);
+  overflow: hidden;
+}
+.leadero-root .le-queue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+}
+.leadero-root .le-queue-title {
+  font-family: var(--ui-font-meta);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .le-queue-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+.leadero-root .le-queue-paused-hint {
+  font-size: var(--text-2xs);
+  color: var(--signal-yellow-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .le-queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-1) var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  max-height: 120px;
+  overflow-y: auto;
+}
+.leadero-root .le-queue-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  min-height: 26px;
+}
+.leadero-root .le-queue-item-text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .le-queue-item-actions {
+  flex-shrink: 0;
+  display: inline-flex;
+  gap: var(--space-0-5);
+}
+.leadero-root .le-queue-act {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+.leadero-root .le-queue-act:hover {
+  color: var(--text-primary);
+  background: var(--hub-bg-hover);
+}
+.leadero-root .le-queue-act-resume {
+  color: var(--action-primary);
+}
+
+/* ==================== ChatInput (unified with toolbar) ==================== */
+/* Outer container — single card (border + shadow + radius), toolbar 浮动在内 */
+.leadero-root .chat-input-container {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+}
+.leadero-root .chat-input-container:focus-within {
+  /* 砚法合规批 2026-09-20 §8.2：focus=交互蓝 1px 边 + 同色 20% 2px 外环
+     （焦点环单源令牌 --focus-ring-accent；旧 3px 15% 环退役） */
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring-accent);
+}
+
+/* Inner body */
+.leadero-root .chat-input-body {
+  display: flex;
+  flex-direction: column;
+  user-select: text;
+  position: relative;
+}
+
+/* Textarea — borderless, lives inside .chat-input-container card (focus 由 container :focus-within 接管) */
+.leadero-root .chat-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-btn);
+  outline: none;
+  resize: none;
+  padding: var(--space-3) var(--input-float-reserve) var(--space-3)
+    var(--space-3);
+  line-height: var(--leading-normal);
+  min-height: var(--input-min-h);
+  max-height: var(--input-max-h);
+  color: var(--text-primary);
+  /* §5.7（复审 Q21）：输入类光标=交互蓝 */
+  caret-color: var(--accent);
+}
+.leadero-root .chat-input::placeholder {
+  color: var(--text-tertiary);
+}
+.leadero-root .chat-input:disabled {
+  opacity: 0.5;
+}
+
+/* Floating buttons inside input — anchored to bottom-right */
+.leadero-root .chat-input-float {
+  position: absolute;
+  right: var(--space-1-5);
+  bottom: var(--space-1-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Character counter — mirrors .chat-input-float at bottom-left, only shown
+   past 80% of MAX_INPUT_LENGTH (see ChatInput.tsx). pointer-events:none so
+   it never steals textarea clicks. */
+.leadero-root .chat-input-counter {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-1-5);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+.leadero-root .chat-input-counter.at-limit {
+  color: var(--signal-red-strong);
+  font-weight: var(--font-weight-semibold);
+}
+
+.leadero-root .attachment-btn {
+  flex-shrink: 0;
+  width: var(--space-7);
+  height: var(--space-7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-btn);
+  /* §10.1（复审 Q9）：图标钮必须带容器（静止态沉纸底+发丝线），裸图标可点=违法 */
+  border: var(--stroke-thin) solid var(--line-faint);
+  background: var(--paper-raised);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+  position: relative;
+  font: inherit;
+  line-height: var(--leading-none);
+  color: inherit;
+}
+.leadero-root .attachment-btn:hover {
+  background-color: var(--hub-bg-hover);
+  color: var(--text-secondary);
+}
+.leadero-root .attachment-btn:active {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .attachment-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.leadero-root .undo-badge {
+  position: absolute;
+  top: var(--badge-offset);
+  right: var(--badge-offset);
+  min-width: var(--icon-base);
+  height: var(--icon-base);
+  /* 复审差异收口（§15-79 代答可再改）：§9 warn=等待/注意态，撤销属破坏性
+     回退注意层级；原型标本即 warn 底+paper-canvas 字（非交互蓝动作态） */
+  padding: 0 var(--space-0-75);
+  border-radius: var(--radius-pill);
+  background: var(--warn);
+  color: var(--paper-canvas);
+  font-size: var(--text-2xs);
+  line-height: var(--leading-none);
+  text-align: center;
+  font-weight: var(--font-weight-semibold);
+  pointer-events: none;
+}
+
+.leadero-root .send-btn {
+  flex-shrink: 0;
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-btn);
+  background-color: var(--action-primary); /* v1.46：按钮族圆角回归+黑 */
+  cursor: pointer;
+  transition:
+    background-color var(--transition-normal),
+    opacity var(--transition-normal);
+  border: none;
+  font: inherit;
+  line-height: var(--leading-none);
+  color: inherit;
+}
+/* v3 批 2（2026-09-19 §19.1 法 3）：hover 灯罩/按压加深走 color-mix 同色系通道，
+   brightness 滤镜与 scale 位移残留退役（零位移铁法） */
+.leadero-root .send-btn:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--action-primary) 88%,
+    var(--surface-raised)
+  );
+}
+.leadero-root .send-btn:active {
+  background-color: color-mix(
+    in srgb,
+    var(--action-primary) 80%,
+    var(--surface-raised)
+  );
+}
+.leadero-root .send-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.leadero-root .send-btn.stop {
+  background-color: var(--signal-red);
+}
+.leadero-root .send-btn.stop:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--signal-red) 88%,
+    var(--surface-raised)
+  );
+}
+.leadero-root .send-btn.stop:active {
+  background-color: color-mix(
+    in srgb,
+    var(--signal-red) 80%,
+    var(--surface-raised)
+  );
+}
+
+/* Steering send button — uses accent color to distinguish from normal send */
+.leadero-root .send-btn.steer {
+  background-color: var(--signal-orange);
+  opacity: var(--opacity-disabled);
+}
+/* v1.44 原子批：send-glow 装饰辉光删除（§23 融合——材质问不过：发光=装饰表面）。
+   ready 态以 opacity 提亮表达，不再辉光。 */
+.leadero-root .send-btn.steer.ready {
+  opacity: 1;
+}
+.leadero-root .send-btn.steer.disabled {
+  opacity: var(--opacity-extreme-disabled);
+  pointer-events: none;
+}
+
+/* ==================== AttachmentPreview ==================== */
+.leadero-root .attachment-preview-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  padding: 0 0 var(--space-2);
+  /* 限制高度：附件 chip 过多时内部滚动，而非无限增长挤压上方消息列表（flex:1）。 */
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.leadero-root .attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  max-width: min(200px, 100%);
+  animation: leadero-attachment-in var(--dur-2) var(--ease-standard);
+}
+.leadero-root .attachment-chip.image-chip {
+  padding: var(--space-0-5);
+  background: none;
+}
+.leadero-root .attachment-thumb {
+  width: var(--icon-2xl);
+  height: var(--icon-2xl);
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+/* §19.1 hover 不抬升：缩略图 zoom（scale 1.08）已删；chip 的 hover 反馈由
+   .attachment-remove 的显隐承担，不再叠加装饰性位移。 */
+.leadero-root .attachment-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border-radius: var(--radius-full);
+  background-color: var(--overlay-bg);
+  color: var(--card-bg);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.leadero-root .attachment-chip:hover .attachment-remove {
+  opacity: 1;
+}
+.leadero-root .item-chip .attachment-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==================== CollectionChip ==================== */
+/* v1.73：同 quote-chip 制——白底细边框 + radius-btn（原型 .anchor-chip 族）。 */
+.leadero-root .attachment-chip.collection-chip {
+  background-color: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  padding: var(--space-1) var(--space-1-5);
+  max-width: min(280px, 100%);
+}
+.leadero-root .collection-chip-icon {
+  color: var(--data-blue-dark);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.leadero-root .collection-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+.leadero-root .collection-chip-count {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+.leadero-root .attachment-chip.prompt-chip {
+  background-color: var(--signal-purple-bg);
+  max-width: min(280px, 100%);
+}
+.leadero-root .prompt-chip-icon {
+  color: var(--signal-purple);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Bypass-mode warning chip — amber, book-like restraint (no gradient) */
+.leadero-root .attachment-chip.bypass-chip {
+  background-color: var(--signal-yellow-bg);
+  border: 1px solid var(--signal-yellow);
+  animation: leadero-attachment-in var(--transition-fast);
+}
+.leadero-root .bypass-chip-icon {
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--signal-yellow-text);
+}
+.leadero-root .bypass-chip-label {
+  font-size: var(--text-xs);
+  color: var(--signal-yellow-text);
+  white-space: nowrap;
+}
+
+/* Steering receipt chip — informational blue, same flat chip pattern */
+.leadero-root .attachment-chip.steering-chip {
+  background-color: var(--data-blue-bg);
+  border: 1px solid var(--data-blue);
+  animation: leadero-attachment-in var(--transition-fast);
+}
+.leadero-root .steering-chip-icon {
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--data-blue-dark);
+}
+.leadero-root .steering-chip-label {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.leadero-root .prompt-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+
+/* Pulse glow when a quote auto-arrives from PDF selection */
+
+.leadero-root .attachment-chip.quote-chip.quote-arrived {
+  animation:
+    leadero-attachment-in var(--dur-2) var(--ease-standard),
+    leadero-quote-pulse 0.8s ease-out var(--dur-2);
+}
+
+/* ==================== QuoteChip (compact, unified attachment row) ==================== */
+/* v1.73（2026-08-26 用户裁决「锚点 chip 按原型」）：tint 底退役 → 白底细边框 +
+   radius-btn 近直角（原型 .anchor-chip 制）；标题衬线为「衬线不进控件」红线的
+   登记例外（仅 chip 内论文标题/引文，用户裁决 2026-08-26）。 */
+.leadero-root .attachment-chip.quote-chip {
+  background-color: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  padding: var(--space-1) var(--space-1-5);
+  gap: var(--space-1);
+  max-width: min(280px, 100%);
+  animation: leadero-attachment-in var(--dur-2) var(--ease-standard);
+}
+.leadero-root .quote-chip-icon {
+  color: var(--data-blue-dark);
+  flex-shrink: 0;
+}
+.leadero-root .quote-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+}
+.leadero-root .quote-chip-meta {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .attachment-chip.quote-chip.clickable {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .attachment-chip.quote-chip.clickable:hover {
+  background-color: var(--hub-bg-hover);
+}
+/* Overflow counter when >5 attachments */
+.leadero-root .overflow-chip {
+  background-color: transparent;
+  font-weight: var(--font-weight-medium);
+  cursor: default;
+  font-size: var(--text-xs);
+}
+
+/* ==================== First-use Slash Hint ==================== */
+.leadero-root .cmd-slash-hint {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-1) 0 0;
+  cursor: pointer;
+  animation: leadero-cmd-suggest-in var(--dur-1) var(--ease-standard);
+}
+
+.leadero-root .cmd-slash-hint-text {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.leadero-root .cmd-slash-hint:hover .cmd-slash-hint-text {
+  opacity: 1;
+  color: var(--data-blue-dark);
+}
+
+/* ── Migrated from utilities.css ── */
+/* ==================== SlashMenu ==================== */
+.leadero-root .slash-menu {
+  position: absolute;
+  min-width: 220px;
+  /* 2026-09-11 拥挤审计：补 max-width 上限——绝对定位 shrink-to-fit 下长描述
+     会把弹层拉宽到宿主全宽，desc 的 ellipsis 永不生效（对照 select/combobox
+     均有宽度锁） */
+  max-width: min(360px, 100%);
+  max-height: 280px;
+  overflow-y: auto;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  padding: var(--space-1);
+  animation: leadero-menu-in var(--transition-fast);
+}
+
+.leadero-root .slash-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+  font-size: var(--text-control); /* v1.67 菜单项 14px（原 text-xs 12） */
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-instant);
+  border-left: var(--stroke-edge) solid transparent;
+}
+.leadero-root .slash-menu-item:hover,
+.leadero-root .slash-menu-item.focused {
+  background-color: var(--hub-bg-hover);
+  color: var(--text-primary);
+  border-left-color: var(--action-primary);
+}
+.leadero-root .slash-menu-item:active {
+  background-color: var(--hub-bg-hover);
+}
+
+.leadero-root .slash-menu-item-icon {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--text-base);
+}
+.leadero-root .slash-menu-item-label {
+  font-weight: var(--font-weight-medium);
+  /* 2026-09-11 拥挤审计：原 flex:1（basis 0）在窄栏+长 desc 下被压缩归 0、
+     文字逐字竖排；改为不收缩（上限 60% 自截断），收缩量全部由 desc 承担 */
+  flex: 0 0 auto;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .slash-menu-item-desc {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Migrated from utilities.css ── */
+/* ==================== DragDropOverlay ==================== */
+.leadero-root .drag-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-dropdown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--action-primary-faint);
+  border: 2px dashed var(--action-primary);
+  border-radius: var(--card-radius);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+
+.leadero-root .drag-drop-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.leadero-root .drag-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  /* 砚法 §7（v1.48 审计收口 §15-95）：1.5s 无限 drag-pulse 循环退役——
+     拖拽悬停态靠背板+虚线边静置表达，入场保留单次淡入（复用 attachment-in） */
+  animation: leadero-attachment-in var(--dur-2) var(--ease-standard) 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .send-btn.steer.ready,
+  .leadero-root .send-btn.ready,
+  .leadero-root .drag-drop-content {
+    animation: none;
+  }
+}
+
+.leadero-root .drag-drop-icon {
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+  color: var(--action-primary);
+  opacity: 0.7;
+}
+
+.leadero-root .drag-drop-text {
+  font-size: var(--text-xs);
+  color: var(--action-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ── Migrated from utilities.css ── */
+/* ==================== File Chip (AttachmentPreview) ==================== */
+.leadero-root .file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  max-width: 184px; /* §13.5 八档进一（2026-09-02）：原 180 */
+}
+
+.leadero-root .file-chip-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.leadero-root .file-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.leadero-root .file-chip-size {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+}
+
+/* Absolute path badge — shown when file picked via file picker */
+.leadero-root .file-path-badge {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* ── Migrated from utilities.css ── */
+/* ── ItemPicker ── */
+.leadero-root .item-picker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-dropdown);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+.leadero-root .item-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--border-strong);
+  opacity: 0.5;
+}
+.leadero-root .item-picker-panel {
+  position: relative;
+  z-index: var(--z-base);
+  /* 2026-09-11 拥挤审计 P1：200×240（dropdown 菜单档）是档位误用——chrome 吃掉
+     60% 后列表视口仅 ≈1.8 行；提档为专用 token（280×320） */
+  max-width: var(--item-picker-panel-max-width);
+  width: 90%;
+  margin: var(--space-15) auto var(--space-8); /* 60px: 欢迎卡 hero 顶部留白，刻度外一次性值（guard 白名单） */
+  background-color: var(--card-bg);
+  border-radius: var(--card-radius);
+  /* v1.43：背景遮罩已承担分离，剥离静态 shadow-md 换 1px 边框（方案 A 单一信号） */
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  max-height: var(--item-picker-panel-max-height);
+}
+.leadero-root .item-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.leadero-root .item-picker-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+.leadero-root .item-picker-close {
+  cursor: pointer;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border-radius: var(--radius-btn);
+}
+.leadero-root .item-picker-close:hover {
+  background: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .item-picker-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.leadero-root .item-picker-search-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.leadero-root .item-picker-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: var(--text-base);
+  background: transparent;
+  color: var(--text-primary);
+  padding: var(--space-1) 0;
+}
+.leadero-root .item-picker-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+.leadero-root .item-picker-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.leadero-root .item-picker-status {
+  padding: var(
+    --space-4
+  ); /* 2026-09-11 拥挤审计：24px 在窄面板内密度失衡，归 16px */
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
+}
+.leadero-root .item-picker-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* 2026-09-11 拥挤审计：8/16 在窄面板横向吃 34px（标题列剩 ~95px），归 6/12 */
+  padding: var(--space-1-5) var(--space-3);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.leadero-root .item-picker-item:hover,
+.leadero-root .item-picker-item.focused {
+  background: var(--hub-bg-hover);
+}
+.leadero-root .item-picker-checkbox {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-on-accent);
+}
+.leadero-root .item-picker-checkbox.checked {
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+}
+.leadero-root .item-picker-item-type-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.leadero-root .item-picker-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.leadero-root .item-picker-item-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .item-picker-item-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .item-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 窄栏（工作区左栏可窄至 ~190px）下按钮组会吃掉整行：显式 gap + 让计数收缩，
+     而不是把它压成单字宽（2026-09-11 真机 F2）。 */
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.leadero-root .item-picker-selected-count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  /* 缺 min-width:0 时 flex 子项最小宽度=内容宽度 + 中文可逐字断行 →
+     整段被压成竖排并溢出弹窗左缘 */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .item-picker-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ==================== Narrow window adjustments ==================== */
+/* At the chat window's min-width (600px), the toolbar row (toolbar + model
+   switch) is tight. Shrink the agent name and model switch caps so both can
+   coexist without the row overflowing. */
+@media (max-width: 640px) {
+  .leadero-root .toolbar-agent-name {
+    /* 2026-09-07 布局审计：160→104 收紧（原 120→160 与本块「Shrink the caps」
+       意图反向——窄窗反而放宽上限）；窄窗断点当前不可达（窗限 minwidth=900），
+       属死防御层，修正方向防未来窗限放宽时踩坑。104=8px 迷你单位向上取整 */
+    max-width: 104px;
+  }
+  .leadero-root .model-quick-switch-btn {
+    max-width: 120px;
+  }
+}
+/*
+ * Section C — 原 leadero-tool-display.css（v1.33 合并至此）。
+ * Tool call display (rich), diff display, search/key-value/note/image/code/PDF result displays.
+ */
+
+/* ArgumentDisplay */
+.leadero-root .tool-call-args {
+  margin-top: var(--space-0-5);
+  font-size: var(--text-2xs);
+}
+.leadero-root .tool-call-arg-row {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-px) 0;
+  align-items: baseline;
+}
+.leadero-root .tool-call-arg-key {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+  min-width: 70px;
+  flex-shrink: 0;
+  font-size: var(--text-xs); /* 砚法合规批 2026-09-20 §9.2：参数档等宽 12px */
+}
+.leadero-root .tool-call-arg-value {
+  color: var(--text-secondary);
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: var(
+    --text-xs
+  ); /* 砚法合规批 2026-09-20 §9.2：参数 JSON 等宽 12px */
+}
+.leadero-root .tool-call-arg-item {
+  color: var(--data-blue-dark);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .tool-call-arg-badge {
+  display: inline-block;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  font-size: var(--text-2xs);
+  /* 2026-09-18 token 审计：tertiary 压 stone-200 仅 3.83:1 <AA，升 secondary 6.08:1（暗色 5.9:1） */
+  color: var(--text-secondary);
+  margin-right: var(--space-0-5);
+}
+.leadero-root .tool-call-arg-toggle {
+  background: none;
+  border: none;
+  padding: var(--space-px);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  display: inline-flex;
+  vertical-align: middle;
+}
+.leadero-root .tool-call-arg-toggle:hover {
+  color: var(--text-secondary);
+}
+.leadero-root .tool-call-arg-list {
+  margin-top: var(--space-0-5);
+  padding-left: var(--space-2);
+}
+.leadero-root .tool-call-arg-list-item {
+  padding: var(--space-px) 0;
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+.leadero-root .tool-call-arg-list-more {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  padding: var(--space-px) 0;
+}
+
+/* SearchResultDisplay */
+.leadero-root .tool-result-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.leadero-root .tool-result-search-item {
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.leadero-root .tool-result-search-item:hover {
+  background: var(--border-strong);
+}
+.leadero-root .tool-result-search-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+}
+.leadero-root .tool-result-search-meta {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-0-5);
+}
+.leadero-root .tool-result-search-relevance {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-0-5);
+  font-style: italic;
+}
+.leadero-root .tool-result-search-abstract {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+  line-height: var(--leading-tight);
+}
+.leadero-root .tool-result-search-doi {
+  font-size: var(--text-2xs);
+  color: var(--data-blue-dark);
+  margin-top: var(--space-0-5);
+  word-break: break-all;
+}
+.leadero-root .tool-result-search-more {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1-5);
+  border: none;
+  background: none;
+  color: var(--data-blue-dark);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  border-radius: var(--radius-btn);
+}
+.leadero-root .tool-result-search-more:hover {
+  background: var(--hub-bg-hover);
+}
+
+/* Metrics card (C4 key numbers) */
+.leadero-root .tool-result-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-metrics-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+}
+.leadero-root .tool-result-metrics-method {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-tertiary);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.leadero-root .tool-result-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-1) var(--space-1-5);
+  background: var(--surface-tint);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+}
+.leadero-root .tool-result-metric-value {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-none);
+}
+.leadero-root .tool-result-metric-unit {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--text-secondary);
+}
+.leadero-root .tool-result-metric-name {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  text-transform: capitalize;
+}
+.leadero-root .tool-result-metric-context {
+  font-size: var(--text-2xs);
+  color: var(--border-strong);
+  font-style: italic;
+}
+.leadero-root .tool-result-metrics-empty {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  padding: var(--space-1) 0;
+}
+
+/* KeyValueTable */
+.leadero-root .tool-result-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-0-5) var(--space-3);
+  font-size: var(--text-2xs);
+}
+.leadero-root .tool-result-kv-key {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+.leadero-root .tool-result-kv-value {
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+/* NotePreview */
+.leadero-root .tool-result-note {
+  padding: var(--space-1-5) var(--space-2);
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+.leadero-root .tool-result-note-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+}
+.leadero-root .tool-result-note-id {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-left: var(--space-1-5);
+  font-weight: var(--font-weight-normal);
+}
+.leadero-root .tool-result-note-body {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+  line-height: var(--leading-tight);
+  white-space: pre-wrap;
+}
+
+/* ==================== DiffDisplay ==================== */
+
+.leadero-root .diff-display {
+  font-size: var(--text-2xs);
+  line-height: var(--leading-tight);
+  padding: var(--space-1-5) 0;
+}
+
+/* diff-type-* are semantic variant tags (replace/update/append/insert) on .diff-display.
+   Only the multi-field update-annotation variant needs a distinguishing left border. */
+.leadero-root .diff-display.diff-type-update-annotation {
+  border-left: 2px solid var(--action-primary);
+  padding-left: var(--space-2);
+}
+
+/* Inline deleted (old text) */
+.leadero-root .diff-deleted {
+  background: var(--signal-red-bg);
+  color: var(--signal-red-strong);
+  padding: var(--space-px) var(--space-0-75);
+  border-radius: var(--radius-xs);
+  text-decoration: line-through;
+}
+
+/* Inline added (new text) */
+.leadero-root .diff-added {
+  background: var(--signal-green-bg);
+  color: var(--signal-green-dark);
+  padding: var(--space-px) var(--space-0-75);
+  border-radius: var(--radius-xs);
+}
+
+/* ── 砚法合规批 2026-09-20 §8.5/§9.2：工具行状态点（点+字双通道）──
+ * 完成=ok 绿、失败=danger 红（§5.3）；点色由 data-tone 承担，文字色由
+ * TSX 侧语义令牌承担。 */
+.leadero-root .inline-tool-call-status-dot {
+  background: var(--ok);
+}
+.leadero-root .inline-tool-call-status-dot[data-tone="danger"] {
+  background: var(--danger);
+}
+
+/* Arrow separator */
+.leadero-root .diff-arrow {
+  color: var(--text-tertiary);
+  margin: 0 var(--space-1);
+  font-size: var(--text-2xs);
+}
+
+/* Label */
+.leadero-root .diff-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  margin-right: var(--space-1-5);
+}
+
+/* Char count badge */
+.leadero-root .diff-char-count {
+  color: var(--text-tertiary);
+  font-size: var(--text-2xs);
+}
+
+/* Header row for update/append sections */
+.leadero-root .diff-update-header,
+.leadero-root .diff-append-header,
+.leadero-root .diff-insert-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-0-5);
+}
+.leadero-root .diff-update-header + .diff-update-header {
+  margin-top: var(--space-1-5);
+}
+
+/* Block-level before/after content */
+.leadero-root .diff-deleted-block {
+  background: var(--signal-red-bg);
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.leadero-root .diff-added-block {
+  background: var(--signal-green-bg);
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+/* Replace row */
+.leadero-root .diff-replace-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-0-5);
+  flex-wrap: wrap;
+}
+
+/* Insert heading name */
+.leadero-root .diff-heading-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+.leadero-root .diff-insert-meta {
+  color: var(--text-tertiary);
+  font-size: var(--text-2xs);
+  margin-bottom: var(--space-1);
+}
+
+/* Created card (green border) */
+.leadero-root .diff-card-created {
+  padding-left: var(--space-2);
+}
+.leadero-root .diff-card-created .diff-card-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--signal-green-dark);
+  font-size: var(--text-2xs);
+  margin-bottom: var(--space-1);
+}
+
+/* Deleted card (red border) */
+.leadero-root .diff-card-deleted {
+  padding-left: var(--space-2);
+}
+.leadero-root .diff-card-deleted .diff-card-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--signal-red-strong);
+  font-size: var(--text-2xs);
+  margin-bottom: var(--space-1);
+}
+
+/* Deleted item in delete card */
+.leadero-root .diff-deleted-item {
+  padding: var(--space-1) 0;
+}
+
+/* Annotation metadata */
+.leadero-root .diff-annotation-meta {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+.leadero-root .diff-annotation-type {
+  text-transform: capitalize;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .diff-annotation-page {
+  color: var(--text-tertiary);
+}
+.leadero-root .diff-annotation-text {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  margin-top: var(--space-0-5);
+}
+.leadero-root .diff-annotation-comment {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin-top: var(--space-0-5);
+}
+
+/* Field change row */
+.leadero-root .diff-field-change {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: var(--space-0-5) 0;
+  flex-wrap: wrap;
+}
+.leadero-root .diff-field-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  min-width: var(--space-7);
+}
+
+/* Color swatch */
+.leadero-root .diff-color-swatch {
+  display: inline-block;
+  width: var(--icon-base);
+  height: var(--icon-base);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  vertical-align: middle;
+}
+
+/* CodeResultDisplay */
+.leadero-root .tool-result-code-output {
+  padding: var(--space-1-5) var(--space-2);
+  background: var(--surface-tint);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  line-height: var(--leading-tight);
+}
+.leadero-root .tool-result-code.error .tool-result-code-output {
+  background: var(--signal-red-bg);
+}
+.leadero-root .tool-result-code-exit {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-0-5);
+}
+
+/* ImageResultDisplay */
+.leadero-root .tool-result-image {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-image-img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.leadero-root .tool-result-image-prompt {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.leadero-root .tool-result-image-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-image-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.leadero-root .tool-result-image-btn {
+  border: none;
+  background: none;
+  color: var(--data-blue-dark);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  border-radius: var(--radius-btn);
+  padding: var(--space-px) var(--space-1);
+}
+.leadero-root .tool-result-image-btn:hover {
+  background: var(--hub-bg-hover);
+}
+
+/* PaperImagesDisplay */
+.leadero-root .tool-result-paper-images {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.leadero-root .tool-result-paper-images-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-paper-images-badge {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  background: transparent;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.leadero-root .tool-result-paper-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-1-5);
+}
+.leadero-root .tool-result-paper-images-card {
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+  background: var(--card-bg);
+}
+.leadero-root .tool-result-paper-images-card:hover {
+  opacity: 0.7;
+}
+.leadero-root .tool-result-paper-images-card.expanded {
+  background: var(--data-blue-bg);
+}
+.leadero-root .tool-result-paper-images-thumb {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--surface-tint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leadero-root .tool-result-paper-images-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.leadero-root .tool-result-paper-images-meta {
+  padding: var(--space-1) var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .tool-result-paper-images-page {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+}
+.leadero-root .tool-result-paper-images-label {
+  color: var(--data-blue-dark);
+}
+.leadero-root .tool-result-paper-images-caption {
+  padding: 0 var(--space-2) var(--space-1-5);
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .tool-result-paper-images-actions {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-paper-images-fullview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--overlay-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  cursor: pointer;
+}
+.leadero-root .tool-result-paper-images-fullview img {
+  max-width: 90%;
+  max-height: 80%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+.leadero-root .tool-result-paper-images-fullview-actions {
+  margin-top: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+.leadero-root .tool-result-paper-images-empty,
+.leadero-root .tool-result-paper-images-error {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  padding: var(--space-1) 0;
+}
+
+/* PdfExcerptDisplay — v1.73（2026-08-26 用户裁决「按原型」）：页文档形态，
+   对照原型 kit .pdfx（页线 + info 高亮摘录 + 底部注脚行）。 */
+.leadero-root .tool-result-pdfx {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 320px;
+}
+.leadero-root .tool-result-pdfx-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-2-5);
+}
+.leadero-root .tool-result-pdfx-l {
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-xs);
+  background: var(--border-subtle);
+}
+.leadero-root .tool-result-pdfx-hl {
+  border: 1.5px solid var(--data-blue);
+  background: color-mix(in srgb, var(--data-blue) 8%, transparent);
+  border-radius: var(--radius-sharp);
+  padding: var(--space-1) var(--space-1-5);
+  font-family: var(--font-serif);
+  font-size: var(--text-2xs);
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.leadero-root .tool-result-pdfx-cap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .tool-result-pdfx-cap-pages {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* TextPreview 展开钮（W2-M5：终态截断改可展开；旧 tool-result-truncated 随之退役） */
+.leadero-root .tool-result-expand-btn {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  padding: var(--space-0-5) 0;
+}
+
+/* PdfExcerptDisplay: plain-text result fallback + excerpt toggle button */
+.leadero-root .tool-result-text {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  padding: var(--space-1) var(--space-2);
+}
+.leadero-root .pdf-excerpt-toggle {
+  background: none;
+  border: none;
+  color: var(--data-blue-dark);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  padding: var(--space-0-5) 0;
+}
+.leadero-root .pdf-excerpt-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Paper images meta inline spans (rendered inside .tool-result-paper-images-meta) */
+.leadero-root .tool-result-paper-images-dims,
+.leadero-root .tool-result-paper-images-size {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Section D — 原 leadero-timeline.css（v1.33 合并至此）。
+ * Message rendering: document feel, collapsible content, shimmer, user request
+ * view, model response, thinking parts, tool call parts, scroll down badge,
+ * pending actions bar.
+ *
+ * Residual rules only — simple single-element classes migrated to Tailwind
+ * utilities in the consuming .tsx (ModelResponse, UserRequest, MessageList,
+ * TokenUsageDisplay, CollapsibleBlock, ScrollToBottomButton, ChatPane).
+ * Retained here: descendant/compound combinators, pseudo-elements, keyframe
+ * animations, media queries, the shared .action-btn tooltip system, and rules
+ * whose className must remain for an overriding residual selector.
+ */
+
+/* ==================== Document Feel (Phase 3) ==================== */
+
+/* Enhanced citation blocks — .citation-author-year is injected as raw HTML by
+   citations.ts (markdown preprocessing), so it cannot be a Tailwind className. */
+.leadero-root .leadero-markdown .citation-author-year {
+  background-color: var(--doc-citation-bg);
+  color: var(--data-blue-dark);
+}
+.leadero-root .leadero-markdown .citation-author-year:hover {
+  background-color: var(--data-blue-bg);
+}
+
+/* Enhanced tables — descendant selectors targeting markdown-rendered <table>. */
+.leadero-root .leadero-markdown table th {
+  background-color: var(--doc-table-header-bg);
+  position: sticky;
+  top: 0;
+}
+/* 偶数行底色单源在 leadero-markdown.css「GFM table enhancements」（级联守卫 D7） */
+
+/* Collapsible long content.
+   The leadero-collapsible-content base (position: relative) migrated to utilities
+   in CollapsibleBlock.tsx; the gradient-fade ::after pseudo-element stays. */
+.leadero-root .leadero-collapsible-content::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--space-8);
+  background: var(--bubble-bg);
+  pointer-events: none;
+}
+
+/* .leadero-collapsible-toggle retained: the `border: none` + `border-top`
+   shorthand interplay is brittle to reproduce with Tailwind border utilities
+   (preflight is disabled, so the explicit border reset matters). */
+.leadero-root .leadero-collapsible-toggle {
+  display: block;
+  width: 100%;
+  padding: var(--space-1-5);
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--data-blue-dark);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--surface-tint);
+  cursor: pointer;
+}
+.leadero-root .leadero-collapsible-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* CollapsibleBlock grid height transition（v1.53）：展开/收起走 grid-template-rows，
+   替代原先 maxHeight 硬切。0fr/1fr 在 Chrome 107+/Firefox 114+/Safari 16+ 全支持。 */
+.leadero-root .leadero-collapsible-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s var(--ease-standard);
+}
+.leadero-root .leadero-collapsible-wrapper.expanded {
+  grid-template-rows: 1fr;
+}
+.leadero-root .leadero-collapsible-content {
+  overflow: hidden;
+  min-height: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .leadero-collapsible-wrapper {
+    transition: none;
+  }
+}
+
+/* Card hover feedback（v1.53）：平地红线内仅加背景色过渡，不加阴影。 */
+.leadero-root [data-slot="card"] {
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.leadero-root [data-slot="card"]:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* Running state — opacity override depends on a base rule elsewhere; compound
+   state selector kept to avoid disturbing the running/idle opacity contract. */
+.leadero-root .leadero-agent-run.running {
+  opacity: 1;
+}
+
+/* Fade-in animation for top-level message bubbles. The visual padding/color of
+   these classes is migrated to utilities; this rule remains for the keyframe
+   animation only (cannot be a static utility). */
+/* C1（2026-09-16）：入场动画只对「新到达」的 run 播放——MessageList 以
+   .leadero-run-enter 标记新增 run，历史装载/会话切换不再整屏起舞。 */
+.leadero-root .leadero-run-enter .leadero-user-request,
+.leadero-root .leadero-run-enter .leadero-model-response,
+.leadero-root .leadero-run-enter .leadero-system-message {
+  animation: leadero-message-fade-in var(--transition-normal);
+}
+
+/* System message modifiers — compound selectors that override the base
+   utilities (unlayered CSS beats Tailwind's @layer utilities). Base visual
+   styles migrated to utilities in MessageList.tsx. */
+
+/* Compact boundary — conversation summary divider */
+.leadero-root .leadero-system-message.leadero-compact-boundary {
+  font-style: normal;
+  color: var(--text-secondary);
+  text-align: left;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1-5) var(--space-3);
+  margin: var(--space-2) 0;
+}
+
+/* Skeleton placeholder for running agent（砚法 §7 法定骨架语法，v1.48 审计收口
+   §15-95：自造 shimmer 1.5s 无限循环退役 → 沉纸色块 + 一次 1.2s 明度呼吸，
+   全站统一消费 hub-skeleton-pulse；加载持续超过一次呼吸即静置沉纸块）。
+   The leadero-agent-run-shimmer container migrated to utilities in ChatPane.tsx;
+   the skeleton lines rely on a keyframe animation + reduced-motion override
+   (shared with streaming-cursor below), so they stay. */
+.leadero-root .leadero-shimmer-line {
+  height: var(--space-3);
+  background: var(--paper-sunken);
+  animation: hub-skeleton-pulse 1.2s var(--ease-standard) 1 both;
+  border-radius: var(--radius-sm);
+}
+
+/* 期刊检索空态进度块（2026-09-21 复审 P2：animate-pulse 内建循环退役，
+   复用 §7 法定骨架呼吸 keyframes——单次呼吸后静置，与 shimmer-line 同律） */
+.leadero-root .leadero-pbar-fill {
+  animation: hub-skeleton-pulse 1.2s var(--ease-standard) 1 both;
+}
+
+.leadero-root .leadero-shimmer-line.short {
+  width: 60%;
+}
+/* 骨架宽度变体（替代旧内联 style={{ width }}） */
+.leadero-root .leadero-shimmer-line.w-70 {
+  width: 70%;
+}
+.leadero-root .leadero-shimmer-line.w-80 {
+  width: 80%;
+}
+
+/* ModelResponseView actions — reveal on row hover.
+   Base .leadero-model-response-actions migrated to utilities (opacity:0) in
+   ModelResponse.tsx; this descendant reveal rule + the touch-device media query
+   below remain, so the className is retained on the element. */
+.leadero-root .leadero-assistant-row:hover .leadero-model-response-actions {
+  opacity: 1;
+}
+
+/* .action-btn shared system — used by 15+ components. Base padding + active
+   state only. The legacy ::after / [data-tooltip] CSS tooltip was removed:
+   no consumer sets data-tooltip (Button renders tooltips via Base UI Tooltip
+   with the tooltip prop), so the pseudo-element rendered an empty dark box on
+   hover instead of a tooltip. */
+.leadero-root .action-btn {
+  padding: var(--space-1-5) var(--space-2);
+  position: relative;
+}
+
+.leadero-root .action-btn.active {
+  color: var(--action-primary);
+}
+
+/* UserRequestView actions — reveal on row hover.
+   Base .leadero-user-request-actions migrated to utilities (opacity:0) in
+   UserRequest.tsx; this descendant reveal rule remains, so the className is
+   retained on the element. */
+.leadero-root .leadero-user-row:hover .leadero-user-request-actions {
+  opacity: 1;
+}
+
+/* .leadero-user-request-content base migrated to utilities in UserRequest.tsx;
+   this block neutralizes prose/markdown opaque backgrounds (pre/code/table)
+   inside the user bubble, retained for specificity over the prose base. */
+.leadero-root .leadero-user-request-content .leadero-markdown,
+.leadero-root .leadero-user-request-content .leadero-markdown pre,
+.leadero-root .leadero-user-request-content .leadero-markdown code,
+.leadero-root .leadero-user-request-content .leadero-markdown table tr,
+.leadero-root
+  .leadero-user-request-content
+  .leadero-markdown
+  table
+  tr:nth-child(2n) {
+  background-color: transparent;
+}
+
+/* Streaming Cursor (used by LiveProgress streaming text) — keyframe animation. */
+.leadero-root .streaming-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--accent);
+  margin-left: var(--space-0-5);
+  vertical-align: text-bottom;
+  animation: leadero-cursor-blink 0.8s ease-in-out infinite;
+}
+
+/* C5（2026-09-16）：流式指示条尾部窗口的左缘渐隐——slice 硬切柔化 */
+.leadero-root .leadero-stream-tail {
+  mask-image: linear-gradient(to right, transparent 0, #000 24px);
+}
+
+/* Reduced motion — disables shimmer + cursor animations. Shared media query. */
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .leadero-shimmer-line,
+  .leadero-root .leadero-pbar-fill,
+  .leadero-root .streaming-cursor {
+    animation: none;
+  }
+}
+
+/* Touch devices: always show action buttons (hover unavailable). Media query
+   targeting the retained .leadero-*-actions classNames. */
+@media (hover: none) and (pointer: coarse) {
+  .leadero-root .leadero-model-response-actions,
+  .leadero-root .leadero-user-request-actions {
+    opacity: 0.5;
+  }
+}
+/*
+ * Section E — 原 leadero-thread.css（v1.33 合并至此，仅保留 <mark> 高亮规则）。
+ *
+ * 其余规则全部迁出：overlay 浮层卡 chrome（pointer-events/margin/
+ * shadow/bg）内联到 ApprovalCard/ContinuationCard 的 className（两者的
+ * 唯一渲染上下文就是 .leadero-overlay-zone）；新内容条 spinner 内联
+ * MessageList（reduced-motion 由全局毛毯接管；原 1.5s 慢速
+ * 覆盖从未生效——毛毯 !important 恒胜非 important 媒体查询）；
+ * .review-card / .continuation-card 两个选择器确证死码（根类分别是
+ * leadero-overlay-card / approval-card）随删。
+ *
+ * 本规则必须留在 CSS：highlight.ts / MarkdownRenderer 把 <mark> 作为
+ * raw HTML 注进 markdown 产物，无法用 Tailwind className 表达。
+ */
+.leadero-root mark.leadero-search-highlight {
+  background-color: var(--signal-yellow);
+  color: inherit;
+  padding: var(--space-px) 0;
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 0 1px var(--signal-yellow);
+}
+
+/* §15-105：undoing 单环旋转——§7 循环禁令的唯一新例外（法定「旋转」语义保留） */
+@keyframes undoing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.leadero-root .undoing-spin {
+  animation: undoing-spin 0.9s linear infinite;
+}
+
+/* §8.5（复审 Q1）：消息元信息行——验证/审计/记忆/token 四类尾注合并单行
+   （12px 淡墨 + lucide 小标，「·」分隔）；多条 2xs 灰行堆叠退役。 */
+.leadero-root .leadero-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .leadero-meta-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  min-width: 0;
+  overflow: hidden;
+}
+/* ellipsis 落在文字子项上（text-overflow 不作用于 flex 容器本身） */
+.leadero-root .leadero-meta-seg-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .leadero-meta-seg + .leadero-meta-seg::before {
+  content: "·";
+  margin-right: var(--space-1);
+}
+/* 方案四（2026-09-21）：消息级反馈——meta 行尾部 👍/👎 + 👎 后跟纠正输入。
+   按钮本体走 UI 原语（Button ghost/icon-xs + .action-btn 共享 hover/focus
+   系统）；这里只保留布局容器与纠正文本框的尺寸适配。 */
+.leadero-root .leadero-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  margin-left: auto;
+  flex: none;
+}
+.leadero-root .leadero-feedback-correct {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  flex: 1 1 100%;
+  margin-top: var(--space-1);
+  min-width: 0;
+}
+.leadero-root .leadero-feedback-correct-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+  padding: var(--space-1) var(--space-1-5);
+  resize: none;
+}
+.leadero-root .leadero-feedback-correct-actions {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: none;
+  gap: var(--space-0-5);
+}

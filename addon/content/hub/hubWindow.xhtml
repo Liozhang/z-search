@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero/skin/zotero.css" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero/skin/overlay.css" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero-platform/content/zotero.css" type="text/css"?>
+<!DOCTYPE window>
+<window
+  id="zsearch-hub-window"
+  orient="vertical"
+  resizable="true"
+  width="1280"
+  height="860"
+  minwidth="900"
+  minheight="600"
+  maxwidth="1920"
+  maxheight="1080"
+  data-l10n-id="zsearch-hub-window"
+  persist="screenX screenY width height"
+  windowtype="zsearch:hub"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+>
+  <linkset><html:link rel="localization" href="zsearch-addon.ftl" /></linkset>
+  <script
+    type="application/javascript"
+    src="chrome://zsearch/content/shared/originGate.js"
+  />
+  <script
+    type="application/javascript"
+    src="chrome://zsearch/content/hub/hubWindow.js"
+  />
+
+  <html:div
+    id="zsearch-hub-iframe-container"
+    class="leadero-root"
+    style="
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    "
+  >
+  </html:div>
+</window>

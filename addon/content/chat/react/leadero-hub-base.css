@@ -1,0 +1,220 @@
+/* leadero-hub-base.css — Hub 样式分区（原 leadero-hub.css 1-135 行：基础：Tab 共享基座 / Body+Sidebar / Main / Content Container）。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/*
+ * leadero-hub.css
+ * Hub 窗口骨架布局样式 + 图谱视图样式 + 研究功能区样式。
+ *
+ * 本文件合并了原 discovery-forms.css / leadero-shared.css 的部分内容。
+ * 参考 docs/hub-design-spec.md 的视觉意图：Hub 骨架类（标题栏 / 功能 Tab /
+ * 主窗 / 侧栏外壳 / 面包屑 / 工具栏 / 内容容器 / 占位）按规范提取；
+ * 图谱视图类（hub-graph-*）按 GraphPane / UnifiedGraphCanvas 实际结构设计；
+ * 研究功能区类（hub-research-*）为 ResearchPane / MethodSelector / ResearchTaskList 的
+ * 容器布局与 method-card / notification 样式。
+ * 其余功能模块的内容样式（stat-card / phase / track-row / bubble / dialog / set-card 等）属于 P2b-P5。
+ *
+ * 颜色 / 间距 / 字号一律用 var(--xxx)：
+ *   - leadero token（--leadero-brand / --accent-* / --space-* / --text-* /
+ *     --radius-* / --shadow-* / --transition-*）由 leadero-tokens.css 在
+ *     .leadero-root scope 提供；
+ *   - Zotero 原生变量（--fill-* / --card-bg）由 Zotero :root 提供。
+ *   故本文件不带 mockup 中模拟 :root 的 --fill-* / @media dark :root 定义。
+ *
+ * 所有选择器以 .leadero-root 起始（check-css-scope.cjs 构建时强制要求）。
+ *
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │ 容器规格索引（详细规格见 docs/component-spec.md §13）        │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │ HubShell        → ThemeScope > SidebarProvider > SidebarInset │
+ * │                  TSX 内联 Tailwind，CSS 不承载 shell 结构      │
+ * │ Main Area       → .hub-main / .hub-content / .hub-pane-slot  │
+ * │ Settings Layout → .hub-settings-layout / .hub-settings-nav   │
+ * │ Settings Card   → .hub-settings-card / -title / -body        │
+ * │ Dialog Form     → .discovery-form-* (discovery-forms.css)    │
+ * └─────────────────────────────────────────────────────────────┘
+ */
+
+/* ==================== Tab Component (shared base) ==================== */
+/* All Hub tabs now use the shared TabBar component (ui/tabs.tsx).
+   Container class overrides (hub-brain-tabs, hub-search-tabs, etc.) only
+   adjust container-level properties (padding, height). Tab active/hover
+   styling comes from TabBar's inline Tailwind classes (data-[selected]). */
+
+/* ==================== Body + Sidebar ==================== */
+.leadero-root .hub-sidebar {
+  width: var(--dash-nav-width);
+  flex-shrink: 0;
+  background: var(
+    --surface-canvas
+  ); /* v1.71：侧板/导航=画布材料（原 card-bg，方案 A 下同为白） */
+  /* 2026-08-22 审计批：左缘分隔由 sidenav border-right 承担（避免背靠背双线），
+     右缘与主内容相邻无分隔线 → 补 hub-hairline（§23.6 两级线制） */
+  border-right: 1px solid var(--hub-hairline);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 激活态=砚法导航「双件」（砚法 §8.0/§11：active = 浮纸底 + 左缘 2px 交互蓝条；
+   原型 .nav-item.active 246-259 同制）+ 焦墨字（§5.1 焦=标题/强强调）。
+   【2026-09-20 砚法合规批】旧「品牌红字+透明底」系旧 v2 原型遗留；v1.52 S2
+   「左条视觉不合理、回归纯排印」的结论随旧原型语境一并作废——砚法立法明确
+   选中=浮纸底+左缘 2px 交互蓝条（§15-62 sec-nav 同律，settings 导航镜像）。
+   2px 为结构线宽豁免（--stroke-edge 档）；圆角由 sidebar-menu-button 基件
+   自带，本规则不重复。图标不透明度由本规则单源控制，button 级 opacity 已从
+   lean 变体移除。 */
+.leadero-root [data-slot="sidebar-menu-button"][data-active] {
+  position: relative;
+  background: var(--paper-raised);
+  color: var(--ink-scorch);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.leadero-root [data-slot="sidebar-menu-button"] svg {
+  opacity: 0.75;
+}
+.leadero-root [data-slot="sidebar-menu-button"][data-active] svg {
+  opacity: 1;
+}
+
+/* ==================== 密度二档（砚法 §8.0 密度开关 [法]） ==================== */
+/* 全局「舒适（28px 行）/ 紧凑（24px 行）」二档，用户可切、持久化：pref
+   hub.density（"comfortable"|"compact"，usePref 响应式），HubShell 侧栏 footer
+   分段切换并在壳容器挂 data-hub-density。紧凑档只降行阶梯 md/lg 两档：
+   md 28→24 = 法定紧凑行（引 --row-height-sm，两档共享下限，无循环引用）；
+   lg 32→28 = 控件高档（§5.4 控件 24/28/32 的 28 档已铸为 --ctl-h，直接引用，
+   不落字面量）。--row-height-sm 两档同为 24 不覆盖。卷域（报告/聊天正文
+   行高 --lh-prose）不消费行阶梯，法定「不参与密度开关」自动成立。 */
+.leadero-root [data-hub-density="compact"] {
+  --row-height-md: var(--row-height-sm);
+  --row-height-lg: var(--ctl-h);
+}
+/* Variant: Research task-list sidebar (semantic hook — inherits .hub-sidebar shell).
+   不设 overflow-y:auto：内部 .sb-list.hub-research-tasks 已是唯一滚动容器，
+   外层再滚动会造成嵌套滚动歧义（外层滚动失效、徒增困惑）。 */
+/* 【清退裁决 2026-09-14 宽度适配批】原 ≤768 隐藏 .hub-sidebar 的死防御已删：
+ * Hub 窗口 minwidth=900（hubWindow.xhtml）立法下永不触发；窄内容列的正确
+ * 响应式改由 @container（hub-main）承接。viewport 断点下限自此为 900 档，
+ * 新代码禁再引入 <900 的 viewport 断点（chat 窗场景走组件自适配）。
+ */
+
+/* sidebar-pane-* 仅作语义标记（topic/task/chat/track/settings），
+   P1 阶段无独立样式，留给 P2-P5 各功能侧栏填充。 */
+
+/* ==================== Main Area ==================== */
+.leadero-root .hub-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  /* @container 锚点（2026-09-14 宽度适配批试点）：pane 级响应式的测量基准——
+     侧栏开合（256/44px）令 pane 漂移 ±212px，viewport 媒体查询感知不到。 */
+  container: hub-main / inline-size;
+}
+
+/* ==================== Content Container ==================== */
+.leadero-root .hub-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  /* 2026-08-25 复审裁决（反转同日裁决 #1 的 980 限宽）：hub 为独立窗口（默认
+    1280×860，可拉大/最大化），整壳 980 居中在宽窗口下两侧大片留白且图谱/热力图
+    被压缩；页面默认占满主区。长文可读限宽由各 pane 自治承担：
+    discussion 780 / research 报告 800 / 文献页 800 / gallery 800（见各处登记）。
+    审计 2026-08-31 P1：登记曾悬空——research 800 已落 research-dash.css、
+    discussion 正文 64ch 已落 MessageList，gallery 860 声明即下方规则。
+    2026-09-02 §13.5 翻案升级：页面层 1440 上限以 --page-inline-pad 复活（豁免
+    登记制）；阅读层四档自治收编为唯一档 --reading-max: 800px（gallery 860→800）。
+    横向溢出由各 pane/组件内部容器自管（overflow-x:auto），本层裁切防止溢出窗口。 */
+}
+
+/* gallery 阅读宽（2026-08-25 登记的 gallery 自治声明点；2026-09-02 §13.5 起
+   消费 --reading-max，860 档退役）。逐子级居中收窄：滚动容器保持全宽
+   （滚动条贴窗缘），节间 hairline 随内容收窄与原型 .section 一致。 */
+.leadero-root .hub-gallery-scroll > * {
+  max-width: var(--reading-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hub 控件字号：14px 标准（原型对齐；2026-08-25 用户裁决）。
+   审计 2026-08-31 P1：authored 无层恒胜 tw @layer utilities，本规则曾把
+   Button sm/xs 的 text-xs/text-2xs 全域压回 14px（字号档死代码）。原语均带
+   data-slot 且自带正确档位（default=14 与本规则同值），窄化到 :not([data-slot])
+   后只兜裸控件；sm 档 11px vs 原型 btn-sm 12px 为字梯缺 12px 梯级的登记残差
+   （2026-08-31 拍板：不铸 12px 档）。 */
+.leadero-root .hub-content button:not([data-slot]),
+.leadero-root .hub-content input:not([data-slot]),
+.leadero-root .hub-content select:not([data-slot]) {
+  font-size: var(--text-control);
+}
+
+/* keep-alive slot（P6：lazy mount + display 切换，挂载后不卸载保留状态）。
+   横向溢出由各 pane/组件内部容器自管（overflow-x:auto），本层禁止横向滚动条。
+   纵向滚动由各 pane 自身滚动容器承担。 */
+.leadero-root .hub-pane-root {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+/* discussion 页滚动容器（2026-09-15 布局批：三态共用 padding 上移至 CSS，
+   避免 TSX 三处重复 py/px utility，并统一消费 --page-inline-pad）。
+   2026-09-22 复审节奏统一收口：上下律从原型 .pane（上 24/下 48 全页统一）。 */
+.leadero-root .hub-discuss-scroll {
+  padding: var(--space-6) var(--page-inline-pad) var(--space-12);
+}
+
+/* keep-alive slot（P6：lazy mount + display 切换，挂载后不卸载保留状态）。
+   横向溢出由各 pane/组件内部容器自管（overflow-x:auto），本层禁止横向滚动条。
+   纵向滚动由各 pane 自身滚动容器承担。 */
+.leadero-root .hub-pane-slot {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* .hub-pane-slot 自身 specificity 0,2,0，高于 .hidden 的 0,1,0，
+   故需显式声明 .hub-pane-slot.hidden 覆盖，否则 inactive slot 的 display:none 被覆盖。 */
+.leadero-root .hub-pane-slot.hidden {
+  display: none;
+}
+
+/* 面板切换进场动画：绑在 animationClassName 上（由 KeepAliveSlot 传入），
+   每次切换重播（slot 不卸载，仅 hidden toggle，animation 在恢复显示时重新触发）。 */
+.leadero-root .hub-pane-slot {
+  animation: hub-pane-enter var(--transition-normal);
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .hub-pane-slot {
+    animation: none;
+  }
+}
+
+/* ── 砚法合规修复批（2026-09-20）──────────────────────────────
+ * leadero-breathe-dot — 讨论室运行态状态点脉冲消费类（§8.5：speaker 活跃期
+ * =名字旁状态点脉冲）。动画本体=leadero-active-dot-breathe（keyframes 在
+ * leadero-theme.css；§7 全站唯一循环动效=墨点呼吸 2s opacity 0.5↔1）。
+ * 点色由消费点按语境直给语义令牌（进行中=info，§5.3）——落 data-tone 属性
+ * 由本表承担（跟随 hub-status info 点=--data-blue 单源，避免 TSX 侧
+ * bg-[color:…] 字面量进对比度用法审计）。 */
+.leadero-root .leadero-breathe-dot {
+  animation: leadero-active-dot-breathe 2s ease-in-out infinite;
+}
+.leadero-root .leadero-breathe-dot[data-tone="info"] {
+  background: var(--data-blue);
+}
+.leadero-root .leadero-breathe-dot[data-tone="accent"] {
+  background: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .leadero-breathe-dot {
+    animation: none;
+  }
+}

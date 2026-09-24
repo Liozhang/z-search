@@ -1,0 +1,16 @@
+# Build output
+.scaffold/
+addon/content/reactBundle.js*
+addon/content/*.reactBundle.js*
+addon/content/scripts/*.js
+
+# Dependencies
+node_modules/
+
+# Generated
+src/locale-keys.generated.ts
+*.tsbuildinfo*
+
+# Tooling scratch
+.dependency-audit.mjs
+.check-imports.mjs

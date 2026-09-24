@@ -1,0 +1,323 @@
+/* leadero-hub-responsive.css — Hub 样式分区（原 leadero-hub.css 1635-1774 行：Responsive 断点）。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/* ==================== Responsive ==================== */
+/* Graph detail panel responsive (floating drawer ≤1024, sidebar hide ≤768) is
+   handled by the DetailPanel + SidebarPane components.
+   No Hub-specific responsive overrides needed here. */
+
+/* ══════════════════════════════════════════════════════════════
+   Graph Filter — 过滤弹窗 + 工具栏漏斗按钮
+   复用 discovery-form-dialog 三段式骨架 + 共享 .leadero-chip（图层 chip 已迁移）。
+   ══════════════════════════════════════════════════════════════ */
+
+/* 漏斗按钮：padding/border 由 shadcn Button 组件内置 */
+.leadero-root .hub-graph-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 有过滤生效时高亮：黑 chip（与 ToggleGroup filter 选中同词汇；原 elev 底=纯白不可见） */
+.leadero-root .hub-graph-filter-btn.has-filter {
+  background: var(--text-primary);
+  color: var(--background);
+}
+/* P1b metric coloring on: same black-chip vocabulary as has-filter (graph-encoding-legislation §3) */
+.leadero-root .hub-graph-metric-btn[aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--background);
+}
+/* ego 邻域聚焦开启（CP 对照批 2026-09-14）：同一黑 chip 激活词汇（按钮带
+   文字标签，在 DetailPanel actions 行内） */
+.leadero-root .hub-graph-ego-btn[aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--background);
+}
+.leadero-root .hub-graph-filter-btn svg {
+  width: var(--icon-base);
+  height: var(--icon-base);
+}
+
+/*
+ * Graph 图例浮层：画布左下角，半透明背景 + 小字。
+ * 显示当前激活图层的边颜色 → 关系类型映射，与画布 nodeRender 配色一致。
+ * swatch 用上边框模拟线条颜色（实线/虚线），与 SVG <line> 视觉一致。
+ */
+.leadero-root .hub-graph-legend {
+  position: absolute;
+  left: var(--space-2);
+  bottom: var(--space-2);
+  z-index: var(--z-toolbar);
+  max-width: calc(100% - var(--space-4));
+  /* 多层全开时图例 item 较多，限制最大高度避免无界增长遮挡画布。
+     pointer-events:none 故不设 overflow-y:auto（内部不可滚动），超长直接裁切。 */
+  max-height: var(--canvas-overlay-max-h); /* v1.52 S16 */
+  overflow: hidden;
+  padding: var(--space-2) var(--space-2-5); /* 2026-09-02 值级批+原型 :792 .gleg；padding 4/6→8/10（--space-2/--space-2-5） */
+  /* v2 §4.8 批7：浮层保留物性——图例是本页唯一需要「物性边界」的浮层（立法 token
+     清单点名 --hub-border-card）。§19.1 单一分离机制要求同一面上 shadow/border
+     二选一：此前走 shadow，现按立法改走 card 边框（画布上密集边线让阴影读不出来，
+     描边更稳）。 */
+  background: var(--hub-bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--card-radius);
+  font: var(--ui-font-meta);
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+.leadero-root .hub-graph-legend-title {
+  /* v1.52 S4：10px 手拼 overline → 单源制式。
+     C4：block→inline 单行内联（原型 .gleg .lg-t :790-797 行内标签，非块级节头）；
+     随 display 变更删除 inline 盒上不生效的 margin-bottom */
+  display: inline;
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+/* 砚法 §8.11（2026-09-20 修复批任务 7）：图例可折叠——标题行 = 标题 +
+   折叠 ghost 钮。容器整体 pointer-events:none 不挡画布，仅标题行放开
+   （折叠钮必须可命中）；collapsed 态 items 不渲染（React 侧），只留标题行。 */
+.leadero-root .hub-graph-legend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  pointer-events: auto;
+}
+.leadero-root .hub-graph-legend-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.leadero-root .hub-graph-legend-toggle:hover {
+  background: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .hub-graph-legend-toggle:focus-visible {
+  outline: 1px solid var(--border-strong);
+  outline-offset: 1px;
+}
+
+/* §8.11（任务 8）：渐变条带量化刻度——min/max 实测小字（caption 档），
+   禁无刻度示意；tabular 数字让两端刻度与 swatch 对位稳定 */
+.leadero-root .hub-graph-legend-gradient {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-graph-legend-scale {
+  font: var(--ui-font-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-graph-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+.leadero-root .hub-graph-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+/* 跨图层首条左分隔线（原型 :1323 border-left 分组） */
+/* 时间维底色带标签 + 未标年份（决策批二十二 §15-58，批 C） */
+.leadero-root .hub-graph-timeband-label {
+  font: var(--text-3xs);
+  fill: var(--text-tertiary);
+}
+
+/* TimeBar 时间刷（决策批二十二 §15-59）：画布底部悬浮条（浮纸三件套） */
+.leadero-root .hub-graph-timebar {
+  position: absolute;
+  bottom: var(--space-2-5);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, 60%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2);
+  background: var(--hub-bg-elev);
+  border: 1px solid var(--hub-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  z-index: var(--z-toolbar);
+}
+.leadero-root .hub-graph-timebar-controls {
+  display: inline-flex;
+  gap: var(--space-0-5);
+  flex-shrink: 0;
+}
+.leadero-root .hub-graph-timebar-svg {
+  flex: 1;
+  min-width: 0;
+  touch-action: none;
+  cursor: ew-resize;
+}
+.leadero-root .hub-graph-timebar-tick {
+  font: var(--text-3xs);
+  fill: var(--text-tertiary);
+}
+.leadero-root .hub-graph-timebar-readout {
+  font: var(--text-3xs);
+  font-variant-numeric: tabular-nums;
+  fill: var(--text-secondary);
+  paint-order: stroke;
+  stroke: var(--hub-bg-elev);
+  stroke-width: 3px;
+}
+.leadero-root .hub-graph-timebar-handle rect {
+  fill: var(--data-blue);
+  stroke: var(--hub-bg-elev);
+  stroke-width: 1.5px;
+  cursor: ew-resize;
+}
+.leadero-root .hub-graph-timebar-handle:focus-visible {
+  outline: none;
+}
+.leadero-root .hub-graph-timebar-handle:focus-visible rect {
+  stroke: var(--data-blue);
+  stroke-width: 2px;
+}
+
+/* 布局语义注记（决策批二十二 §15-56）：一行淡墨说明随布局切换 */
+.leadero-root .hub-graph-legend-note {
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* 跨图层首条左分隔线（原型 :1323 border-left 分组） */
+.leadero-root .hub-graph-legend-item[data-new-layer] {
+  border-left: 1px solid var(--hub-hairline);
+  padding-left: var(--space-2-5);
+  margin-left: var(--space-0-5);
+}
+/* 线条样本：用上边框模拟有向/无向边（实线/虚线），宽度固定，颜色由 inline style 注入 */
+.leadero-root .hub-graph-legend-swatch {
+  display: inline-block;
+  /* C4：20px 字面量登记——原型 .leg-sw :791 法值 20px，icon 阶梯（--icon-md 16px）
+     无此档，暂不扩充阶梯（仅此一处使用） */
+  width: 20px;
+  height: 0;
+  border-top-width: var(--stroke-edge);
+}
+
+/* 节点形状样本（2026-09-10 节点图例批）：circle=圆点 / rect=圆角方块 /
+   diamond=菱形（方点旋转 45°，与画布 nodeRender 三形状同族）。
+   颜色由 inline background 注入（getNodeColorVar 单源），几何走 data-shape。 */
+.leadero-root .hub-graph-legend-swatch[data-shape] {
+  width: 10px;
+  height: 10px;
+  border: none;
+  flex-shrink: 0;
+}
+.leadero-root .hub-graph-legend-swatch[data-shape="circle"] {
+  border-radius: 50%;
+}
+.leadero-root .hub-graph-legend-swatch[data-shape="rect"] {
+  border-radius: 2px;
+}
+.leadero-root .hub-graph-legend-swatch[data-shape="diamond"] {
+  border-radius: 1px;
+  transform: rotate(45deg) scale(0.9);
+}
+
+/* 零边提示条（2026-09-10）：画布顶部左缘浮层，与图例同配方（实底卡片 +
+   card 边框分离，§19.1），但含回填按钮故 pointer-events 恢复 auto。
+   v2 §4.8 批7：随图例同批由 shadow 改 card 边框——两处立法声明为「同配方」，
+   只改一处会让同角两个浮层用两套分离机制（正是 §19.1 要防的漂移）。 */
+.leadero-root .hub-graph-edge-hint {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-toolbar);
+  max-width: calc(100% - var(--space-4));
+  padding: var(--space-1-5) var(--space-2-5);
+  background: var(--hub-bg-elev);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--card-radius);
+  font: var(--ui-font-meta);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-graph-edge-hint-layers {
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-graph-edge-hint .hub-graph-ref-coverage {
+  margin-top: var(--space-0-5);
+}
+
+/* 弹窗：复用 discovery-form-dialog，宽度走 form-dialog-width。
+   v1.60 视觉对齐批：覆盖 Base UI 默认 shadow-lg/rounded-lg，回归 §19 扁平语言。 */
+.leadero-root .hub-graph-filter-dialog {
+  width: var(--form-dialog-width);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.leadero-root .hub-graph-filter-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.leadero-root .hub-graph-filter-body-content {
+  padding: var(--space-4-5);
+}
+
+/* C4：dlg-head 显式无线（原型 :3131 style="border-bottom:none"），分区交给
+   body 内 zone-sep——原 border-bottom 规则已删；类名保留作 TSX 结构锚点 */
+/* 关闭按钮：28×28 正方形图标按钮（对齐原型 .icon-btn.sm） */
+.leadero-root .hub-graph-filter-close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 弹窗内两区分隔：「数据范围」与「显示过滤」。两区各自一组 section，
+   区间用 border-top 分隔，区标签用 uppercase 小字提示分区语义。
+   v1.60：Separator 负边距 breakout 到全宽（对齐原型 zone-sep）。
+   v1.53 2026-08-24：Base UI Separator 是无头组件零默认样式——此前只有边距
+   规则，区线实际零高度不可见（截图审计「组头/节标题层级不可辨」的根因）。
+   §22.2 弹窗例外：节间无线靠留白，仅区级 zone-sep 保留线；边距 12→16px
+   拉出比节间更强的章节节拍。 */
+.leadero-root .hub-graph-filter-body-content > [data-slot="separator"] {
+  margin: var(--space-4) calc(-1 * var(--space-4-5));
+  height: 1px;
+  border: none;
+  background: var(--hub-hairline);
+}
+.leadero-root .hub-graph-filter-group-label {
+  /* v1.52 S4：11px 方言 → overline 制式（同对话框内与节标题统一为两级以内） */
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+/* 筛选弹窗 scope 选项加载失败行（W2-M2 失败≠空：可重试） */
+.leadero-root .hub-graph-filter-options-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}

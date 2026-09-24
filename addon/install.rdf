@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>__addonID__</em:id>
+    <em:name>__addonName__</em:name>
+    <em:version>__buildVersion__</em:version>
+    <em:description>__description__</em:description>
+    <em:creator>__author__</em:creator>
+    <em:homepageURL>__homepage__</em:homepageURL>
+    <em:optionsURL>chrome://__addonRef__/content/preferences.xhtml</em:optionsURL>
+    <em:iconURL>chrome://__addonRef__/content/icons/icon.svg</em:iconURL>
+    <em:type>2</em:type>
+    <em:targetApplication>
+      <Description>
+        <em:id>zotero@zotero.org</em:id>
+        <em:minVersion>9.0</em:minVersion>
+        <em:maxVersion>10.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+  </Description>
+</RDF>

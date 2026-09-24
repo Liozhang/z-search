@@ -1,0 +1,637 @@
+/*
+ * leadero-tokens.css — 砚法值层（Inkstone value layer）
+ * Single source of truth: docs/inkstone-legislation-2026-09-19.md §5（v1.46）。
+ * B1 令牌批（2026-09-20，§15-70~81）：值层整体换血 Stone/Radix → 墨分五色，
+ * 旧令牌名全部保留为消费 API（§15-76 旧类名换值），同名令牌取砚法值
+ * （§15-72 砚法谱系全胜），real 独有档位就近平手向上映射退役（§15-77）。
+ * 对账清单：docs/inkstone-b1-token-reconciliation-2026-09-20.md
+ *
+ * Architecture（沿用三层制）:
+ *   Layer 1 — Primitives:    砚法原始值（墨分五色/语义六色/尺寸谱系）
+ *   Layer 2 — Semantic:      设计语义别名（旧名 → 砚法值）
+ *   Layer 3 — Component:     组件合同令牌
+ *
+ * TOKEN VALIDATION — scripts/check-tokens.cjs（var 引用三源可解析）
+ * VALUE AUTHORITY — scripts/check-palette-source.cjs：唯一权威源=砚法 §5.1/§5.3
+ *   色表 + §8.11 teal 年份梯 + §15-8 品牌红豁免；Radix/Tailwind/Stone 阶全部退役。
+ * 亮暗切换：prefers-color-scheme 跟随 Zotero（browser.theme.toolbar-theme）。
+ */
+
+.leadero-root {
+  /* ═══════════════════════════════════════════════════════════════
+     LAYER 1: PRIMITIVES — 砚法原始值（§5.1 墨分五色 / §5.3 语义六色）
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ── 纸（表面三阶）── */
+  --paper-canvas: #f8f5f0; /* 宣纸：全局画布底 */
+  --paper-raised: #fdfcf9; /* 浮纸：卡片/面板/输入底 */
+  --paper-sunken: #f0ebe2; /* 沉纸：侧栏/表头/代码底/用户消息底 */
+
+  /* ── 墨（文字五色，全暖倾向，禁冷灰）── */
+  --ink-scorch: #1c1a17; /* 焦：标题、强强调 */
+  --ink-full: #2c2a26; /* 浓：正文（衡域）、图标主色（≥12:1） */
+  --ink-heavy: #57534a; /* 重：次要文字、标签（≥6:1） */
+  --ink-light: #6f695e; /* 淡：辅助文字/占位（≥4.5:1 小字下限） */
+  --ink-clear: #b5ac9c; /* 清：禁用文字、极弱角标（仅大字/非文字） */
+
+  /* ── 线（发丝线两档，一律 1px）── */
+  --line-faint: #ddd5c7; /* 纸纹：默认分隔 */
+  --line-strong: #a89c88; /* 淡墨线：强分隔、输入框边 */
+
+  /* ── 苔（墨域身份点缀；不作小字文字、不作衡域功能色）── */
+  --ink-moss: #6b7b6e;
+
+  /* ── 语义六色（§5.3 功能表唯一；语义外色相=违法）── */
+  --accent: #0969da; /* 交互/引用蓝：链接/选中/主按钮/焦点环 */
+  --ok: #1a7f37; /* 成功绿 */
+  --warn: #9a6700; /* 警示黄 */
+  --danger: #cf222e; /* 危险红（UI 语义红唯一） */
+  --info: #1d7f98; /* 信息青 */
+  --chart: #e4572e; /* 图表橙：仅数据可视化强调（单对象） */
+
+  /* ── 品牌资产（§5.3 豁免：#b5343a 仅 logo 图形内部）── */
+  --brand-seal: #b5343a;
+
+  /* ── 微色令牌（§5.4）── */
+  --selection: rgba(
+    9,
+    105,
+    218,
+    0.18
+  ); /* 选区=交互蓝 18%（暗 25% 见 dark 块） */
+  --ink-inverse: #fdfcf9; /* 强调钮反白墨（暗 #10141c 见 dark 块） */
+
+  /* ── teal 年份梯（§8.11 单色相明度插值，砚法保留的图谱专用色相）── */
+  --graph-year-old: #b8eae0; /* 浅端 */
+  --graph-year-mid: #53b9ab;
+  --graph-year-new: #008573; /* 显著端 ≥3:1 */
+
+  /* ── Typography（§6.1 字族）── */
+  /* 衡域 UI：system-ui + 简繁双系黑体；卷域衬线：Noto Serif SC（B2 内嵌 woff2，
+     加载前回退 Charter/Georgia/系统宋体）；Newsreader 已退役（§15-77）。 */
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", "PingFang SC", "PingFang TC",
+    "Microsoft YaHei", "Microsoft JhengHei", sans-serif;
+  --font-mono:
+    Consolas, "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display:
+    "Noto Serif SC", Charter, Georgia, "Songti SC", "Noto Serif TC", SimSun,
+    serif;
+  --font-serif: var(--font-display); /* alias：prose 内容区用 */
+
+  /* 字号 8 档（§5.4：3xs10/2xs11/xs12/sm13/md14/base15/lg16/xl20）。
+     real 特殊档映射：prose=卷域正文 15、control=控件 13（衡域基准）、
+     3xl 退役→xl（hero 大数=20px tabular，§15-77）。 */
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-xs: 12px; /* 砚法全胜：real 11（v1.70）→12（§15-72） */
+  --text-sm: 13px;
+  --text-prose: 15px; /* 卷域正文 15px/1.75（§6.2；real 14 →15） */
+  --text-control: 13px; /* 控件档=衡域基准 13（real 14→13） */
+  --text-base: 15px; /* UI 正文=base 档 15（real 13→15，§15-72 谱系对位） */
+  --text-md: 14px; /* real 15→14（§15-72） */
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-3xl: var(--text-xl); /* 退役别名：hero 数=20 */
+
+  /* 字重三档（§5.4/§15-69：禁其他字重） */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --font-weight-regular: var(--fw-regular);
+  --font-weight-medium: var(--fw-medium);
+  --font-weight-semibold: var(--fw-semibold);
+  --font-weight-bold: var(
+    --fw-semibold
+  ); /* 700 退役→semibold（砚法标题最重 600） */
+  --font-weight-normal: var(--fw-regular);
+
+  /* 行高：卷域 1.75（§5.4/§6.2）为单源 */
+  --lh-prose: 1.75;
+  --leading-prose: var(--lh-prose); /* real 1.65→1.75（砚法全胜） */
+  --leading-loose: var(--lh-prose); /* 1.75 同源 */
+  --leading-none: 1;
+  --leading-tight: 1.4;
+  --leading-normal: 1.5;
+  --leading-comfortable: 1.6;
+  --leading-code: 1.45;
+  --leading-snug: var(--leading-tight);
+
+  /* 字距 */
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.08em; /* byline 拉丁小标签专用；中文禁字距（§6.2） */
+  --tracking-wider: 0.04em;
+
+  /* ── 圆角（§5.4：ctl6/scroll4/内嵌 sm4·md6·lg8/pill/品牌件 0）── */
+  --radius-ctl: 6px; /* 控件/卡片/弹窗 */
+  --radius-scroll: 4px; /* 卷域容器 */
+  --radius-btn: var(--radius-ctl); /* 砚法全胜：real 8（v1.46）→6（§15-72） */
+  --radius: var(--radius-scroll); /* 色板/轨道 4（real 2→4，§15-77 就近向上） */
+  --radius-xs: var(--radius);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px; /* 内嵌面板档（real 6→8） */
+  --radius-xl: var(--radius-ctl); /* real 6 → ctl 单源 */
+  --radius-pill: 999px;
+  --radius-full: 50%;
+  --radius-sharp: 0px; /* 墨域品牌件 */
+  --card-radius: var(--radius-ctl);
+
+  /* ── 间距：砚法 12 档正谱（§5.4）+ real 独有档退役别名（§15-77）── */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  /* 退役别名（real 独有档 → 就近平手向上） */
+  --space-px: 1px; /* 光学校准子网格实用值，非谱档 */
+  --space-0-75: var(--space-1); /* 3→4 */
+  --space-1-25: var(--space-1-5); /* 5→6 */
+  --space-4-5: var(--space-5); /* 18→20 */
+  --space-7: var(--space-8); /* 28→32 */
+  --space-10: var(--space-12); /* 40→48 */
+  --space-15: var(--space-12); /* 60→48 */
+  /* Tailwind 阶梯桥（tw.css --spacing 按 rem 解析的纠偏，机制沿用） */
+  --spacing: var(--space-1);
+
+  /* ── 图标四档（§5.5：12/14/16/20；real 七档映射退役）── */
+  --icon-xs: 12px; /* 10→12 */
+  --icon-sm: 12px;
+  --icon-base: 14px;
+  --icon-md: 16px;
+  --icon-lg: 20px; /* 18→20 */
+  --icon-xl: 20px; /* 24→20 */
+  --icon-2xl: 48px; /* 空态 hero 插画位=构件局部几何（批二十九方法论），不入图标谱 */
+
+  /* ── 动效三速（§7/§15-69）── */
+  --dur-1: 150ms; /* 衡域 */
+  --dur-2: 200ms; /* 卷域 */
+  --dur-3: 400ms; /* 墨域基准（身份时刻 400–700 区间内取专用值） */
+  --ease-standard: ease-out;
+  --ease-decelerate: ease-out;
+  --ease-spring: ease-out; /* spring 禁（§7）；旧名保留指向标准曲线 */
+  --transition-instant: 0.1s var(--ease-standard);
+  --transition-fast: var(--dur-1) var(--ease-standard);
+  --transition-normal: var(--dur-2) var(--ease-standard);
+  --transition-spring: var(--transition-normal); /* 退役别名 */
+  --transition-exit: calc(var(--dur-1) / 2) var(--ease-standard); /* 退场=时长减半 */
+  --transition-entrance: 0.6s var(--ease-standard); /* 墨域签名入场（400–700 区间内合法值） */
+
+  /* ── 阴影两档（§5.4/§15-68）：弹层 + 控件选中微影；旧三档映射退役 ── */
+  --shadow-overlay: 0 4px 16px rgba(28, 26, 23, 0.1);
+  --shadow-ctl: 0 1px 2px rgba(28, 26, 23, 0.08);
+  --shadow-sm: var(--shadow-ctl);
+  --shadow-md: var(--shadow-overlay);
+  --shadow-pop: var(--shadow-overlay);
+  --shadow-lg: var(--shadow-overlay);
+
+  /* ── 焦点环单源（§8.2：focus=交互蓝 1px 边 + 同色 20% 2px 外环；2026-09-20
+      逐页对照批立令牌，消费点 shadow-[var(--focus-ring-accent)]）── */
+  --focus-ring-accent: 0 0 0 2px
+    color-mix(in srgb, var(--accent) 20%, transparent);
+
+  /* ── 层叠：沿用现有机制（§5.6）+ 砚法七档语义别名 ── */
+  --z-base: 1;
+  --z-toolbar: 2;
+  --z-force-toolbar: 3;
+  --z-input: 10;
+  --z-layout: 20;
+  --z-search: 30;
+  --z-search-dropdown: 40;
+  --z-setup: 50;
+  --z-dropdown: 100;
+  --z-modal: 1000;
+  --z-tooltip: 9999;
+  --z-topmost: 10000;
+  --z-sticky: var(--z-force-toolbar);
+  --z-header: var(--z-input);
+  --z-sub: var(--z-layout);
+  --z-side: var(--z-setup);
+  --z-edge-tab: var(--z-dropdown);
+  --z-overlay: var(--z-modal);
+  --z-toast: var(--z-topmost);
+
+  /* ── 宽度梯（§5.4/§11 成文值成 token，§15-67）── */
+  --w-compact: 420px;
+  --w-std: 560px;
+  --w-wide: 640px;
+  --w-full: 720px;
+  --w-pane: 1120px;
+
+  /* ── 控件（§5.4：高 24/28/32；select 下限 148）── */
+  --ctl-h: 28px;
+  --ctl-h-sm: 24px;
+  --ctl-select-min: 148px;
+
+  /* ── 卷域测宽 ── */
+  --measure: 74ch;
+
+  /* ── Opacity（沿用 real 法定值；砚法无对冲条文）── */
+  --opacity-disabled: 0.5;
+  --opacity-secondary: 0.8;
+  --opacity-extreme-disabled: 0.2;
+  --fill-opacity-subtle: 0.18;
+
+  /* ── 输入区高度（D3 立法值，TS useAutoResize(200) 成对；2026-09-22 复审
+     差异收口：起始 1 行→自增 8 行封顶，原型 1→8 协议，min-h=1 行实高托底）── */
+  --input-min-h: 44px;
+  --input-max-h: 200px;
+
+  /* ── Swiss 字体角色（real 名保留；砚法排印对位 §6.2）── */
+  --ui-font-display: 600 var(--text-lg)/1.3 var(--font-sans);
+  --ui-font-heading: 600 var(--text-md)/1.35 var(--font-sans);
+  --ui-font-title: 500 var(--text-md)/1.4 var(--font-sans);
+  --ui-font-body: 400 var(--text-prose)/var(--lh-prose) var(--font-serif);
+  --ui-font-meta: 400 var(--text-xs)/1.4 var(--font-sans);
+  --ui-font-caption: 500 var(--text-xs)/1.4 var(--font-sans);
+  --ui-font-overline: 600 var(--text-2xs)/1.3 var(--font-sans);
+  --ui-family-display: var(--font-sans);
+  --ui-family-body: var(--font-display);
+  --ui-family-meta: var(--font-sans);
+
+  /* ── 状态点/描边 ── */
+  --dot-md: 8px;
+  --dot-sm: 6px; /* 复审批E：呼吸点小档（research 相位点/任务行） */
+  --stroke-thin: 1px;
+  --border-width-emphasis: 1.5px;
+  --stroke-edge: 2px;
+  --stroke-label: 3px;
+
+  /* ═══════════════════════════════════════════════════════════════
+     LAYER 2: SEMANTIC — 语义别名（旧名 → 砚法值）
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ── 交互蓝族（real --data-blue → 砚法 --accent 单源）── */
+  --data-blue: var(--accent);
+  --data-blue-faint: rgba(9, 105, 218, 0.03);
+  --data-blue-bg: rgba(9, 105, 218, 0.08);
+  --data-blue-ring: rgba(9, 105, 218, 0.15);
+  --data-blue-soft: rgba(9, 105, 218, 0.18);
+  --data-blue-medium: rgba(9, 105, 218, 0.25);
+  --data-blue-strong: rgba(9, 105, 218, 0.5);
+  --data-blue-vivid: rgba(9, 105, 218, 0.75);
+  --data-blue-dark: var(--accent); /* 文字档随主题翻转（暗=亮蓝） */
+
+  /* ── 信号族 → 砚法语义六色 ── */
+  --signal-red: var(--danger);
+  --signal-red-strong: var(--danger);
+  --signal-red-bg: rgba(207, 34, 46, 0.1);
+  --signal-red-ring: rgba(207, 34, 46, 0.2);
+  --signal-green: var(--ok);
+  --signal-green-dark: var(--ok);
+  --signal-green-bg: rgba(26, 127, 55, 0.1);
+  --signal-yellow: var(--warn);
+  --signal-yellow-text: var(--warn);
+  --signal-yellow-dark: var(--warn);
+  --signal-yellow-bg: rgba(154, 103, 0, 0.1);
+  --signal-yellow-medium: rgba(154, 103, 0, 0.25);
+  --signal-orange: var(
+    --warn
+  ); /* 橙相退役 → 警示黄（图表橙不作正文文字色，§5.3 附则） */
+  --signal-teal: var(--info);
+  --signal-purple: var(--ink-heavy); /* 紫相退役（§5.3 语义外色相）→ 重墨 */
+  --signal-purple-bg: rgba(107, 123, 110, 0.08);
+  --color-error: var(--danger);
+
+  /* ── 原始色阶桥（旧名保留，值=砚法语义）── */
+  --color-blue-9: var(--accent);
+  --color-red-9: var(--danger);
+  --color-green-9: var(--ok);
+  --color-amber-9: var(--warn);
+  --color-brand: var(--brand-seal); /* 仅 logo 资产（§5.3 豁免） */
+  --leadero-brand: var(--brand-seal);
+  --leadero-brand-text: var(
+    --accent
+  ); /* UI 指示/强调一律交互蓝（砚法唯一选中语义色） */
+  --accent-tint: rgba(
+    9,
+    105,
+    218,
+    0.08
+  ); /* §5.3/Q4 加固别名：选中态淡蓝底（显式语义名） */
+  --leadero-brand-bg: rgba(9, 105, 218, 0.08);
+  --accent-primary: var(--accent);
+  --tag-red-primary: var(--danger);
+
+  /* ── 图谱分类色 → 墨梯明度阶 ≤6 + 语义（§5.3 附则；形状冗余编码随知识区页批）── */
+  --type-method: var(--ink-scorch);
+  --type-theory: var(--ink-full);
+  --type-fact: var(--ink-heavy);
+  --type-metric: var(--ink-heavy);
+  --type-problem: var(--danger);
+  --type-tool: var(--ink-light);
+  --level-L1: var(--danger);
+  --level-L2: var(--warn);
+  --level-L3: var(--accent);
+  --level-L4: var(--ink-moss);
+  --level-L5: var(--info);
+  /* 2026-09-22 差异收口（用户裁定）：--color-level-L1~L5 零引用死别名已删
+     ——层级色唯一族=--level-L*（构成图消费；清理前守卫信息级清单在案）。 */
+  --edge-related: var(--ink-heavy);
+  --edge-extends: var(--accent);
+  --edge-contradicts: var(--danger);
+  --edge-uses: var(--ok);
+  --edge-alternative: var(--warn);
+  --edge-prerequisite: var(--ink-full);
+  --edge-person-relation: var(--ink-moss);
+  --edge-academic: var(--info);
+  --edge-tech-competition: var(--ink-light);
+  --graph-node-default: var(--ink-light);
+  --graph-shade-mix: var(
+    --ink-scorch
+  ); /* 明度混入目标=焦墨（暗色反白见 dark 块） */
+  --graph-metric-base: var(--paper-sunken); /* 度数 0 端中性底 */
+  --graph-time-band: var(--line-faint); /* 年份底色带=纸纹（结构） */
+
+  /* ── 主操作族（real 名保留；砚法=交互蓝，v1.44 近黑单色制退役）── */
+  --action-primary: var(--accent);
+  --action-primary-bg: var(--data-blue-bg);
+  --action-primary-light: var(--data-blue-soft);
+  --action-primary-ring: var(--data-blue-ring);
+  --action-primary-faint: var(--data-blue-bg);
+
+  /* ── 发现实体色 → 墨梯轮转 + 语义（§5.3 附则；形状冗余随页批）── */
+  --discovery-researcher: var(--accent);
+  --discovery-journal: var(--ink-scorch);
+  --discovery-technology: var(--ok);
+  --discovery-lab: var(--warn);
+  --discovery-institution: var(--danger);
+  --discovery-company: var(--ink-full);
+  --discovery-conference: var(--info);
+  --discovery-funding-agency: var(--ink-heavy);
+  --discovery-dataset: var(--chart);
+  --discovery-opensource-project: var(--ok);
+  --discovery-key-paper: var(--ink-scorch);
+  --discovery-patent: var(--ink-moss);
+  --discovery-standard: var(--ink-light);
+  --discovery-regulation: var(--ink-heavy);
+  --discovery-grant: var(--chart);
+  --discovery-node-default: var(--ink-light);
+
+  /* ── 图表分类色板 → 墨梯明度阶（§5.3 附则：分类≤6 档+形状冗余；超 6 类先聚合，
+     c7–c10 轮回 c1–c4 使超额立即可见）── */
+  --chart-c1: var(--ink-scorch);
+  --chart-c2: var(--ink-full);
+  --chart-c3: var(--ink-heavy);
+  --chart-c4: var(--ink-light);
+  --chart-c5: var(--ink-clear);
+  --chart-c6: var(--ink-moss);
+  --chart-c7: var(--chart-c1);
+  --chart-c8: var(--chart-c2);
+  --chart-c9: var(--chart-c3);
+  --chart-c10: var(--chart-c4);
+
+  /* ── Usage 分段/热图（沿用 P2-1 语义映射，值随上游换血自动跟随）── */
+  --usage-segment-input: var(--chart-c1);
+  --usage-segment-output: color-mix(in srgb, var(--chart-c1) 55%, transparent);
+  --usage-segment-cache: var(--ink-clear);
+  --usage-reading-bar: var(--chart-c3);
+  --usage-heatmap-color: var(--accent);
+
+  /* ── shadcn 桥接槽位（tw-source @theme inline 消费；值=砚法对位）── */
+  --background: var(--paper-canvas);
+  --foreground: var(--ink-full);
+  --card: var(--paper-raised);
+  --popover: var(--paper-raised);
+  --sidebar: var(--paper-sunken); /* 砚法：侧栏=沉纸 */
+  --primary: var(--accent); /* 砚法：主操作=交互蓝（v1.44 近黑单色制退役） */
+  --primary-foreground: var(--ink-inverse);
+  --muted: var(--paper-sunken);
+  --muted-foreground: var(--ink-light);
+  --accent-foreground: var(--ink-full);
+  --card-foreground: var(--ink-full);
+  --popover-foreground: var(--ink-full);
+  --destructive: var(--danger);
+  --border: var(--line-faint);
+  --input: var(--line-strong); /* 砚法：输入框边=淡墨线 */
+  --ring: var(--accent);
+  --sidebar-foreground: var(--ink-full);
+  --sidebar-accent: var(--paper-raised);
+  --sidebar-accent-foreground: var(--ink-scorch);
+  --sidebar-ring: var(--accent);
+  --sidebar-border: var(--line-faint);
+  --success: var(--ok);
+  --success-foreground: var(--ink-inverse);
+  --warning: var(--warn);
+  --info-status: var(--info);
+  /* 焦点环 */
+  --focus-ring: 0 0 0 1.5px var(--accent), 0 0 0 3px var(--data-blue-bg);
+  --focus-ring-subtle: 0 0 0 2px var(--data-blue-ring);
+
+  /* ── 文字/边框/表面（旧 Stone 名 → 墨分五色）── */
+  --text-primary: var(--ink-full);
+  --text-secondary: var(--ink-heavy);
+  --text-tertiary: var(--ink-light);
+  --border-strong: var(--line-strong);
+  --border-subtle: var(--line-faint);
+  --surface-subtle: var(--paper-sunken);
+  --surface-tint: var(--paper-sunken);
+  --surface-canvas: var(--paper-canvas);
+  --surface-raised: var(--paper-raised);
+  --surface-zone: var(--paper-sunken);
+  --card-bg: var(--paper-raised);
+  --page-bg: var(
+    --paper-canvas
+  ); /* 砚法：chat 文档表面=宣纸（v1.71 纯白翻转退役） */
+  --overlay-mix: rgba(28, 26, 23, 0.05);
+
+  /* ── Hub 表面 ── */
+  --hub-bg-page: var(--paper-canvas);
+  --hub-bg-elev: var(--paper-raised);
+  --hub-bg-hover: rgba(28, 26, 23, 0.05);
+  /* §5.1 线两档：默认分隔=纸纹 --line-faint，强分隔/输入框边才 --line-strong。
+     【2026-09-20 砚法合规批】strong→faint 降档：全仓消费点（壳侧栏右缘、
+     settings/workspace 栏间、图谱/brain 卡线、布局分区线等）经逐一核对皆为
+     默认分隔场景，无强分隔需求；确需强档的消费点应直引 --line-strong。 */
+  --hub-hairline: var(--line-faint);
+  --hub-row-divider: var(--line-faint);
+  --hub-indicator-width: 2px;
+  --hub-indicator-color: var(
+    --accent
+  ); /* 砚法：选中/未读指示=交互蓝（品牌红退役出 UI） */
+  --hub-dot-size: var(--space-1-5);
+  --hub-nav-collapsed-width: 64px; /* 砚法 §8.0：图标轨 64（real 44→64） */
+  --dash-nav-width: 240px; /* 砚法 §11：侧栏 240（real 256→240） */
+  --action-panel-width: 240px; /* 右侧栏同律 240 */
+  --discussion-panel-width: 240px; /* 形式②右栏 240 */
+
+  /* ── 行高密度（§5.4：衡域列表 28 标准/24 紧凑）── */
+  --row-height-sm: 24px; /* real 36→24 紧凑档 */
+  --row-height-md: 28px; /* real 48→28 标准档 */
+  --row-height-lg: 32px; /* 动作行=控件高档 32（real 56 退役） */
+
+  /* ── 控件几何（§8.1：图标钮容器 28）── */
+  --icon-btn-size: 28px; /* real 32→28 */
+  --avatar-size: 20px; /* 砚法 §8.5 铭牌 20px（real 32→20） */
+  --btn-padding-compact: var(--space-1) var(--space-2);
+
+  /* ── 气泡/反白 ── */
+  --user-bubble-bg: var(--paper-sunken); /* 砚法：用户消息底=沉纸 */
+  --user-bubble-text: var(--ink-full);
+  --text-on-accent: var(--ink-inverse);
+  --text-on-accent-medium: rgba(255, 255, 255, 0.7);
+  --text-on-accent-high: rgba(255, 255, 255, 0.9);
+  --bubble-max-width: 75%;
+  --doc-table-alt-bg: rgba(28, 26, 23, 0.02);
+
+  /* ── 弹层/浮层（§5.6：浮纸+阴影+细边三件齐）── */
+  --overlay-bg: rgba(28, 26, 23, 0.4);
+  --tooltip-bg-solid: rgba(28, 26, 23, 0.95);
+  --toolbar-float-bg: rgba(28, 26, 23, 0.92);
+
+  /* ═══════════════════════════════════════════════════════════════
+     LAYER 3: COMPONENT — 组件合同（砚法宽度梯/密度对位）
+     ═══════════════════════════════════════════════════════════════ */
+  --layout-modal-sm: var(--w-compact); /* 360→420 */
+  --layout-modal-md: var(--w-compact); /* 480→420 */
+  --layout-sidebar-min: 320px;
+  --layout-sidebar-max: 560px;
+  --layout-content-max: 420px;
+  --layout-tool-name-min: 140px;
+  --layout-graph-min-h: 300px;
+  --layout-api-key-right: 88px;
+  --layout-api-key-input-right: 64px;
+  --layout-phase-label-max: 64px;
+  --layout-model-switch-max: 280px;
+  --form-dialog-width: var(
+    --w-compact
+  ); /* ModelDialog 440→420（§15-73 基件宽档） */
+  --dialog-detail-max-width: var(--w-std); /* 520→560 */
+  --dialog-max-h: 80vh;
+  --palette-max-w: var(--w-std); /* 命令面板=std 560 */
+  --content-max: var(--w-pane); /* 页面上限=pane 1120（real 1440→1120） */
+  --page-content-padding: var(
+    --space-8
+  ); /* real 40→32（砚法 pane 24/32/48 律） */
+  --page-inline-pad: max(
+    var(--page-content-padding),
+    calc((100% - var(--content-max)) / 2)
+  );
+  --reading-max: var(--w-full); /* 长文阅读宽=full 720 */
+  --pg-right-width: 240px;
+  --graph-force-height: 500px;
+  --graph-force-compact-height: 280px;
+  --graph-tooltip-max-width: 260px;
+  --dropdown-max-height: 240px;
+  --item-picker-panel-max-height: 320px;
+  --item-picker-panel-max-width: 280px;
+  --heatmap-cell-size: 13px;
+  --cm-domain-col-width: 80px;
+  --cm-level-col-width: 60px;
+  --cm-type-col-width: 70px;
+  --cm-modality-col-width: 90px;
+  --cm-uncertainty-col-width: 36px;
+  --hub-graph-year-field-width: 88px;
+  --hub-method-grid-max: 400px;
+  --detail-aside-width: 240px;
+  --gallery-demo-width: var(--w-compact);
+  --gallery-media-width: 300px;
+  --gallery-thumb-width: 240px;
+  --gallery-thumb-height: 96px;
+  --cron-error-max-w: 320px;
+  --cron-time-input-w: 88px;
+  --cron-number-input-w: 64px;
+  --stage-circle-md: 36px;
+  --stage-circle-sm: 26px;
+  --canvas-overlay-max-h: 40vh;
+  --form-view-max-w: var(--w-wide); /* 600→640 */
+  --chip-max-w: 240px;
+  --input-float-reserve: 92px;
+  --indent-tool-icon: 28px;
+  --nested-timeline-indent: var(--indent-tool-icon);
+  --nested-timeline-border: var(--border-strong);
+  --nested-timeline-padding-block: var(--space-1);
+  --nested-timeline-max-height: 300px;
+  --tool-result-max-h: 250px; /* §8.5 工具行：结果区 max-height（成文法值成 token） */
+  --action-panel-collapsed-w: 44px; /* 操作面板折叠态图标条宽（布局 P3 合同值） */
+}
+
+/* ==================== Window Sizing ==================== */
+/* 13px = 衡域基准（§6.2）。rem 布局基准仍由宿主注入同步。 */
+#leadero-chat-window {
+  font-size: 13px !important;
+}
+
+/* ==================== Dark mode（夜纸） ==================== */
+/* 亮暗同名对偶（§5.1）：切换即整组生效。 */
+@media (prefers-color-scheme: dark) {
+  .leadero-root {
+    /* ── 纸/墨/线/苔（夜纸）── */
+    --paper-canvas: #1e1c18; /* 墨底 */
+    --paper-raised: #262420; /* 浮墨 */
+    --paper-sunken: #161512; /* 沉墨 */
+    --ink-scorch: #ece7dd; /* 反白标题 */
+    --ink-full: #d6d0c4;
+    --ink-heavy: #a89f8f;
+    --ink-light: #a09689; /* 法值修正：#8a8274 未达 §5.1 自定 4.5 地板（实测 4.08~4.48），提档至 5.3+ */
+    --ink-clear: #6b6455;
+    --line-faint: #37332b;
+    --line-strong: #55503f;
+    --ink-moss: #8fa08f;
+
+    /* ── 语义六色（暗档）── */
+    --accent: #6ea8ff;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --danger: #f85149;
+    --info: #39c5cf;
+    --chart: #ff7849;
+
+    /* ── 微色 ── */
+    --selection: rgba(110, 168, 255, 0.25);
+    --ink-inverse: #10141c;
+
+    /* ── teal 年份梯暗色反向（旧=暗沉、新=亮）── */
+    --graph-year-old: #145750;
+    --graph-year-mid: #12a594;
+    --graph-year-new: #0bd8b6;
+
+    /* ── 交互蓝族（暗=亮蓝基色）── */
+    --data-blue-faint: rgba(110, 168, 255, 0.04);
+    --data-blue-bg: rgba(110, 168, 255, 0.1);
+    --data-blue-ring: rgba(110, 168, 255, 0.18);
+    --data-blue-soft: rgba(110, 168, 255, 0.22);
+    --data-blue-medium: rgba(110, 168, 255, 0.3);
+    --data-blue-strong: rgba(110, 168, 255, 0.5);
+    --data-blue-vivid: rgba(110, 168, 255, 0.75);
+
+    /* ── 信号染色底（暗）── */
+    --signal-red-bg: rgba(248, 81, 73, 0.12);
+    --signal-red-ring: rgba(248, 81, 73, 0.25);
+    --signal-green-bg: rgba(63, 185, 80, 0.12);
+    --signal-yellow-bg: rgba(210, 153, 34, 0.12);
+    --signal-purple-bg: rgba(143, 160, 143, 0.1);
+    --accent-tint: rgba(110, 168, 255, 0.1);
+    --leadero-brand-bg: rgba(110, 168, 255, 0.1);
+
+    /* ── 图谱结构（暗）── */
+    --graph-shade-mix: var(--ink-scorch); /* 暗色向反白混=浅色高置信 */
+    --graph-metric-base: var(--paper-canvas);
+    --graph-time-band: var(--line-faint);
+
+    /* ── 阴影（暗）── */
+    --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-ctl: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+    /* ── 表面/悬停（暗）── */
+    --background: var(--paper-canvas);
+    --card: var(--paper-raised);
+    --popover: var(--paper-raised);
+    --sidebar: var(--paper-sunken);
+    --card-bg: var(--paper-raised);
+    --overlay-mix: rgba(236, 231, 221, 0.06);
+    --hub-bg-hover: rgba(236, 231, 221, 0.06);
+    --user-bubble-bg: var(--paper-sunken);
+    --doc-table-alt-bg: rgba(236, 231, 221, 0.03);
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    --tooltip-bg-solid: rgba(22, 21, 18, 0.95);
+    --toolbar-float-bg: rgba(22, 21, 18, 0.92);
+  }
+}

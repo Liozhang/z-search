@@ -1,0 +1,518 @@
+{
+  "data": [
+    [
+      "WIRELESS PERSONAL COMMUNICATIONS",
+      2025,
+      null,
+      null,
+      "论文工厂",
+      "Paper Mill"
+    ],
+    ["NATURAL RESOURCES FORUM", 2025, null, null, "论文工厂", "Paper Mill"],
+    [
+      "COMPUTERS & ELECTRICAL ENGINEERING",
+      2025,
+      null,
+      null,
+      "论文工厂",
+      "Paper Mill"
+    ],
+    [
+      "NUMERICAL HEAT TRANSFER PART A-APPLICATIONS",
+      2025,
+      null,
+      null,
+      "论文工厂",
+      "Paper Mill"
+    ],
+    [
+      "SCALABLE COMPUTING-PRACTICE AND EXPERIENCE",
+      2025,
+      null,
+      null,
+      "论文工厂",
+      "Paper Mill"
+    ],
+    ["CANCERS", 2024, null, null, "引用操纵", "Citation Manipulation"],
+    ["DIAGNOSTICS", 2024, null, null, "引用操纵", "Citation Manipulation"],
+    [
+      "ENVIRONMENTAL SCIENCE AND POLLUTION RESEARCH",
+      2024,
+      null,
+      null,
+      "引用操纵、论文工厂",
+      "Citation Manipulation, Paper Mill"
+    ],
+    ["FUEL", 2024, null, null, "引用操纵", "Citation Manipulation"],
+    [
+      "JOURNAL OF CLINICAL MEDICINE",
+      2024,
+      null,
+      null,
+      "引用操纵",
+      "Citation Manipulation"
+    ],
+    [
+      "JOURNAL OF PERSONALIZED MEDICINE",
+      2024,
+      null,
+      null,
+      "引用操纵",
+      "Citation Manipulation"
+    ],
+    [
+      "RADIOLOGIA MEDICA",
+      2024,
+      null,
+      null,
+      "引用操纵",
+      "Citation Manipulation"
+    ],
+    ["BIOENGINEERED", 2024, null, null, "论文工厂", "Paper Mill"],
+    ["CONNECTION SCIENCE", 2024, null, null, "论文工厂", "Paper Mill"],
+    [
+      "MULTIMEDIA TOOLS AND APPLICATIONS",
+      2024,
+      null,
+      null,
+      "论文工厂",
+      "Paper Mill"
+    ],
+    ["PSYCHIATRIA DANUBINA", 2024, null, null, "论文工厂", "Paper Mill"],
+    [
+      "JOURNAL OF BIOBASED MATERIALS AND BIOENERGY",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "JOURNAL OF BIOMATERIALS AND TISSUE ENGINEERING",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "JOURNAL OF BIOMEDICAL NANOTECHNOLOGY",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "JOURNAL OF NANOELECTRONICS AND OPTOELECTRONICS",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "JOURNAL OF SENSORS",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "MATERIALS EXPRESS",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "SCIENCE OF ADVANCED MATERIALS",
+      2024,
+      null,
+      null,
+      "论文工厂、中国作者占比畸高",
+      "Paper Mill, 中国作者占比畸高"
+    ],
+    [
+      "ALTERNATIVE THERAPIES IN HEALTH AND MEDICINE",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    [
+      "CMES-COMPUTER MODELING IN ENGINEERING & SCIENCES",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    [
+      "EXPERIMENTAL AND THERAPEUTIC MEDICINE",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    [
+      "FRONTIERS IN ENERGY RESEARCH",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    [
+      "MATHEMATICAL BIOSCIENCES AND ENGINEERING",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    [
+      "TROPICAL JOURNAL OF PHARMACEUTICAL RESEARCH",
+      2024,
+      null,
+      null,
+      "中国作者占比畸高",
+      "中国作者占比畸高"
+    ],
+    ["TEXTILE RESEARCH JOURNAL", 2023, "中", "Medium", null, null],
+    ["GEOFLUIDS", 2023, "中", "Medium", null, null],
+    ["FRONTIERS IN EARTH SCIENCE", 2023, "低", "Low", null, null],
+    [
+      "JOURNAL OF INDUSTRIAL AND MANAGEMENT OPTIMIZATION",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["MATHEMATICAL PROBLEMS IN ENGINEERING", 2023, "中", "Medium", null, null],
+    ["AEROSPACE", 2023, "低", "Low", null, null],
+    ["BUILDINGS", 2023, "低", "Low", null, null],
+    [
+      "COMPUTATIONAL AND MATHEMATICAL METHODS IN MEDICINE",
+      2023,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["ENERGY REPORTS", 2023, "低", "Low", null, null],
+    ["MACHINES", 2023, "低", "Low", null, null],
+    ["INORGANIC AND NANO-METAL CHEMISTRY", 2023, "高", "High", null, null],
+    ["JOURNAL OF STRUCTURAL CHEMISTRY", 2023, "高", "High", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF ELECTROCHEMICAL SCIENCE",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["FRONTIERS IN ENVIRONMENTAL SCIENCE", 2023, "低", "Low", null, null],
+    ["MICROPROCESSORS AND MICROSYSTEMS", 2023, "高", "High", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF CONTROL AUTOMATION AND SYSTEMS",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["MOBILE INFORMATION SYSTEMS", 2023, "低", "Low", null, null],
+    ["ECONOMIC RESEARCH-EKONOMSKA ISTRAZIVANJA", 2023, "低", "Low", null, null],
+    ["FOOD SCIENCE AND TECHNOLOGY", 2023, "低", "Low", null, null],
+    [
+      "JOURNAL OF ENVIRONMENTAL AND PUBLIC HEALTH",
+      2023,
+      "高",
+      "High",
+      null,
+      null
+    ],
+    ["PHARMAZIE", 2023, "高", "High", null, null],
+    ["PSYCHIATRIA DANUBINA", 2023, "高", "High", null, null],
+    ["ACTA MEDICA MEDITERRANEA", 2023, "中", "Medium", null, null],
+    [
+      "AMERICAN JOURNAL OF TRANSLATIONAL RESEARCH",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    [
+      "JOURNAL OF BIOMATERIALS AND TISSUE ENGINEERING",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    [
+      "JOURNAL OF CLINICAL LABORATORY ANALYSIS",
+      2023,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["WORLD JOURNAL OF CLINICAL CASES", 2023, "中", "Medium", null, null],
+    ["FRONTIERS IN SURGERY", 2023, "低", "Low", null, null],
+    ["COMPLEXITY", 2021, "中", "Medium", null, null],
+    ["SHOCK AND VIBRATION", 2021, "中", "Medium", null, null],
+    ["ADVANCES IN CIVIL ENGINEERING", 2021, "中", "Medium", null, null],
+    ["BIOMEDICINES", 2021, "低", "Low", null, null],
+    ["MICROPROCESSORS AND MICROSYSTEMS", 2021, "高", "High", null, null],
+    ["SCIENTIFIC PROGRAMMING", 2021, "低", "Low", null, null],
+    ["BIOFACTORS", 2021, "高", "High", null, null],
+    ["MITOCHONDRIAL DNA PART B-RESOURCES", 2021, "中", "Medium", null, null],
+    ["FRONTIERS IN MOLECULAR BIOSCIENCES", 2021, "低", "Low", null, null],
+    [
+      "FRONTIERS IN CELL AND DEVELOPMENTAL BIOLOGY",
+      2021,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["LIFE-BASEL", 2021, "低", "Low", null, null],
+    ["BIOLOGY-BASEL", 2021, "低", "Low", null, null],
+    [
+      "DISCRETE DYNAMICS IN NATURE AND SOCIETY",
+      2021,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["AIMS MATHEMATICS", 2021, "低", "Low", null, null],
+    ["JOURNAL OF MATHEMATICS", 2021, "低", "Low", null, null],
+    ["PHARMAZIE", 2021, "高", "High", null, null],
+    ["MOLECULAR THERAPY-NUCLEIC ACIDS", 2021, "高", "High", null, null],
+    ["EXPERIMENTAL AND MOLECULAR PATHOLOGY", 2021, "高", "High", null, null],
+    [
+      "JOURNAL OF CELLULAR AND MOLECULAR MEDICINE",
+      2021,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["MOLECULAR MEDICINE REPORTS", 2021, "中", "Medium", null, null],
+    [
+      "JOURNAL OF INTERNATIONAL MEDICAL RESEARCH",
+      2021,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["JOURNAL OF CANCER", 2021, "中", "Medium", null, null],
+    ["MEDICAL SCIENCE MONITOR", 2021, "中", "Medium", null, null],
+    ["AGING-US", 2021, "中", "Medium", null, null],
+    ["ONCOTARGETS AND THERAPY", 2021, "中", "Medium", null, null],
+    ["CANCER MANAGEMENT AND RESEARCH", 2021, "中", "Medium", null, null],
+    ["CANCER CELL INTERNATIONAL", 2021, "中", "Medium", null, null],
+    ["WORLD JOURNAL OF CLINICAL CASES", 2021, "中", "Medium", null, null],
+    ["ANNALS OF PALLIATIVE MEDICINE", 2021, "低", "Low", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF GENERAL MEDICINE",
+      2021,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["FRONTIERS IN MEDICINE", 2021, "低", "Low", null, null],
+    ["JOURNAL OF PERSONALIZED MEDICINE", 2021, "低", "Low", null, null],
+    ["HEALTHCARE", 2021, "低", "Low", null, null],
+    ["DIAGNOSTICS", 2021, "低", "Low", null, null],
+    ["VACCINES", 2021, "低", "Low", null, null],
+    ["METALS", 2020, "低", "Low", null, null],
+    ["COATINGS", 2020, "低", "Low", null, null],
+    ["MATERIALS", 2020, "低", "Low", null, null],
+    [
+      "JOURNAL OF NANOSCIENCE AND NANOTECHNOLOGY",
+      2020,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["MINERALS", 2020, "低", "Low", null, null],
+    ["ATMOSPHERE", 2020, "低", "Low", null, null],
+    [
+      "ARTIFICIAL CELLS NANOMEDICINE AND BIOTECHNOLOGY",
+      2020,
+      "高",
+      "High",
+      null,
+      null
+    ],
+    ["ADVANCES IN CIVIL ENGINEERING", 2020, "中", "Medium", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF ENERGY RESEARCH",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["MATHEMATICAL PROBLEMS IN ENGINEERING", 2020, "中", "Medium", null, null],
+    ["SENSORS", 2020, "低", "Low", null, null],
+    ["ENERGIES", 2020, "低", "Low", null, null],
+    ["APPLIED SCIENCES-BASEL", 2020, "低", "Low", null, null],
+    ["POLYMERS", 2020, "低", "Low", null, null],
+    ["ELECTRONICS", 2020, "低", "Low", null, null],
+    ["PROCESSES", 2020, "低", "Low", null, null],
+    ["COMPLEXITY", 2020, "低", "Low", null, null],
+    ["DESALINATION AND WATER TREATMENT", 2020, "低", "Low", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF ELECTROCHEMICAL SCIENCE",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["CATALYSTS", 2020, "低", "Low", null, null],
+    ["MOLECULES", 2020, "低", "Low", null, null],
+    ["NATURAL PRODUCT RESEARCH", 2020, "低", "Low", null, null],
+    [
+      "ZEITSCHRIFT FUR KRISTALLOGRAPHIE-NEW CRYSTAL STRUCTURES",
+      2020,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["SUSTAINABILITY", 2020, "中", "Medium", null, null],
+    ["WATER", 2020, "低", "Low", null, null],
+    ["IEEE ACCESS", 2020, "中", "Medium", null, null],
+    ["AGRONOMY-BASEL", 2020, "低", "Low", null, null],
+    ["JOURNAL OF CELLULAR BIOCHEMISTRY", 2020, "高", "High", null, null],
+    ["JOURNAL OF CELLULAR PHYSIOLOGY", 2020, "中", "Medium", null, null],
+    ["BIOSCIENCE REPORTS", 2020, "中", "Medium", null, null],
+    ["BIOMED RESEARCH INTERNATIONAL", 2020, "中", "Medium", null, null],
+    ["BIOFACTORS", 2020, "低", "Low", null, null],
+    ["PLANTS-BASEL", 2020, "低", "Low", null, null],
+    ["CELLS", 2020, "低", "Low", null, null],
+    ["BOUNDARY VALUE PROBLEMS", 2020, "高", "High", null, null],
+    ["ADVANCES IN DIFFERENCE EQUATIONS", 2020, "高", "High", null, null],
+    [
+      "JOURNAL OF INEQUALITIES AND APPLICATIONS",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["MATHEMATICS", 2020, "低", "Low", null, null],
+    [
+      "EUROPEAN REVIEW FOR MEDICAL AND PHARMACOLOGICAL SCIENCES",
+      2020,
+      "高",
+      "High",
+      null,
+      null
+    ],
+    [
+      "INTERNATIONAL JOURNAL OF CLINICAL AND EXPERIMENTAL PATHOLOGY",
+      2020,
+      "高",
+      "High",
+      null,
+      null
+    ],
+    ["MEDICINE", 2020, "高", "High", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF CLINICAL AND EXPERIMENTAL MEDICINE",
+      2020,
+      "高",
+      "High",
+      null,
+      null
+    ],
+    ["BIOMEDICINE & PHARMACOTHERAPY", 2020, "中", "Medium", null, null],
+    ["EXPERIMENTAL AND MOLECULAR PATHOLOGY", 2020, "中", "Medium", null, null],
+    [
+      "BRAZILIAN JOURNAL OF MEDICAL AND BIOLOGICAL RESEARCH",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["CANCER BIOMARKERS", 2020, "中", "Medium", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF IMMUNOPATHOLOGY AND PHARMACOLOGY",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["ONCOLOGY RESEARCH", 2020, "中", "Medium", null, null],
+    ["AMERICAN JOURNAL OF CANCER RESEARCH", 2020, "中", "Medium", null, null],
+    ["MEDICAL SCIENCE MONITOR", 2020, "中", "Medium", null, null],
+    ["ONCOLOGY LETTERS", 2020, "中", "Medium", null, null],
+    ["EXPERIMENTAL AND THERAPEUTIC MEDICINE", 2020, "中", "Medium", null, null],
+    ["ONCOTARGETS AND THERAPY", 2020, "中", "Medium", null, null],
+    ["ONCOLOGY REPORTS", 2020, "中", "Medium", null, null],
+    ["MOLECULAR MEDICINE REPORTS", 2020, "中", "Medium", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF MOLECULAR MEDICINE",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    [
+      "JOURNAL OF INTERNATIONAL MEDICAL RESEARCH",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    [
+      "AMERICAN JOURNAL OF TRANSLATIONAL RESEARCH",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    [
+      "JOURNAL OF BIOMATERIALS AND TISSUE ENGINEERING",
+      2020,
+      "中",
+      "Medium",
+      null,
+      null
+    ],
+    ["AGING-US", 2020, "中", "Medium", null, null],
+    ["LIFE SCIENCES", 2020, "低", "Low", null, null],
+    ["JOURNAL OF CLINICAL MEDICINE", 2020, "低", "Low", null, null],
+    [
+      "INTERNATIONAL JOURNAL OF ENVIRONMENTAL RESEARCH AND PUBLIC HEALTH",
+      2020,
+      "低",
+      "Low",
+      null,
+      null
+    ],
+    ["ACTA MEDICA MEDITERRANEA", 2020, "低", "Low", null, null],
+    ["SYMMETRY-BASEL", 2020, "低", "Low", null, null]
+  ]
+}

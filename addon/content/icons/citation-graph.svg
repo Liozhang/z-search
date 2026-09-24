@@ -1,0 +1,15 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- DUALLAYER: 基底层固定墨色保证任何渲染器可见；覆盖层 context-fill 由宿主主题接管 -->
+<g id="graph">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="
+M8 6.25a1.75 1.75 0 100 3.5 1.75 1.75 0 000-3.5zM4 3.1a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM12 3.1a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM4 10.7a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM12 10.7a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM8 1.8a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM8 12a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2z
+" fill="#1a1a1a"/>
+<path d="M7 6.5L5 4.8M9 6.5L11 4.8M7 9.5L5 11.2M9 9.5L11 11.2M8 6v4" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+</g>
+<g id="graph">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="
+M8 6.25a1.75 1.75 0 100 3.5 1.75 1.75 0 000-3.5zM4 3.1a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM12 3.1a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM4 10.7a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM12 10.7a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM8 1.8a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2zM8 12a1.1 1.1 0 100 2.2 1.1 1.1 0 000-2.2z
+" fill="context-fill"/>
+<path d="M7 6.5L5 4.8M9 6.5L11 4.8M7 9.5L5 11.2M9 9.5L11 11.2M8 6v4" stroke="context-fill" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+</g>
+</svg>

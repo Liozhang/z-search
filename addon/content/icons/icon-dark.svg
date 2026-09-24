@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="z-search">
+  <!--
+    z-search 标的深色宿主变体（2026-09-23 重设计）。
+
+    与 icon.svg 同构、同几何（圆心 42/48、Z 在 x 26..68 / y 33..63、手柄
+    (68,63)→(84,78)），只把明度对调：深底场景下墨圆会糊进背景，故圆用浅墨
+    #fafafa、Z 用墨色负形、绯红手柄不变。
+
+    当前仓库内无引用点——Zotero 菜单的自定义深色图标机制只在旧工具栏按钮上
+    用过。留作深底场景资产；确认不再需要可直接删。
+  -->
+  <circle cx="42" cy="48" r="34" fill="#fafafa"/>
+  <g stroke="#1a1a1a" stroke-width="9" stroke-linecap="round" fill="none">
+    <path d="M26 33 H68"/>
+    <path d="M68 33 L26 63"/>
+    <path d="M26 63 H68"/>
+  </g>
+  <path d="M68 63 L84 78" stroke="#b5343a" stroke-width="9" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,17 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- DUALLAYER: 基底层固定墨色保证任何渲染器可见；覆盖层 context-fill 由宿主主题接管 -->
+<g id="translate">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="
+M1 3h4v10H1V3z
+M11 3h4v10h-4V3z
+" fill="#1a1a1a"/>
+<path d="M6 6.5h3M8 5.5l1 1-1 1M10 9.5H7M8 10.5l-1-1 1-1" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</g>
+<g id="translate">
+<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="
+M1 3h4v10H1V3z
+M11 3h4v10h-4V3z
+" fill="context-fill"/>
+<path d="M6 6.5h3M8 5.5l1 1-1 1M10 9.5H7M8 10.5l-1-1 1-1" stroke="context-fill" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</g>
+</svg>

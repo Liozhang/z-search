@@ -1,0 +1,994 @@
+/* ================================================================
+   leadero-theme.css — 暗色适配 + 容器级联块
+   （合并自 leadero-theme-fallback.css / leadero-hub-palette.css /
+    leadero-animations.css / leadero-shared.css 等，v1.33 后多轮合并）。
+
+   2026-08-15 设计换血后的职责收敛：
+   - 表面/文字/边框（text/border/surface 系列）已永久定义于 leadero-tokens.css
+     的官方 Stone 主题层，本文件【不再】重复定义（避免高特异性 :not 规则
+     压过官方值）。
+   - accent fallback 双轨已随 2026-08-25 脱钩批拆除：token 全静态定义于
+     leadero-tokens.css（亮暗两套），不再有「Zotero 注入 / standalone
+     兜底」两种供给状态，theme-injected 类随之退役。
+   - 暗色模式下硬编码色修复（引用 tokens.css 的 --overlay-bg 等）。
+
+   所有被引用的变量均定义在 leadero-tokens.css，注入顺序无关。
+   ================================================================ */
+
+/* ==================== Component-local contracts（2026-08-25 五问审计批下放）====================
+   单消费组件契约 token 自 leadero-tokens.css 下放至此（全局只留跨组件语义）：
+   pagination/taginput 的消费点全部在本文件；scrollbar 另被 layout.css 消费——
+   同一 bundle 注入同一 .leadero-root 作用域，此处单点定义即可覆盖。
+   2026-08-31 D1 清债：原「阶段0 Base UI 全局前置」的裸 .leadero-root 块
+   （原 :97 isolation/position）并入本块——两块逐 key 核对无重复 key，
+   取并集、活值不变；rationale 详见下方阶段0 注释。 */
+.leadero-root {
+  --pagination-gap: var(--space-2);
+  --pagination-active-bg: var(--action-primary-bg);
+  --pagination-active-fg: var(--action-primary);
+  --taginput-border: var(--border-subtle);
+  --taginput-radius: var(--radius-btn);
+  --scrollbar-width: 6px;
+  --scrollbar-thumb: var(--border-subtle);
+  --scrollbar-thumb-hover: var(--border-strong);
+  --scrollbar-radius: 3px;
+  /* data-le-animate 进场错峰延迟默认值（借鉴 ZCode 批 2026-09-07）——
+     消费点内联 style 按块覆盖 */
+  --le-entrance-delay: 0s;
+
+  /* ── 阶段0 Base UI 全局前置（官方 quick-start；并入自原独立块）── */
+  isolation: isolate;
+  /* position:relative 让内部 position:absolute 的浮层（含 portal-layer、
+   * Base UI Backdrop）以 .leadero-root 为定位参考，而非向上冒泡到更远的
+   * 定位祖先。hub.html 的 #root 无显式定位，chat.html 的 #root 是 fixed
+   * （隐式 relative），这里统一显式声明，保证两种挂载路径行为一致。
+   * 官方对 body 的要求："body { position: relative; }"（iOS 26+ Safari
+   * 兼容，Backdrop 用 absolute 覆盖整个视口）；leadero 挂载在 .leadero-root
+   * 而非 body，故等价地加在 .leadero-root。 */
+  position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Fix hardcoded colors that don't auto-adapt */
+  .leadero-root .attachment-remove {
+    background-color: var(--overlay-bg);
+    color: var(--card-bg);
+  }
+  .leadero-root .hub-brain-force-tooltip {
+    background: var(--tooltip-bg-solid);
+  }
+  .leadero-root .hub-brain-force-toolbar {
+    background: var(--toolbar-float-bg);
+  }
+  .leadero-root .hub-brain-concept-level.L4 {
+    color: var(--data-blue-dark);
+  }
+  .leadero-root .hub-brain-concept-level.L5 {
+    color: var(--data-blue-dark);
+  }
+  /* ForceGraph SVG text fill — override inline style fallback in dark mode */
+  .leadero-root .hub-brain-force-svg text {
+    fill: var(--text-primary);
+  }
+  /* ForceGraph container 暗色底双轨退役（砚化第二轮·阅读器面板批）：
+     §11 面板浮纸底由 .leadero-pg-section-root 统一承担（令牌亮暗自适配），
+     原 --card-bg≡--paper-raised 同值异源，内层再铺一层属双轨。 */
+}
+/*
+ * leadero-baseui.css
+ * Base UI（@base-ui/react）headless 组件的样式覆盖。
+ *
+ * 设计原则：
+ *   - 所有选择器以 `.leadero-root` 起始，满足 check-css-scope.cjs；
+ *   - 通过 Base UI 暴露的 `data-*` 属性（如 `[data-popup]`、`[data-checked]`）
+ *     或自定义 className 命中样式，不依赖 Base UI 内部 class；
+ *   - 颜色 / 间距 / 圆角一律用 leadero token（`--data-*` / `--signal-*` /
+ *     `--space-*` / `--radius-*` 等，全静态定义于 leadero-tokens.css）；
+ *   - portal-layer 容器物理上在 `.leadero-root` 子树内（见 PortalScope.tsx），
+ *     因此这里的选择器能命中 portal 出去的浮层。
+ *
+ * 阶段对应（随迁移进度逐步填充）：
+ *   阶段0：portal-layer 基础样式
+ *   阶段1：Toast / Tooltip
+ *   阶段2：Dialog
+ *   阶段3：Select / Combobox
+ *   阶段4：Menu / Tabs
+ *   阶段5：Button / Switch / Checkbox / Slider / NumberField
+ *   阶段6：Collapsible / Accordion
+ */
+
+/* ==================== 阶段0：Base UI 全局前置样式（官方 quick-start 要求） ====================
+ * 来源：https://base-ui.com/react/overview/quick-start
+ * 这两条是 Base UI 浮层正确渲染的前置条件，必须在使用任何 Base UI 组件前落实。
+ */
+
+/*
+ * 1. 独立堆叠上下文（官方：.root { isolation: isolate; }）
+ *
+ * 让所有浮层 z-index 在 .leadero-root 内部解析，不与 Zotero 主窗口或
+ * iframe 宿主页面的 z-index 冲突。官方原文：
+ *   "create a separate stacking context for your application so popups
+ *    appear above page contents and z-index properties do not interfere."
+ *
+ * leadero 的"应用根"是 .leadero-root（不是 body），所以加在这里。
+ * 这也意味着 portal-layer 容器无需自带 z-index —— isolate 已确保
+ * .leadero-root 内部的 z-index 层级独立。
+ *
+ * 2026-08-31 D1 清债：isolation/position 声明本体已并入文件首的
+ * .leadero-root 合一块（原独立裸块删除，活值不变）。
+ */
+
+/* ==================== 阶段0：Portal Layer 容器 ==================== */
+/*
+ * portal-layer 是所有 Base UI 浮层（Dialog/Popover/Tooltip/Menu/Select/
+ * Combobox/Toast）的统一 portal 目标。它物理上在 .leadero-root 子树内，
+ * 自身带 .leadero-root 类（见 PortalScope.tsx），因此 token 与 CSS 选择器
+ * 都能正常工作。
+ *
+ * 关键样式：
+ *   - position: absolute; inset: 0 —— 覆盖父级作用域，为浮层提供定位参考
+ *   - pointer-events: none —— 空容器不拦截鼠标；浮层各自设 auto
+ *   - 不设 z-index —— 避免创建堆叠上下文限制内部浮层层级（见 tokens 注释）
+ *
+ * 注意：此容器只在 .leadero-root 已有的作用域内生效（它本身就在 .leadero-root
+ * 子树里，所以选择器用 .leadero-portal-layer 即可，外层 .leadero-root 是
+ * 它的祖先）。
+ */
+.leadero-root .leadero-portal-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* 必须铺满 .leadero-root（不能是 0×0）：Dialog 的 Backdrop 需要铺满父级
+   * 来实现全屏遮罩 + 居中弹窗。Tooltip/Popover/Menu/Select 用 floating-ui
+   * 算绝对坐标，不依赖父容器尺寸，铺满对它们无影响。
+   * pointer-events:none 让容器本身不拦截正常内容；子浮层各自 auto。 */
+  overflow: visible;
+}
+
+/* 所有 portal 进来的浮层根元素恢复指针事件（覆盖容器的 pointer-events:none）。
+ * Base UI 浮层根通常带 [data-popup] 或具体 role，统一放行。 */
+.leadero-root .leadero-portal-layer > * {
+  pointer-events: auto;
+}
+
+/* 组件视觉样式已迁移到各组件 .tsx 的内联 Tailwind 工具类
+   （Select/Checkbox/Slider/NumberField/Menu/Tooltip/Dialog 等）。
+   本文件仅保留 Base UI 全局前置要求 + portal-layer 容器。 */
+
+/*
+ * leadero-animations.css — All @keyframes definitions in one place.
+ *
+ * A component uses an animation by referencing the name in `animation:` / `@keyframes`.
+ * This file only defines keyframes — the animation properties (duration, easing,
+ * iteration-count) live in the consuming component CSS.
+ *
+ * Convention:
+ *   Prefix  Scope
+ *   ──────  ────────────────────────────────────────────
+ *   le-     Leadero-wide utilities (search, slide)
+ *   spin    Spinner variants
+ *   lf-     Layout/flow animations
+ *   lv-     Live/progress indicators
+ *   msg-    Chat message animations
+ *   ui-     UI element animations (tooltip, toast, dialog)
+ *   lt-     Loader/task animations
+ *   pg-     Paper Graph animations
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   SPINNER — Orbit rings（消费者：ui/OrbitRings.tsx；le-spin 随边框圈
+   spinner 清退已删除，勿在 CSS 类里重新手写旋转动画）
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes spin-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-orbit-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT — Slide, fade, zoom
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Utility: search highlight pulse fade (used by search overlay) */
+@keyframes le-search-highlight {
+  0% {
+    background-color: var(--data-blue-medium);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Layout: dialog fade-in (used by dialog backdrop) */
+@keyframes le-dialog-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOADERS / PROGRESS — Pulsing, orbiting
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* le-task-pulse 已退役（复审 Q6：1.6s 无限脉冲违 §7；消费点改法定墨点呼吸） */
+
+/* ═══════════════════════════════════════════════════════════════════
+   UI — Toast
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESEARCH — Phase indicator
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   LITERATURE SEARCH — Fade in
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes le-lit-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROFILE — Radar pulse
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* le-profile-pulse 已退役（2026-09-21 砚法 v1.48 审计收口 §15-95：1.5s scale
+   循环违 §7 全站唯一循环动效法；消费点 profile-phase-label-inline 改静态，
+   keyframes 随批删除防复活）。 */
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAPER GRAPH — Node highlight ring
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   ORIGINAL-NAME ALIASES — kept for backward compatibility with
+   CSS files that reference these names in `animation:` properties.
+   Each has identical behavior to its le- prefixed counterpart above
+   (or is a unique animation with no le- equivalent).
+   ═══════════════════════════════════════════════════════════════════ */
+
+@keyframes leadero-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes leadero-message-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* leadero-shimmer 已退役（2026-09-21 砚法 v1.48 审计收口 §15-95）：自造 shimmer
+   禁令（§3.3 审过不采/§7）——shimmer-text 与 leadero-shimmer-line 两消费点改
+   hub-skeleton-pulse 1.2s 单次呼吸（法定骨架语法），本 keyframes 随批删除。 */
+
+@keyframes leadero-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes leadero-attachment-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* leadero-drag-pulse 已退役（2026-09-21 砚法 v1.48 审计收口 §15-95）：1.5s 无限
+   循环违 §7；消费点 drag-drop-content 改 attachment-in 单次入场，随批删除。 */
+
+/* research-phase-pulse 已退役（2026-09-21 砚法 v1.48 审计收口 §15-95）：
+   active 光环脉冲消费点 2026-09-20 合规批已改 research-ink-breath（2s 墨点
+   呼吸同律），死键随批删除（research-dash.css 注记的「待属主批清理」清偿）。 */
+
+/* leadero-session-slide-in 已退役（2026-09-16 C1）：虚拟化列表滚动重挂行会
+   重播动画=滚动抖动，且整列表动画属「廉价动效」。消费点已从 layout.css 移除。 */
+
+/* ═══ 恢复区（2026-08-18 审计 K 批）══════════════════════════════
+ * 下列 6 个 keyframes 被 7aad3c15 误判为未使用删除，但 leadero-input.css
+ * 的 slash 菜单 / 命令建议 / 菜单淡入 / 引用脉冲 / 发送按钮辉光 / 手风琴
+ * 动画仍在引用（animation: <name>），删除后全部静默失效。自此恢复。 */
+
+@keyframes leadero-accordion-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* v1.44：leadero-send-glow-steer 删除（消费点已移除，装饰辉光禁令） */
+@keyframes leadero-quote-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--data-blue-medium);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--data-blue-ring);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes leadero-cmd-suggest-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes leadero-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hub-palette-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 骨架 shimmer（原 leadero-hub-home.css，补 Q 迁入；渐变底色在消费点 utility 里） */
+/* v1.52：hub-home skeleton keyframe 退役（手写骨架改 LoadingState） */
+
+/* ══ 以下三块自 leadero-hub.css 迁入（§1.6.3 keyframes 基建单源立法，2026-08-19）══ */
+
+@keyframes hub-pane-enter {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes graph-node-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hub-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   进场动画门控约定（借鉴 ZCode 批 2026-09-07）
+   消费点给块级元素标 data-le-animate 即得统一进场：签名曲线
+   --ease-standard + leadero-fade-in；逐块错峰用内联 --le-entrance-delay。
+   reduced-motion 不需要单列豁免——文件尾全局块已把时长压到 0.01ms。
+   ═══════════════════════════════════════════════════════════════════ */
+
+.leadero-root [data-le-animate] {
+  /* v3 批 3（2026-09-19）：0.6s 裸值归位 --transition-entrance（签名进场档） */
+  animation: leadero-fade-in var(--transition-entrance) var(--le-entrance-delay)
+    both;
+}
+/*
+ * 命令面板容器级联块（原 leadero-hub-palette.css，v1.33 合并至此）。
+ *
+ * 2026-08-18 补 O：内件样式（input 行/分组列表/命令项/空态/底部栏/kbd）
+ * 已全量迁移 CommandPalette.tsx utility（data-[focused] 变体驱动焦点态），
+ * 本文件只剩【容器】——它必须留在无层 CSS：命令面板顶部锚定（top:12vh +
+ * translate:-50% 0）要与 .leadero-dialog 基类的 inset:0/margin:auto 居中
+ * （同为无层）对抗，utility 在 @layer 内恒输，搬走即破。
+ *
+ * 入场 keyframe hub-palette-enter 见 leadero-animations.css（基建单源）。
+ */
+
+.leadero-root .hub-command-palette {
+  position: fixed;
+  top: 12vh;
+  /* 覆盖 .leadero-dialog 基类的 inset:0 + margin:auto 居中——命令面板用顶部定位 */
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  margin: 0;
+  /* 覆盖 dialog.tsx DialogContent 基类的 translate-x/y-[-50%] 居中。
+     Tailwind v4 把这两个 utility 编译为独立 `translate` 属性，不是 `transform`。
+     无需 !important：本规则无层，恒胜 tw.css @layer utilities（同特异性 (0,2,0)）。 */
+  translate: -50% 0;
+  width: min(var(--palette-max-w), 92vw);
+  /* 以下三项必须显式声明：DialogContent 基类（@layer utilities）的
+     p-6 / gap-4 / sm:max-w-lg 只在本规则未声明时才失效——不声明即泄漏
+     （24px 双层 padding、16px 多余 gap、实宽被压成 512px）。 */
+  max-width: min(var(--palette-max-w), 92vw);
+  padding: 0;
+  gap: 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--hub-bg-elev);
+  border-radius: var(--card-radius);
+  /* 审计 2026-08-31：面板投影回原型 .palette 档 shadow-pop（=md，最小浮层阴影），
+     原值 --shadow-lg 无登记升档 */
+  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  z-index: var(--z-modal);
+  /* 入场只做 Y 位移（水平居中由上面的 translate 属性承担；
+     keyframes 里再写 translateX(-50%) 会叠加成 -100%，动画期间偏左半宽）。 */
+  /* --transition-normal 值内已含 easing，shorthand 再拼第二个会非法（IACVT 整条失效）——拆写 */
+  animation: hub-palette-enter var(--transition-normal);
+}
+/* v1.53 审计批 B3：选项行单源类（原 523 字符内联 utility 链提取）。
+   group/flex/items-center 留在 TSX——子元素图标依赖 group-hover/group-data 修饰符。
+   hover 与聚焦态灯罩单通道（同 hub 列表行配方）；聚焦=左侧品牌指示条。 */
+.leadero-root .hub-palette-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  min-height: var(--row-height-sm);
+  padding: var(--space-1) var(--space-4);
+  cursor: pointer;
+  /* v1.67（2026-08-26 用户裁决）：菜单项对齐原型 .menu-item=14px → --text-control
+     （08-24 批曾回归 --text-base 13px，后原型字号核对确立菜单项=控件档）。
+     家族用 --font-sans（UI 正文 sans）；衬线 prose 档 = --text-prose/--leading-prose
+     + 显式 font-family（--ui-font-body 已删，2026-09-02 值级批孤儿清退）。 */
+  font-size: var(--text-control);
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+.leadero-root .hub-palette-option:hover,
+.leadero-root .hub-palette-option[data-focused] {
+  background: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .hub-palette-option[data-focused] {
+  box-shadow: inset var(--hub-indicator-width) 0 0 var(--hub-indicator-color);
+}
+/*
+ * 跨 Dashboard 共享组件样式（原 leadero-shared.css，v1.33 合并至此）。
+ * Loaded by all Leadero interfaces (Brain, Discovery, Extract, Graph, Usage, Research).
+ *
+ * Design system: token-driven, accent-blue single-hue,
+ * surface + shadow hierarchy, --transition-fast interactions.
+ */
+
+/* ── 紧凑空态（原 usage-empty-compact，2026-09-02 值级批收尾升共享）：
+   挂 EmptyState className 压缩为大空态的紧凑变体（80 高 + 12/16 内距）。 */
+.leadero-root .hub-empty-compact {
+  min-height: 80px;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ── Universal Focus Visible ── */
+/* 仅对非 shadcn 组件生效（shadcn 组件有 data-slot 属性 + 自带 focus-visible:ring）。
+   避免与 Button/Input 等组件的 focus ring 叠加产生双重焦点指示器。 */
+.leadero-root button:not([data-slot]):focus-visible,
+.leadero-root [role="button"]:not([data-slot]):focus-visible,
+.leadero-root [tabindex="0"]:not([data-slot]):focus-visible,
+.leadero-root a:not([data-slot]):focus-visible,
+.leadero-root select:not([data-slot]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ==================== Button Sub-rules (residual) ==================== */
+/* Button variants/sizes/tones migrated to inline Tailwind classes (Button.tsx).
+ * Only classes still consumed by non-migrated .tsx files remain below. */
+
+/* Disabled but styled — used by RunStatusIndicator (ghost Button in disabled state). */
+.leadero-root .disabled-but-styled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.leadero-root .loading {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+/* v1.52：TintedIcon 退役（状态=点+文字唯一制；组件与基座样式同批删除） */
+/* ── Stat Card ──（容器规则统一在下方 Usage 区的唯一定义；此处仅保留变体）
+   primary 变体已废（v2 立法 2026-09-08 §8 废法候选；视觉底 v1.45 已中和为
+   transparent，本批清除 prop 与两条死规则——「最重要数字」由排印主位承担，
+   品牌红只做身份不做数据容器）。 */
+
+.leadero-root .leadero-stat-card .stat-label {
+  /* 2026-09-02 值级批+原型 :256：label 字号 12px 直给（--ui-font-meta 内含 11px 被覆写，font-family 保留） */
+  font-family: var(--ui-font-meta);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: var(--font-weight-normal);
+  /* 2026-09-02 值级批+原型 :247-258：label→value 间距补差 8px（容器 gap=2px 管 value→delta） */
+  margin-bottom: var(--space-2);
+}
+
+.leadero-root .leadero-stat-card .stat-value {
+  font: var(--ui-font-display);
+  color: var(--text-primary);
+  line-height: 1.2; /* 2026-09-02 值级批+原型 :169 .num.hero 1.2；--ui-font-display 简写自带 /1.2 被此覆写，改回 1.2 */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(
+    --tracking-tight
+  ); /* 2026-08-30 对齐原型 num.hero 光学紧排 */
+}
+
+.leadero-root .leadero-stat-card .stat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+.leadero-root .leadero-stat-card .stat-head svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.leadero-root .leadero-stat-card .stat-sub {
+  font: var(--ui-font-meta);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+/* 环比等方向性 meta：token 用量上升≠好事，用中性灰而非红绿情绪色 */
+.leadero-root .leadero-stat-card .stat-sub.is-success {
+  color: var(--success);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .leadero-stat-card .stat-sub.is-warning {
+  color: var(--warning);
+  font-weight: var(--font-weight-medium);
+}
+
+.leadero-root .leadero-stat-card .stat-weekly {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--signal-green-dark);
+  margin-left: var(--space-1-5);
+  vertical-align: middle;
+}
+
+/* ── Pagination ── */
+.leadero-root .leadero-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--pagination-gap);
+  margin-top: var(
+    --space-4
+  ); /* 2026-09-02 值级批+原型 :1535 .pager margin-top:16px；视图内元素不连带 section 制 24 */
+}
+
+/* 注：padding/border/border-radius/cursor/transition 由 shadcn Button 的
+   variant/size 内置处理，此处仅保留 active 态的颜色覆盖。 */
+.leadero-root .leadero-pagination button.active:not([data-slot]) {
+  background: var(--pagination-active-bg);
+  color: var(--pagination-active-fg);
+  font-weight: var(--font-weight-medium);
+}
+
+.leadero-root .leadero-pagination-info {
+  font-variant-numeric: tabular-nums; /* v1.52 S11 */
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ── Dialog Overlay ── */
+/* Dialog (.leadero-dialog-overlay / .leadero-dialog) migrated to inline Tailwind
+ * classes (baseui/Dialog.tsx). ConfirmDialog reuses Dialog.Content. */
+
+/* ── Form Controls ── */
+.leadero-root .leadero-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+/* 注：视觉（背景/边框/焦点/字号）由官方 v4 Input/Textarea/Select 工具类
+   提供；此处仅保留布局属性。 */
+.leadero-root .leadero-form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.leadero-root .leadero-form-select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.leadero-root .leadero-form-textarea {
+  width: 100%;
+  line-height: var(--leading-normal);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+/* ── Globe wrapper ── */
+.leadero-root .leadero-globe-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Form required marker ── */
+.leadero-root .leadero-form-required {
+  color: var(--signal-red-strong);
+  margin-left: var(--space-0-5);
+}
+
+/* ── Migrated from utilities.css ── */
+/* ErrorBoundary 段已删（2026-09-02 批4：ErrorBoundary.tsx 收编 ErrorState 后零消费；FTL 键 error-boundary-message 仍存活） */
+
+/* ── Section Title (shared across dashboards) ── */
+
+/* ── Tag Input ── */
+/* v1.65 矩阵 ⑩（2026-08-25 裁决，原型 .tagin/.tc）：外壳 8px/min-h 32/内距 6-8；
+   chip 无色描边（蓝 chip 退役，顺带修单色制违规）；焦点近黑边。chip 字号原型
+   11.5px 不在字阶上，就近取 --text-2xs(11px)。 */
+.leadero-root .leadero-tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--taginput-border);
+  border-radius: var(--taginput-radius);
+  background: var(--card-bg);
+  min-height: 32px;
+  align-items: center;
+  transition: border-color var(--transition-fast);
+}
+.leadero-root .leadero-tag-input:focus-within {
+  border-color: var(--primary);
+}
+.leadero-root .leadero-tag-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1); /* 2026-09-11 拥挤审计：2px→4px，删除钮误触邻域 */
+  padding: var(--space-0-5) var(--space-1) var(--space-0-5) var(--space-1-5);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+}
+.leadero-root .leadero-tag-input-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  /* 2026-09-11 拥挤审计：× 字符裸热区 ≈13px 远低于 24px 下限；chip 内放不下
+     24px，用 2px padding+负 margin 把热区扩到 ≈17px 且不改视觉占位 */
+  padding: var(--space-0-5);
+  margin: calc(-1 * var(--space-0-5));
+  font-size: var(--text-sm);
+  line-height: 1.1;
+}
+.leadero-root .leadero-tag-input-remove:hover {
+  color: var(--text-primary);
+}
+.leadero-root .leadero-tag-input-field {
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 100px;
+  flex: 1;
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  outline: none;
+}
+
+/* ── ConfirmButton — inline two-click confirmation ── */
+
+/* ── Searchable Select (combo-box) ── */
+/* Combobox (.searchable-select*) migrated to inline Tailwind classes (Combobox.tsx). */
+
+/* ── Context Menu (was discovery-context-*) ── */
+/* Menu (.leadero-context-overlay / -menu / -item) migrated to inline Tailwind
+ * classes (baseui/Menu.tsx). */
+
+/* ── Donut（SVG 环形分布图）──
+   2026-09-07 布局审计：.leadero-donut/-svg/-center 三规则全仓零消费
+   （组件已删遗留），整体清退。 */
+
+/* ── Toast（auto-dismissing notification）── */
+/* Toast (.leadero-toast* / .leadero-toast--{tone}) migrated to inline Tailwind
+ * classes (ui/Toast.tsx). The @keyframes leadero-toast-in is removed with it. */
+
+/* ── Tab / TabBar (shared tab molecule with 3 weight variants) ── */
+/* TabBar (.leadero-tabbar / --pill / --solid / --underline / .leadero-tab) migrated
+ * to inline Tailwind classes (TabBar.tsx). */
+
+/* Chip migrated to inline Tailwind classes (Chip.tsx). */
+
+/* ── StatCard (large number + label + optional change trend) ── */
+/* NOTE: .leadero-stat-card container is shared with BrainOverview's hand-written
+ * stat cards (which use .stat-label/.stat-value/.stat-sub child classes, no
+ * leadero- prefix). The container rules below (gap/padding/bg) apply to both;
+ * child rules use .leadero-stat-* prefix to avoid collision. Container padding
+ * is identical (--space-4) so no visual conflict. */
+.leadero-root .leadero-stat-card {
+  /* v1.45 页面批：统计卡去盒（§23 融合——数字与标签直接站在页面上） */
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  /* 2026-09-02 值级批+原型 :247-258：容器 gap 控制 value→delta=2px；label→value 由 label margin-bottom 补差至 8px */
+  gap: var(--space-0-5);
+  padding: var(--space-2); /* 原型 .stat padding-block:8 */
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+/* ── SidebarPane (self-contained: layout + sb-head + sb-list) ── */
+/* Defined here (not leadero-hub.css) so SidebarPane works in any window. */
+.leadero-root .leadero-sidebar-pane {
+  width: var(--dash-nav-width);
+  flex-shrink: 0;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.leadero-root .sb-head {
+  padding: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-2);
+}
+.leadero-root .sb-head h3 {
+  margin: 0;
+  font-family: var(--ui-family-display);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .sb-head-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.leadero-root .sb-head-subtitle {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .sb-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-1-5) var(--space-2);
+}
+
+/* ── SidebarPane（graph/research 左栏壳）≤768 隐藏规则已清退（2026-09-14
+   宽度适配批裁决）：消费面仅 Hub（minwidth=900）永不触发；graph 左栏窄
+   pane 降档见 leadero-hub-graph.css 的 @container 规则。 */
+
+/* ── DetailPanel (collapsible right panel; reuses hub-graph-detail transition) ── */
+.leadero-root .leadero-detail-panel {
+  width: 0;
+  min-width: 0;
+  flex-shrink: 0;
+  border-left: none;
+  background: var(--card-bg);
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  /* width/padding/border 都触发 layout reflow（影响旁边 canvas）。
+     用 transition-fast 缩短持续时间 + will-change 提示浏览器优化合成层。
+     根治需改 canvas 在面板动画期间暂停 d3 simulation（画布层改动，留后续）。 */
+  transition:
+    width var(--transition-fast),
+    padding var(--transition-fast),
+    border-left-width var(--transition-fast);
+  will-change: width;
+}
+.leadero-root .leadero-detail-panel.open {
+  /* 本仓无全局 border-box：width+padding+border 三件套必须显式 border-box，
+     否则实占 =320+25 超声明宽，挤压 flex 兄弟正文列 26px（2026-09-07 布局审计 P2；
+     同族先例 .leadero-stat-card 已补） */
+  box-sizing: border-box;
+  width: var(--pg-right-width);
+  border-left: 1px solid var(--border-subtle);
+  /* 2026-09-11 拥挤审计：顶部 40px 预留——关闭钮（top 4 + 32px 高 = 底缘 36px）
+     此前压住首行内容约 22px（GraphPane 节点题名首行直接穿入钮下） */
+  padding: var(--space-10) var(--space-3) var(--space-3);
+}
+/* close 按钮：宽屏定位右上角小按钮（随时可关闭面板），窄屏为浮层抽屉大按钮。
+   宽屏 32px 略大于 WCAG 2.5.8 (AA) 的 24px 最低值，鼠标点击更舒适；
+   窄屏放大到 44px 满足 WCAG 2.5.5 (AAA) 触摸目标。 */
+.leadero-root .leadero-detail-panel-close {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  min-width: var(--icon-btn-size);
+  min-height: var(--icon-btn-size);
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: var(--text-lg);
+  line-height: 1.1;
+  cursor: pointer;
+  z-index: var(--z-base);
+  transition: color var(--transition-fast);
+}
+.leadero-root .leadero-detail-panel-close:hover {
+  color: var(--text-primary);
+}
+.leadero-root .leadero-detail-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.leadero-root .leadero-detail-panel-actions > button:not([data-slot]) {
+  flex: 0 1 auto;
+  min-width: fit-content;
+}
+/* Responsive: ≤1024px → floating drawer overlay */
+@media (max-width: 1024px) {
+  .leadero-root .leadero-detail-panel.open {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: var(--z-dropdown);
+    /* v1.43：浮层边缘配方走法定阶梯（--shadow-panel 方向性侧影为 §19.2 禁用技法） */
+    box-shadow: var(--shadow-lg);
+  }
+  /* narrow screen: enlarge close button for touch (44px target) */
+  .leadero-root .leadero-detail-panel-close {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: var(--text-xl);
+  }
+}
+
+/* ── Scrollbar（webkit + firefox；T6 迁移 4 处消费方）── */
+.leadero-root .leadero-scroll::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+.leadero-root .leadero-scroll::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--scrollbar-radius);
+}
+.leadero-root .leadero-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+.leadero-root .leadero-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* ── Reduced Motion ── */
+/* Respect user's motion preference: disable transform/scale animations but
+   keep color/opacity transitions (needed for state feedback visibility). */
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root *,
+  .leadero-root *::before,
+  .leadero-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Base UI 阶段5：Checkbox checked 态（F1 修复，2026-09-08）──
+ * 暗色勾号对比度 1.67:1（真机 acc-154 + 09-08 复测复现）根因：组件类串的
+ * data-checked:* 工具类在 Hub iframe 运行时不落地——元素 class、
+ * data-checked="" 属性、tw.css 规则三层齐备，computed 样式仍是未选中态
+ * （暗灰底+继承次级文字色勾号）。手写规则钉死 checked 态，token 直取：
+ * 亮色=近黑底/近白勾，暗色随 v1.44 单色制反转，两主题对比 ~10:1 ≫ 3:1。
+ * specificity (0,4,0) 高于工具类 (0,2,0)，后置源序双保险。 */
+.leadero-root [data-slot="checkbox"][data-checked]:not([data-checked="false"]) {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* ═══ 砚法合规修复批（2026-09-20）══════════════════════════════
+ * leadero-active-dot-breathe — 讨论室运行态「名字旁状态点脉冲」（§8.5）。
+ * OrbitRings 循环环退役（§8.5 运行态禁循环环）；全站唯一循环动效=
+ * 墨点呼吸（§7/§9.1：2s opacity 0.5↔1 极慢，reduced-motion 下停——
+ * 消费类 leadero-breathe-dot 的显式停动规则见 leadero-hub-base.css）。
+ * keyframes 归本文件（全站 @keyframes 单一归宿），消费类在域 CSS。 */
+@keyframes leadero-active-dot-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ═══ 首页页批（2026-09-20，砚法 §15-74 队列 / IA 附法 §4.1 形式①）═══
+ * ink-in — bento 卡级联入场（stylekit 配件级引用，立法 v1.18；原型
+ * inkstone-prototype-2026-09-19.html 736-748 忠实映射：0.5s decel 位移 8px，
+ * stagger 75ms/步）。keyframes 归本文件（全站 @keyframes 单一归宿），
+ * 消费类 .hub-bento-card 在 leadero-layout.css；stagger 由卡上内联 --i 驱动
+ * （.hub-bento 内有静态默认值 0），reduced-motion 停动见 layout 消费侧。 */
+@keyframes ink-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

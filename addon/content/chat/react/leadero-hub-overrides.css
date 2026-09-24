@@ -1,0 +1,15 @@
+/* leadero-hub-overrides.css — Hub 样式分区（原 leadero-hub.css 3356-3371 行：末尾微观覆盖（Home 手感 / Settings Select 28px））。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/* ==================== Home 组件微观手感（原型对齐批 1.2⑥） ====================
+ * 原型无过渡是静态稿属性，不等于真机要零过渡；压到 80ms 消除「库拼感」的
+ * 拖沓同时保留即时反馈（2026-08-25 评审定案，不照抄方案的 transition: none）。 */
+.leadero-root .hub-home-body button[data-variant="ghost"] {
+  transition-duration: 80ms;
+}
+
+/* ==================== Settings Select 28px（原型对齐批 4.3④；2026-08-25 裁决 #3） ====================
+ * 分界规则：对话框/表单输入 = 32px（h-8 输入基线，08-24 裁决）；
+ * 页面行内紧凑控件（Select / mini input）= 28px——两档并存合法，按场景选档。
+ * 2026-09-02 值级批：本覆盖块退役——Select 基线已同步原型 .sel（:374）全三值
+ * （h-7=28 / --text-control 14 / 右10左12 内距），Settings 专属覆写不再需要。 */

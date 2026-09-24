@@ -1,0 +1,53 @@
+<!--
+  z-search — Zotero 设置面板（搜索中心的设置项归口）。
+
+  结构按 Zotero 7 原生 prefpane 制式（chrome/content/zotero/preferences/
+  preferences_general.xhtml 同款）：XUL fragment，由
+  Zotero.PreferencePanes.register() 注入设置窗 deck（parseXULToFragment
+  会把本片段包进带 DOCTYPE 的外层文档——故文件头**禁写 <?xml?> 声明**，
+  只能以注释开头）。
+
+  脚本经 register({scripts}) 以 Sandbox 载入后自行挂 document load 捕获监听
+  （Sandbox 符号对 onload 属性不可见，见 content/preferences.js 头部注）。
+-->
+<vbox id="zsearch-prefpane" class="main-section">
+  <linkset>
+    <!-- 面板全部文案走插件自有 FTL（经 addon.api.t 运行时取词），此处不引
+         data-l10n-id，避免与设置窗自身 l10n 语境混用。 -->
+  </linkset>
+
+  <!-- ═══ 网页搜索源 ═══ -->
+  <groupbox id="zsearch-sources-group">
+    <caption id="zsearch-sources-title" />
+    <description id="zsearch-sources-desc" class="pane-desc" />
+    <richlistbox id="zsearch-source-list" class="source-list" rows="6" />
+    <hbox align="center" class="sources-toolbar">
+      <button id="zsearch-source-test" class="pane-button" />
+      <spacer flex="1" />
+      <label id="zsearch-default-label" control="zsearch-default-provider" />
+      <menulist
+        id="zsearch-default-provider"
+        class="pane-menulist"
+        native="true"
+      >
+        <menupopup id="zsearch-default-popup" />
+      </menulist>
+    </hbox>
+    <description id="zsearch-source-note" class="pane-note" role="status" />
+  </groupbox>
+
+  <!-- ═══ API Keys 与服务端点 ═══ -->
+  <groupbox id="zsearch-keys-group">
+    <caption id="zsearch-keys-title" />
+    <description id="zsearch-keys-desc" class="pane-desc" />
+    <checkbox id="zsearch-show-keys" class="pane-checkbox" />
+    <vbox id="zsearch-keys-rows" class="keys-rows" />
+  </groupbox>
+
+  <!-- ═══ 学术检索 API Keys ═══ -->
+  <groupbox id="zsearch-academic-keys-group">
+    <caption id="zsearch-academic-keys-title" />
+    <description id="zsearch-academic-keys-desc" class="pane-desc" />
+    <vbox id="zsearch-academic-keys-rows" class="keys-rows" />
+  </groupbox>
+</vbox>
