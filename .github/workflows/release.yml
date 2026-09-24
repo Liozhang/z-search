@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:prod
+
+      # scaffold CI 模式：版本号已随 tag 提交（本地 npm run release 负责
+      # bump + tag + push），这里只创建 v{version} Release 并上传 xpi，
+      # 再在 `release` tag 下刷新 update.json 更新清单。
+      - run: npx zotero-plugin release -y
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

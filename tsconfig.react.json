@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["zotero-types/entries/sandbox"],
+    "noEmit": true,
+    "composite": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/react/*"]
+    },
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo.react"
+  },
+  "include": ["src", "typings"],
+  "exclude": []
+}

@@ -1,0 +1,9 @@
+# 统一 LF：prettier endOfLine: "lf"，避免 Windows 检出 CRLF 导致 lint 失败
+* text=auto eol=lf
+
+# 二进制产物不做换行转换
+*.png binary
+*.jar binary
+*.ico binary
+*.woff binary
+*.woff2 binary

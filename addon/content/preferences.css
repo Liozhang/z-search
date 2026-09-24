@@ -1,0 +1,110 @@
+/*
+ * z-search — Zotero 设置面板样式（搜索源管理）。
+ *
+ * 只做 Zotero 原生 prefpane 制式之外的最小增量：搜索源行与密钥行的栅格、
+ * 状态色档、说明文字档位。基础件（groupbox/caption/hbox/menulist/
+ * richlistbox/checkbox/button/textbox）全部继承设置窗的 preferences.css
+ * 与 zotero.css，本文件不重复定义，防双源漂移。
+ *
+ * 色档说明：设置窗只加载 Zotero 自己的样式表，插件令牌（--accent 等）在
+ * 此不可用，故色值直给（取 Zotero/Firefox 系统色系，与原生选中蓝一致）。
+ */
+
+#zsearch-prefpane {
+  padding-bottom: 12px;
+}
+
+/* 说明/提示行：caption 档、次级墨色。 */
+#zsearch-prefpane .pane-desc,
+#zsearch-prefpane .pane-note {
+  font-size: 1.15em;
+  color: #5b6673;
+  margin: 4px 0 8px;
+  white-space: pre-wrap;
+}
+
+#zsearch-prefpane .pane-note {
+  min-height: 1.6em;
+}
+
+/* 提示行色档（测试结果/操作反馈）。 */
+#zsearch-prefpane .pane-note.tone-ok {
+  color: #1a7f37;
+}
+#zsearch-prefpane .pane-note.tone-warn {
+  color: #b26b00;
+}
+#zsearch-prefpane .pane-note.tone-bad {
+  color: #d70022;
+}
+#zsearch-prefpane .pane-note.tone-busy {
+  color: #0060df;
+}
+
+/* 搜索源列表行：checkbox 左 + 状态右。 */
+#zsearch-prefpane .source-row {
+  min-height: 24px;
+  padding: 1px 2px;
+}
+
+#zsearch-prefpane .source-row.is-added .source-check {
+  font-weight: 600;
+}
+
+/* 状态列：右对齐、meta 档；色档随语义（idle/accent/warn/ok/bad）。 */
+#zsearch-prefpane .source-status {
+  font-size: 1.15em;
+  color: #8a94a3;
+  text-align: end;
+}
+
+#zsearch-prefpane .source-status.tone-accent {
+  color: #0060df;
+  font-weight: 600;
+}
+#zsearch-prefpane .source-status.tone-warn {
+  color: #b26b00;
+}
+#zsearch-prefpane .source-status.tone-ok {
+  color: #1a7f37;
+}
+#zsearch-prefpane .source-status.tone-bad {
+  color: #d70022;
+}
+
+#zsearch-prefpane .sources-toolbar {
+  margin-top: 6px;
+}
+
+/* 密钥行：label 栏定宽、输入伸缩。 */
+#zsearch-prefpane .key-row {
+  margin: 3px 0;
+}
+
+#zsearch-prefpane .key-label {
+  margin-inline-end: 8px;
+}
+
+/* 学术 key 行状态列：已填=绿、必填未填=琥珀、可选未填=灰。 */
+#zsearch-prefpane .key-status {
+  font-size: 1.15em;
+  color: #8a94a3;
+  text-align: end;
+  min-width: 6.5em;
+}
+
+#zsearch-prefpane .key-status.tone-ok {
+  color: #1a7f37;
+}
+
+#zsearch-prefpane .key-status.tone-warn {
+  color: #b26b00;
+}
+
+#zsearch-prefpane .key-input {
+  max-width: 320px;
+}
+
+#zsearch-prefpane .keys-rows {
+  margin-top: 4px;
+}

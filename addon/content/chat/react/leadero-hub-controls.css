@@ -1,0 +1,185 @@
+/* leadero-hub-controls.css — Hub 样式分区（原 leadero-hub.css 1775-1947 行：ToggleGroup filter variant（分段控件 / 多选筛选按钮组））。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/* ═══ ToggleGroup filter variant（分段控件 / 多选筛选按钮组）══════════
+ *
+ * spec §5.4：筛选多选/单选的唯一法定形态。全局作用域（data-variant="filter"
+ * 即判别器）——GraphFilterDialog、Graph 图层切换、搜索来源行共用同一语言。
+ * 曾圈在 .hub-graph-filter-group 下，导致后两处选中态无样式（审计 P1）。
+ *
+ * Base UI ToggleGroup 默认 .group 的 Tailwind 类（border/bg-muted/p-1/text-muted-foreground）
+ * 由以下无层规则凭级联覆盖（无层 author CSS 恒胜 tw.css @layer utilities），
+ * 无需 !important；item 的默认 selected/hover 类同理。
+ */
+.leadero-root [data-slot="toggle-group"][data-variant="filter"] {
+  /* v1.45 组件批（§23 融合）：组容器去边框去灰底——筛选组不装盒；
+     选中态黑底白字（单色制，原品牌红实底退役）。
+     v1.54 用户裁决「裸 chip 不合理」：chip 本体加描边可供性（组容器仍无盒）。
+     v1.57 用户裁决「多选容器必须支持换行」：容器加 flex-wrap（原型参照）；
+     组内间距 2→4px 对齐原型。多选组条目多时换行，不横向溢出/裁切。
+     v1.53 2026-08-24：补 justify-content——wrapper 自带 justify-center 工具类，
+     多行 wrap 时会把每行居中（Tool 单独成行居中悬浮 / L4-L5 整体右移，
+     截图审计发现）；左轨 flush 是 §22.2 单一对齐纪律。
+     v1.63 同族修：补 height:auto——wrapper 基线工具类 h-9(36px) 脱
+     24/28/32/40 控件阶梯，容器无盒化后仍以 36px 隐形壳撑高 chip 行。 */
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--text-secondary);
+  gap: var(--space-1);
+}
+.leadero-root
+  [data-slot="toggle-group"][data-variant="filter"]
+  [data-slot="toggle-group-item"] {
+  /* §19.3 v1.46b 控件族：按钮式 chip 圆角 = --radius-btn（2026-08-22 审计批 S9 落法）。
+     v1.54 描边 chip：边线 = var(--input)——与 Input/Select 触发器同源（暗色自动跟随）。
+     v1.55 用户裁决「对齐 button」：水平内距 6→8px（--space-2，Button xs 档 0.67em）；
+     min-height 24px 归位控件高度阶梯 xs 档（此前渲染高 22px 落在 24/28/32 阶梯外）。
+     契约三处同步：本规则 + spec §18.1 + check-spacing-conventions CONTRACT */
+  border-radius: var(--radius-btn);
+  padding: var(--space-0-5) var(--space-2);
+  min-height: 24px;
+  font-size: 12px; /* 原型 .chip=12px（v1.70 2026-08-26：--text-xs 归 meta 档 11px 后，chip 家族独立保 12，不走 token） */
+  border: 1px solid var(--input);
+  background: transparent;
+  color: inherit;
+  /* v1.53 2026-08-24：长标签防御（中文集合名可极长）——单枚封顶 §22.1 登记
+     --chip-max-w，溢出走 ellipsis（wrapper 的 truncate span）+ hover title */
+  max-width: var(--chip-max-w);
+}
+.leadero-root
+  [data-slot="toggle-group"][data-variant="filter"]
+  [data-slot="toggle-group-item"]:hover {
+  background: var(--hub-bg-hover);
+  color: inherit;
+}
+.leadero-root
+  [data-slot="toggle-group"][data-variant="filter"]
+  [data-slot="toggle-group-item"][aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--background);
+  border-color: var(--text-primary); /* 边框融合同色（尺寸与未选中档一致） */
+  box-shadow: none;
+}
+/* dot 指示器（知识类型/层级等） */
+.leadero-root
+  [data-slot="toggle-group"][data-variant="filter"]
+  [data-dot-color] {
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* 分节 */
+.leadero-root .hub-graph-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.leadero-root .hub-graph-filter-section-title {
+  /* v1.52 S4：caption 方言 → overline 制式（组标签/节标题两级统一） */
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* 可折叠节头（2026-08-25 图谱筛选密度裁决）：低频精筛维度默认收起，
+   激活值强制展开（TSX FoldSection 保证）。宿主为 ghost Button（ui-adoption
+   守卫要求 Base UI 封装），此处压平其盒模型只留 overline 标题 + 旋转 chevron；
+   hover 灯罩保留——折叠头的可点击暗示。 */
+.leadero-root .hub-graph-filter-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.leadero-root .hub-graph-filter-fold-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+.leadero-root
+  .hub-graph-filter-section-toggle.is-open
+  .hub-graph-filter-fold-chevron {
+  transform: rotate(180deg);
+}
+
+/* 置信度 slider（PR-4 新增维度） */
+.leadero-root .hub-graph-filter-slider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-graph-filter-slider-value {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  min-width: 3em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标注开关（Switch） */
+.leadero-root .hub-graph-filter-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.leadero-root .hub-graph-filter-switch [data-slot="switch"] {
+  cursor: pointer;
+}
+
+/* keyword 输入框：padding/border/border-radius/outline/focus 由 shadcn Input 内置 */
+.leadero-root .hub-graph-filter-keyword {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 出版年份：起止 NumberField 行 + 分隔符。替代旧双拇指原生 range slider。 */
+.leadero-root .hub-graph-filter-year-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.leadero-root .hub-graph-filter-year-field {
+  width: var(--hub-graph-year-field-width);
+}
+.leadero-root .hub-graph-filter-year-sep {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+/* footer：Reset + 计数 */
+.leadero-root .hub-graph-filter-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2-5) var(--space-4-5); /* 2026-09-02 值级批：垂直 var(--space-3)→var(--space-2-5)（原型 :502 .dlg-foot padding:10px 18px）；水平 18=--space-4-5 不动 */
+  border-top: 1px solid var(--hub-hairline); /* v1.52 S12 */
+  flex-shrink: 0;
+}
+.leadero-root .hub-graph-filter-count {
+  font-variant-numeric: tabular-nums; /* v1.52 S11 */
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}

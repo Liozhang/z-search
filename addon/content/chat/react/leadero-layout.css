@@ -1,0 +1,2226 @@
+/*
+ * leadero-layout.css
+ * Hub 全局布局 + 侧边栏
+ *
+ * 合并自：
+ *   - leadero-layout.css   (Hub shell, pane slots, grid utilities, responsive)
+ *   - leadero-sidebar.css  (SidebarPane, soul footer, recommend panel, nav items)
+ *
+ * v1.33 merge 2026-08-20
+ */
+
+/* ── 1. Hub Shell Layout ────────────────────────────────────────────── */
+/*
+ * leadero-layout.css
+ * Root layout, window sizing, XUL resets, utility classes, scroll buttons, shimmer text.
+ */
+
+/* ==================== Layout Utilities ==================== */
+/* Flexbox */
+.leadero-root,
+.leadero-root .display-flex,
+.leadero-root.display-flex {
+  display: flex;
+}
+.leadero-root .flex-col,
+.leadero-root.flex-col {
+  flex-direction: column;
+}
+.leadero-root .flex-1,
+.leadero-root.flex-1 {
+  flex: 1;
+}
+
+/* Swiss page grid（spec §20.1，2026-08-19 立法）：
+   8 列流体栅格的内容区实现。侧边栏列由 HubShell SidebarProvider（flex）承担，
+   固定 256px（2026-08-30 统一为 16rem）。本 utility 作用于「内容区」：
+   主内容 5fr + 细节面板 1fr。当前 DetailPanel 为浮层形态（v1.18），
+   本类是未来「细节面板占列」布局的法定载体，首个消费者落地前保留。 */
+.leadero-root .hub-grid-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 1fr);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── .hub-sections：无盒分节框架 utility（§22.2 + §23.6，v1.45 立 / v1.71 改制）──
+ * 挂在 pane 滚动 body 上：分节不装盒，节间通栏 hairline（首节免）。
+ * v1.71 布局批（2026-08-26 用户裁决「推广 Home 制全页」）：制式改为原型
+ * .section { padding-block: 24px } + .section + .section 节间线——每节上下
+ * 24px、节间 1px 线（节间总空隙 49px）、首节贴顶（pt-0，与容器 py 组合）。
+ * 原 gap-32 制退役；HomePane SECTION_STYLE 常量同步退役改挂本 utility（单源）。
+ * 行分割线由各列表的 .hub-section-rows 或页面行类用 --hub-row-divider 承担。
+ * v3 批 1（2026-09-19 法 3 节线制退役）：Following/Settings 已迁 .hub-clusters，
+ * 存量消费者仅余 Gallery（批 2 随动）；新页禁用本 utility。 */
+.leadero-root .hub-sections {
+  display: flex;
+  flex-direction: column;
+}
+.leadero-root .hub-sections > * {
+  padding-block: var(--space-6);
+}
+.leadero-root .hub-sections > * + * {
+  border-top: 1px solid var(--hub-hairline);
+}
+.leadero-root .hub-sections > :first-child {
+  padding-top: 0;
+}
+
+/* ── .hub-clusters：A 形态（门面/仪表）簇容器 utility（hub-redesign-v2 §3.5，
+ * 2026-09-08 立法 / 2026-09-10 批2 落地）──
+ * 挂在 pane 滚动体上：分节不装盒，簇间 gap 32px（复用 --space-8，同 v1.71 页面
+ * 节奏值单源）且无线——Gestalt 接近律：留白分组先于线条分组被感知；A/B 形态
+ * 节线退役（v2 宪法三）；v3 批 1（2026-09-19）起 C 形态亦退役节线（法 3），
+ * 全页统一簇制（簇 = 留白 32 分组的全形态单源容器）。
+ * 簇 = 直接子级，内部节间距自管（自 gap --space-4/6）。首个消费者：HomePane
+ * （step1 视觉合并；四簇 DOM 合并属批3）。spec §22.2 v2 修订注同批。 */
+.leadero-root .hub-clusters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ═══ 形式① 首页 bento 卡栅格（砚法 §15-74 队列 / IA 附法 §4.1 已裁卡集，
+ * 2026-09-20 首页页批；HomePane 四簇制退役，卡栅格 + 编辑态 + 卡池）═══
+ * 材质 = 浮纸卡壳（原型 .card：paper-raised + 发丝线 + radius-ctl），卡头 =
+ * 拖拽把手 + 卡题（13px/600 焦墨）。配件级引用 stylekit v1.18：.kpi 左色条
+ * （--stroke-label 3px --ink-moss，token 化原型 3px 裸值）与 ink-in 级联入场
+ * （keyframes 归 leadero-theme.css，0.5s×75ms stagger 登记于 check-motion
+ * ALLOWED_RAW）。编辑态：卡 1px dashed line-strong 描边 + 把手交互蓝；
+ * 拖拽三态 = dragging 半透明 / drop-target 2px dashed accent（§15-58 拖放制式）。
+ * 单列退化挂 @container hub-main 锚点（§13.8 测量基准法）。 */
+.leadero-root .hub-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-3);
+}
+@container hub-main (max-width: 800px) {
+  .leadero-root .hub-bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.leadero-root .hub-bento-card {
+  /* 级联 stagger 步进器：静态默认 0（check-tokens 引用有效性），每卡由
+     TSX 内联 style 按启用序覆写；卡增删时序号随 DOM 重排，无需迁移。 */
+  --i: 0;
+  background: var(--paper-raised);
+  border: var(--stroke-thin) solid var(--line-faint);
+  border-radius: var(--radius-ctl);
+  padding: var(--space-4);
+  min-width: 0;
+  animation: ink-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 75ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .hub-bento-card {
+    animation: none;
+  }
+}
+.leadero-root .hub-bento-card[draggable="true"] {
+  cursor: grab;
+}
+.leadero-root .hub-bento-card.is-dragging {
+  opacity: 0.45;
+}
+.leadero-root .hub-bento-card.is-drop-target {
+  outline: var(--stroke-edge) dashed var(--accent);
+  outline-offset: var(--stroke-thin);
+}
+.leadero-root .hub-bento-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2-5);
+}
+.leadero-root .hub-bento-title {
+  font: var(--fw-semibold) var(--text-sm) / 1.4 var(--font-sans);
+  color: var(--ink-scorch);
+}
+.leadero-root .hub-bento-grip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-light);
+  cursor: grab;
+}
+.leadero-root .hub-bento.is-editing .hub-bento-card {
+  border: var(--stroke-thin) dashed var(--line-strong);
+}
+.leadero-root .hub-bento.is-editing .hub-bento-grip {
+  color: var(--accent);
+}
+/* KPI 左色条（v1.18 配件级引用，原型 .kpi）：库况卡专用，3px --ink-moss。 */
+.leadero-root .hub-bento-kpi {
+  border-left: var(--stroke-label) solid var(--ink-moss);
+}
+
+/* ── 卡池条（IA 附法 §4.1 批九 34：可选卡池入口 = 编辑模式）──
+ * 沉纸 + 虚线边（原型 .bento-pool）；平铺未启用候选 chip，行尾常显编辑
+ * 提示（hub-home-edit-hint）；「完成」在页头动作区（本批裁决）。drop
+ * 高亮 = 边线转交互蓝（拖卡入池=停用）。 */
+.leadero-root .hub-bento-pool {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-3);
+  background: var(--paper-sunken);
+  border: var(--stroke-thin) dashed var(--line-strong);
+  border-radius: var(--radius-ctl);
+}
+.leadero-root .hub-bento-pool.is-drop-target {
+  border-color: var(--accent);
+}
+.leadero-root .hub-bento-pool-chip {
+  cursor: grab;
+}
+
+/* ── 墨域时刻（§8.8 印章白名单：衬线引言 + 印章 + 淡墨副行）──
+ * 原型 .ink-moment 忠实映射；印章色 --brand-seal（§5.3 logo 资产豁免单源，
+ * 禁以裸 hex 入 UI——生产消费该 token 而非原型字面量）。 */
+.leadero-root .hub-ink-moment {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3-5) 0;
+}
+.leadero-root .hub-ink-seal {
+  /* 印章形制 34px：§8.8 白名单件随原型 .ink-moment .seal（1884-1888）法定，
+     无对应 --space/--icon 令牌；值随原型单源，勿改。 */
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.leadero-root .hub-ink-quote {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--ink-full);
+  quotes: "「" "」";
+}
+.leadero-root .hub-ink-attr {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-light);
+}
+
+/* ── v3 容器原语层（hub-redesign-v3 蓝图 §2.2，2026-09-19 批 1 注册）──
+ * Every Layout 原语 house 化 = 结构四法（蓝图 §2）的法定载体：
+ * 留白分离走 gap（--space-* 刻度，不造 --rhythm 别名），材质分组走 .le-band
+ * （--surface-zone），线条只留行/表/控件（法 4 白名单），原语一律免描边免投影。
+ * 可配参数以类内自定义属性给默认值——var() 一律不带 fallback（视觉总量学说
+ * §B 静默兜底禁令 / check-tokens var-fallback 红线）。
+ * 消费随批迁移（试点三页先行），新容器优先消费原语、禁止再手写同类配方。
+ * 单列退化挂 @container hub-main 锚点（§13.8 测量基准法）。 */
+.leadero-root .le-stack {
+  --stack-gap: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap);
+}
+.leadero-root .le-cluster {
+  --cluster-gap: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-gap);
+}
+.leadero-root .le-sidebar {
+  --le-aside: var(--detail-aside-width);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--le-aside);
+  min-height: 0;
+  min-width: 0;
+}
+.leadero-root .le-sidebar--left {
+  grid-template-columns: var(--le-aside) minmax(0, 1fr);
+}
+@container hub-main (max-width: 800px) {
+  .leadero-root .le-sidebar,
+  .leadero-root .le-sidebar--left {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .leadero-root .le-sidebar > aside,
+  .leadero-root .le-sidebar--left > aside {
+    border-top: 1px solid var(--hub-hairline);
+    max-height: var(--canvas-overlay-max-h);
+  }
+}
+.leadero-root .le-band {
+  background: var(--surface-zone);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-3);
+}
+.leadero-root .le-frame {
+  --le-frame-ratio: 4 / 3;
+  aspect-ratio: var(--le-frame-ratio);
+  overflow: hidden;
+}
+.leadero-root .le-frame > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.leadero-root .le-center {
+  --le-center-max: var(--content-max);
+  margin-inline: auto;
+  max-width: var(--le-center-max);
+}
+
+/* ── .hub-grid-12：12 列流体栅格（hub-redesign-v2 宪法二，2026-09-08 立法）──
+ * 异构内容并排的主内容区栅格：12 列（2/3/4/6 公倍数，最小完备），gutter
+ * 16px（--space-4）。仅在需要并排时启用；单列文档流（表单）与画布形态不套。
+ * 跨列类 .col-2/3/4/6/8/12；≤1024px 全部单列退化（§13.6 断点同条款）。
+ * 批2 注册待批 3-5（Home 数字行/Brain 构成 6+6/Stats 双列）接线。
+ * .col-2 2026-09-11 补登记（审计 HO-1）：Home 簇 1「display 跨 6 + 3×title
+ * 跨 2」立法形态此前落不到 CSS，Tailwind 同名 utility 让位退化成 1/12 宽。
+ * .col-3 2026-09-16 改登记：Home 库况行与学术脑规模行改为**四格等宽**（4×col-3）——
+ * 原「6+3×2」形态在最大化窗实测 hero 单元格 712px 内仅 39px 内容、相邻数字相隔
+ * 727px（Hub 评审批 H-1/B-1，P2 跨页同构）。等宽后空洞消失，主数字层级仍由
+ * display 字号承担。立法同步：v2 档 §5.1 与 component-spec §7 消费现状。 */
+.leadero-root .hub-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.leadero-root .hub-grid-12 > .col-2 {
+  grid-column: span 2;
+}
+.leadero-root .hub-grid-12 > .col-3 {
+  grid-column: span 3;
+}
+.leadero-root .hub-grid-12 > .col-4 {
+  grid-column: span 4;
+}
+.leadero-root .hub-grid-12 > .col-6 {
+  grid-column: span 6;
+}
+.leadero-root .hub-grid-12 > .col-8 {
+  grid-column: span 8;
+}
+.leadero-root .hub-grid-12 > .col-12 {
+  grid-column: span 12;
+}
+@media (max-width: 1024px) {
+  .leadero-root .hub-grid-12 > .col-2,
+  .leadero-root .hub-grid-12 > .col-3,
+  .leadero-root .hub-grid-12 > .col-4,
+  .leadero-root .hub-grid-12 > .col-6,
+  .leadero-root .hub-grid-12 > .col-8 {
+    grid-column: span 12;
+  }
+}
+/* ≤1024px：细节面板并入主列（单列退化），与 §20.1 折叠条款一致 */
+@media (max-width: 1024px) {
+  .leadero-root .hub-grid-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 讨论室双栏（§20.1 hub-grid-detail 衍生变体，2026-08-21 登记）：
+   左 = 讨论消息流，右 = 控制面板（参与者/阶段/审批卡）。
+   不同于 5fr/1fr 细节面板比例：控制面板需容纳参与者列表与审批卡，
+   用固定宽右栏（--discussion-panel-width，Layer 3 令牌）。
+   ≤1024px 右栏并入主列（单列退化，同 §20.1 折叠条款；控制操作
+   退化为消息流顶部的紧凑行 .discussion-controls-compact）。 */
+.leadero-root .hub-grid-discussion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--discussion-panel-width);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+@media (max-width: 1024px) {
+  /* v1.52 S15：兑现 §20.1 单列退化承诺——窄窗右栏并入主列
+     （原注释引用的 .discussion-controls-compact 从未实现，320px 右栏挤压不可达） */
+  .leadero-root .hub-grid-discussion {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .leadero-root .hub-grid-discussion > aside {
+    border-top: 1px solid var(--hub-hairline);
+    max-height: var(--canvas-overlay-max-h);
+  }
+}
+/* @container 试点（2026-09-14 宽度适配批）：pane 实际宽 ≤800px 同样退化
+   单列——侧栏收合（44px）时 1025~1100px 窗的 pane 已窄于 1024 档假设、
+   viewport 断点漏触发；与上一条 media 双轨并存（旧引擎兜底）。 */
+@container hub-main (max-width: 800px) {
+  .leadero-root .hub-grid-discussion {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .leadero-root .hub-grid-discussion > aside {
+    border-top: 1px solid var(--hub-hairline);
+    max-height: var(--canvas-overlay-max-h);
+  }
+}
+
+/* 讨论室视图切换（议程 | 看板）：每次切换重播 fade-up。 */
+.leadero-root .discussion-view-switch {
+  animation: hub-pane-enter var(--transition-normal);
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .discussion-view-switch {
+    animation: none;
+  }
+}
+
+/* Sizing */
+.leadero-root .h-full,
+.leadero-root.h-full {
+  height: 100%;
+}
+.leadero-root .w-full,
+.leadero-root.w-full {
+  width: 100%;
+}
+.leadero-root .min-w-0,
+.leadero-root.min-w-0 {
+  min-width: 0;
+}
+.leadero-root .min-h-0,
+.leadero-root.min-h-0 {
+  min-height: 0;
+}
+
+/* Position */
+.leadero-root .relative,
+.leadero-root.relative {
+  position: relative;
+}
+
+/* Text */
+.leadero-root .truncate,
+.leadero-root.truncate {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Padding (used) */
+.leadero-root .px-1 {
+  padding-left: var(--space-1);
+  padding-right: var(--space-1);
+}
+.leadero-root .px-3 {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+/* Overflow (used) */
+.leadero-root .overflow-y-auto,
+.leadero-root.overflow-y-auto {
+  overflow-y: auto;
+}
+.leadero-root .overflow-hidden,
+.leadero-root.overflow-hidden {
+  overflow: hidden;
+}
+
+/* Background (used) — unified with root material-sidepane */
+.leadero-root .bg-sidepane {
+  background-color: var(--card-bg);
+}
+
+/* Font color (used) */
+.leadero-root .font-color-red {
+  color: var(--signal-red-strong);
+}
+
+/* States (used) */
+.leadero-root .opacity-50 {
+  opacity: 0.5;
+}
+.leadero-root .cursor-pointer {
+  cursor: pointer;
+}
+.leadero-root .cursor-default {
+  cursor: default;
+}
+.leadero-root .pointer-events-none {
+  pointer-events: none;
+}
+
+/* Scrollbar */
+.leadero-root .scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* ── v3 批 4（2026-09-19 缺口立法，蓝图 §2 法域；本轮不配守卫）──
+ * 文本选区单源：数据蓝 alpha 梯 soft 档（18%）染底 + 前景文字，两主题同源；
+ * color-scheme 声明令 UA 原生控件/滚动条跟随主题；accent-color 统一原生
+ * checkbox/radio/progress 着色（此前仅 brain 两处局部）。 */
+.leadero-root ::selection {
+  background: var(--data-blue-soft);
+  color: var(--text-primary);
+}
+.leadero-root {
+  color-scheme: light dark;
+  accent-color: var(--primary);
+}
+
+/* ── v3 收口（2026-09-19 同一交互语义唯一实现）——hover 显影单源 ──
+ * 容器挂 .hover-reveal-scope、低频动作件挂 .hover-reveal：容器 hover / 容器内
+ * 焦点 / 件本体 hover 与键盘焦点显影；触屏（hover:none）恒显。收编三实现：
+ * settings 行删钮（原 .hub-row-del）、provider 卡动作区、discussion 参与者
+ * 行动件（原 Tailwind group-hover 三连）。 */
+.leadero-root .hover-reveal {
+  opacity: 0;
+  transition: opacity var(--transition-exit);
+}
+.leadero-root .hover-reveal-scope:hover .hover-reveal,
+.leadero-root .hover-reveal-scope:focus-within .hover-reveal,
+.leadero-root .hover-reveal:hover,
+.leadero-root .hover-reveal:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .leadero-root .hover-reveal {
+    opacity: 1;
+  }
+}
+
+/* ==================== XUL Reset ==================== */
+/* 2026-09-08 用户裁决：全局 border-box 立法。content-box 陷阱第三次发作后拍板
+ * 根治（09-04 combobox popup/item 两起 + 09-08 combobox input 45px 高/24px 右缘
+ * 溢出一起）——.leadero-root 域内通配 border-box，与 Tailwind 官方 preflight
+ * 语义对齐（本项目 preflight 关闭，此规则补上其第一条）。此后新控件无需逐个
+ * 补 box-border（存量补丁冗余无害）；「显式宽 + 水平 padding 必超宽」旧制
+ * （content-box 时代法则）随之废止。
+ * 风险面：存量「固定宽/高 + padding」规则在 border-box 下总尺寸变小——
+ * 几何回归靠真机走查兜底（拍板时已明示）。 */
+.leadero-root,
+.leadero-root *,
+.leadero-root *::before,
+.leadero-root *::after {
+  box-sizing: border-box;
+}
+
+/* Specific property resets to strip XUL chrome styling from HTML form elements.
+ * We intentionally do NOT use `all: revert` because it resets properties we want
+ * to keep (e.g. display, position, cursor, transition from component CSS), and
+ * its specificity 0,1,1 would silently override 0,1,0 class selectors. */
+.leadero-root button:not([data-slot]),
+.leadero-root textarea:not([data-slot]),
+.leadero-root input:not([data-slot]),
+.leadero-root select:not([data-slot]),
+.leadero-root option:not([data-slot]) {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Restore native appearance for text inputs, textareas, and selects */
+.leadero-root textarea:not([data-slot]),
+.leadero-root input[type="text"]:not([data-slot]),
+.leadero-root input[type="search"]:not([data-slot]),
+.leadero-root input[type="number"]:not([data-slot]),
+.leadero-root input[type="email"]:not([data-slot]),
+.leadero-root input[type="url"]:not([data-slot]),
+.leadero-root input[type="password"]:not([data-slot]),
+.leadero-root select:not([data-slot]) {
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+/* ── 视觉总量学说 §B/§H（2026-09-17 批）：交互状态显式化 ──────────────
+ * 1) 焦点环单源：非 shadcn 原生可交互元素挂 .focus-ring-subtle 即得
+ *    component-spec §1.5 的轻量焦点环（--focus-ring-subtle = 2px 蓝环）。
+ *    禁止站点自造环样式；shadcn/kit 组件走 ring-ring 体系，勿混用。 */
+.leadero-root .focus-ring-subtle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-subtle);
+}
+
+/* 2) 占位符/插入符单源：UA 默认（石板灰/系统色）顶班 = 未指定解析路径。
+ *    占位符三级灰、插入符主文字色。::selection 待 alpha token 立法（学说 §H）。 */
+.leadero-root ::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+.leadero-root input:not([data-slot]),
+.leadero-root textarea:not([data-slot]) {
+  caret-color: var(--accent); /* §5.7 复审 Q21 */
+}
+
+/* ==================== UA Chrome Normalization (@layer base) ====================
+ * 2026-08-15 侧边栏呈现异常（菜单项灰底胶囊 + UA 边框、每行左侧圆点、40px 缩进）
+ * 的根因是两处 Reset 之间的空档：
+ *   1. tw-source.css 关闭了 Tailwind preflight（避免与上面的 XUL reset 冲突），
+ *      因此「ul 无圆点 / button 无边框底色」这些 preflight 默认承担的归一化不存在；
+ *   2. 上面的 XUL reset 用 :not([data-slot]) 排除了 shadcn 原语（修复 reset 压制
+ *      utilities 的旧 bug），于是 data-slot button/ul 全部落回浏览器 UA 默认样式：
+ *      按钮带系统灰底+边框，ul 带 disc 圆点 + padding-inline-start 缩进。
+ * 修复：把 UA 归一化放进 @layer base——层内规则恒输给无层业务 CSS 与
+ * utilities 层（tw.css 的 @layer utilities 注入在后、优先级更高），
+ * 因此覆盖含 data-slot 的元素也不会重演 reset 压制组件类的旧 bug。
+ * 注意：markdown 正文等需要圆点的场景由无层规则显式恢复
+ * （leadero-markdown.css .prose ul/ol 设 list-style-type: disc，恒胜本层）。 */
+@layer base {
+  /* v1.58 实证修复：去掉 :not([data-slot])——08-15 迁入本层时保留了排除，
+     与本层设计意图（层内恒输业务 CSS/utilities，覆盖 data-slot 也不会压制
+     组件类）自相矛盾，导致 shadcn 按钮裸奔在 UA 灰底上（ghost/link 无显式
+     bg → 浏览器默认灰色按钮面；实机截图铁证，代码级审计盲区）。 */
+  .leadero-root button,
+  .leadero-root input,
+  .leadero-root select,
+  .leadero-root textarea {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+  }
+  .leadero-root ul,
+  .leadero-root ol,
+  .leadero-root menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* 裸 border 兜底（审计 2026-08-31 R2）：tw 的 .border/.border-b 只发
+     border-width，preflight 关闭且无 *{border-color} 归一 → 跌落 currentColor
+     近黑框（对话框/下拉/表格行线/outline 钮）。对齐 preflight 标准做法补默认
+     边色；任何显式 border-color（authored 无层、tw utilities）恒胜本层，
+     只填「谁都没设色」的真空。 */
+  .leadero-root *,
+  .leadero-root ::before,
+  .leadero-root ::after {
+    border-color: var(--border);
+  }
+  /* 可点暗示（审计 2026-08-31 XB6）：preflight 关闭后全仓无 button
+     cursor 规则，含 data-slot 原语在内渲染箭头光标；checkbox/switch 均已
+     显式 pointer，此处单点归一。 */
+  .leadero-root button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* ==================== Root Layout ==================== */
+.leadero-root .leadero-chat-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+/* Standalone window: material-background 区分侧栏（双模式差异化 #5）。
+   2026-08-25 用户裁决：正文列 960px 居中档退役，内容跟随窗口全宽。 */
+.leadero-root .leadero-chat-root[data-window] {
+  background-color: var(--page-bg);
+}
+
+.leadero-root .leadero-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Content transition between HomePage and Chat view */
+
+/* Focus Visible — non-shadcn primitives only.
+ * shadcn 组件有 data-slot + 自带 focus-visible:ring，不适用本规则。
+ * 无层规则恒胜 @layer utilities，若加 :not([data-slot]) 会与原语
+ * 自带的 ring 叠加产生双重焦点指示器（旧版 leadero-shared.css 同约定，
+ * 现已内聚于本文件）。 */
+.leadero-root :focus-visible:not([data-slot]) {
+  outline: 2px solid var(--data-blue);
+  outline-offset: 2px;
+}
+.leadero-root .chat-input:focus-visible {
+  outline: none;
+}
+.leadero-root textarea:not([data-slot]):focus-visible,
+.leadero-root input:not([data-slot]):focus-visible {
+  outline: none;
+}
+
+/* ==================== Search Overlay ==================== */
+/* 2026-08-31 D1 清债：与原「Panel Slide Animations」区（原 :337）的重复
+   .leadero-search-overlay 块合一——两块无重复 key，animation 声明并入本块，
+   活值（并集）不变。 */
+.leadero-root .leadero-search-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-search);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg);
+  animation: le-lit-fade-in 0.15s var(--ease-decelerate);
+}
+
+.leadero-root .leadero-search-overlay .search-results {
+  border-top: 1px solid var(--border-strong);
+}
+
+.leadero-root .search-history-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: var(--z-search-dropdown);
+  margin-top: var(--space-0-5);
+  background: var(--card-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: var(
+    --dropdown-max-height
+  ); /* 2026-08-31 用户拍板：200 裸值并入立法 dropdown 240 档 */
+  overflow-y: auto;
+}
+
+.leadero-root .search-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--surface-tint);
+}
+
+.leadero-root .search-history-clear {
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
+.leadero-root .search-history-clear:hover {
+  color: var(--data-blue-dark);
+}
+
+.leadero-root .search-history-remove {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-0-5);
+  border-radius: var(--radius-full);
+}
+.leadero-root .search-history-remove:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* Search highlight animation */
+.leadero-root .search-highlight {
+  animation: le-search-highlight 2s ease;
+}
+
+/* ==================== Panel Slide Animations ====================
+   （2026-08-31 D1 清债：本区唯一的 .leadero-search-overlay 入场动画块已并入
+   上方 Search Overlay 主块——重复选择器合一，活值不变。） */
+
+/* ==================== Shimmer text ==================== */
+.leadero-root .shimmer-text {
+  color: var(--text-primary);
+  /* 砚法 §7（v1.48 审计收口 §15-95）：leadero-shimmer 1.4s×3 文字扫光退役 →
+     法定骨架呼吸单次（§8.5 运行态行的活性由 mm:ss 计时器承担） */
+  animation: hub-skeleton-pulse 1.2s var(--ease-standard) 1 both;
+}
+
+/* ==================== Scroll down button ==================== */
+.leadero-root .leadero-scroll-down {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-5);
+  /* D3：2rem 裸值（随宿主缩放，与 px 体系相悖）→ 图标阶梯 --icon-xl */
+  width: var(--icon-xl);
+  height: var(--icon-xl);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-mix);
+  /* §19.1 单一分离机制：浮动按钮（覆盖聊天流的浮层）用 shadow 分离，去 border */
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  z-index: var(--z-layout);
+  color: var(--text-secondary);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    background-color var(--transition-normal),
+    box-shadow var(--transition-normal),
+    color var(--transition-normal),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.leadero-root .leadero-scroll-down-hidden {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  /* W1（2026-09-07 评审）：visibility:hidden 移出 Tab 序与可访问树——
+     旧 opacity:0 让键盘焦点落在不可见按钮上 */
+  visibility: hidden;
+}
+
+.leadero-root .leadero-scroll-down:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .leadero-scroll-down:active {
+  background-color: var(--hub-bg-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .leadero-scroll-down {
+    transition:
+      background-color var(--transition-normal),
+      box-shadow var(--transition-normal),
+      color var(--transition-normal);
+  }
+  .leadero-root .leadero-scroll-down-hidden {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* ── 2. Sidebar ─────────────────────────────────────────────────────── */
+/*
+ * leadero-sidebar.css
+ * Sidebar container, soul selector, session search, session items, session list, custom selectors.
+ */
+
+/* ==================== Sidebar ==================== */
+.leadero-root .sidebar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.leadero-root .sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-title {
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-sans);
+  color: var(
+    --ink-scorch
+  ); /* 砚法合规批 2026-09-20 §8.8 词标法：14px semibold 浓墨（品牌族令牌退役出 UI） */
+}
+.leadero-root .sidebar-actions {
+  padding: 0 var(--space-3) var(--space-2);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.leadero-root .sidebar-action-btns {
+  display: flex;
+  gap: var(--space-1);
+}
+.leadero-root .sidebar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  /* §10.1（复审 Q9）：静止态容器（沉纸底+发丝线），裸图标可点=违法 */
+  border: var(--stroke-thin) solid var(--line-faint);
+  background: var(--paper-raised);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+.leadero-root .sidebar-icon-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--hub-bg-hover);
+}
+
+/* ==================== Soul Selector ==================== */
+.leadero-root .sidebar-soul-selector {
+  padding: 0 var(--space-3) var(--space-2);
+  flex-shrink: 0;
+  position: relative;
+}
+.leadero-root .soul-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  transition: border-color var(--transition-fast);
+}
+.leadero-root .soul-select-trigger:hover {
+  border-color: var(--data-blue);
+}
+.leadero-root .soul-select-label {
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .soul-select-value {
+  flex: 1;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .soul-select-arrow {
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+.leadero-root .soul-select-arrow.open {
+  transform: rotate(180deg);
+}
+.leadero-root .soul-select-dropdown {
+  position: absolute;
+  left: var(--space-3);
+  right: var(--space-3);
+  top: 100%;
+  z-index: var(--z-setup);
+  background: var(--card-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-height: var(--dropdown-max-height);
+  overflow-y: auto; /* 2026-08-31 用户拍板：200 裸值并入立法 dropdown 240 档 */
+  margin-top: var(--space-0-5);
+}
+.leadero-root .soul-select-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) var(--space-3);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .soul-select-option:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .soul-select-option[data-active="true"] {
+  background-color: var(--hub-bg-hover);
+  outline: none;
+} /* B7 键盘高亮与 hover 同罩 */
+.leadero-root .soul-select-option.selected {
+  color: var(--action-primary);
+}
+.leadero-root .soul-option-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .soul-option-desc {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .soul-option-tags {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* ==================== Jump to Session ==================== */
+.leadero-root .sidebar-jump {
+  padding: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-jump-input {
+  width: 100%;
+  padding: var(--space-1-5) var(--space-2);
+  font-size: var(--text-xs);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast);
+}
+.leadero-root .sidebar-jump-input:focus {
+  border-color: var(--data-blue);
+}
+.leadero-root .sidebar-jump-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ==================== SessionSearch ==================== */
+.leadero-root .sidebar-search {
+  position: relative;
+  padding: 0 var(--space-3) var(--space-2);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  display: flex;
+  pointer-events: none;
+}
+.leadero-root .sidebar-search-input {
+  width: 100%;
+  padding: var(--space-1-5) calc(var(--space-3) + var(--space-3-5))
+    var(--space-1-5) var(--space-8);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  /* 2026-08-31 用户拍板：15px(--text-md)→14px 控件档，归位 Hub 控件立法（清一色 14px） */
+  font-size: var(--text-control);
+  outline: none;
+  box-sizing: border-box;
+}
+.leadero-root .sidebar-search-input:focus {
+  border-color: var(--data-blue);
+}
+.leadero-root .sidebar-search-clear {
+  position: absolute;
+  right: calc(var(--space-3) + var(--space-3-5));
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-0-5);
+  border-radius: var(--radius-full);
+}
+.leadero-root .sidebar-search-clear:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+/* ==================== SessionItem ==================== */
+
+.leadero-root .session-item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  margin: var(--space-px) var(--space-1);
+  transition: background-color var(--transition-fast);
+  /* C1（2026-09-16）：slide-in 入场动画已移除——虚拟化下滚动会不断重挂行，
+     每次重挂都重播动画=滚动抖动；列表出现本身不需动画。 */
+  /* 砚法合规批 2026-09-20 §5.4：行高走 --row-height-md（28 标准档，容 13px
+     正文行；B1 后 --row-height-sm=24 为紧凑档）。TS ITEM_ROW_HEIGHT=28 对齐
+     （SessionList A7 漂移告警兜底）。 */
+  min-height: var(--row-height-md);
+  box-sizing: border-box;
+}
+.leadero-root .session-item:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .session-item:active {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .session-item.active {
+  /* 砚法合规批 2026-09-20 §8.3：active=交互蓝 10% 底 + 左缘 2px 蓝条
+     （与 Hub 侧栏 .hub-ws-session-row.is-active 同法，§10.6 选中态白名单） */
+  background-color: var(--data-blue-bg);
+  box-shadow: inset var(--stroke-edge) 0 0 var(--accent);
+}
+/* C3（2026-09-16）：焦点可见性回归——outline:none 只豁免鼠标聚焦，
+   键盘聚焦（focus-visible）恢复焦点环（--data-blue 2px 内嵌环）。 */
+.leadero-root .session-item:focus {
+  background-color: var(--data-blue-bg);
+}
+.leadero-root .session-item:focus:not(:focus-visible) {
+  outline: none;
+}
+.leadero-root .session-item:focus-visible {
+  outline: 2px solid var(--data-blue);
+  outline-offset: -2px;
+}
+.leadero-root .session-item:focus .session-actions,
+.leadero-root .session-item:focus-visible .session-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+/* B6（2026-09-16）：未读呈现归一为单点（旧 7px 内联 style + Badge 双轨） */
+.leadero-root .session-unread-dot {
+  /* 砚法合规批 2026-09-20 §5.4：7px 裸值退役 → 状态点令牌 --hub-dot-size */
+  width: var(--hub-dot-size);
+  height: var(--hub-dot-size);
+  border-radius: var(--radius-pill);
+  background-color: var(--data-blue);
+  flex-shrink: 0;
+}
+.leadero-root .session-title {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+} /* 砚法 §6.2：衡域列表正文 13px 基准 */
+.leadero-root .session-title-input {
+  flex: 1;
+  padding: var(--space-0-5) var(--space-1-5);
+  border: 1px solid var(--data-blue);
+  border-radius: var(--radius-btn);
+  font-size: var(--text-base);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+}
+.leadero-root .session-meta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-left: var(--space-2);
+}
+/* C2（2026-09-16）：hover 操作钮 display 硬切 → opacity/visibility 过渡
+   （与消息操作栏同配方；常驻 flex 避免布局跳动，隐藏态切断命中）。 */
+.leadero-root .session-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
+  flex-shrink: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--transition-fast),
+    visibility var(--transition-fast);
+}
+.leadero-root .session-item:hover .session-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.leadero-root .session-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+.leadero-root .session-action-btn:hover {
+  color: var(--text-primary);
+  background-color: var(--hub-bg-hover);
+}
+/* v3 批 2（2026-09-19 §19.1 零位移铁法）：active scale 残留退役，反馈归灯罩单通道 */
+.leadero-root .delete-btn:hover {
+  color: var(--signal-red-strong);
+  background-color: var(--signal-red-bg);
+}
+/* pin-btn / export-btn / .session-item.pinned / .session-pin-icon:
+   随置顶功能退役移除（2026-09-17 拍板）。 */
+
+/* ==================== SessionList ==================== */
+.leadero-root .sidebar-sessions {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--space-1);
+}
+.leadero-root .session-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--text-tertiary);
+}
+.leadero-root .empty-icon {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+  color: var(--ink-clear);
+} /* 砚法合规批 2026-09-20 §8.6：空态小件=清墨单色 */
+.leadero-root .empty-text {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  text-align: center;
+} /* 砚法合规批 2026-09-20 §8.6：主话 15px 浓墨 */
+.leadero-root .session-group-label {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  /* 砚法合规批 2026-09-20 §6.2/§10.5：byline 大写+字距语法不适用于 CJK
+     （组标签随 locale 三语切换），uppercase/letter-spacing 退役；
+     min-height 24px 裸值 → --row-height-sm。 */
+  min-height: var(--row-height-sm);
+  box-sizing: border-box;
+}
+.leadero-root .jump-error {
+  font-size: var(--text-xs);
+  color: var(--color-error);
+  padding: var(--space-0-5) 0 0 var(--space-1);
+}
+
+/* ── Soul footer (当前 soul 身份持续可见) ── */
+.leadero-root .sidebar-soul-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-soul-footer:hover {
+  border-color: var(--data-blue);
+}
+.leadero-root .sidebar-soul-footer-avatar {
+  /* 砚法合规批 2026-09-20：--leadero-brand 品牌红退役（§5.3 禁入 UI）→
+     §8.5 铭牌法定形：20px（--avatar-size）圆形 + 沉纸底 + 发丝边 +
+     重墨 11px semibold（§15-42 全产品对话归属唯一语法） */
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: var(--radius-full);
+  background: var(--paper-sunken);
+  border: 1px solid var(--line-faint);
+  color: var(--ink-heavy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-soul-footer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .sidebar-soul-footer-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .sidebar-soul-footer-desc {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .sidebar-soul-footer-arrow {
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+.leadero-root .sidebar-soul-footer-arrow.open {
+  transform: rotate(180deg);
+}
+/* ==================== Selectors ==================== */
+
+/* ==================== Batch Mode ==================== */
+.leadero-root .batch-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  margin-right: var(--space-1-5);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+.leadero-root .batch-checkbox:hover {
+  border-color: var(--action-primary-ring);
+}
+.leadero-root .batch-checkbox.checked {
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+  color: var(--text-on-accent);
+}
+.leadero-root .session-item.batch-selected {
+  background-color: var(--action-primary-light);
+}
+.leadero-root .session-item.batch-selected:hover {
+  background-color: var(--action-primary-ring);
+}
+
+/* ── Session dimmed state (deleting / skeleton) ── */
+.leadero-root .session-dimmed {
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+/* ── Skeleton loading placeholders ── */
+.leadero-root .skeleton-title {
+  background: var(--border-strong);
+  border-radius: var(--radius-xs);
+  color: transparent;
+  display: inline-block;
+  height: var(--icon-base);
+}
+/* 骨架宽度变体（替代旧内联 style={{ width }}，3 种循环宽度） */
+.leadero-root .skeleton-title[data-variant="0"] {
+  width: 60%;
+}
+.leadero-root .skeleton-title[data-variant="1"] {
+  width: 75%;
+}
+.leadero-root .skeleton-title[data-variant="2"] {
+  width: 90%;
+}
+
+.leadero-root .skeleton-meta {
+  width: 40px;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-xs);
+  color: transparent;
+  display: inline-block;
+  height: var(--icon-xs);
+}
+
+/* ── Session operation indicator (pinning / renaming) ── */
+.leadero-root .session-virtual-row {
+  position: relative;
+}
+.leadero-root .session-operation-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  padding: 0 var(--space-2) var(--space-0-5);
+  margin-top: calc(var(--space-0-5) * -1);
+}
+
+.leadero-root .batch-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
+  flex-shrink: 0;
+  background: var(--card-bg);
+  gap: var(--space-2);
+}
+.leadero-root .batch-action-left {
+  display: flex;
+  gap: var(--space-1);
+}
+.leadero-root .batch-action-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.leadero-root .batch-action-btn {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-btn);
+  border: none;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.leadero-root .batch-action-btn:hover {
+  background: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .batch-action-btn:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+.leadero-root .batch-action-btn.danger {
+  background: var(--signal-red);
+  color: var(--text-on-accent);
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .batch-action-btn.danger:hover {
+  filter: brightness(0.85);
+}
+.leadero-root .batch-action-btn.danger:disabled {
+  filter: none;
+  opacity: var(--opacity-disabled);
+}
+.leadero-root .batch-progress-text {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+/* custom-select / .trigger / select-value / options / options-up / option (+states) /
+   option-group-label: dead (0 consumers) — removed. */
+
+/* ==================== Translate Panel ====================
+   砚法 §11 阅读器面板行：面板浮纸底 + 弹层阴影贴缘；译文区卷域排版。 */
+.leadero-root .translate-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* 砚法 §11/§5.6：面板=浮纸（--paper-raised）+发丝描边+弹层阴影三件齐；
+     贴阅读器边缘侧（左缘）无圆角（同 leadero-hub-research.css 贴边浮层
+     先例：border-radius 左缘归零）。原 --card-bg 别名归位正名令牌。 */
+  background: var(--paper-raised);
+  border: 1px solid var(--line-faint);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  box-shadow: var(--shadow-overlay);
+}
+.leadero-root .translate-panel-source {
+  flex-shrink: 0;
+  max-height: 25%;
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+  padding: var(--space-3);
+}
+.leadero-root .translate-panel-source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+.leadero-root .translate-panel-source-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--text-tertiary);
+}
+.leadero-root .translate-panel-source-text {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: var(--leading-comfortable);
+  max-height: 15vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.leadero-root .translate-panel-placeholder-inline {
+  font-size: var(--text-base);
+  color: var(--text-tertiary);
+  padding: var(--space-2) 0;
+}
+.leadero-root .translate-panel-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-btn);
+  border: none;
+  background: transparent;
+  color: var(--data-blue-dark);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .translate-panel-refresh-btn:hover {
+  text-decoration: underline;
+}
+
+/* ── Language bar ── */
+.leadero-root .translate-panel-lang-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3);
+  margin-bottom: var(--space-2);
+  background: transparent;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.leadero-root .translate-panel-lang-auto {
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .translate-panel-lang-arrow {
+  display: inline-flex;
+  align-items: center;
+  /* 角色正名：原 --border-strong 是边框令牌（值层角色错配，同 PaperGraph
+     edge-related 批修法），文字色归文字梯淡墨。 */
+  color: var(--text-tertiary);
+}
+.leadero-root .translate-panel-lang-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-0-5) var(--space-2);
+  /* 砚法 §5.1：输入框边=--line-strong（淡墨线）；原 --border-subtle（纸纹）
+     是发丝分隔档，降权了输入供能。 */
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-btn);
+  background: var(--paper-raised);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.leadero-root .translate-panel-lang-input:focus {
+  /* 交互蓝=唯一选中/聚焦语义色（§15-44/C-4）；原 --data-blue 是数据编码
+     令牌，角色错配归位 --primary（同值异名，正名不换值）。 */
+  border-color: var(--primary);
+}
+.leadero-root .translate-panel-lang-input::placeholder {
+  /* 砚法 §5.7：占位文字=淡墨；原 --border-strong 边框令牌角色错配。 */
+  color: var(--text-tertiary);
+}
+
+/* ── Result area ── */
+.leadero-root .translate-panel-result-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3);
+  /* 砚法 §11：译文与原文分界=发丝线（--line-faint，一律 1px）。 */
+  border-top: 1px solid var(--line-faint);
+}
+/* §9.4：选区就绪待翻译的示能态（原「请选择文本」占位与事实不符，退役）。 */
+.leadero-root .translate-panel-idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-3);
+}
+.leadero-root .translate-panel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-3);
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
+}
+
+.leadero-root .translate-panel-error {
+  padding: var(--space-4) 0;
+  text-align: center;
+}
+.leadero-root .translate-panel-error span {
+  display: block;
+  color: var(--signal-red-strong);
+  font-size: var(--text-base);
+  margin-bottom: var(--space-2);
+}
+
+.leadero-root .translate-panel-result-text {
+  /* 砚法 §11 译文区=局部卷域排版：宋体/Charter 衬线（§6.1）+ 卷域行高
+     1.75（§5.4 --lh-prose 单源，--leading-loose 别名退役）+ 测宽 ≤74ch
+     （§6.2 --measure）。 */
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: var(--leading-prose);
+  max-width: var(--measure);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.leadero-root .translate-panel-actions {
+  margin-top: var(--space-3);
+}
+
+/* ── Paper Graph Section ──
+   砚法 §11 阅读器面板行：面板浮纸底 + 弹层阴影贴缘（PaperGraph 同律）。 */
+.leadero-root .leadero-pg-section-root {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  overflow: hidden;
+  /* 砚法 §11/§5.6：面板=浮纸+发丝描边+弹层阴影三件齐；贴阅读器边缘侧
+     （左缘）无圆角，同 leadero-hub-research.css 贴边浮层先例。 */
+  background: var(--paper-raised);
+  border: 1px solid var(--line-faint);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  box-shadow: var(--shadow-overlay);
+}
+.leadero-root .leadero-pg-section-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.leadero-root .leadero-pg-section-error {
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.leadero-root .leadero-pg-section-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
+}
+.leadero-root .leadero-pg-section-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* 面板收边后标题行随内嵌（原贴边 0 内距基于无底材面板）。 */
+  padding: var(--space-1) var(--space-2);
+}
+.leadero-root .leadero-pg-section-info {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+}
+
+/* ==================== Sidebar Header Actions ==================== */
+.leadero-root .sidebar-header-actions {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+/* ==================== Recommend Panel ==================== */
+.leadero-root .recommend-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.leadero-root .recommend-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  flex-shrink: 0;
+}
+.leadero-root .recommend-panel-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-0-5);
+}
+.leadero-root .recommend-panel-source {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .recommend-panel-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+.leadero-root .recommend-panel-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: var(--text-xl);
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-btn);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+.leadero-root .recommend-panel-close:hover {
+  color: var(--text-primary);
+  background: var(--hub-bg-hover);
+}
+.leadero-root .recommend-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2) 0;
+}
+.leadero-root .recommend-panel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5);
+  gap: var(--space-3);
+  color: var(--text-tertiary);
+}
+.leadero-root .recommend-panel-loading-text {
+  font-size: var(--text-base);
+}
+.leadero-root .recommend-panel-error {
+  padding: var(--space-3);
+  color: var(--tag-red-primary);
+  font-size: var(--text-base);
+}
+.leadero-root .recommend-panel-empty {
+  padding: var(--space-3);
+  color: var(--text-tertiary);
+  font-size: var(--text-base);
+  text-align: center;
+}
+
+/* ==================== Recommend Category ==================== */
+.leadero-root .recommend-category {
+  margin-bottom: var(--space-2);
+}
+.leadero-root .recommend-category:last-child {
+  margin-bottom: 0;
+}
+.leadero-root .recommend-category-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-fast);
+}
+.leadero-root .recommend-category-header:hover {
+  background: var(--hub-bg-hover);
+}
+.leadero-root .recommend-category-arrow {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  width: var(--space-3);
+  text-align: center;
+  flex-shrink: 0;
+}
+.leadero-root .recommend-category-label {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  flex: 1;
+}
+.leadero-root .recommend-category-count {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  background: transparent;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+}
+.leadero-root .recommend-category-content {
+  padding: 0 var(--space-3) var(--space-2) var(--space-3);
+}
+.leadero-root .recommend-category-loading {
+  padding: var(--space-2) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.leadero-root .recommend-category-error {
+  padding: var(--space-1) 0;
+  font-size: var(--text-2xs);
+  color: var(--tag-red-primary);
+}
+
+/* ==================== Recommend Item ==================== */
+.leadero-root .recommend-item {
+  padding: var(--space-1-5) 0;
+  transition: background var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+.leadero-root .recommend-item.clickable {
+  cursor: pointer;
+}
+.leadero-root .recommend-item.clickable:hover {
+  background: var(--hub-bg-hover);
+}
+/* External papers (no intersection with the library) — dimmed vs. in-library primary color */
+.leadero-root .recommend-item.is-external {
+  cursor: default;
+}
+.leadero-root .recommend-item.is-external .recommend-item-title {
+  color: var(--text-secondary);
+}
+.leadero-root .recommend-item-title {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.leadero-root .recommend-item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-0-5);
+  flex-wrap: wrap;
+}
+/* 2026-09-11 拥挤审计：作者行借用 --layout-phase-label-max(64px) 只露 4-5 字符
+   过狠；本地放宽 96px（复用值退役，phase 标签 token 不动） */
+.leadero-root .recommend-item-authors {
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 96px;
+}
+.leadero-root .recommend-item-year {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+/* .recommend-item-badge / .in-library 已迁移到 .leadero-badge 基类 + modifier */
+.leadero-root .recommend-item-doi {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  background: transparent;
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+.leadero-root .recommend-item-context-hint {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-0-5);
+  opacity: 0.8;
+}
+
+/* ==================== SelectionActionBar（Reader 侧边栏选区快捷操作条）==================== */
+.leadero-root .leadero-selection-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1-5) var(--space-2);
+  margin: 0 var(--space-2) var(--space-1);
+  background: var(--data-blue-bg);
+  border: 1px solid var(--data-blue-ring);
+  border-radius: var(--radius-md);
+  animation: leadero-fade-in var(--transition-fast);
+}
+.leadero-root .leadero-selection-bar-preview {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.leadero-root .leadero-selection-bar-quote {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+.leadero-root .leadero-selection-bar-page {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.leadero-root .leadero-selection-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  flex-wrap: wrap;
+}
+
+/* ==================== 独立窗双栏骨架 ==================== */
+/* 2026-09-17 拍板：AgentRail（左角色栏）与 <700 抽屉死断点整体退役；
+   独立窗布局 = 单列聊天主区 + 右 ActionPanel（按需展开）。 */
+.leadero-root .leadero-chat-main {
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+/* ==================== ActionPanel（独立窗口右侧操作面板）==================== */
+/* 审批/续轮/文献导入卡片集中显示，不散在消息流里。
+   注：OverlayCards 内的卡片自带 .leadero-overlay-card / .approval-card 样式，
+   此处只定义面板外壳；卡片在面板内不再需要 absolute 浮层定位（改为静态流）。 */
+.leadero-root .leadero-action-panel {
+  flex-shrink: 0;
+  width: var(--action-panel-width);
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border-left: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+.leadero-root .leadero-action-panel-header {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.leadero-root .leadero-action-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: var(--space-2);
+  /* 卡片在面板内是静态文档流（不再 absolute），覆写 overlay-card 的 margin */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+/* 面板内的审批卡片取消 absolute 浮层行为（.approval-card 自带 id 选择器权重，
+   此处用面板作用域覆写 margin/position） */
+.leadero-root .leadero-action-panel-body .approval-card,
+.leadero-root .leadero-action-panel-body .leadero-overlay-card {
+  position: static;
+  margin: 0;
+}
+
+/* ==================== ActionPanel 折叠态（布局 P3：按需展开）==================== */
+/* 折叠为 44px 图标条，释放水平空间给聊天区。用户手动折叠优先，
+   活跃卡片（approval/continuation/review/grill）自动展开。 */
+.leadero-root .leadero-action-panel.is-collapsed {
+  /* 砚法合规批 2026-09-20 §5.4：44px 裸值退役 → 组件合同令牌（L3） */
+  width: var(--action-panel-collapsed-w);
+}
+.leadero-root .leadero-action-panel-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  flex-shrink: 0;
+}
+.leadero-root .leadero-action-panel-badge {
+  position: absolute;
+  top: var(--space-1-5);
+  right: var(--space-1-5);
+  min-width: var(--icon-md);
+  height: var(--icon-md);
+  padding: 0 var(--space-0-75);
+  border-radius: var(--radius-pill);
+  background: var(--action-primary);
+  color: var(--text-on-accent);
+  font-size: var(--text-2xs);
+  line-height: var(--icon-md);
+  text-align: center;
+  font-weight: var(--font-weight-semibold);
+  pointer-events: none;
+}
+
+/* ==================== SessionOutputSection（会话产出追踪）==================== */
+.leadero-root .leadero-session-output {
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  /* 2026-08-31 用户拍板：边框色当填充底（全仓唯一一例）→ 语义归位表面体系
+     （--surface-subtle 亮色与 --border-strong 同值 stone-200，视觉零变化） */
+  background: var(--surface-subtle);
+}
+.leadero-root .leadero-session-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.leadero-root .leadero-session-output-title {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.leadero-root .leadero-session-output-notes-badge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+.leadero-root .leadero-session-output-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .leadero-session-output-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.leadero-root .leadero-session-output-row-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.leadero-root .leadero-session-output-row-label {
+  flex-shrink: 0;
+  font-weight: var(--font-weight-medium);
+}
+.leadero-root .leadero-session-output-row-sample {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.leadero-root .leadero-session-output-row-count {
+  flex-shrink: 0;
+  min-width: var(--space-4);
+  text-align: right;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ==================== BackgroundTasksSection（后台任务总览，D5）==================== */
+.leadero-root .leadero-bg-tasks {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+}
+.leadero-root .leadero-bg-tasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-1) var(--space-1);
+}
+.leadero-root .leadero-bg-tasks-title {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  /* 砚法合规批 2026-09-20 §6.2：uppercase/字距为拉丁 byline 语法，
+     本标签为 CJK（三语切换），字距拉伸退役 */
+}
+.leadero-root .leadero-bg-tasks-toggle-dot {
+  /* §5.3 状态色只上点：启停开关 ●/○ 文字字符退役（TSX 侧 data-on 承担） */
+  background: var(--ink-clear);
+}
+.leadero-root .leadero-bg-tasks-toggle-dot[data-on="true"] {
+  background: var(--ok);
+}
+.leadero-root .leadero-bg-tasks-badge {
+  font-size: var(--text-2xs);
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-bold);
+}
+.leadero-root .leadero-bg-tasks-badge.tone-error {
+  background: var(--signal-red-bg);
+  color: var(--signal-red-strong);
+}
+.leadero-root .leadero-bg-tasks-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .leadero-bg-tasks-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  width: 100%;
+  padding: var(--space-1) var(--space-1-5);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-align: left;
+  cursor: pointer;
+  min-height: var(--space-7);
+  transition: background var(--transition-fast);
+}
+.leadero-root .leadero-bg-tasks-row:hover {
+  background: var(--hub-bg-hover);
+}
+.leadero-root .leadero-bg-tasks-row-static {
+  cursor: default;
+}
+.leadero-root .leadero-bg-tasks-row-static:hover {
+  background: transparent;
+}
+.leadero-root .leadero-bg-tasks-row-label {
+  flex: 1;
+}
+.leadero-root .leadero-bg-tasks-row-meta {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+.leadero-root .leadero-bg-tasks-unread {
+  color: var(--data-blue-dark);
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .leadero-bg-tasks-fail {
+  color: var(--signal-red-strong);
+}
+
+/* 子列表（cron / feeds 详情） */
+.leadero-root .leadero-bg-tasks-sub-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-0-5) var(--space-1) var(--space-1)
+    calc(var(--space-1) + var(--icon-sm) + var(--space-1-5));
+}
+.leadero-root .leadero-bg-tasks-sub-empty {
+  padding: var(--space-1) var(--space-1-5);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.leadero-root .leadero-bg-tasks-cron-item,
+.leadero-root .leadero-bg-tasks-feed-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.leadero-root .leadero-bg-tasks-cron-item:last-child,
+.leadero-root .leadero-bg-tasks-feed-item:last-child {
+  border-bottom: none;
+}
+.leadero-root .leadero-bg-tasks-cron-info,
+.leadero-root .leadero-bg-tasks-feed-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-px);
+}
+.leadero-root .leadero-bg-tasks-cron-name {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .leadero-bg-tasks-cron-name.is-disabled {
+  opacity: 0.5;
+}
+.leadero-root .leadero-bg-tasks-cron-schedule {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.leadero-root .leadero-bg-tasks-cron-error {
+  font-size: var(--text-2xs);
+  color: var(--signal-red-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .leadero-bg-tasks-feed-name {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .leadero-bg-tasks-feed-unread {
+  font-size: var(--text-2xs);
+  color: var(--data-blue-dark);
+  font-weight: var(--font-weight-semibold);
+}
+.leadero-root .leadero-bg-tasks-feed-error {
+  color: var(--signal-red-strong);
+}
+.leadero-root .leadero-bg-tasks-cron-actions {
+  display: flex;
+  gap: var(--space-0-5);
+  flex-shrink: 0;
+}
+.leadero-root .leadero-bg-tasks-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-7);
+  min-height: var(--space-7);
+}
+.leadero-root .leadero-bg-tasks-services {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-1) var(--space-1-5);
+}
+.leadero-root .leadero-bg-tasks-service-fail {
+  font-size: var(--text-2xs);
+  color: var(--signal-red-strong);
+}
+.leadero-root .leadero-bg-tasks-empty {
+  padding: var(--space-2) var(--space-1-5);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ==================== SessionPane Overlay（P0：脱离 flex 流）==================== */
+/* 会话列表面板以 absolute 浮层形式覆盖聊天区，不再与 leadero-content 抢高度。
+   背景色跟随 chat-root：侧栏模式 = sidepane，独立窗口 = background。 */
+.leadero-root .leadero-chat-root .session-pane-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-layout);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg);
+}
+.leadero-root .leadero-chat-root[data-window] .session-pane-overlay {
+  background-color: var(--page-bg);
+}
+
+/* ── 砚法首页批（2026-09-20，§8.4 概览卡+KPI 变体）──
+ * 库况四数 = 概览卡：浮纸+发丝线+radius-ctl，左缘 3px 苔条=类别条白名单
+ * （§10.6·墨域身份点缀，数字 20px tabular 大数；StatFigure display 档随
+ * B1 --text-3xl→xl 单源自动 20px）。作用域限首页，hub-grid-12 本体不动。 */
+.leadero-root .hub-home-body .hub-grid-12 {
+  background: var(--paper-raised);
+  border: 1px solid var(--line-faint);
+  border-left: 3px solid var(--ink-moss);
+  border-radius: var(--radius-ctl);
+  padding: var(--space-4) var(--space-5);
+}
+/* 卡头右缘注记（原型 .card-head .act）：为你发现「多源 · 条件触发」。 */
+.leadero-root .hub-bento-act {
+  margin-left: auto;
+  font: var(--ui-font-meta);
+  color: var(--ink-light);
+}

@@ -1,0 +1,36 @@
+# dot files
+.DS_Store
+.vscode/
+
+# Node.js
+node_modules
+
+# TSC compiled output
+*.tsbuildinfo*
+src/**/*.js
+src/**/*.d.ts
+
+# Scaffold
+.env
+.scaffold
+build
+logs
+
+# Coverage / test artifacts
+coverage/
+tests/zotero/sdt-out/
+
+# Build output written into the source tree (webpack target)
+addon/content/reactBundle.js
+addon/content/reactBundle.js.map
+addon/content/reactBundle.js.LICENSE.txt
+addon/content/*.reactBundle.js
+addon/content/*.reactBundle.js.map
+
+# Build output written into the source tree (esbuild embed-frame)
+addon/content/scripts/embed-standalone.js
+addon/content/scripts/embed-standalone.js.map
+
+# Local audit / session artifacts
+.tmp-audit/
+.zcode/

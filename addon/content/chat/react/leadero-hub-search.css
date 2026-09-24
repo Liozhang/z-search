@@ -1,0 +1,147 @@
+/* leadero-hub-search.css — Hub 样式分区（原 leadero-hub.css 1102-1172 行：Search Pane（单页双视图：文献=全域并联 / 期刊））。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/* ==================== Search Pane（单页双视图：文献=全域并联 / 期刊） ==================== */
+/* hub-search-pane: non-scrolling flex column shell (Research/Stats pattern).
+ * 页头 + 视图 seg 固定在上，每个视图 slot (hub-search-slot) 自管 scroll + padding。 */
+.leadero-root .hub-search-pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  overflow: hidden;
+  /* 2026-09-07 R11-D5 终裁：页级收编 L1 1440 上限——水平消费 --page-inline-pad
+     （≤1520px 窗恒等 40px 渲染不变；宽窗内容居中收窄）。slot 内滚动条随列内收
+     （gallery 全宽滚动条先例的已知偏差），登记欠真机验收。 */
+  padding-inline: var(--page-inline-pad);
+}
+
+/* 视图切换对钮容器（砚法 §8.10 定式 2；§15-31 页签式 tab 退役——原 ToggleGroup
+   文字 seg 随 v1.20 改判视图对钮，2026-09-20 砚化批落地，组件轨道/白片视觉退役）。
+   行配方 = space-4 顶部；水平归页根 --page-inline-pad 轨（2026-09-07 D5 收编，
+   与 hub-search-slot 内容左缘对齐）。
+   ── R14 拍板销案（2026-09-09 用户裁决）：维持切换器上置——它是双视图共享
+   切换器，必须在两视图之上；DOM 序不动。
+   ── 2026-09-23 可用性审计 P1：对钮由独占行并入 PaneHeader 右缘动作区（§8.0
+   法定入口位）——「上置、不随滚动」的 R14 实质不变（页头本就不滚），独占行
+   与 space-4 行距退役（margin 归零，高度归页头 flex 居中承担）。 */
+.leadero-root .hub-search-seg {
+  flex-shrink: 0;
+  position: relative;
+  z-index: var(--z-base);
+  /* 2026-09-02 P1：column flex 父级（hub-search-pane）内 inline-flex 容器被
+     默认 stretch 拉满整行——补 align-self: flex-start 让容器收缩宽左置
+     （对钮组宽度=内容宽，不占满行）。页头动作区内 ml-auto 已推右缘，此条
+     兜底防 flex stretch。 */
+  align-self: flex-start;
+  margin: 0;
+}
+
+/* 定式 2 活动钮：沉纸底（--surface-zone 材质角色）+ 交互蓝图标（§5.3 交互蓝
+   =全产品唯一选中语义色）；未选钮图标重墨降档，示能靠按钮容器本身（ghost
+   1px 发丝边）+title/aria 文字双通道（§10.5 颜色非唯一通道）。 */
+.leadero-root .hub-search-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-search-view-toggle .hub-search-view-btn {
+  color: var(--text-secondary);
+}
+.leadero-root .hub-search-view-toggle .hub-search-view-btn.is-active {
+  background: var(--surface-zone);
+  color: var(--accent);
+}
+
+/* keep-alive slot：flex column 撑满，display:flex + .hidden 切换（FollowingPane 范式）。
+ * 两视图均自带 scroll 骨架 → 一律 is-self-scroll（slot 只管显隐与高度传播）。 */
+.leadero-root .hub-search-slot {
+  /* v1.52 二轮：死基座配方退役——唯一消费点即挂 is-self-scroll（视图自带滚动骨架），
+     基座只承担 flex 骨架与 hidden 切换（原 overflow+padding 永不生效） */
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  animation: hub-pane-enter var(--transition-normal);
+}
+.leadero-root .hub-search-slot.hidden {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .hub-search-slot {
+    animation: none;
+  }
+}
+
+/* 文献页（hub-lit-page）：自带完整 scroll 骨架（h-full + overflow:hidden +
+ * 结果列表区 flex-1 滚动），slot 清零 padding/overflow 让它自管。
+ * 2026-08-25 铺满裁决（二次反转）：全局可读限宽档退役（tokens 同名墓碑注），
+ * 本页与网格型页面一致自然铺满；行宽由条目自身布局保证。
+ * 2026-09-04 content-box 审计：width:100% 退役——preflight 关无全局 border-box，
+ * 显式宽 + 页边距（px --page-content-padding）= border box 右探 80px 被 slot
+ * overflow:hidden 裁（页面整体超出窗宽）。不写宽度走 flex column stretch
+ * （期刊/Discussion 同配方），浏览器实测归零。
+ * 2026-09-09 清 D5 双 pad 回归：视图 TSX 的 px-[--page-content-padding] 退役——
+ * 水平轨道唯一归 pane 根 --page-inline-pad（页根 40px 轨，与 seg 左缘对齐），
+ * 视图层只管纵向 py（文献/期刊两视图同批）。 */
+.leadero-root .hub-lit-page {
+  flex: 1;
+  min-height: 0;
+}
+
+.leadero-root .hub-search-slot.is-self-scroll {
+  overflow: hidden;
+}
+
+/* ---- 引擎状态条（库内/外部逐路结算；§23.4 状态=点+文字） ---- */
+.leadero-root .hub-search-engine-strip {
+  flex-shrink: 0;
+}
+.leadero-root .hub-search-engine-dot {
+  width: var(--hub-dot-size);
+  height: var(--hub-dot-size);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* ---- 锚点工具行（2026-09-23 可用性审计 P1：link 灰字改 ghost 图标小钮）----
+   筛选生效维度计数角标：currentColor 描边+tabular 数字——常态随按钮文字色，
+   has-filter 黑 chip 态（background=text-primary/color=background）自动反白，
+   不引入第二套配色。数字进 aria 由按钮文本承担，此处 aria-hidden 防重复播报。 */
+.leadero-root .hub-tool-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35em;
+  height: 1.35em;
+  padding-inline: 0.3em;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-btn);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ---- 知识库腿结果卡（B3 第三腿：学术脑概念，点击跳概念详情） ---- */
+.leadero-root .hub-search-knowledge-card {
+  border-bottom: 1px solid var(--hub-row-divider);
+  padding: var(--space-2) 0;
+}
+.leadero-root .hub-search-knowledge-badge {
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-search-knowledge-chip {
+  font-size: var(--text-3xs);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  padding: 0 var(--space-1-5);
+  line-height: var(--leading-none);
+  padding-block: var(--space-0-5);
+}

@@ -1,0 +1,2118 @@
+/* leadero-hub-settings.css — Hub 样式分区（原 leadero-hub.css 1948-3355 行：Settings（R1 布局 / API Keys / AI Models / B1-B3 / MCP 编辑器））。
+ * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
+ * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
+/* ============================================================
+   Hub Settings (redesign R1+)
+   主布局：左导航 + 右内容 + 顶部搜索栏。
+   子区：API Keys / AI Models（后续 Phase 加 Brain/Discovery/...）。
+   复用 CSS 变量：--space-* / --fill-* / --hub-bg-* / --leadero-brand-*。
+   ============================================================ */
+
+.leadero-root .hub-settings-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--hub-bg-page);
+}
+
+/* ---- 主布局：左导航 + 右内容 ---- */
+.leadero-root .hub-settings-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  /* v1.70 用户裁决（2026-08-26）统一 256：Settings 与 Graph/Brain 等 dash 左栏
+   同走 --dash-nav-width（原型 .settings-layout=172 被 4px 统一裁决否决）。
+   2026-08-30：--dash-nav-width 从 176 改为 256，与本注释同步。 */
+  grid-template-columns: var(--dash-nav-width) 1fr;
+}
+
+.leadero-root .hub-settings-nav {
+  border-right: 1px solid var(--hub-hairline); /* v1.52 S12 */
+  padding: var(--space-3) var(--space-2);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  /* v1.72 填白批：导航=画布材料（与全局侧栏同语义）；原 --hub-bg-elev 在
+     方案 A 下与页同白无形，画布翻转后成为「二级导航比一级亮」的材料反转 */
+  background: var(--surface-canvas);
+  min-height: 0;
+}
+
+.leadero-root .hub-settings-nav-group + .hub-settings-nav-group {
+  margin-top: var(--space-3);
+}
+
+.leadero-root .hub-settings-nav-group-label {
+  padding: var(--space-1) var(--space-2);
+  /* 砚法 §6.2/§15-63（2026-09-20 合规批）：组题=13px/600 CJK 正常字距——
+     uppercase 对中文无效、字距拉伸破坏方块字骨架（§6.2 中文标签禁大写变换/
+     字距拉伸），11px overline 方言退役（同 hub-settings-card-title 卡头制） */
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+}
+
+/* 2026-08-21：Settings 导航迁移 SidebarMenuButton variant="lean"（§21.2 导航
+   项单一形态）。皮肤/hover/focus 由 lean 工具类提供；旧 base/hover/is-active/
+   focus-visible 四规则删除。类名仅作响应式折叠（容器断点图标条）与 icon/label
+   布局钩子保留。 */
+
+/* sec-nav active 三件（砚法 §15-62/§8.0，2026-09-20 合规批补齐）：active=
+   浮纸底 + 左缘 2px 交互蓝条 + 焦墨字，与全局导航同律（§11 导航行「active=
+   浮纸底+左缘 2px 交互蓝条」）；lean 变体只供字重/不透明度，材料三件由本
+   规则显式承担（与 leadero-hub-base.css 的 [data-active] 全局规则同值，防
+   基础规则收窄作用域时本页失保）。2px 为结构线宽豁免。 */
+.leadero-root .hub-settings-nav-item[data-active] {
+  background: var(--paper-raised);
+  color: var(--ink-scorch);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.leadero-root .hub-settings-nav-item-icon {
+  flex-shrink: 0;
+}
+
+.leadero-root .hub-settings-nav-item-label {
+  flex: 1;
+}
+
+/* D1（拍板 #7）：自动化组头「定时任务管理 →」跨页深链行——链接语义
+   （次级色 + meta 字号），与分区导航项区分。
+   箭头唯一载体 = 下方 ::after；三语 locale 的 hub-settings-nav-cron-link
+   必须保持裸文案，再带 → 会渲染成双箭头（2026-09-10 修复）。 */
+.leadero-root .hub-settings-nav-cron-link {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.leadero-root .hub-settings-nav-cron-link .hub-settings-nav-item-label::after {
+  content: " →";
+}
+
+/* ---- Settings 响应式：窄内容列折叠为图标条 ----
+ * settings 是 8 个功能区里唯一"左栏窄屏既不隐藏也不折叠"的（其他 pane 的 SidebarPane /
+ * DetailPanel 在窄内容列都有处理）。settings nav 是唯一导航，不能 display:none。
+ * 【2026-09-20 砚法合规批 §8.0 容器法】viewport 断点 (max-width:1024px) 退役，
+ * 改挂 @container（禁视口断点，一切响应量容器实际宽）：锚点=hub-main
+ * （leadero-hub-base.css .hub-main container-name，本 pane 的真实可用宽——
+ * Hub 导航×app 侧栏开合 viewport 均无感）。阈值 800 与同文件 workspace-left
+ * 先例同档（1024 视口 − 240 侧栏 ≈ 784 ≈ 800 档）。
+ */
+@container hub-main (max-width: 800px) {
+  .leadero-root .hub-settings-layout {
+    grid-template-columns: var(--hub-nav-collapsed-width) 1fr;
+  }
+  .leadero-root .hub-settings-nav {
+    padding: var(--space-2) var(--space-1);
+  }
+  .leadero-root .hub-settings-nav-group-label,
+  .leadero-root .hub-settings-nav-item-label {
+    /* 折叠态只显示图标：隐藏文字（分组标题 + 导航项 label）。
+       display:none 而非 visibility:hidden，让图标居中不留空白。 */
+    display: none;
+  }
+  .leadero-root .hub-settings-nav-item {
+    justify-content: center;
+    padding: var(--space-2) var(--space-1);
+  }
+}
+
+/* 【清退 2026-09-15，R4-15】原 @media (max-width: 768px) 区块已删：
+ * Hub 窗口 minwidth=900（hubWindow.xhtml）立法下 <900 的 viewport 断点永不
+ * 触发（同 leadero-hub-base.css 的清退裁决注释），窄内容列降级改由下方
+ * @container settings-content (max-width: 620px) 承接。新代码禁再引入
+ * <900 的 viewport 断点。原区块内容：单列 layout + 横向 nav（永不生效）。 */
+
+/* ---- 右侧内容区 ---- */
+.leadero-root .hub-settings-content {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  /* @container 试点（2026-09-14 宽度适配批）：行族窄列降级量本列实际宽，
+     Hub 导航 × settings 导航（256/44）四组合下都精确触发（viewport 断点
+     对「窗窄 pane 宽 / 窗宽 pane 窄」两种失配都无感）。 */
+  container: settings-content / inline-size;
+  /* min-width:0 防 grid 项固有宽度撑破 1fr 轨（Embedding desc 右缘截断的根因） */
+  min-width: 0;
+  /* v1.73 布局批（2026-08-26 用户裁决）：垂直 16→32 照原型 .page 立法，
+     与 Home/Following/Stats/Gallery 四页拉平。2026-09-02 §13.5：水平改
+     --page-inline-pad（1440 上限；settings 左导航贴左，内容列在余幅内居中）。
+     【2026-09-20 砚法合规批 §8.0 容器法】pane 上下律=上 24（--space-6）/
+     下 48（--space-12）：旧上下均 32 拆为呼吸不对称制；水平仍走
+     --page-inline-pad（≥--space-8 的 1440 居中轨，§13.5 豁免登记在案）。 */
+  padding: var(--space-6) var(--page-inline-pad) var(--space-12);
+  min-height: 0;
+}
+
+.leadero-root .hub-settings-section-slot {
+  animation: hub-pane-enter var(--transition-normal);
+}
+.leadero-root .hub-settings-section-slot.hidden {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .leadero-root .hub-settings-section-slot {
+    animation: none;
+  }
+}
+
+/* ---- View（一个分类的根容器） ---- */
+.leadero-root .hub-settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+/* v1.45 页面批（§22.2 无盒分节）→ v3 批 1（2026-09-19）法 4 节线退役：
+   分节分离 = .hub-settings-view 的 gap 32 单通道，通栏 hairline 与其
+   hint/header 豁免对同批退役；节内（.hub-settings-card）与行级 divider
+   不受影响（法 4 白名单：数据行间/表头下缘/控件描边）。 */
+.leadero-root .hub-settings-agent-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 分类级样式钩子（hub-settings-apikeys / hub-settings-ai-models / 后续 section 根容器）。
+   当前用于轻微区分不同分类背景；后续 section 各自可挂同名 className 复用本样式。 */
+.leadero-root .hub-settings-apikeys,
+.leadero-root .hub-settings-ai-models {
+  /* 当前与父 .hub-settings-view 一致；保留 className 作为未来分类专属样式的钩子 */
+}
+
+.leadero-root .hub-settings-view-header-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-settings-view-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-settings-view-title {
+  /* v1.33 V8/D2：Settings 区块标题升 display 级（同页同律——每个 view 即一页）。
+     2026-09-01 审计拍板①：700/-0.02em 双漂移退役——600 由 --ui-font-display
+     本形承担（原型 display-title=600）；字距走 --tracking-tight 单源（theme/brain
+     显示级同款），-0.02em 系全仓孤儿字面量（原型 -0.01em 同族光学紧排） */
+  font: var(--ui-font-display);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.leadero-root .hub-settings-view-desc {
+  margin: 0;
+  font-family: var(--ui-family-meta);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  line-height: var(--leading-normal);
+}
+
+/* padding/gap 由 shadcn Button 组件内置 */
+.leadero-root .hub-settings-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+}
+
+/* padding/gap 由 shadcn Button 组件内置 */
+.leadero-root .hub-settings-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* ---- 分区容器（v1.45 无盒化：原卡片壳退役，§22.2 次形态仅留复杂子工具如 provider 卡） ---- */
+.leadero-root .hub-settings-card {
+  /* 砚法分节卡制（批二十五立法，§8.4 卡容器两制·setgrp 分节卡；设置页页批
+     2026-09-20 落地）：一节一卡=浮纸+发丝线+radius-ctl；推翻 v1.45/v3批1
+     无盒分节（用户原型评审否决形态）。材料律：卡浮纸凸于画布，行线组内收。 */
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius-ctl);
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+/* v3 批 1（2026-09-19）法 4：通栏分节 hairline 退役——原 v1.45「* + * 顶线」
+   （后位声明压 card border:none）与 2026-09-01 header-wrapper 首节豁免对一并清；
+   分节分离交给 .hub-settings-view gap 32 单通道，线预算收窄至行 divider 与控件描边。 */
+
+.leadero-root .hub-settings-card-title {
+  /* 分节卡卡头（批二十五）：13px/600 CJK 正常字距 ink-full——推翻 v1.52/v1.45
+     overline uppercase+宽字距（CJK 三不适）；右动作槽由 space-between 承担 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3-5);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--ink-full);
+  letter-spacing: normal;
+  text-transform: none;
+  background: transparent;
+}
+
+.leadero-root .hub-settings-card-body {
+  /* 分节卡：卡体零衬距，行自担 12/14 呼吸（行线通栏到卡缘） */
+  padding: 0 0 var(--space-2);
+  display: flex;
+  flex-direction: column;
+}
+.leadero-root .hub-settings-card-body > * + * {
+  border-top: 1px solid var(--hub-row-divider);
+}
+
+.leadero-root .hub-settings-empty-line {
+  /* v1.52：消费点已收编 EmptyState；规则保留兼容 stragglers，italic 退役 */
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+/* ---- 表单原子 ---- */
+/* v1.72（2026-08-26 用户裁决）：.hub-settings-form auto-fit 字段墙退役——唯一消费点
+   AgentSection 弹窗表单改字段纵排单列（原型「设置表单一列」法）；墙在 440px 弹窗内
+   排两列曾把 220px 标签行挤碎。页内表单=form-row 单列堆叠（v1.61），弹窗表单=
+   form-field 纵排单列（同 ModelDialog 字段本形）。 */
+
+.leadero-root .hub-settings-form-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.leadero-root .hub-settings-form-field.hub-settings-form-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.leadero-root .hub-settings-form-row {
+  /* 分节卡行（批二十五）：「标题+说明」堆叠左、控件右——flex space-between
+     推翻 v1.61 220px 标签列 grid（用户原型评审否决：说明窄列狂折行）；
+     12/14 行呼吸=原型 .set-row 法值 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3-5);
+}
+
+/* 分节卡行标签（批二十五）：13px/500 重墨行题；说明 12px 淡墨堆叠其下
+   （旧 12px 字面量随 --text-sm 单源化） */
+.leadero-root .hub-settings-form-label {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* MCP 编辑器的字段标签（McpSection；语义同 hub-settings-form-label） */
+/* v1.33 V8：hub-settings-field-label 死别名删除，McpSection 两处改用 hub-settings-form-label */
+
+.leadero-root .hub-settings-form-input,
+.leadero-root .hub-settings-form-select {
+  box-sizing: border-box;
+  max-width: var(--layout-content-max);
+}
+
+.leadero-root .hub-settings-form-select {
+  /* §5.4 select 触发器下限成 token（--ctl-select-min:148）：未选态占位不缩窄 */
+  min-width: var(--ctl-select-min);
+}
+
+.leadero-root .hub-settings-form-input--sm {
+  /* 数字/短输入：120px 构件局部宽保留；高度对齐 §5.4 --ctl-h 28 */
+  width: 120px;
+  height: var(--ctl-h);
+}
+
+.leadero-root .hub-settings-form-input:read-only {
+  opacity: var(--opacity-secondary);
+  cursor: not-allowed;
+}
+
+/* ---- Capability toggle grid（model 详情页） ---- */
+.leadero-root .hub-settings-caps {
+  /* v1.61 用户裁决（2026-08-24）：盒壳退役（§23 去盒化，先例 v1.52 S23 hub-api-group）。
+     原型「只读 Badge 芯片」方案否决——本区是模型能力唯一编辑入口，保可编辑开关格；
+     已移出两列字段网格通栏放置，与上方字段栈以行线分隔（§23.6 行线制）。
+     Card 默认 border/bg 由本规则压平（同 .hub-settings-card 制）。 */
+  border: none;
+  border-top: 1px solid var(--hub-row-divider);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-3) 0 0;
+}
+
+.leadero-root .hub-settings-caps-title {
+  /* 砚法 §6.2/§15-63（2026-09-20 合规批）：能力组题=13px/600 CJK 正常字距——
+     overline uppercase+宽字距方言退役（中文大写无效、字距拉伸违法，同
+     hub-settings-card-title 制） */
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.leadero-root .hub-settings-caps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-settings-cap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* ============================================================
+   API Keys section
+   ============================================================ */
+
+.leadero-root .hub-api-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.leadero-root .hub-api-group {
+  /* v1.52 S23：盒中盒退役（§23.4 容器=无；v1.45 卡制式内不再嵌独立壳） */
+}
+
+.leadero-root .hub-api-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2-5) var(--space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+}
+
+.leadero-root .hub-api-group-header:hover {
+  background: var(--hub-bg-hover);
+}
+
+.leadero-root .hub-api-group-chevron {
+  display: inline-flex;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.leadero-root .hub-api-group-label {
+  /* 砚法 §6.2/§15-63（2026-09-20 合规批）：API 组题=13px/600 CJK 正常字距——
+     overline uppercase+宽字距方言退役（同 hub-settings-card-title 制） */
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+}
+
+.leadero-root .hub-api-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-3) var(--space-2-5);
+  border-top: 1px solid var(--hub-row-divider); /* v1.52 S12 */
+}
+
+/* ---- 单个 ApiKeyInput ---- */
+.leadero-root .hub-api-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+}
+
+.leadero-root .hub-api-key + .hub-api-key {
+  border-top: 1px solid var(--hub-row-divider);
+}
+
+.leadero-root .hub-api-key-label {
+  /* 2026-09-01 审计拍板⑤：13(--text-sm)→12 归一表单标签单源（原型 .form-label=12
+     法值，同 hub-settings-form-label 契约；API Keys 分区标签同步归一） */
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.leadero-root .hub-api-key-mask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex: 1;
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(
+    --radius-btn
+  ); /* v1.52 S9：与编辑态 Input 同形（原两态 2px/8px 翻转） */
+  background: var(--hub-bg-page);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.leadero-root .hub-api-key-mask:hover {
+  /* v1.52 S3：hover 单通道 --hub-bg-hover */
+  background: var(--hub-bg-hover);
+}
+
+.leadero-root .hub-api-key-mask-value {
+  flex: 1;
+  /* 2026-08-31 修复批 C1：min-width:0 + break-all——揭示态长 key 撑破组体/页面 */
+  min-width: 0;
+  word-break: break-all;
+  font-family: var(--font-mono);
+  /* 2026-09-02 值级批+原型 :585 .apikey mono 12px 档（白名单字面量） */
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-wide);
+}
+
+.leadero-root .hub-api-key-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+}
+
+.leadero-root .hub-api-key-input {
+  flex: 1;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+}
+
+.leadero-root .hub-api-key.is-invalid .hub-api-key-input,
+.leadero-root .hub-api-key.is-invalid .hub-api-key-mask {
+  border-color: var(--signal-red);
+}
+
+/* 审计 2026-08-31 P1：PrefFields 的 is-invalid 曾是死类——上面规则要求祖先
+   .hub-api-key，而 TextField/TextAreaField 的祖先是 label.hub-settings-form-row/
+   form-field，永不匹配，红边永不出现。补齐两条真实 DOM 路径（镜像上规则）。 */
+.leadero-root .hub-settings-form-row.is-invalid .hub-settings-form-input,
+.leadero-root .hub-settings-form-field.is-invalid .hub-settings-form-textarea {
+  border-color: var(--signal-red);
+}
+
+/* api-key 编辑态：input + toggle + copy + saved 反馈在同一行；toggle/copy 用
+   absolute 堆叠到 input 右侧（替代旧版的负 margin，在不同字体/DPI 下更稳健）。
+   hub-api-key-control 是 flex 行容器，input flex:1，右侧 action 用 absolute 定位。 */
+.leadero-root .hub-api-key-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+/* 编辑态下 input 撑满，actions 浮在右侧上方（input 给右内边距留位）。
+ * 2026-08-30 审计批④：64px 裸值升 --layout-api-key-input-right，与
+ * --layout-api-key-right（saved 反馈偏移）同族同档 tokens.css——三个右侧坐标
+ * （input 让位/saved 偏移/toggle 偏移）单一事实源，按钮尺寸变化一处可调。 */
+.leadero-root .hub-api-key-control.has-actions > .hub-api-key-input {
+  flex: 1;
+  padding-right: var(--layout-api-key-input-right);
+}
+.leadero-root .hub-api-key-toggle {
+  position: absolute;
+  right: var(--space-8);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-base);
+}
+/* saved 反馈：浮在 input 右下，避免推动布局 */
+.leadero-root .hub-api-key-saved {
+  position: absolute;
+  /* 避让行内右侧按钮组（mask 行 eye+copy 合计约 80px），此前 64px 会压在 eye 上 */
+  right: var(--layout-api-key-right);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  font-size: var(--text-2xs);
+  color: var(--signal-green-dark);
+  background: var(--hub-bg-elev);
+  padding: 0 var(--space-1);
+}
+
+/* 已删除：旧版 hub-api-key-saved 规则（已合并到上方现行 hub-api-key-saved 规则） */
+
+.leadero-root .hub-api-key-empty {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+.leadero-root .hub-api-key-warn {
+  font-size: var(--text-2xs);
+  color: var(--signal-red-strong);
+}
+
+/* ============================================================
+   AI Models section: Provider 卡片堆叠 + Model 列表/详情
+   ============================================================ */
+
+.leadero-root .hub-provider-card {
+  border-radius: var(--radius-lg);
+  background: var(--hub-bg-elev);
+  overflow: hidden;
+}
+
+.leadero-root .hub-provider-card + .hub-provider-card {
+  margin-top: var(--space-2);
+}
+
+.leadero-root .hub-provider-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-1) var(--space-1-5);
+}
+
+/* 2026-08-31 修复批 C1：head:hover 灯罩规则删除——内层 ghost 钮自带同值灯罩，
+   双层叠加（5%+5%≠均质） hover 变色不均；揭示制见下方 actions 规则 */
+
+.leadero-root .hub-provider-card-collapse {
+  flex: 1;
+  justify-content: flex-start;
+  font: inherit;
+  color: inherit;
+  /* Tailwind preflight 将 button 置为 cursor:default，这里需恢复手型 */
+  cursor: pointer;
+}
+
+/* v3 收口（2026-09-19）：.hub-row-del 显影三连退役——归 .hover-reveal 单源
+   （layout.css；行根类挂 .hover-reveal-scope，删钮挂 .hover-reveal）。 */
+/* v3 收口（2026-09-19）：hub-provider-card-actions 的显影三连（opacity/transition +
+   head:hover/focus-within + hover:none，v1.60 立）退役——归 .hover-reveal 单源；
+   该类仅存布局职责（display/align/gap 三行，见原规则），TSX 侧并存 hover-reveal。 */
+.leadero-root .hub-provider-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+}
+
+.leadero-root .hub-provider-card-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.leadero-root .hub-provider-card-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leadero-root .hub-provider-card-adapter {
+  /* v1.60：徽章盒退役——adapter 降为名称的灰色文字后缀（§23 去盒化）。
+     分隔点「·」由消费点 JSX 显式渲染（2026-09-02 真机审计：单点依赖 ::before
+     在类未命中时退化为裸拼接）；此处只管字级与左距。 */
+  display: inline;
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  margin-left: var(--space-1);
+}
+
+/* v1.60：卡内模型节标签（§23.6 overline 制式，单源类 hub-overline + count） */
+.leadero-root .hub-provider-models-label {
+  margin-top: var(--space-0-5);
+}
+
+/* 2026-08-31 修复批 C1：死徽章规则删除——v1.60 徽章退役后卡头再无 [data-slot="badge"]，
+   本 flex-shrink 规则零匹配残留 */
+
+.leadero-root .hub-provider-card-body {
+  /* 2026-09-02 值级批+原型 :307 .provider-body：padding 全周 12px / gap 8px */
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-top: 1px solid var(--hub-row-divider); /* v1.53 S12 收尾：卡内标题→内容分隔 */
+}
+
+.leadero-root .hub-provider-apikey-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.leadero-root .hub-provider-apikey-row .hub-settings-form-input {
+  flex: 1;
+}
+
+/* 2026-09-01 审计拍板②：provider 卡内已配置静止态 mask 降级无边框轻行
+   （原型 .apikey :585 轻文本行）。v1.52 S9「与编辑态 Input 同形」带框立法保留于
+   API Keys 分区全宽行，本规则 scope 于 provider 卡内——去框减重（§23 去盒方向）；
+   hover 灯罩保留作可点击暗示（radius-sm 与模型行同制）。空值/编辑态仍走带框
+   Input（焦点界界可视），saved/toggle 的 absolute 坐标只服务编辑态不受影响。 */
+.leadero-root .hub-provider-apikey-row .hub-api-key-mask {
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: var(--space-1) var(--space-1-5);
+}
+.leadero-root .hub-provider-apikey-row .hub-api-key-mask:hover {
+  background: var(--hub-bg-hover);
+}
+
+/* ---- Model 列表（点击整行进详情） ---- */
+.leadero-root .hub-model-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-1);
+}
+
+.leadero-root .hub-model-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  /* 2026-08-24 对齐批（溯源 #20 走样回归）：行高锁 --row-height-sm(36，
+     §22.1 行阶梯)；相邻行补 row-divider（§23.6 两级线制的行分割通道）。
+     原 gap+无 min-height 版本无立法记录，行高随内容漂移。 */
+  min-height: var(--row-height-sm);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.leadero-root .hub-model-list-row + .hub-model-list-row {
+  border-top: 1px solid var(--hub-row-divider);
+}
+
+.leadero-root .hub-model-list-row:hover {
+  background-color: var(--hub-bg-hover);
+}
+
+.leadero-root .hub-model-list-name {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leadero-root .hub-model-list-star {
+  color: var(--text-tertiary); /* v1.52 S13：装饰黄退役 */
+  display: inline-flex;
+}
+
+/* v1.60：hub-model-list-meta 退役——modelId 移出列表行（详情弹窗 Model ID 字段承载） */
+
+.leadero-root .hub-model-list-caps {
+  display: inline-flex;
+  /* 2026-09-02 值级批+原型 :314 .caps gap:8px */
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-model-dialog-form {
+  display: grid;
+  /* 2026-09-02 拍板：v1.72 弹窗表单纵排立法——440px 弹窗内两列每字段仅 ~200px，
+     改单列（同 AgentSection 弹窗表单纵排先例；GalleryPrefForms 同型消费点一并跟随） */
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+/* v1.52 §15.2：ModelDialog 字段改 form-field 纵排本形（原 form-row+CSS 覆盖反语法退役） */
+
+/* ============================================================
+   Hub Settings Part B1: section 辅助样式
+   - .hub-settings-restart-hint / .hub-settings-hint：信息提示行
+   - .hub-settings-actions：action 按钮行
+   - .hub-settings-form-desc：字段描述（label 下方次要文本）
+   - .hub-settings-form-textarea：多行文本
+   - .hub-institutional-row：institutional 单行（字段 + 登录按钮）
+   - .hub-soul-list / .hub-soul-item：soul 选择列表
+   - .hub-settings-form-field.is-disabled / .hub-settings-form-row.is-disabled
+   ============================================================ */
+
+/* 备份/恢复进度状态行：中性次级文字（此前借"需重启"黄色警示壳，语义错位） */
+.leadero-root .hub-backup-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.leadero-root .hub-settings-restart-hint,
+.leadero-root .hub-settings-hint {
+  /* v1.52：半覆盖合并（原 padding 声明后被 padding-left:0 改写）；
+     颜色成员各自单源（级联守卫 D7）：restart=警示黄，hint=三级灰 */
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1-5) 0;
+  font-size: var(--text-xs);
+  background: transparent;
+}
+
+/* ── 第四层自动化：事件 Hook 节（2026-09-21 补实现）──
+   行制跟随设置页既有制式（无盒分节 + 行分割线）；hover 单通道。 */
+.leadero-root .hub-hooks-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.leadero-root .hub-hooks-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+.leadero-root .hub-hooks-row + .hub-hooks-row {
+  border-top: 1px solid var(--border-subtle);
+}
+.leadero-root .hub-hooks-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-hooks-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.leadero-root .hub-hooks-meta {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .hub-hooks-create {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.leadero-root .hub-hooks-create-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-settings-restart-hint {
+  color: var(--signal-yellow-text);
+}
+
+.leadero-root .hub-settings-hint {
+  color: var(--text-tertiary);
+}
+
+.leadero-root .hub-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.leadero-root .hub-shortcut-key {
+  /* v1.49：快捷键值 = mono 纯文字（Badge 盒退役） */
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+}
+.leadero-root .hub-field-saved {
+  /* v1.49：字段已保存反馈=静态内联（原 hub-api-key-saved 绝对定位是为 api-key 行设计，
+     被 Agent/ModelDialog 复用时逃逸到容器边缘） */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  font-size: var(--text-2xs);
+  /* 2026-08-31 修复批 C1：--signal-green→--signal-green-dark——白底 2.6:1 不达 AA；
+     已保存语义对齐 :497 hub-api-key-saved 同用 dark（消双色分裂） */
+  color: var(--signal-green-dark);
+}
+.leadero-root .hub-settings-form-desc {
+  display: block;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-0-5);
+  line-height: var(--leading-tight);
+  /* v1.49 P0：父 label 的 nowrap+ellipsis 会裁切 desc——显式复位（长描述可换行） */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* padding/border/border-radius/focus/background 由 shadcn Textarea 内置 */
+.leadero-root .hub-settings-form-textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+/* is-disabled 状态（gating 子项） */
+.leadero-root .hub-settings-form-row.is-disabled,
+.leadero-root .hub-settings-form-field.is-disabled {
+  /* v1.62 用户裁决：禁用整行统一 0.5——从 --opacity-secondary(0.8) 换挂 --opacity-disabled；
+     与 cron 行 .is-disabled 同档（spec §15.10 法条 0.5 就此归位） */
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+/* Institutional 行
+   2026-09-02 双线修正：本规则原带 border-bottom + :last-child 豁免，与父级
+   card-body `> * + *` 的 border-top 单通道叠加成双分隔线——行分割统一由
+   card-body 单通道独担（§23.6 两级线制），此处只管布局。 */
+.leadero-root .hub-institutional-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  padding: var(--space-2) 0;
+}
+
+.leadero-root .hub-institutional-row > .hub-settings-form-row {
+  flex: 1;
+}
+
+.leadero-root .hub-institutional-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Soul 列表 */
+.leadero-root .hub-soul-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.leadero-root .hub-soul-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0; /* v1.47：行盒退役，flush 左轨 */
+  border: none;
+  border-radius: 0;
+  background: var(--hub-bg-page);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.leadero-root .hub-soul-item.is-active {
+  /* v1.49：彩底选中退役 → 2px 品牌红左指示条（§23.4 法定手法，负 margin 保 flush） */
+  border-left: var(--hub-indicator-width) solid var(--hub-indicator-color);
+  margin-left: calc(-1 * var(--hub-indicator-width));
+}
+
+.leadero-root .hub-soul-item-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  /* flex 子项默认 min-width:auto 不收缩——长中英混排名会把 desc 压成 0 宽
+     （Agent SOUL 列表末项行高异常根因）；镜像 .hub-soul-item-desc 的收缩四件套 */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leadero-root .hub-soul-item-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* Agent 列表（镜像 hub-soul-* 结构；AgentSection） */
+.leadero-root .hub-agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.leadero-root .hub-agent-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.leadero-root .hub-agent-item:hover {
+  background: var(--hub-bg-hover);
+}
+
+.leadero-root .hub-agent-item-name {
+  /* 2026-09-02 死类补法（原类名在 AgentSection 挂载但无规则）：对齐
+     hub-soul-item-name 13px/600 制（:898）——agent 列表镜像 soul 列表结构，
+     名称档随制；长中英混排名同样需要收缩四件套防压 desc */
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leadero-root .hub-agent-item-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ============================================================
+   Hub Settings Part B2: section 辅助样式（prompts/tools/brain 等）
+   ============================================================ */
+
+/* 卡片标题行的右侧 actions 槽位（.hub-settings-card-title 的布局属性
+   已合并到首次定义处 hub.css:2064，此处不再重复声明 display/align/justify/gap）。 */
+.leadero-root .hub-settings-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Java Runtime Status 操作按钮容器 */
+.leadero-root .hub-settings-java-runtime-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Prompt Templates */
+.leadero-root .hub-prompt-dir-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-prompt-dir-row > .hub-settings-form-row {
+  flex: 1;
+}
+
+.leadero-root .hub-prompt-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.leadero-root .hub-prompt-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2);
+  border-bottom: 1px solid var(--hub-row-divider);
+  font-size: var(--text-sm);
+}
+
+.leadero-root .hub-prompt-item:last-child {
+  border-bottom: none;
+}
+
+.leadero-root .hub-prompt-item-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  /* 2026-09-07 布局审计：补收缩四件套——裸 span min-width:auto 取 min-content，
+     长无空格模板名把右侧 desc 压成 0 宽并自行溢出分割线（与 desc 的
+     flex:1+min-w-0+ellipsis 配方对齐） */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leadero-root .hub-prompt-item-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* Tools */
+.leadero-root .hub-tools-group + .hub-tools-group {
+  /* v3 批 2（2026-09-19 法 4）：组间规则线退役，分离 = 留白 16 单通道 */
+  margin-top: var(--space-4);
+}
+
+.leadero-root .hub-tools-group-label {
+  /* 砚法 §6.2/§15-63（2026-09-20 合规批）：工具组题=13px/600 CJK 正常字距——
+     overline uppercase+宽字距方言退役（同 hub-settings-card-title 制） */
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-1-5);
+}
+
+.leadero-root .hub-tools-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+}
+
+.leadero-root .hub-tools-item-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  min-width: var(--layout-tool-name-min);
+}
+
+.leadero-root .hub-tools-item-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* ============================================================
+   Hub Settings Part B3: shortcuts/security/backup
+   ============================================================ */
+
+/* Shortcuts 列表 */
+.leadero-root .hub-shortcuts-group + .hub-shortcuts-group {
+  /* v3 批 2（2026-09-19 法 4）：组间规则线退役，分离 = 留白 16 单通道 */
+  margin-top: var(--space-4);
+}
+
+.leadero-root .hub-shortcuts-group-label {
+  /* 砚法 §6.2/§15-63（2026-09-20 合规批）：快捷键组题=13px/600 CJK 正常字距——
+     overline uppercase+宽字距方言退役（同 hub-tools-group-label 同批） */
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-1-5);
+}
+
+.leadero-root .hub-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) 0;
+  border-bottom: 1px solid var(--hub-row-divider);
+}
+
+.leadero-root .hub-shortcut-row:last-child {
+  border-bottom: none;
+}
+
+.leadero-root .hub-shortcut-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.leadero-root .hub-shortcut-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.leadero-root .hub-shortcut-desc {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+/* dialog-bg 契约下放（2026-08-25 五问审计批）：单消费组件 token 本地化 */
+.leadero-root {
+  --dialog-bg: var(--card-bg);
+}
+.leadero-root .hub-shortcut-capture-modal {
+  background: var(--dialog-bg);
+  border-radius: var(--card-radius); /* v1.65 矩阵 ⑮：对话框=卡片档 6px */
+  padding: var(--space-5) var(--space-6);
+  min-width: var(--layout-modal-sm);
+  max-width: var(--layout-modal-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.leadero-root .hub-shortcut-capture-title {
+  /* v1.52 S4：居中违例修正（§20.3 面板标题左对齐）+ display 家族泄漏 → heading 档 */
+  font: var(--ui-font-heading);
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.leadero-root .hub-shortcut-capture-prompt {
+  font-size: var(--text-lg);
+  font-family: var(--font-mono);
+  text-align: center;
+  padding: var(--space-4) var(--space-3);
+  border: 2px solid var(--border-subtle); /* v1.53 S12 收尾：捕获态强调框描边（2px 为强调宽度，通道同卡片描边） */
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: var(--hub-bg-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leadero-root .hub-shortcut-capture-hint {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: var(--leading-normal);
+}
+
+.leadero-root .hub-shortcut-capture-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Security bypass options */
+.leadero-root .hub-bypass-options.is-disabled {
+  /* v1.62：禁用整行统一 0.5（同 settings/cron 行制） */
+  opacity: var(--opacity-disabled);
+  pointer-events: none;
+}
+
+.leadero-root .hub-bypass-whitelist {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--hub-row-divider);
+  /* v1.52 S15：嵌套滚动退役（§22.3 单滚动容器） */
+}
+
+/* Backup groups */
+.leadero-root .hub-backup-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.leadero-root .hub-backup-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* About section */
+.leadero-root .hub-settings-about-version {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.leadero-root .hub-settings-about-desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* ── Workspace (AI 工作台：对话 + 可视化 Dashboard 双栏) ── */
+.leadero-root .hub-workspace {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.leadero-root .hub-workspace-left {
+  flex: 0 0 40%;
+  min-width: var(--layout-sidebar-min);
+  max-width: var(--layout-sidebar-max);
+  overflow: hidden;
+  /* v1.53 审计批 B4：--fill-primary-bg → --hub-bg-elev（值等价：浅=纯白/暗=官方 card，
+     纯 token 语义归位——Hub 区域一律走 hub-* 表面体系；内嵌 chat root 自绘同值） */
+  background: var(--hub-bg-elev);
+  /* preflight 关闭无全局 border-box：双边框下 content-box 会让占位变成 40%+2px */
+  box-sizing: border-box;
+  /* 与 sidenav 的分隔由 sidenav 自身 border-right 承担（相邻再画即 2px 双线）。
+     border-right：与右侧聊天区的栏间分隔（显式 border，双表面策略一致）。 */
+  border-right: 1px solid var(--hub-hairline); /* v1.53 S12 收尾 */
+  display: flex;
+  flex-direction: column;
+}
+/* 2026-09-14 宽度适配批：窄 pane 左栏 min 降档 320→280——Hub 导航展开时
+   900px 窗 pane≈644，320 夹紧占 49.7%、Dashboard 仅 ~324px（Workspace.tsx
+   头注释的 40/60 断言同源失真，已同步修正）。容器查询量 hub-main 实际宽。 */
+@container hub-main (max-width: 800px) {
+  .leadero-root .hub-workspace-left {
+    min-width: 280px;
+  }
+}
+.leadero-root .hub-workspace-left .leadero-chat-root {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border: none;
+}
+
+/* ── Workspace 会话侧栏（IA §4.4 v2.19 §15-91 功能批，2026-09-20）──
+   左栏=完整可搜索会话列表（搜索+按日分组+切换+新会话），明示推翻
+   2026-08-21「跨窗连续单会话」裁决。准入法「导航列表」类：列材料=画布
+   （hub-settings-nav 同语义）；active 行三件=浮纸底+左缘 2px 交互蓝条+焦墨
+   （§8.3/§8.0 交互蓝语义，与 hub-settings-nav-item[data-active] 同律，
+   2px 为结构线宽豁免）。宽度走 --dash-nav-width（§11 侧栏 240 档）。
+   形式②悬浮贴边/图钉 polish 已登记功能批窗口——本轮为常驻左列。 */
+.leadero-root .hub-ws-sessions {
+  flex: 0 0 var(--dash-nav-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface-canvas);
+  border-right: 1px solid var(--hub-hairline);
+  box-sizing: border-box;
+}
+.leadero-root .hub-ws-sessions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) var(--space-1) var(--space-3);
+  flex-shrink: 0;
+}
+/* 组题语法（§6.2/§15-63：13px/600 正常字距，uppercase 对中文无效——
+   同 hub-settings-nav-group-label，11px overline 方言退役） */
+.leadero-root .hub-ws-sessions-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-ws-sessions-search {
+  padding: 0 var(--space-2) var(--space-2);
+  flex-shrink: 0;
+}
+.leadero-root .hub-ws-sessions-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 0 var(--space-1) var(--space-2);
+}
+.leadero-root .hub-ws-sessions-group + .hub-ws-sessions-group {
+  margin-top: var(--space-1);
+}
+.leadero-root .hub-ws-sessions-group-label {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+}
+/* 会话行=标题+相对时间单行制（与聊天侧 .session-item 同节奏，
+   min-height 挂 --row-height-sm 法定行阶梯） */
+.leadero-root .hub-ws-session-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+  margin: var(--space-px) var(--space-1);
+  min-height: var(--row-height-sm);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .hub-ws-session-row:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .hub-ws-session-row:focus {
+  outline: none;
+}
+/* C3 同律（session-item 焦点可见性）：鼠标聚焦豁免，键盘聚焦恢复交互蓝环 */
+.leadero-root .hub-ws-session-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.leadero-root .hub-ws-session-row.is-active {
+  background: var(--paper-raised);
+  color: var(--ink-scorch);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.leadero-root .hub-ws-session-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .hub-ws-session-time {
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+/* 空态/失败态/装载（§9.4：失败≠空——错误行+重试钮，不冒充空态） */
+.leadero-root .hub-ws-sessions-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+/* 窄容器诚实降级（§13.8 锚点=hub-main，与 workspace-left min 降 280 同档）：
+   ≤800px 三栏放不下，会话列隐藏（聊天窗与宽容器仍可达）；窄容器恢复入口
+   归形式②悬浮贴边/图钉 polish 功能批（IA §4.4 悬浮语义）。 */
+@container hub-main (max-width: 800px) {
+  .leadero-root .hub-ws-sessions {
+    display: none;
+  }
+}
+
+/* DashboardPanel — now a direct flex child of hub-workspace */
+.leadero-root .hub-dashboard-panel {
+  flex: 1 1 60%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* v1.53 审计批 B4：同 hub-workspace-left，token 语义归位 */
+  background: var(--hub-bg-elev);
+}
+.leadero-root .hub-dashboard-panel.is-collapsed {
+  flex: 0 0 var(--row-height-md); /* v1.52：48px 裸值 → 行阶梯 token */
+  min-width: var(--row-height-md);
+}
+.leadero-root .hub-dashboard-collapsed-handle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--hub-hairline);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.leadero-root .hub-dashboard-collapsed-handle:hover {
+  /* v1.52 S10/S3：灰实心退役（§23.4 次级动作禁灰疙瘩）；hover=灯罩单通道 */
+  background: var(--hub-bg-hover);
+  color: var(--text-primary);
+}
+.leadero-root .hub-dashboard-header-actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+  align-items: center;
+}
+.leadero-root .hub-dashboard-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 2026-08-31 修复批 C1：激活态补齐（attr data-pinned 已在 DashboardPanel 存在）——
+   原型 .icon-btn.on :355 bg ink + color #fff；反白走 --text-on-accent token */
+.leadero-root .hub-dashboard-mode-btn[data-pinned="true"] {
+  background: var(--text-primary);
+  color: var(--text-on-accent);
+}
+.leadero-root .hub-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  /* v3 批 2（2026-09-19 法 2）：面板头 = zone 功能带（材质分组替代下缘线） */
+  background: var(--surface-zone);
+  flex-shrink: 0;
+}
+/* v2 §4.10 批7：pinned 态的工件名标签（面板顶部 overline 11）——「固定」这个
+   状态此前只活在 pin 钮的按压态里；多轮对话后右栏显示的是哪一次产出无处可读。
+   C 形态节标签语法（overline + 大写宽字距），不与下方 heading 标题争重。 */
+.leadero-root .hub-dashboard-pinned-note {
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  padding: var(--space-2) var(--space-3) 0;
+  flex-shrink: 0;
+}
+.leadero-root .hub-dashboard-title {
+  font: var(--ui-font-heading); /* v1.33 V8/G1：面板标题 = heading 级 */
+
+  color: var(--text-primary);
+}
+.leadero-root .hub-dashboard-source {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.leadero-root .hub-dashboard-content {
+  flex: 1;
+  overflow: auto;
+  /* 遵守铁律：pane 内容区 padding 用 --page-content-padding（与其他 Hub pane 对齐）。
+     2026-08-31 用户拍板：垂直顶距 16→32 补齐 v1.73 布局统一（40/60 双栏形态本身保留，
+     不进 pane 单列公式）。
+     §13.5 豁免登记（2026-09-02）：本面板保持 --page-content-padding 不收窄——
+     workspace dashboard 图表面（hub-dashboard-graph 100% 填充）属数据密集豁免页。 */
+  padding: var(--space-8) var(--page-content-padding);
+}
+.leadero-root .hub-dashboard-graph {
+  width: 100%;
+  height: 100%;
+  min-height: var(--layout-graph-min-h);
+}
+.leadero-root .hub-dashboard-graph canvas {
+  width: 100%;
+  height: 100%;
+}
+/* search-results 容器：SearchResultDisplay 的卡片在此堆叠。
+   之前是裸 div（无 padding/gap），靠子组件 tool-result-search 自带间距；
+   现补齐容器样式，让卡片间距与 hub-dashboard-gap-list 节奏一致（space-1-5）。 */
+.leadero-root .hub-dashboard-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+/* gap-list 容器：之前是裸 div，现补齐纵向间距。 */
+.leadero-root .hub-dashboard-gaps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+/* html 容器：单子元素（MarkdownRenderer），prose 基座自带排版，
+   无需容器样式；TSX 的 hub-dashboard-html 类名仅作语义锚点。 */
+.leadero-root .hub-dashboard-paper-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.leadero-root .hub-dashboard-paper-title {
+  /* v1.33 D1：论文标题用 heading 简写一步到位（§20.2 heading = 16px/600 sans） */
+  font: var(--ui-font-heading);
+  color: var(--text-primary);
+  margin: 0;
+}
+.leadero-root .hub-dashboard-paper-summary {
+  /* §20.2 body role：Newsreader 衬线用于正文阅读（论文摘要等长文本） */
+  font-family: var(--ui-family-body);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+.leadero-root .hub-dashboard-paper-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.leadero-root .hub-dashboard-metric-chip {
+  /* v1.52 二轮：幻影 chip 壳退役（height/padding/radius 无内容承载）→ 纯 meta 文字 */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.leadero-root .hub-dashboard-gap-stats {
+  /* v1.52 S23：残留盒退役（v1.47 清扫漏网；统计=纯文字 tabular） */
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-1) 0;
+  margin-bottom: var(--space-2);
+}
+.leadero-root .hub-dashboard-gap-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.leadero-root .hub-dashboard-gap-item {
+  border: none;
+  border-radius: 0;
+  background: transparent; /* v1.47：盒退役 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) var(--space-2);
+}
+.leadero-root .hub-dashboard-gap-type {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary); /* v1.52 S13：装饰橙退役，黑白灰纪律 */
+  text-transform: uppercase;
+}
+.leadero-root .hub-dashboard-gap-desc {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* ── Workspace Dashboard 入口栏（准入法升格批①：IA §0「侧栏内容准入法」
+   落地实例 + §4.4 v2.5；原型 ws-sub-dash 入口栏 :7902-7977）──
+   右栏由 DashboardPanel 全量可视化（升格次级页「Dashboard」形式①）改为
+   「Dashboard 入口列表」：行=可视化项名+一句状态+chevron。行制与左栏会话
+   行同律（hub-ws-session-row：hover 灯罩 / 键盘交互蓝环 / is-active=浮纸底
+   +左缘 2px 交互蓝条——§8.3/§8.0 交互蓝语义，2px 为结构线宽豁免）；无数据
+   行淡墨置灰（is-empty，不可点——如实呈现 dashboardFocusAtom 单焦点）。
+   宽度走 --dash-nav-width（§11 侧栏 240 档，与左栏同梯）。 */
+.leadero-root .hub-ws-dash-rail {
+  flex: 0 0 var(--dash-nav-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface-canvas);
+  border-left: 1px solid var(--hub-hairline);
+  box-sizing: border-box;
+}
+.leadero-root .hub-ws-dash-rail-head {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  flex-shrink: 0;
+}
+/* 栏题语法（§6.2：13px/600 正常字距，同 hub-ws-sessions-title） */
+.leadero-root .hub-ws-dash-rail-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-ws-dash-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 0 var(--space-1);
+}
+/* 入口行=名+状态两行制（单行状态挤在 240 档里截断失真），chevron 右缘 */
+.leadero-root .hub-ws-dash-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+  margin: var(--space-px) var(--space-1);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.leadero-root .hub-ws-dash-row:hover {
+  background-color: var(--hub-bg-hover);
+}
+.leadero-root .hub-ws-dash-row:focus {
+  outline: none;
+}
+/* C3 同律（hub-ws-session-row 焦点可见性）：鼠标聚焦豁免，键盘聚焦恢复交互蓝环 */
+.leadero-root .hub-ws-dash-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* is-active=当前持有焦点的可视化类型（浮纸底+左缘 2px 交互蓝，同左栏会话行） */
+.leadero-root .hub-ws-dash-row.is-active {
+  background: var(--paper-raised);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.leadero-root .hub-ws-dash-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-ws-dash-row-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .hub-ws-dash-row-status {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .hub-ws-dash-row-chev {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+}
+/* 无数据行淡墨置灰：不可点（无指针/hover 语义），名与状态同降 tertiary 档 */
+.leadero-root .hub-ws-dash-row.is-empty {
+  cursor: default;
+}
+.leadero-root .hub-ws-dash-row.is-empty .hub-ws-dash-row-name {
+  color: var(--text-tertiary);
+}
+/* 升格脚注（原型 g-note「全量卡片已升格为次级页面（形式①）」）：常驻轻状态 */
+.leadero-root .hub-ws-dash-note {
+  flex-shrink: 0;
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+/* keep-alive 显隐覆盖：.hub-workspace 自身 display:flex specificity(0,2,0)
+   高于 .hidden(0,1,0)，subView=dashboard 时显式隐藏三栏（同
+   .hub-pane-slot.hidden 先例，hub-base.css:180）。 */
+.leadero-root .hub-workspace.hidden {
+  display: none;
+}
+/* 次级页定位高亮（入口行点击=定位对应卡）：交互蓝描边短暂驻留（§8.3；
+   stroke-edge/stroke-thin 与 hub-bento-card.is-drop-target 同源令牌）。 */
+.leadero-root .hub-bento-card.is-anchored {
+  outline: var(--stroke-edge) solid var(--accent);
+  outline-offset: var(--stroke-thin);
+}
+
+/* Workspace: overlay-zone 在 40% 窄栏中 absolute 浮层遮挡严重，
+   审批/续轮/追问等交互卡片仍需可见。absolute bottom + 外层 pointer-events:none
+   不会挤压消息流；卡片仅在底部浮出，用户可正常滚动与点击消息。 */
+.leadero-root .hub-workspace .leadero-overlay-zone {
+  left: var(--space-3);
+  right: var(--space-3);
+}
+
+/* ── hub-surface-scope 已停用并移除（v1.71 表面翻转批，2026-09-18）──
+   方案 B 时代的 --card-bg→--hub-bg-page 重映射（HubShell 曾给全部 .leadero-root
+   挂 scope 类）：方案 A 下双主题 no-op，且其「.bg-background → var(--card-bg)」
+   内联断言早已失实（tw-source 实桥 --color-background: var(--background)）。
+   v1.71 灰底白卡翻转后该重映射会把控件钉到画布灰上，故连同类选择器整体退役。
+   表面语义单源 = tokens.css --surface-canvas / --surface-raised（spec §19.2 v1.71）。 */
+
+/* ── CronManagerPanel (in Settings) ──
+   IA §4.3（裁决 31，2026-09-20 页批）：行表（hub-cron-list/hub-cron-item 族）
+   退役 → 响应式卡片网格（hub-cron-grid/hub-cron-card）；行内表达式 Input
+   移入编辑弹窗（卡上不再放输入框），卡面只留 mono 只读陈列。 */
+.leadero-root .hub-cron-manager {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4); /* v1.52 S7：标题→内容 = 16（§18.1；兄弟节已同批改 4） */
+}
+/* 视觉（字号/背景/颜色）由官方 Input 工具类提供；cron 表达式保留 mono */
+.leadero-root .hub-cron-schedule-input {
+  font-family: var(--font-mono);
+}
+/* 定时卡片网格（裁决 31）：auto-fill 260px 地板，窄面单列、宽面多列；
+   构件局部几何（<700px，宽度梯不入档）——地板值沿任务规格拍板。 */
+.leadero-root .hub-cron-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+/* 卡容器材料律（§8.4 卡容器两制，hub-settings-card 同制）：浮纸 + 发丝线 +
+   radius-ctl；零投影（§19.1 法则 2 静态内容卡）。 */
+.leadero-root .hub-cron-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line-faint);
+  border-radius: var(--radius-ctl);
+  background: var(--paper-raised);
+}
+.leadero-root .hub-cron-card.is-disabled {
+  opacity: var(--opacity-disabled);
+}
+/* 卡体：名称（title 级）+ 下次运行 meta + 失败态行 + mono 调度陈列纵排 */
+.leadero-root .hub-cron-card-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+.leadero-root .hub-cron-item-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.leadero-root .hub-cron-item-meta {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.leadero-root .hub-cron-item-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: auto;
+} /* 2026-09-11 拥挤审计 P1：2px→8px；卡底动作行贴底（同排卡不等高时对齐卡缘） */
+.leadero-root .hub-cron-card-expr {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* §9.4 失败披露行（2026-09-20 补漏批）：错误摘要可折行，不随家族 nowrap 裁切 */
+.leadero-root .hub-cron-item-fail {
+  font-size: var(--text-xs);
+  white-space: normal;
+}
+/* 四模式表单（编辑弹窗）的模式组题/前后缀标签：meta 档（非交互文字） */
+.leadero-root .hub-cron-form-label {
+  font: var(--ui-font-meta);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   MCP structured server editor (McpSection)
+   Row: [enabled toggle] [name] [transport] [url] [remove]
+   Invalid rows block persistence; errors render inline under fields.
+   ============================================================ */
+
+.leadero-root .hub-mcp-servers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+/* v1.52：PDF 自定义源专属类族（原借用 hub-mcp-*，跨模块耦合退役；样式同形） */
+.leadero-root .hub-source-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+.leadero-root .hub-mcp-server-row {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  display: grid; /* v1.47：逐行盒退役，flush 左轨 */ /* 2026-08-31 修复批 C1：第 3 列 5rem→auto——HTTP/SSE 双 chip 91px 超列宽换行破碎 */
+  grid-template-columns: auto minmax(110px, 1fr) auto minmax(180px, 2fr) auto; /* 2026-09-14 宽度适配批：地板 120/220→110/180，最坏内容预算 ~433px（900px 窗+双导航展开）下 5 列不溢出（原 ~527px 必溢出成 pane 横滚） */
+  gap: var(--space-1-5);
+  align-items: start;
+  padding: var(--space-1-5) 0;
+}
+.leadero-root .hub-mcp-server-row + .hub-mcp-server-row {
+  border-top: 1px solid var(--hub-row-divider);
+}
+.leadero-root .hub-mcp-server-enabled {
+  display: flex;
+  align-items: center;
+  height: var(--row-height-sm);
+}
+.leadero-root .hub-source-row-enabled {
+  display: flex;
+  align-items: center;
+  height: var(--row-height-sm);
+}
+.leadero-root .hub-mcp-server-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.leadero-root .hub-mcp-field-error {
+  font-size: var(--text-xs);
+  color: var(--signal-red-strong);
+}
+.leadero-root .hub-source-row-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.leadero-root .hub-source-field-error {
+  font-size: var(--text-xs);
+  color: var(--signal-red-strong);
+}
+.leadero-root .hub-mcp-parse-error {
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--signal-red) 10%, transparent);
+}
+.leadero-root .hub-source-parse-error {
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--signal-red) 10%, transparent);
+}
+
+/* A2A 结构化行编辑器（A2ASection）——同 MCP/PDF 行族同形（专属类族，
+   跨模块耦合退役先例 hub-source-*）；列序 = toggle/url/token/timeout/del */
+.leadero-root .hub-a2a-servers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block: var(--space-2);
+}
+.leadero-root .hub-a2a-server-row {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: auto minmax(170px, 2fr) minmax(110px, 1.5fr) 72px auto; /* 2026-09-14 宽度适配批：地板 220/150/84→170/110/72（原 ~550px > 最坏预算 ~433px，P0 溢出主源） */
+  gap: var(--space-1-5);
+  align-items: start;
+  padding: var(--space-1-5) 0;
+}
+.leadero-root .hub-a2a-server-row + .hub-a2a-server-row {
+  border-top: 1px solid var(--hub-row-divider);
+}
+.leadero-root .hub-a2a-server-enabled {
+  display: flex;
+  align-items: center;
+  height: var(--row-height-sm);
+}
+.leadero-root .hub-a2a-server-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.leadero-root .hub-a2a-field-error {
+  font-size: var(--text-xs);
+  color: var(--signal-red-strong);
+}
+.leadero-root .hub-a2a-parse-error {
+  padding: var(--space-1) var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--signal-red) 10%, transparent);
+}
+
+/* v3 收口（2026-09-19）：MCP/PDF/A2A 行删除钮悬停显影制（原 2026-08-31 C1 立，
+   原型 .hover-reveal :81-82）退役——归 .hover-reveal 单源（layout.css；行根挂
+   .hover-reveal-scope、删钮挂 .hover-reveal，触屏/键盘兜底同源）。 */
+
+/* Quick-start wizard (AiModelsSection first-run) */
+.leadero-root .hub-wizard-title {
+  margin: 0;
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+} /* v1.52 S4：16/600 第三级 → overline（view display + 卡 overline 两级以内） */
+.leadero-root .hub-wizard-sub {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+.leadero-root .hub-wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: var(--layout-content-max);
+}
+.leadero-root .hub-wizard-label {
+  /* 2026-09-01 审计拍板⑤：11(--text-xs)→12 归一表单标签单源（同 form-label 契约） */
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+} /* v1.33 V8：raw 500 → token */
+/* hub-wizard-field select: removed — the wizard now uses the ui Select
+   primitive (.leadero-form-select). The old rule also had a live bug:
+   background and color both used --text-primary (invisible text). */
+.leadero-root .hub-wizard-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.leadero-root .hub-wizard-tested {
+  font-size: var(--text-xs);
+  color: var(--signal-green-dark);
+} /* 2026-08-31 修复批 C1：--signal-green→dark（白底 AA；对齐 hub-field-saved 同批） */
+.leadero-root .hub-wizard-hint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+/* Home readiness 样式由 HomePane tsx utilities 承载（leadero-hub-home.css 已不存在） */
+
+/* Settings 表单级黄色警示（form-desc 通道 + 专用警示色）
+   2026-09-02 两制收敛：hub-mcp-server-warning 泛化为 hub-settings-warning——
+   SecuritySection bypass 警示此前借 restart-hint「需重启」壳属语义错位
+   （同 BrainSection v1.52 修正先例：通道语义优先，视觉 11px 黄不变由
+   form-desc 的 2xs 承担字级）；restart-hint 留给真正的重启提示（RestartHint）。 */
+.leadero-root .hub-settings-warning {
+  color: var(--signal-yellow-text);
+}
+
+/* API key group reverse-annotation chips (consumedBy) */
+/* 2026-09-02 值级批+原型 :585 四件套：min-width:0 + max-width:200px + nowrap + ellipsis */
+.leadero-root .hub-api-group-usedby {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-left: var(--space-1-5);
+  min-width: 0;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Structured source list editor (CustomPdfSourcesSection) — same row grammar as the MCP editor */
+.leadero-root .hub-source-row {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  display: grid; /* v1.49：与 mcp 行同构（拆盒+行线） */
+  grid-template-columns: auto minmax(110px, 1fr) minmax(180px, 2fr) 76px auto; /* 2026-09-14 宽度适配批：地板压缩同 MCP 行（原 ~524px 贴线） */
+  gap: var(--space-1-5);
+  align-items: start;
+  padding: var(--space-1-5) 0;
+}
+.leadero-root .hub-source-row + .hub-source-row {
+  border-top: 1px solid var(--hub-row-divider);
+}
+
+/* 2026-09-02 窄窗降级：MCP/PDF 两族 5 列固定行网格在 ≤640px 逐列挤压破碎
+   （url minmax(200px,2fr) 首当其冲）——降级单列纵排（toggle/name/transport/url/
+   remove 顺次堆叠）；900px 审计口径内布局不变（本档之上网格原样） */
+/* 【清退 2026-09-15，R4-15】原 @media (max-width: 640px) 区块已删：
+ * 同为 <900 viewport 死断点；其单列降级已由紧邻的 @container 620px 规则
+ * 逐选择器等价覆盖。原注保留在此以备溯源：2026-09-02 窄窗降级——MCP/PDF
+ * 两族 5 列固定行网格在 ≤640px 逐列挤压破碎（url minmax(200px,2fr) 首当其冲）。 */
+/* 2026-09-14 宽度适配批（@container 试点）：内容列 ≤620px 即单列——量
+   settings-content 实际宽，补 640 viewport 档在窄窗+导航展开组合下的覆盖
+   缺口（该组合内容预算 433~520px，viewport 640 在 minwidth=900 立法下
+   永不触发）。 */
+@container settings-content (max-width: 620px) {
+  .leadero-root .hub-mcp-server-row,
+  .leadero-root .hub-source-row,
+  .leadero-root .hub-a2a-server-row {
+    grid-template-columns: 1fr;
+  }
+}
+.leadero-root .hub-source-priority {
+  height: var(--space-8);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  width: 100%;
+} /* v1.52 S9：双壳退役（控件自带边框圆角）；2026-08-31 修复批 C1：36(--row-height-sm)→32(--space-8)，同排 Input h-8=32 对齐 */
+
+/* ============================================================
+   Memory 管理卡（§15-75 / IA v2.18 §4.7：记忆管理归设置 Agent 分区，
+   2026-09-20 设置页页批）：分四小节行式陈列（规则/事实/会话摘要/主题），
+   行=内容摘要（title 档截断）+ meta（category/时间，淡墨）+ 删除钮。
+   行制镜像 hub-agent-*（AgentSection 同分区同律）；材料/行线由
+   hub-settings-card 容器制承担（card-body `> * + *` 行线通栏）。
+   ============================================================ */
+
+.leadero-root .hub-memory-stats {
+  /* 顶部条目计数行（淡墨）：与 hub-settings-hint 同字级同色 */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-1-5);
+  padding: var(--space-2) var(--space-3-5);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.leadero-root .hub-memory-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3-5);
+}
+
+.leadero-root .hub-memory-group-title {
+  /* 小节题：12px 半粗次级墨（低于卡头 13px/600 ink-full 一档） */
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+}
+
+.leadero-root .hub-memory-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  min-width: 0;
+}
+
+.leadero-root .hub-memory-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.leadero-root .hub-memory-row-title {
+  /* title 档单行截断：收缩四件套（长中英混排摘要不破行，同 hub-agent-item-name） */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.leadero-root .hub-memory-row-meta {
+  /* meta 档（category/时间）：淡墨 12px，同样单行截断 */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.leadero-root .hub-memory-row-removed {
+  /* 行级删除反馈：原行位显示「已删除」状态行（hub-status ok 档承担染色） */
+  display: flex;
+  align-items: center;
+  padding: var(--space-1) 0;
+}

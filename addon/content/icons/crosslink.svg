@@ -1,0 +1,15 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- DUALLAYER: 基底层固定墨色保证任何渲染器可见；覆盖层 context-fill 由宿主主题接管 -->
+<g id="crosslink">
+<path fill-rule="evenodd" clip-rule="evenodd" d="
+M4.5 2.2a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zM11.5 9.2a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6z
+" fill="#1a1a1a"/>
+<path d="M5.6 6.2l4.8 3.6M10.4 6.2L5.6 9.8" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+</g>
+<g id="crosslink">
+<path fill-rule="evenodd" clip-rule="evenodd" d="
+M4.5 2.2a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zM11.5 9.2a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6z
+" fill="context-fill"/>
+<path d="M5.6 6.2l4.8 3.6M10.4 6.2L5.6 9.8" stroke="context-fill" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+</g>
+</svg>

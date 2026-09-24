@@ -1,0 +1,376 @@
+/**
+ * HubLiteratureHandler — literature.* + journal.* RPC handlers（z-search 精简版）。
+ *
+ * 从 leadero 复制时移除 translate（依赖整体翻译 API）与 chat.open
+ * （聊天窗不属于本插件）。
+ */
+
+import type { HubWindowBridge } from "./HubWindowBridge";
+import { toErrorMessage } from "../../utils/error";
+import type { ImportResult } from "../../types/literatureSearch";
+import academicSearch from "../../core/tool/builtin/handlers/academic-search/index";
+import { safeDebug } from "../../utils/logger";
+import { normalizeDoi } from "../../core/search/literatureSearchHelpers";
+import { isSourceAvailable } from "../../core/sources/academic-search/utils";
+
+const {
+  callSearchAPI,
+  deduplicateArticles,
+  importArticle: doImportArticle,
+} = academicSearch;
+
+export async function handleLiteratureRequest(
+  bridge: HubWindowBridge,
+  method: string,
+  payload: any,
+  id: string | number,
+  source: Window,
+): Promise<void> {
+  let result: any = null;
+  let error: string | null = null;
+
+  try {
+    switch (method) {
+      case "literature.search": {
+        if (!payload?.query) {
+          error = "literature.search: missing query";
+          break;
+        }
+
+        const maxResults = payload.maxResults ?? 20;
+        // 默认源表 = UI 可选全集。「全不选」走这里。
+        const sources = payload.sources || [
+          "openalex",
+          "semantic-scholar",
+          "crossref",
+          "arxiv",
+          "biorxiv",
+          "medrxiv",
+          "doaj",
+          "zenodo",
+          "hal",
+          "core",
+          "europe-pmc",
+          "pubmed",
+          "chinaxiv",
+          "github",
+        ];
+
+        bridge._searchAbortSignal ??= new Map();
+        const searchId = ++bridge._searchIdCounter;
+        const signal: { aborted: boolean } = { aborted: false };
+        bridge._searchAbortSignal.set(searchId, signal);
+
+        const allArticles: any[] = [];
+        // 未真正产出结果的源，分开记账（2026-09-23 可观测性修复：此前两者
+        // 都只进 safeDebug，前端看到「正在检索 8 个来源」却不知哪几个没跑，
+        // 静默降级）：
+        //   skippedNoKey  = 缺 API Key，本配置下不发起请求（与 SearchPipeline
+        //                   的 isSourceAvailable 语义对齐）
+        //   failedSources = 发起了请求但抛错（网络/限流/解析）
+        const skippedNoKey: string[] = [];
+        const failedSources: string[] = [];
+        try {
+          // 并发扇出（2026-09-23）：Hub 搜索页前端已改为逐源并行 RPC
+          // （每次单源调用，本循环体只跑一轮）；这里的并发化服务于仍传
+          // 多源 sources 的调用方——总耗时从「各源之和」降到「最慢单源」。
+          // 取消语义不变：signal.aborted 的源直接跳过，结算后统一上报。
+          const responses = await Promise.all(
+            sources.map(async (src: string) => {
+              if (signal.aborted) return null;
+              if (!isSourceAvailable(src)) {
+                skippedNoKey.push(src);
+                return null;
+              }
+              try {
+                return await callSearchAPI(
+                  src,
+                  payload.query,
+                  payload.year,
+                  maxResults,
+                  {
+                    author: payload.author,
+                    journal: payload.journal,
+                    sort: payload.sort || "relevance",
+                  },
+                );
+              } catch (e) {
+                safeDebug("[z-search] " + e);
+                failedSources.push(src);
+                /* skip failed source */
+                return null;
+              }
+            }),
+          );
+          for (const resp of responses) {
+            if (resp?.articles) {
+              allArticles.push(...resp.articles);
+            }
+          }
+
+          if (signal.aborted) {
+            result = { aborted: true };
+            break;
+          }
+
+          const deduped = deduplicateArticles(allArticles);
+          result = {
+            articles: deduped.slice(0, maxResults).map((a: any) => ({
+              title: a.title || "",
+              authors: a.authors || "",
+              // 源侧字段名不统一：Europe PMC/PubMed 回 journalName 或
+              // containerTitle，只有旧 arch 源带 journal——三者取齐，否则
+              // 卡片期刊位恒空。
+              journal: a.journal || a.journalName || a.containerTitle || "",
+              year: a.year ?? "",
+              // DOI 归一化：源站会回填 https://doi.org/ 全 URL——不剥前缀则
+              // 展示冗余、href 二次拼接、导入标识带壳。
+              doi: normalizeDoi(a.doi),
+              citationCount: a.citationCount ?? a.citations ?? 0,
+              pdfUrl: a.pdfUrl || a.pdf_url || "",
+              isOpenAccess: a.isOpenAccess || a.openAccess || false,
+              abstract: a.abstract || "",
+              source: a.source || "",
+              // 全文解析标识（PMC 标签与「全文」按钮的可用性依据）。
+              pmid: a.pmid || undefined,
+              pmcid: a.pmcid || undefined,
+              oaUrl: a.oaUrl || undefined,
+            })),
+            skippedNoKey,
+            failedSources,
+          };
+        } finally {
+          bridge._searchAbortSignal.delete(searchId);
+        }
+        break;
+      }
+
+      case "literature.searchCancel": {
+        if (bridge._searchAbortSignal) {
+          for (const s of bridge._searchAbortSignal.values()) {
+            s.aborted = true;
+          }
+          bridge._searchAbortSignal.clear();
+        }
+        result = { cancelled: true };
+        break;
+      }
+
+      case "literature.import": {
+        // 两种入参：identifiers（DOI 等直采标识，旧契约）或 entries（支持
+        // 无 DOI 条目——标题走 crossrefTitleToDoi→s2TitleToDoi 回退解析）。
+        // 返回数组与入参逐位对齐，未解析条目位返回 success:false。
+        const rawEntries: Array<{
+          doi?: string;
+          title?: string;
+          year?: string;
+        }> = [];
+        if (Array.isArray(payload?.entries)) {
+          for (const e of payload.entries) {
+            if (e && typeof e === "object") {
+              rawEntries.push({
+                doi:
+                  typeof e.doi === "string" && e.doi.trim()
+                    ? // 归一化：消费方可能透传带前缀的 article.doi（幂等）。
+                      normalizeDoi(e.doi) || undefined
+                    : undefined,
+                title: typeof e.title === "string" ? e.title : undefined,
+                year: typeof e.year === "string" ? e.year : undefined,
+              });
+            }
+          }
+        } else if (
+          Array.isArray(payload?.identifiers) &&
+          payload.identifiers.length > 0
+        ) {
+          for (const id2 of payload.identifiers) {
+            rawEntries.push({ doi: String(id2) });
+          }
+        }
+        if (rawEntries.length === 0) {
+          error = "literature.import: missing identifiers/entries array";
+          break;
+        }
+
+        let collectionId: number | undefined;
+        try {
+          const pane = Zotero.getActiveZoteroPane?.();
+          const selected = pane?.getSelectedCollectionID?.();
+          if (typeof selected === "number" && selected > 0) {
+            collectionId = selected;
+          }
+        } catch (e) {
+          safeDebug("[z-search] " + e);
+          /* pane not ready — fall back to My Library root */
+        }
+
+        const importResults: ImportResult[] = new Array(rawEntries.length);
+        const doiJobs: Array<{ idx: number; doi: string; title: string }> = [];
+        for (const [i, e] of rawEntries.entries()) {
+          let doi = e.doi;
+          if (!doi && e.title) {
+            try {
+              const lookup =
+                await import("../../core/tool/builtin/handlers/items/citations/doiLookup");
+              doi =
+                (await lookup.crossrefTitleToDoi(e.title)) ??
+                (await lookup.s2TitleToDoi(e.title, e.year)) ??
+                undefined;
+            } catch (lookupErr) {
+              safeDebug("[z-search] title→doi lookup failed: " + lookupErr);
+            }
+          }
+          if (doi) {
+            doiJobs.push({ idx: i, doi, title: e.title || doi });
+          } else {
+            importResults[i] = {
+              success: false,
+              title: e.title || "",
+              error: "DOI not found",
+              imported: false,
+            };
+          }
+        }
+
+        if (doiJobs.length > 0) {
+          try {
+            const r = await doImportArticle({
+              identifiers: doiJobs.map((j) => j.doi),
+              type: payload.type,
+              collectionId,
+            });
+            const itemResults = r.results ?? [];
+            for (const [j, itemResult] of itemResults.entries()) {
+              const job = doiJobs[j];
+              if (!job) continue;
+              importResults[job.idx] = {
+                success: itemResult?.success || false,
+                itemId: itemResult?.itemId,
+                title: itemResult?.title || job.title,
+                error: itemResult?.error,
+                imported: itemResult?.imported || false,
+              };
+            }
+          } catch (e: any) {
+            for (const job of doiJobs) {
+              importResults[job.idx] = {
+                success: false,
+                title: job.title,
+                error: toErrorMessage(e),
+                imported: false,
+              };
+            }
+          }
+        }
+        result = importResults;
+        break;
+      }
+
+      case "literature.fetchFulltext": {
+        // 单篇全文按需拉取（结果卡片「全文」按钮）：PMC 开放获取 JATS XML
+        // （NCBI E-utilities，DOI/PMID/PMCID 三入口 + OA 网页兜底，见
+        // FullTextResolver）优先结构化路径——拿到的是无导航噪声的章节化正文。
+        if (
+          !payload?.doi &&
+          !payload?.pmid &&
+          !payload?.pmcid &&
+          !payload?.oaUrl
+        ) {
+          error = "literature.fetchFulltext: missing identifier";
+          break;
+        }
+
+        try {
+          const { resolveArticleFullText } =
+            await import("../../core/search/FullTextResolver");
+          const resolved = await resolveArticleFullText(
+            {
+              doi: payload.doi,
+              pmid: payload.pmid,
+              pmcid: payload.pmcid,
+              url: payload.url,
+              oaUrl: payload.oaUrl,
+            },
+            {
+              strategy: "structured-first",
+              maxChars: Math.min(payload.maxChars ?? 20_000, 60_000),
+            },
+          );
+          if (!resolved) {
+            // 不可得（非开放获取 / 无 PMCID / 网页也不可抓）——回执
+            // success:false 由 UI 用 lit-fulltext-empty 说实话，不抛错。
+            result = { success: false, reason: "unavailable" };
+          } else {
+            result = { success: true, ...resolved };
+          }
+        } catch (e: any) {
+          result = {
+            success: false,
+            reason: "error",
+            error: toErrorMessage(e),
+          };
+        }
+        break;
+      }
+
+      case "literature.translate": {
+        // 摘要翻译：走统一翻译引擎（默认 Google 免费端点，无需配 key；
+        // 可在 translate.engineType 切 AI/Bing/DeepL/custom）。
+        if (!payload?.text || typeof payload.text !== "string") {
+          error = "literature.translate: missing text";
+          break;
+        }
+        try {
+          const { createTranslator } =
+            await import("../../core/translation/translationEngines");
+          const targetLanguage =
+            payload.targetLanguage || (Zotero as any).locale || "zh-CN";
+          const translate = createTranslator(
+            targetLanguage,
+            payload.sourceLanguage,
+          );
+          const translatedText = await translate(
+            payload.text,
+            targetLanguage,
+            payload.sourceLanguage,
+          );
+          if (translatedText) {
+            result = { success: true, translatedText };
+          } else {
+            result = { success: false, error: "Translation returned empty" };
+          }
+        } catch (e: any) {
+          result = { success: false, error: toErrorMessage(e) };
+        }
+        break;
+      }
+
+      case "journal.search": {
+        if (
+          !payload?.mode ||
+          !["metric", "discover", "library"].includes(payload.mode)
+        ) {
+          error = "journal.search: invalid mode";
+          break;
+        }
+        const { default: JournalSearchService } =
+          await import("../../core/search/JournalSearchService");
+        try {
+          result = await JournalSearchService.search({
+            mode: payload.mode,
+            query: payload.query,
+            limit: payload.limit,
+            sortBy: payload.sortBy,
+          });
+        } catch (e: any) {
+          error = toErrorMessage(e);
+        }
+        break;
+      }
+    }
+  } catch (e: any) {
+    error = toErrorMessage(e);
+  }
+
+  bridge.respond(id, result, error, source);
+}
