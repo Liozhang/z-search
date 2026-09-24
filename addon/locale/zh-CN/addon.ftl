@@ -386,7 +386,6 @@ lit-source-hal = HAL
 lit-source-core = CORE
 lit-source-europe-pmc = Europe PMC
 lit-source-pubmed = PubMed
-lit-source-chinaxiv = ChinaXiv
 lit-source-github = GitHub
 
 # Result card
@@ -397,6 +396,10 @@ lit-quartile-cass-1 = 一区
 lit-quartile-cass-2 = 二区
 lit-quartile-cass-3 = 三区
 lit-quartile-cass-4 = 四区
+lit-quartile-jcr-q1 = JCR Q1
+lit-quartile-jcr-q2 = JCR Q2
+lit-quartile-jcr-q3 = JCR Q3
+lit-quartile-jcr-q4 = JCR Q4
 lit-top = 顶
 lit-warning = 预警
 lit-if-label = IF

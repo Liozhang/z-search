@@ -10,7 +10,10 @@ import { toErrorMessage } from "../../utils/error";
 import type { ImportResult } from "../../types/literatureSearch";
 import academicSearch from "../../core/tool/builtin/handlers/academic-search/index";
 import { safeDebug } from "../../utils/logger";
-import { normalizeDoi } from "../../core/search/literatureSearchHelpers";
+import {
+  normalizeDoi,
+  enrichJournalMetrics,
+} from "../../core/search/literatureSearchHelpers";
 import { isSourceAvailable } from "../../core/sources/academic-search/utils";
 
 const {
@@ -52,7 +55,6 @@ export async function handleLiteratureRequest(
           "core",
           "europe-pmc",
           "pubmed",
-          "chinaxiv",
           "github",
         ];
 
@@ -114,6 +116,9 @@ export async function handleLiteratureRequest(
           }
 
           const deduped = deduplicateArticles(allArticles);
+          // 期刊指标/风险富集（JCR/CASS/预警/Beall's）——本地查表、原地写回，
+          // 内部吞错，绝不拖垮主检索。
+          await enrichJournalMetrics(deduped);
           result = {
             articles: deduped.slice(0, maxResults).map((a: any) => ({
               title: a.title || "",
@@ -135,6 +140,14 @@ export async function handleLiteratureRequest(
               pmid: a.pmid || undefined,
               pmcid: a.pmcid || undefined,
               oaUrl: a.oaUrl || undefined,
+              // 期刊指标/风险徽章数据（富集未命中则全 undefined，卡片静默不显示）
+              jif: a.jif,
+              jcrQuartile: a.jcrQuartile,
+              cassQuartile: a.cassQuartile,
+              cassCategory: a.cassCategory,
+              cassIsTop: a.cassIsTop,
+              warningLevel: a.warningLevel,
+              beallsHit: a.beallsHit,
             })),
             skippedNoKey,
             failedSources,

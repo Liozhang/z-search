@@ -26,7 +26,6 @@ export const AVAILABLE_SOURCES: { value: string; labelKey: string }[] = [
   { value: "core", labelKey: "lit-source-core" },
   { value: "europe-pmc", labelKey: "lit-source-europe-pmc" },
   { value: "pubmed", labelKey: "lit-source-pubmed" },
-  { value: "chinaxiv", labelKey: "lit-source-chinaxiv" },
   { value: "github", labelKey: "lit-source-github" },
 ];
 

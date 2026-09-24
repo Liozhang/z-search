@@ -1,3 +1,12 @@
+/**
+ * ChinaXiv 学术源适配器。
+ *
+ * ⚠ 已从默认源表移除（2026-09-24）：现用的第三方接口 chinarxiv.org
+ * 无视 query 参数——任何检索词都返回同一批无关论文，实测两轮不同检索
+ * 逐字相同。官方 api.chinaxiv.org 的旧端点 301 到已 404 的页面。恢复
+ * 默认启用前需先找到真实可用的检索端点并验证结果与检索词相关。
+ */
+
 /** Per-source academic search handlers. */
 
 import { httpJsonGet } from "../../../utils/http";
