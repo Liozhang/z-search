@@ -33,6 +33,10 @@ export interface ArticleResult {
   cassCategory?: string; // 中科院大类名
   cassIsTop?: boolean; // 顶刊
   warningLevel?: string; // 命中预警时的等级；前端仅作 truthy 信号，文案走 lit-warning
+  /** 命中 Beall's 掠夺性期刊名单。仅期刊表精确名匹配才置位——模糊层（缩写/
+   *  关键词重叠）与出版社级命中不足以对单条检索结果作断言。前端仅作 truthy
+   *  信号，文案走 journal-predatory-label，tooltip 披露名单截止时间。 */
+  beallsHit?: { category: "standalone" | "hijacked" };
 }
 
 /** literature.fetchFulltext 的逐篇回执。 */

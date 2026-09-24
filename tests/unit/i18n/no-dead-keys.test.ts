@@ -12,7 +12,7 @@
  * generated catalog / typings 的三方一致。
  *
  * 两条已知的运行时动态键家族（键名由数据拼出，静态扫描必须放过）：
- *   - lit-quartile-cass-{1..4}（LiteratureResultCard 按分区等级取）
+ *   - lit-quartile-cass-{1..4}、lit-quartile-jcr-q{1..4}（LiteratureResultCard 按分区等级取）
  *   - soul-name-{id}（locale.ts 按灵魂 id 取）
  * 新增动态家族时在此登记，否则本守卫会误报。
  */
@@ -28,7 +28,11 @@ const REPO = path.resolve(
   "..",
 );
 
-const DYNAMIC_KEY_PREFIXES = ["lit-quartile-cass-", "soul-name-"] as const;
+const DYNAMIC_KEY_PREFIXES = [
+  "lit-quartile-cass-",
+  "lit-quartile-jcr-",
+  "soul-name-",
+] as const;
 
 const LOCALES = ["zh-CN", "zh-TW", "en-US"] as const;
 const FAMILIES = ["addon.ftl", "preferences.ftl", "tracking.ftl"] as const;

@@ -233,7 +233,10 @@ class BeallsListStore {
           entry.abbrUpper = normalizeJournalName(entry.extra);
         }
 
-        if (entry.name) this.journalByName.set(entry.name, entry);
+        // 键走与查询侧一致的 normalizeJournalName——此前用原始大小写入键、
+        // 查询却归一化后取，L2 精确名匹配对非全大写名单条目恒失配。
+        if (entry.name)
+          this.journalByName.set(normalizeJournalName(entry.name), entry);
         if (entry.domain) this.journalByDomain.set(entry.domain, entry);
         if (entry.abbrUpper) this.journalByAbbr.set(entry.abbrUpper, entry);
         this.allJournals.push(entry);
@@ -250,7 +253,8 @@ class BeallsListStore {
           url: (row.publisher_url as string) || null,
           domain: extractDomain(row.publisher_url),
         };
-        if (entry.name) this.publisherByName.set(entry.name, entry);
+        if (entry.name)
+          this.publisherByName.set(normalizeJournalName(entry.name), entry);
         if (entry.domain) this.publisherByDomain.set(entry.domain, entry);
       }
 
@@ -265,7 +269,8 @@ class BeallsListStore {
           url: (row.metric_url as string) || null,
           domain: extractDomain(row.metric_url),
         };
-        if (entry.name) this.metricByName.set(entry.name, entry);
+        if (entry.name)
+          this.metricByName.set(normalizeJournalName(entry.name), entry);
         if (entry.domain) this.metricByDomain.set(entry.domain, entry);
       }
     } catch (e) {
@@ -505,6 +510,32 @@ class BeallsListStore {
       }
     }
 
+    return result;
+  }
+
+  /**
+   * Batch exact-name lookup against the journals table ONLY (checkItem's L2).
+   * The fuzzy layers (abbr 0.9 / keyword-overlap 0.7) and publisher-level
+   * hits are deliberately excluded: on a search result card they would label
+   * legitimate venues — keyword overlap fires on generic name collisions, and
+   * a publisher hit asserts about the publisher, not this journal. Used by
+   * literature search enrichment. Returns Map<normalizeJournalName(name), hit>.
+   */
+  async batchLookupJournalExact(
+    names: string[],
+  ): Promise<Map<string, { category: "standalone" | "hijacked" }>> {
+    const result = new Map<string, { category: "standalone" | "hijacked" }>();
+    const unique = [
+      ...new Set(names.map((s) => (s || "").trim()).filter(Boolean)),
+    ];
+    if (unique.length === 0) return result;
+
+    await this.ensureIndex();
+    for (const name of unique) {
+      const key = normalizeJournalName(name);
+      const hit = this.journalByName.get(key);
+      if (hit) result.set(key, { category: hit.category });
+    }
     return result;
   }
 

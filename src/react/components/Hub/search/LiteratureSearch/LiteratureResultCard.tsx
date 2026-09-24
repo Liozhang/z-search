@@ -36,6 +36,9 @@ const QUARTILE_DOT =
   "lit-quartile-dot w-[var(--space-1)] h-[var(--space-1)] rounded-full bg-[var(--data-blue)] flex-shrink-0";
 const TAG_KIND: Record<string, string> = {
   warning: "bg-[var(--signal-red-bg)] text-[color:var(--signal-red-strong)]",
+  /* 与 warning 同配方（同为风险信号，label 文字区分语义）——掠夺性
+     （Beall's 名单精确命中），tooltip 披露名单截止时间。 */
+  predatory: "bg-[var(--signal-red-bg)] text-[color:var(--signal-red-strong)]",
   top: "bg-[var(--signal-yellow-bg)] text-[color:var(--signal-yellow-text)]",
   pdf: "bg-[var(--signal-green-bg)] text-[color:var(--signal-green-dark)]",
   oa: "bg-[var(--data-blue-bg)] text-[color:var(--data-blue-dark)]",
@@ -212,6 +215,7 @@ export function LiteratureResultCard({
             )}
           </div>
           {(article.warningLevel ||
+            article.beallsHit ||
             article.jcrQuartile ||
             article.cassQuartile ||
             article.cassIsTop ||
@@ -220,6 +224,14 @@ export function LiteratureResultCard({
               {article.warningLevel && (
                 <span className={`${TAG_BASE} ${TAG_KIND.warning}`}>
                   ⚠ {getString("lit-warning")}
+                </span>
+              )}
+              {article.beallsHit && (
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.predatory}`}
+                  title={getString("journal-predatory-data-year")}
+                >
+                  {getString("journal-predatory-label")}
                 </span>
               )}
               {article.jcrQuartile && (

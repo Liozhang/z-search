@@ -6,13 +6,16 @@
  */
 
 /**
- * Enrich articles with journal quality metrics (JCR/CASS/Warning) from the
- * builtin DB. Mutates each article in place, attaching jif / jcrQuartile /
- * cassQuartile / cassCategory / cassIsTop / warningLevel when matched.
+ * Enrich articles with journal quality metrics (JCR/CASS/Warning/Beall's)
+ * from the builtin DB. Mutates each article in place, attaching jif /
+ * jcrQuartile / cassQuartile / cassCategory / cassIsTop / warningLevel /
+ * beallsHit when matched.
  *
  * Lookup key: ISSN (normalized) for JCR/CASS, journal name (normalized) for
- * Warning (warning table has no ISSN). Articles without issn are skipped for
- * JCR/CASS (accepted miss rate, see spec §2.2).
+ * Warning and Beall's (neither table carries ISSN). Articles without issn are
+ * skipped for JCR/CASS (accepted miss rate, see spec §2.2). Beall's is exact
+ * journal-name only — the store's fuzzy layers are too coarse to assert
+ * against a single search result.
  *
  * Failure is silent: metrics are an enhancement and must never break the main
  * search. All store errors are swallowed.
@@ -27,6 +30,8 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
     const { default: CASSStore } = await import("../data/CASSStore");
     const { default: WarningListStore } =
       await import("../data/WarningListStore");
+    const { default: BeallsListStore } =
+      await import("../data/BeallsListStore");
 
     const normIssn = (s: string) => s.replace(/[-\s]/g, "").toUpperCase();
     const normName = (s: string) => s.trim().replace(/\s+/g, " ").toUpperCase();
@@ -37,7 +42,7 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       .filter(Boolean);
     if (issns.length === 0 && names.length === 0) return;
 
-    const [jcrMap, cassMap, warningMap] = await Promise.all([
+    const [jcrMap, cassMap, warningMap, beallsMap] = await Promise.all([
       issns.length
         ? JCRStore.batchLookupByIssn(issns)
         : Promise.resolve(new Map()),
@@ -46,6 +51,9 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
         : Promise.resolve(new Map()),
       names.length
         ? WarningListStore.batchLookupWarnings(names)
+        : Promise.resolve(new Map()),
+      names.length
+        ? BeallsListStore.batchLookupJournalExact(names)
         : Promise.resolve(new Map()),
     ]);
 
@@ -57,6 +65,7 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       const jcr = issnKey ? jcrMap.get(issnKey) : undefined;
       const cass = issnKey ? cassMap.get(issnKey) : undefined;
       const warn = nameKey ? warningMap.get(nameKey) : undefined;
+      const beallsHit = nameKey ? beallsMap.get(nameKey) : undefined;
 
       if (jcr) {
         a.jif = jcr.jif ?? undefined;
@@ -68,6 +77,7 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
         a.cassIsTop = cass.is_top === true;
       }
       if (warn) a.warningLevel = warn.warning_level ?? undefined;
+      if (beallsHit) a.beallsHit = beallsHit;
     }
   } catch (e) {
     safeDebug(
