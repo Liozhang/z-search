@@ -18,10 +18,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/z-search/z-search.git"
+    "url": "git+https://github.com/Liozhang/z-search.git"
   },
-  "author": "z-search",
-  "homepage": "https://github.com/z-search/z-search#readme",
+  "author": "Liozhang",
+  "homepage": "https://github.com/Liozhang/z-search#readme",
   "license": "MIT",
   "scripts": {
     "postinstall": "patch-package",
