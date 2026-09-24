@@ -6,8 +6,24 @@
 declare namespace Zotero {
   interface _Zotero {
     notify(event: string, data?: any): void;
-    on(event: string, callback: (event: string, type: string, ids: (string | number)[], extraData: { [key: string]: any }) => void): void;
-    off(event: string, callback: (event: string, type: string, ids: (string | number)[], extraData: { [key: string]: any }) => void): void;
+    on(
+      event: string,
+      callback: (
+        event: string,
+        type: string,
+        ids: (string | number)[],
+        extraData: { [key: string]: any },
+      ) => void,
+    ): void;
+    off(
+      event: string,
+      callback: (
+        event: string,
+        type: string,
+        ids: (string | number)[],
+        extraData: { [key: string]: any },
+      ) => void,
+    ): void;
 
     // Additional Zotero API methods
     getSelectedCollection?(): any;
@@ -53,7 +69,7 @@ declare namespace Zotero {
     function subscribe(
       url: string,
       name?: string,
-      refreshInterval?: number
+      refreshInterval?: number,
     ): Promise<{ feed: Feed }>;
 
     /**
@@ -64,8 +80,12 @@ declare namespace Zotero {
      */
     function listItems(
       feedKey: string | null,
-      options?: { unreadOnly?: boolean; limit?: number }
-    ): Promise<{ items: FeedItem[]; total: number; feed?: { key: string; name: string } }>;
+      options?: { unreadOnly?: boolean; limit?: number },
+    ): Promise<{
+      items: FeedItem[];
+      total: number;
+      feed?: { key: string; name: string };
+    }>;
 
     /**
      * Delete a feed
@@ -206,16 +226,33 @@ declare namespace Zotero {
     title: string;
     url: string;
     abstractNote: string;
-    creators: Array<{ name: string; firstName?: string; lastName?: string; field?: string }>;
+    creators: Array<{
+      name: string;
+      firstName?: string;
+      lastName?: string;
+      field?: string;
+    }>;
     isRead: boolean;
     isTranslated: boolean;
   }
 
   // Notifier
   namespace Notifier {
-    type NotifierObserverLike = {
-      notify: (event: string, type: string, ids: (string | number)[], extraData: { [key: string]: any }) => void | Promise<void>;
-    } | ((event: string, type: string, ids: (string | number)[], extraData: { [key: string]: any }) => void | Promise<void>);
+    type NotifierObserverLike =
+      | {
+          notify: (
+            event: string,
+            type: string,
+            ids: (string | number)[],
+            extraData: { [key: string]: any },
+          ) => void | Promise<void>;
+        }
+      | ((
+          event: string,
+          type: string,
+          ids: (string | number)[],
+          extraData: { [key: string]: any },
+        ) => void | Promise<void>);
 
     /**
      * Register observer for events
@@ -228,7 +265,7 @@ declare namespace Zotero {
       observer: NotifierObserverLike,
       types: string[] | null,
       id?: string,
-      priority?: number
+      priority?: number,
     ): string;
 
     /**
@@ -240,13 +277,18 @@ declare namespace Zotero {
     function unregisterObserver(
       observerOrId: string | NotifierObserverLike,
       types?: string[],
-      id?: string
+      id?: string,
     ): void;
 
     /**
      * Trigger an event
      */
-    function trigger(event: string, type?: string, ids?: (string | number)[], extraData?: { [key: string]: any }): void;
+    function trigger(
+      event: string,
+      type?: string,
+      ids?: (string | number)[],
+      extraData?: { [key: string]: any },
+    ): void;
   }
 
   // Augment Item instance type with common getters
@@ -260,7 +302,12 @@ declare namespace Zotero {
     PMID?: string;
     URL?: string;
     abstractNote?: string;
-    creators?: Array<{ name: string; firstName?: string; lastName?: string; field?: string }>;
+    creators?: Array<{
+      name: string;
+      firstName?: string;
+      lastName?: string;
+      field?: string;
+    }>;
     itemType: string;
     dateAdded: number;
     dateModified: number;
@@ -353,7 +400,11 @@ declare namespace Zotero {
 
   // DB
   namespace DB {
-    function queryAsync(sql: string, params?: any[], options?: any): Promise<any[]>;
+    function queryAsync(
+      sql: string,
+      params?: any[],
+      options?: any,
+    ): Promise<any[]>;
     function valueQueryAsync(sql: string, params?: any[]): Promise<any>;
     function columnQueryAsync(sql: string, params?: any[]): Promise<any[]>;
     function executeTransaction<T>(fn: () => Promise<T>): Promise<T>;
@@ -379,7 +430,7 @@ declare namespace Zotero {
         responseType?: string;
         headers?: Record<string, string>;
         timeout?: number;
-      }
+      },
     ): Promise<HTTPResponse>;
     function download(
       url: string,
@@ -387,14 +438,18 @@ declare namespace Zotero {
       options?: {
         headers?: Record<string, string>;
         timeout?: number;
-      }
+      },
     ): Promise<void>;
   }
 
   // File
   namespace File {
     function pathToFile(path: string): any;
-    function getContentsAsync(path: string, encoding?: string | null, maxBytes?: number): Promise<string>;
+    function getContentsAsync(
+      path: string,
+      encoding?: string | null,
+      maxBytes?: number,
+    ): Promise<string>;
     function putContentsAsync(path: string, content: string): Promise<void>;
     function exists(path: string): boolean;
     function createDirectory(path: string): void;
@@ -415,13 +470,20 @@ declare namespace Zotero {
   // URI — item URI generation and parsing
   namespace URI {
     function getItemURI(item: Item): string;
-    function getURIItemLibraryKey(uri: string): { libraryID: number; key: string; itemType: string } | false;
+    function getURIItemLibraryKey(
+      uri: string,
+    ): { libraryID: number; key: string; itemType: string } | false;
   }
 
   // EditorInstanceUtilities — citation formatting (may not be available in all contexts)
-  const EditorInstanceUtilities: {
-    formatCitation(citation: { citationItems: any[]; properties: any }): string | null;
-  } | undefined;
+  const EditorInstanceUtilities:
+    | {
+        formatCitation(citation: {
+          citationItems: any[];
+          properties: any;
+        }): string | null;
+      }
+    | undefined;
 }
 
 // ZoteroPane global (window.ZoteroPane)
@@ -430,5 +492,9 @@ declare const ZoteroPane: {
 };
 
 // Notifier observer type
-type NotifierObserver = (event: string, type: string, ids: (string | number)[], extraData: { [key: string]: any }) => void;
-
+type NotifierObserver = (
+  event: string,
+  type: string,
+  ids: (string | number)[],
+  extraData: { [key: string]: any },
+) => void;

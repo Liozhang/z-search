@@ -29,7 +29,13 @@ declare const ZoteroPane: any;
 declare function parseSoulMarkdown(text: string): any;
 
 // Third-party module declarations (no bundled types)
-declare module 'pako' {
-  export function inflate(data: Uint8Array, options?: { raw?: boolean }): Uint8Array;
-  export function deflate(data: Uint8Array, options?: { level?: number }): Uint8Array;
+declare module "pako" {
+  export function inflate(
+    data: Uint8Array,
+    options?: { raw?: boolean },
+  ): Uint8Array;
+  export function deflate(
+    data: Uint8Array,
+    options?: { level?: number },
+  ): Uint8Array;
 }
