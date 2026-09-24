@@ -11,7 +11,10 @@ export default defineConfig({
     "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
 
   build: {
-    assets: ["addon/**/*.*", "src/core/pdf/lib/*.jar"],
+    // opendataloader-pdf-cli.jar 不再随包分发（24MB，见
+    // OpenDataLoaderPdfClient.ts 头注）——需要此 PDF 后端时手动放入
+    // 安装目录 core/pdf/lib/。
+    assets: ["addon/**/*.*"],
     define: {
       ...pkg.config,
       author: pkg.author,

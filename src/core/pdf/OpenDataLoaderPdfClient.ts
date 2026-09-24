@@ -4,6 +4,11 @@
  * Uses opendataloader-pdf CLI (JVM) for local PDF parsing.
  * Uses nsIProcess.runwAsync to spawn `java -jar opendataloader-pdf-cli.jar`.
  *
+ * ⚠ JAR 不随包分发（2026-09-24）：单个 jar 24MB，占插件包 97%，且运行还需
+ * 用户自备 Java 11+。需要此后端时把 opendataloader-pdf-cli.jar 手动放入
+ * 插件安装目录的 core/pdf/lib/ 下即可启用；缺 jar/缺 Java 时本客户端
+ * 快速失败（与未装 Java 同一路径），管线按 tier 级联降级。
+ *
  * Output contract:
  *  - format: `options.format ?? "json"`; parsePdfToMarkdown() pins "markdown"
  *  - imageOutput: `options.imageOutput ?? config.imageOutput`, i.e. pref-driven
