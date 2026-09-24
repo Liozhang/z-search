@@ -9,6 +9,9 @@ node_modules
 *.tsbuildinfo*
 src/**/*.js
 src/**/*.d.ts
+# 例外：src/types/ 下的手写环境声明必须入库——本地缺失只影响本机，
+# CI 全新检出缺了它们会整批类型报错（window/Zotero.getGlobal 等增补）
+!src/types/*.d.ts
 
 # Scaffold
 .env
