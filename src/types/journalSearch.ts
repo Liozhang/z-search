@@ -122,4 +122,7 @@ export interface JournalSearchResult {
   list?: JournalListItem[];
   /** Total count reported by OpenAlex (mode 'discover'). */
   total?: number;
+  /** 服务侧错误（如 OpenAlex 断网）——上抛供 UI 区分「失败」与「无结果」，
+   *  不再吞成空列表谎报（2026-09-25 审计 P1-8）。 */
+  error?: string;
 }

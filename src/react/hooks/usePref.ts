@@ -6,9 +6,9 @@
  *   2. pref 变化：监听 host 侧广播的 'zsearch:prefChanged' 事件，命中本 key 时重读
  *
  * 用途：Hub / Chat iframe 内需要"pref 改了即时刷新"的场景。写入侧通过
- * hubPrefWriter.broadcastPrefChanged 在 host 推送事件（best-effort 跨窗口）。
  *
- * 注意：setValue 只调 prefsSetDynamic，**不**触发 hubPrefWriter 副作用。
+ *
+ *
  * Hub Settings 内对需要副作用的字段应直接用 hubRequest('settings.*')，不要用本 hook 的 setter。
  *
  * @module react/hooks/usePref

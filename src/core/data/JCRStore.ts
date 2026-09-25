@@ -28,7 +28,7 @@ import {
   type StructuredFilter,
   type FilterLogic,
 } from "./utils/filters";
-import { normalizeISSN } from "./utils/normalize";
+import { normalizeISSN, normalizeJournalName } from "./utils/normalize";
 import { exportTable } from "./utils/export";
 import { safeDebug } from "../../utils/logger";
 
@@ -125,7 +125,9 @@ class JCRStore {
   }
 
   /**
-   * Lookup a journal by exact journal name (case-insensitive; input is auto-uppercased before query).
+   * Lookup a journal by exact journal name (normalized: case-insensitive +
+   * whitespace-collapsed——与 CASS/Warning 的 normalizeJournalName 同口径，
+   * 审计 P2-2：双空格/前后空格输入此前只有另两家能命中).
    */
   async lookupByName(
     journalName: string,
@@ -139,7 +141,7 @@ class JCRStore {
       `SELECT * FROM zsearch_impact_factors
        WHERE jcr_year = ? AND journal_name = ?
        LIMIT 1`,
-      [targetYear, journalName.toUpperCase()],
+      [targetYear, normalizeJournalName(journalName)],
     );
     return rows?.[0] ?? null;
   }

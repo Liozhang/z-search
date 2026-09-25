@@ -575,6 +575,7 @@ search-sources-test = Test
 search-sources-test-ok = Reachable · { $count } result(s)
 search-sources-test-auth = Key rejected — check the API key.
 search-sources-test-missing-key = No API key set — fill it in below first.
+journal-data-import-failed = Built-in journal datasets (JCR / CAS / warning lists / Beall's) failed to load — journal metrics and risk flags will be missing. Restart Zotero to retry the import.
 search-sources-test-unreachable = Unreachable from this network.
 search-sources-test-failed = Test failed: { $detail }
 search-sources-not-configured = Key not set

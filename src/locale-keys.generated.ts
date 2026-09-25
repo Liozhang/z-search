@@ -374,6 +374,7 @@ export const ALL_LOCALE_KEYS: readonly string[] = [
   "search-sources-test-ok",
   "search-sources-test-auth",
   "search-sources-test-missing-key",
+  "journal-data-import-failed",
   "search-sources-test-unreachable",
   "search-sources-test-failed",
   "search-sources-not-configured",

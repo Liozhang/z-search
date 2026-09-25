@@ -57,9 +57,17 @@ class HubWindowManager {
 
   /**
    * 打开 Hub 窗口。
-   * @param tab 可选：打开后直达的功能区（'search' / 'settings'）。
+   * @param tab 可选：打开后直达的功能区——白名单校验（审计 P2-1），
+   *  未知名落 debug 并按默认开窗，不再静默吞掉让调用方以为已落位。
    */
   async openHub(tab?: string): Promise<void> {
+    const VALID_TABS = new Set(["search"]);
+    if (tab && !VALID_TABS.has(tab)) {
+      debugOut(
+        `openHub: unknown tab "${tab}" — opening default view (valid: ${[...VALID_TABS].join("/")})`,
+      );
+      tab = undefined;
+    }
     const wm = Components.classes[
       "@mozilla.org/appshell/window-mediator;1"
     ].getService(Components.interfaces.nsIWindowMediator);

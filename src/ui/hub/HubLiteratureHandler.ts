@@ -157,6 +157,7 @@ export async function handleLiteratureRequest(
               cassIsTop: a.cassIsTop,
               warningLevel: a.warningLevel,
               beallsHit: a.beallsHit,
+              stars: a.stars,
             })),
             skippedNoKey,
             failedSources,
@@ -228,30 +229,41 @@ export async function handleLiteratureRequest(
 
         const importResults: ImportResult[] = new Array(rawEntries.length);
         const doiJobs: Array<{ idx: number; doi: string; title: string }> = [];
-        for (const [i, e] of rawEntries.entries()) {
-          let doi = e.doi;
-          if (!doi && e.title) {
-            try {
-              const lookup =
-                await import("../../core/tool/builtin/handlers/items/citations/doiLookup");
-              doi =
-                (await lookup.crossrefTitleToDoi(e.title)) ??
-                (await lookup.s2TitleToDoi(e.title, e.year)) ??
-                undefined;
-            } catch (lookupErr) {
-              safeDebug("[z-search] title→doi lookup failed: " + lookupErr);
-            }
-          }
-          if (doi) {
-            doiJobs.push({ idx: i, doi, title: e.title || doi });
-          } else {
-            importResults[i] = {
-              success: false,
-              title: e.title || "",
-              error: "DOI not found",
-              imported: false,
-            };
-          }
+        // 标题→DOI 解析并行化（审计 P2-7）：串行最坏 63s/条，批量 120s RPC
+        // 超时下后段条目必超时（前端 toast 失败、后端继续建条目 → 重复导入）。
+        // 并发 5 兼顾 Crossref 礼貌池；解析带年份优先吻合候选。
+        const RESOLVE_CONCURRENCY = 5;
+        for (let i = 0; i < rawEntries.length; i += RESOLVE_CONCURRENCY) {
+          const chunk = rawEntries
+            .slice(i, i + RESOLVE_CONCURRENCY)
+            .map((e, j) => ({ e, idx: i + j }));
+          await Promise.all(
+            chunk.map(async ({ e, idx }) => {
+              let doi = e.doi;
+              if (!doi && e.title) {
+                try {
+                  const lookup =
+                    await import("../../core/tool/builtin/handlers/items/citations/doiLookup");
+                  doi =
+                    (await lookup.crossrefTitleToDoi(e.title, e.year)) ??
+                    (await lookup.s2TitleToDoi(e.title, e.year)) ??
+                    undefined;
+                } catch (lookupErr) {
+                  safeDebug("[z-search] title→doi lookup failed: " + lookupErr);
+                }
+              }
+              if (doi) {
+                doiJobs.push({ idx, doi, title: e.title || doi });
+              } else {
+                importResults[idx] = {
+                  success: false,
+                  title: e.title || "",
+                  error: "DOI not found",
+                  imported: false,
+                };
+              }
+            }),
+          );
         }
 
         if (doiJobs.length > 0) {

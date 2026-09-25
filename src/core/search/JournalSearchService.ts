@@ -47,6 +47,24 @@ function cleanQuartile(q?: string | null): string | undefined {
   return q && /^Q[1-4]$/.test(q) ? q : undefined;
 }
 
+/** 预警级别按界面语言取值（审计 P2-5）：en 界面优先 warning_level_en
+ *  （High/Medium/Low），中文界面优先 warning_level；缺失回退另一侧，
+ *  再缺回退 ⚠（记录存在即告警）。 */
+function pickWarningLevel(
+  rec: {
+    warning_level?: string | null;
+    warning_level_en?: string | null;
+  } | null,
+): string | undefined {
+  if (!rec) return undefined;
+  const en = String((Zotero as any).locale ?? "")
+    .toLowerCase()
+    .startsWith("en");
+  const primary = en ? rec.warning_level_en : rec.warning_level;
+  const secondary = en ? rec.warning_level : rec.warning_level_en;
+  return primary ?? secondary ?? "⚠";
+}
+
 function isISSN(s: string): boolean {
   return ISSN_RE.test(s.trim());
 }
@@ -186,16 +204,18 @@ class JournalSearchService {
     // No data from either local or OpenAlex — nothing to show.
     if (!hasLocalHit && !oaSrc) return null;
 
-    // If local missed but OpenAlex hit, re-probe local by the ISSN / name
-    // OpenAlex returned (handles name-spelling mismatches).
+    // If local missed (or only warning/bealls hit — ISSN 维度仍空), re-probe
+    // local by the ISSN / name OpenAlex returned (handles name-spelling
+    // mismatches). 已命中的维度不复探——首 pass 结果不会被覆盖为 null
+    // （审计 P2-6：warning/bealls-only 命中此前阻断了 JCR/CASS 复探）。
     let finalJcr = jcr,
       finalCass = cass,
       finalWarn = warning,
       finalBealls = bealls;
-    if (!hasLocalHit && oaSrc) {
+    if (oaSrc) {
       const oaIssn = oaSrc.issn || oaSrc.issnL;
       const probes: Promise<unknown>[] = [];
-      if (oaIssn) {
+      if (!jcr && !cass && oaIssn) {
         probes.push(
           JCRStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
             finalJcr = r;
@@ -205,18 +225,21 @@ class JournalSearchService {
           }),
         );
       }
-      probes.push(
-        WarningListStore.lookup(oaSrc.displayName).then((r) => {
-          finalWarn = r[0] ?? null;
-        }),
-        BeallsListStore.checkItem(oaSrc.displayName).then((r) => {
-          finalBealls =
-            r.isPredatory && (r.bestLayer === "url" || r.bestLayer === "exact")
-              ? r
-              : null;
-        }),
-      );
-      await Promise.all(probes);
+      if (!warning && !bealls) {
+        probes.push(
+          WarningListStore.lookup(oaSrc.displayName).then((r) => {
+            finalWarn = r[0] ?? null;
+          }),
+          BeallsListStore.checkItem(oaSrc.displayName).then((r) => {
+            finalBealls =
+              r.isPredatory &&
+              (r.bestLayer === "url" || r.bestLayer === "exact")
+                ? r
+                : null;
+          }),
+        );
+      }
+      if (probes.length > 0) await Promise.all(probes);
     }
 
     return this.composeMetric({
@@ -290,12 +313,9 @@ class JournalSearchService {
         quartile: m.q,
       })),
       // Risk flags — local only. 2024/2025 版预警名单（论文工厂类）不带
-      // 级别字段（warning_level=null 占 29/29）——记录存在即告警，级别缺失
-      // 时以英文级别/⚠ 兜底，否则最新两批名单整体隐身（审计 P0-3）
-      warningLevel:
-        warning?.warning_level ??
-        warning?.warning_level_en ??
-        (warning ? "⚠" : undefined),
+      // 级别字段（warning_level=null 占 29/29）——记录存在即告警，级别按
+      // 界面语言取值、全缺时 ⚠ 兜底（审计 P0-3 / P2-5）
+      warningLevel: pickWarningLevel(warning),
       warningReason:
         warning?.warning_reason_en ?? warning?.warning_reason ?? undefined,
       isPredatory: bealls?.isPredatory || undefined,
@@ -327,6 +347,7 @@ class JournalSearchService {
     if (!keyword) return { mode: "discover", list: [], total: 0 };
 
     const limit = Math.min(Math.max(payload.limit ?? 25, 1), 25);
+    const sortBy = payload.sortBy ?? "relevance";
     const oaSortMap: Record<JournalSortBy, "relevance" | "works" | "h5"> = {
       relevance: "relevance",
       jif: "works", // OpenAlex has no JIF; 'works' as a sensible default for IF sort
@@ -335,14 +356,23 @@ class JournalSearchService {
       library: "works",
     };
 
+    // JIF 排序的取样放宽（审计 P2-4）：OpenAlex 排不了 JIF，若只取按
+    // works_count 的前 25 再客户端重排，呈现的「JIF 榜」实为 works 榜的
+    // 顺序扰动。取 50 条富集后按 JIF 排序再截 25——仍是 JCR 本地命中的
+    // 子集内排序（诚实上限），但显著降低排序失真。
+    const fetchLimit = sortBy === "jif" ? Math.min(limit * 2, 50) : limit;
+
     const oa = await searchOpenAlexSources({
       search: keyword,
-      limit,
-      sortBy: oaSortMap[payload.sortBy ?? "relevance"],
+      limit: fetchLimit,
+      sortBy: oaSortMap[sortBy],
     });
-    if (oa.error) return { mode: "discover", list: [], total: 0 };
+    // 错误上抛（审计 P1-8）：断网时的空结果会被 UI 当「无数据」空态展示
+    if (oa.error) {
+      return { mode: "discover", list: [], total: 0, error: oa.error };
+    }
 
-    const items: JournalListItem[] = oa.journals.map((j) => ({
+    let items: JournalListItem[] = oa.journals.map((j) => ({
       source: "openalex" as const,
       name: j.displayName,
       issn: j.issn || j.issnL,
@@ -353,11 +383,19 @@ class JournalSearchService {
     await this.batchEnrichLocalMetrics(items);
 
     // Client-side re-sort if the user asked for JIF (OpenAlex can't sort by it).
-    if ((payload.sortBy ?? "relevance") === "jif") {
+    if (sortBy === "jif") {
       items.sort((a, b) => (b.jif ?? -1) - (a.jif ?? -1));
+      items = items.slice(0, limit);
     }
 
-    return { mode: "discover", list: items, total: oa.total };
+    // 计数诚实化（审计 P2-3）：OpenAlex 只取一页（fetchLimit），total 是
+    // 远端全量——展示层用 list.length 与 total 中较小者，防「N 条结果」
+    // 实示 25 的落差（分页 UI 俟后续）。
+    return {
+      mode: "discover",
+      list: items,
+      total: Math.min(oa.total ?? items.length, items.length) || items.length,
+    };
   }
 
   private async searchLibrary(
@@ -379,6 +417,22 @@ class JournalSearchService {
     // Re-sort if requested.
     const sortBy = payload.sortBy ?? "library";
     if (sortBy === "jif") {
+      // library 条目无 ISSN，batchEnrich 的 ISSN 路径全空——按刊名补全 JIF
+      // （名称精确查 JCR 表，前 50 条），让 JIF 排序真正有数可排（审计 P2-4）
+      await Promise.all(
+        items.slice(0, 50).map(async (it) => {
+          if (it.jif != null) return;
+          try {
+            const rec = await JCRStore.lookup({ journalName: it.name });
+            if (rec) {
+              it.jif = rec.jif ?? undefined;
+              it.jifQuartile = cleanQuartile(rec.jif_quartile);
+            }
+          } catch {
+            /* 单条失败不阻断 */
+          }
+        }),
+      );
       items.sort((a, b) => (b.jif ?? -1) - (a.jif ?? -1));
     }
     // 'library' sort is already the default order from computeLibraryJournalCounts.
@@ -521,9 +575,9 @@ class JournalSearchService {
         }
       }
       if (warn) {
-        // 2024/2025 版预警无级别（null）——记录存在即告警（同 composeMetric
-        // 的兜底口径，审计 P0-3）
-        item.warningLevel = warn.warning_level ?? warn.warning_level_en ?? "⚠";
+        // 2024/2025 版预警无级别（null）——记录存在即告警；级别按界面
+        // 语言取值（同 composeMetric 口径，审计 P0-3 / P2-5）
+        item.warningLevel = pickWarningLevel(warn);
       }
       if (bealls) {
         item.isPredatory = true;

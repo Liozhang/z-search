@@ -17,6 +17,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getString } from "../../../../utils/locale";
 import { handleUiError } from "../../../../utils/errorHandler";
 import { semanticRequest } from "../../../../utils/semanticBridge";
+import { onBridgeReady } from "../../../../utils/bridge";
 import { zoteroNotify } from "@/utils/zoteroNotification";
 import { useToast } from "@/components/ui/toast";
 import { SearchResult, DuplicateGroup, ModelInfo } from "./types";
@@ -195,111 +196,147 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
       });
   }, []);
 
-  // Listen for fire-and-forget notifications
+  // Listen for fire-and-forget notifications.
+  // 抗桥重建（审计 P2-4）：index.tsx 收到重复 init 消息会销毁旧桥换新桥——
+  // 挂载时一次性绑定的订阅从此全部悬空（构建进度/完成事件静默丢失，只剩
+  // 5 分钟看门狗兜底）。改为 onBridgeReady 事件驱动重绑：每次桥 attach
+  // 广播都重新绑定到新桥实例。
   useEffect(() => {
-    const bridge = (window as any).__bridge;
-    if (!bridge) return;
+    let unsubs: Array<() => void> = [];
+    const bind = (): boolean => {
+      const bridge = (window as any).__bridge;
+      if (!bridge || typeof bridge.on !== "function") return false;
+      for (const off of unsubs) {
+        try {
+          off();
+        } catch {
+          /* 旧桥已销毁 */
+        }
+      }
+      unsubs = [];
 
-    const unsubProgress = bridge.on(
-      "semantic.buildProgress",
-      (p: { current: number; total: number }) => {
-        // 孤儿进度守卫（2026-09-16 审计）：buildComplete/Error 之后到达的迟到
-        // 通知（上一代构建的收尾事件等）会把「构建中 9 / 9」复活成与完成摘要、
-        // 横幅 CTA 同屏的僵尸态。非构建期一律丢弃；watchdog 的前置也是
-        // isBuilding（见下），孤儿进度只能在这里拦。
-        if (!isBuildingRef.current) return;
-        setBuildProgress(p);
-        buildProgressAt.current = Date.now();
-      },
-    );
-    const unsubComplete = bridge.on(
-      "semantic.buildComplete",
-      (r: {
-        processed: number;
-        skipped: number;
-        errors: number;
-        failedList?: string;
-        skips?: Array<{ reason: string; count: number }>;
-      }) => {
-        setIsBuilding(false);
-        isBuildingRef.current = false;
-        setBuildProgress(null);
-        // 跳过明细（2026-09-16 审计 B4）：后端按原因码聚合计数上抛，这里
-        // 本地化渲染——原先非错误跳过只剩一个数字，全跳过时用户点构建→
-        // 横幅原样→死循环，跳过原因无任何出口。
-        const skipLines = (r.skips ?? [])
-          .map(({ reason, count }) => {
-            const key = SKIP_REASON_KEYS[reason];
-            return `  • ${key ? getString(key) : reason} ×${count}`;
-          })
-          .join("\n");
-        setBuildResult(
-          getString("semantic-build-done", {
-            args: {
-              processed: r.processed,
-              skipped: r.skipped,
-              errors: r.errors,
-            },
-          }) +
-            (skipLines
-              ? `\n${getString("semantic-skipped-details")}\n${skipLines}`
-              : "") +
-            (r.failedList
-              ? `\n\n${getString("semantic-failed-items")}\n${r.failedList}`
-              : ""),
-        );
-        refreshModelInfo();
-        refreshIndexStatus();
-      },
-    );
-    const unsubBuildError = bridge.on(
-      "semantic.buildError",
-      (r: { error: string }) => {
-        setIsBuilding(false);
-        isBuildingRef.current = false;
-        setBuildProgress(null);
-        setBuildResult(
-          getString("semantic-build-failed", {
-            args: { error: r.error.slice(0, 200) },
-          }),
-        );
-      },
-    );
+      unsubs.push(
+        bridge.on(
+          "semantic.buildProgress",
+          (p: { current: number; total: number }) => {
+            // 孤儿进度守卫（2026-09-16 审计）：buildComplete/Error 之后到达的迟到
+            // 通知（上一代构建的收尾事件等）会把「构建中 9 / 9」复活成与完成摘要、
+            // 横幅 CTA 同屏的僵尸态。非构建期一律丢弃；watchdog 的前置也是
+            // isBuilding（见下），孤儿进度只能在这里拦。
+            if (!isBuildingRef.current) return;
+            setBuildProgress(p);
+            buildProgressAt.current = Date.now();
+          },
+        ),
+      );
+      unsubs.push(
+        bridge.on(
+          "semantic.buildComplete",
+          (r: {
+            processed: number;
+            skipped: number;
+            errors: number;
+            failedList?: string;
+            skips?: Array<{ reason: string; count: number }>;
+          }) => {
+            setIsBuilding(false);
+            isBuildingRef.current = false;
+            setBuildProgress(null);
+            // 跳过明细（2026-09-16 审计 B4）：后端按原因码聚合计数上抛，这里
+            // 本地化渲染——原先非错误跳过只剩一个数字，全跳过时用户点构建→
+            // 横幅原样→死循环，跳过原因无任何出口。
+            const skipLines = (r.skips ?? [])
+              .map(({ reason, count }) => {
+                const key = SKIP_REASON_KEYS[reason];
+                return `  • ${key ? getString(key) : reason} ×${count}`;
+              })
+              .join("\n");
+            setBuildResult(
+              getString("semantic-build-done", {
+                args: {
+                  processed: r.processed,
+                  skipped: r.skipped,
+                  errors: r.errors,
+                },
+              }) +
+                (skipLines
+                  ? `\n${getString("semantic-skipped-details")}\n${skipLines}`
+                  : "") +
+                (r.failedList
+                  ? `\n\n${getString("semantic-failed-items")}\n${r.failedList}`
+                  : ""),
+            );
+            refreshModelInfo();
+            refreshIndexStatus();
+          },
+        ),
+      );
+      unsubs.push(
+        bridge.on("semantic.buildError", (r: { error: string }) => {
+          setIsBuilding(false);
+          isBuildingRef.current = false;
+          setBuildProgress(null);
+          setBuildResult(
+            getString("semantic-build-failed", {
+              args: { error: r.error.slice(0, 200) },
+            }),
+          );
+        }),
+      );
+      unsubs.push(
+        bridge.on(
+          "semantic.scanProgress",
+          (p: { current: number; total: number }) => {
+            setScanProgress(p);
+            scanProgressAt.current = Date.now();
+          },
+        ),
+      );
+      unsubs.push(
+        bridge.on(
+          "semantic.scanComplete",
+          (r: { results: DuplicateGroup[] }) => {
+            setIsScanning(false);
+            setScanProgress(null);
+            setDuplicateResults(r.results);
+            setHasScanned(true);
+          },
+        ),
+      );
+      unsubs.push(
+        bridge.on("semantic.scanError", (r: { error: string }) => {
+          setIsScanning(false);
+          setScanProgress(null);
+          setError(
+            getString("semantic-scan-failed", { args: { error: r.error } }),
+          );
+        }),
+      );
+      return true;
+    };
 
-    const unsubScanProgress = bridge.on(
-      "semantic.scanProgress",
-      (p: { current: number; total: number }) => {
-        setScanProgress(p);
-        scanProgressAt.current = Date.now();
-      },
-    );
-    const unsubScanComplete = bridge.on(
-      "semantic.scanComplete",
-      (r: { results: DuplicateGroup[] }) => {
-        setIsScanning(false);
-        setScanProgress(null);
-        setDuplicateResults(r.results);
-        setHasScanned(true);
-      },
-    );
-    const unsubScanError = bridge.on(
-      "semantic.scanError",
-      (r: { error: string }) => {
-        setIsScanning(false);
-        setScanProgress(null);
-        setError(
-          getString("semantic-scan-failed", { args: { error: r.error } }),
-        );
-      },
-    );
+    let offReady: (() => void) | null = null;
+    if (!bind()) {
+      offReady = onBridgeReady(() => {
+        bind();
+        // 桥可能再次被替换——继续挂 ready 监听（notifyBridgeAttached 每次
+        // attach 都会唤醒 pending 订阅者）
+        offReady = onBridgeReady(bind);
+      });
+    } else {
+      // 已有桥也保持监听后续替换
+      offReady = onBridgeReady(bind);
+    }
 
     return () => {
-      unsubProgress();
-      unsubComplete();
-      unsubBuildError();
-      unsubScanProgress();
-      unsubScanComplete();
-      unsubScanError();
+      for (const off of unsubs) {
+        try {
+          off();
+        } catch {
+          /* 旧桥已销毁 */
+        }
+      }
+      offReady?.();
     };
   }, [refreshModelInfo, refreshIndexStatus]);
 

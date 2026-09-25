@@ -82,9 +82,16 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
         a.cassIsTop = cass.is_top === true;
       }
       // 2024/2025 版预警名单不带级别（warning_level=null，论文工厂类）——
-      // 记录存在即告警，级别缺失以英文级别/⚠ 兜底（审计 P0-3）
-      if (warn)
-        a.warningLevel = warn.warning_level ?? warn.warning_level_en ?? "⚠";
+      // 记录存在即告警；级别按界面语言取值（en 优先 High/Medium/Low），
+      // 全缺回退 ⚠（审计 P0-3 / P2-5）
+      if (warn) {
+        const en = String((globalThis as any).Zotero?.locale ?? "")
+          .toLowerCase()
+          .startsWith("en");
+        const primary = en ? warn.warning_level_en : warn.warning_level;
+        const secondary = en ? warn.warning_level : warn.warning_level_en;
+        a.warningLevel = primary ?? secondary ?? "⚠";
+      }
       if (beallsHit) a.beallsHit = beallsHit;
     }
   } catch (e) {

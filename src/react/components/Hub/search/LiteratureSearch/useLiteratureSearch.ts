@@ -628,8 +628,20 @@ export function useLiteratureSearch() {
   // ─── UX-M32: export actions ────────────────────────────────────────────
   const clipboard = useClipboard();
 
+  /** 导出/复制清单的数据集（审计 P2-8）：有勾选时作用于选中集（与同行
+   *  「导入选中 (N)」的语义对齐），无勾选时作用于全部结果。 */
+  const exportTarget = useCallback(
+    () =>
+      selectedIds.size > 0
+        ? results.filter((_, i) =>
+            selectedIds.has(getArticleKey(results[i], i)),
+          )
+        : results,
+    [results, selectedIds],
+  );
+
   const handleCopyList = useCallback(async () => {
-    const lines = results.map((r, i) => {
+    const lines = exportTarget().map((r, i) => {
       const byline = [r.authors || "—"];
       if (r.year) byline.push(`(${r.year})`);
       const block = [`${i + 1}. ${r.title || "—"}`, `    ${byline.join(" ")}`];
@@ -639,10 +651,11 @@ export function useLiteratureSearch() {
     const ok = await clipboard.copy(lines.join("\n"));
     if (ok) toast.success(getString("copy-success"));
     else toast.error(getString("copy-failed"));
-  }, [results, clipboard, toast]);
+  }, [exportTarget, clipboard, toast]);
 
   const handleExportCsv = useCallback(() => {
-    if (results.length === 0) return;
+    const target = exportTarget();
+    if (target.length === 0) return;
     try {
       const header = [
         getString("csv-header-title"),
@@ -654,7 +667,7 @@ export function useLiteratureSearch() {
         getString("csv-header-source"),
         getString("csv-header-pdf-url"),
       ];
-      const rows = results.map((r) => [
+      const rows = target.map((r) => [
         r.title,
         r.authors,
         r.year,
@@ -685,7 +698,7 @@ export function useLiteratureSearch() {
       safeDebug("[z-search] " + e);
       toast.error(getString("ux3-lit-export-failed"));
     }
-  }, [results, toast]);
+  }, [exportTarget, toast]);
 
   return {
     // query

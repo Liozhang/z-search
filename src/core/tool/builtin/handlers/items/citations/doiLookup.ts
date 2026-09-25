@@ -47,14 +47,19 @@ export async function batchQueryDois(
 /**
  * CrossRef title→DOI search with 2 retries + exponential backoff.
  * Returns DOI string or null.
+ *
+ * year（审计 P2-7）：已知发表年时取前 5 候选，优先选年份吻合者——纯
+ * relevance 第一条在同名/改版/译本文献上会导错论文。
  */
 export async function crossrefTitleToDoi(
   title: string,
+  year?: string,
 ): Promise<string | null> {
   const maxRetries = 2;
+  const wantYear = year ? parseInt(year, 10) : NaN;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const cxUrl = `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(title)}&rows=1&sort=relevance`;
+      const cxUrl = `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(title)}&rows=5&sort=relevance`;
       const cxResp = await Zotero.HTTP.request("GET", cxUrl, {
         headers: {
           Accept: "application/json",
@@ -64,11 +69,15 @@ export async function crossrefTitleToDoi(
         errorDelayMax: 0,
       } as any);
       const cxData = JSON.parse(cxResp.responseText ?? "");
-      const cxItems = cxData.message?.items || [];
-      if (cxItems.length > 0 && cxItems[0].DOI) {
-        return cxItems[0].DOI;
-      }
-      return null;
+      const cxItems: any[] = cxData.message?.items || [];
+      if (cxItems.length === 0) return null;
+      const yearMatch = !isNaN(wantYear)
+        ? cxItems.find(
+            (it) => it.published?.["date-parts"]?.[0]?.[0] === wantYear,
+          )
+        : undefined;
+      const hit = yearMatch ?? cxItems.find((it) => it.DOI);
+      return hit?.DOI ?? null;
     } catch (e) {
       safeDebug("[z-search] doiLookup: " + e);
       if (attempt < maxRetries) {

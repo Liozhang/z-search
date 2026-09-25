@@ -46,6 +46,32 @@ export function JournalSearchDashboard(): React.ReactElement {
   const [total, setTotal] = useState<number | null>(null);
   /** True once at least one search has completed (drives empty-state copy). */
   const [hasSearched, setHasSearched] = useState(false);
+  /** 内置期刊数据集导入失败旗（审计 P1-9）：启动导入挂掉时提示用户数据
+   *  缺席的原因，而不是只看到「无数据」。可关闭。 */
+  const [dataImportFailed, setDataImportFailed] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const failed = await semanticRequest<boolean>("prefs.getDynamic", {
+          key: "journalData.importFailed",
+        });
+        if (failed === true) setDataImportFailed(true);
+      } catch {
+        /* 非关键 */
+      }
+    })();
+  }, []);
+
+  const dismissDataBanner = () => {
+    setDataImportFailed(false);
+    void semanticRequest("prefs.setDynamic", {
+      key: "journalData.importFailed",
+      value: false,
+    }).catch(() => {
+      /* 关闭失败不放大 */
+    });
+  };
 
   // UX-M23: elapsed-seconds ticker for the loading state. The journal handler
   // (JournalSearchService via HubLiteratureHandler) emits no progress events,
@@ -108,6 +134,17 @@ export function JournalSearchDashboard(): React.ReactElement {
           setError(
             getString("journal-search-failed", {
               args: { error: getString("ux3-journal-no-response") },
+            }),
+          );
+          return;
+        }
+
+        // 服务侧错误（如 OpenAlex 断网）与「无结果」分流——不再谎报空态
+        // （审计 P1-8）
+        if ((result as { error?: string }).error) {
+          setError(
+            getString("journal-search-failed", {
+              args: { error: String(result.error).slice(0, 160) },
             }),
           );
           return;
@@ -234,6 +271,18 @@ export function JournalSearchDashboard(): React.ReactElement {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
+
+      {/* 数据集导入失败横幅（审计 P1-9） */}
+      {dataImportFailed && (
+        <div className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--radius-sm)] border border-[color:var(--warning)] px-[var(--space-2)] py-[var(--space-1)]">
+          <span className="text-[length:var(--text-xs)] text-[color:var(--warning)]">
+            {getString("journal-data-import-failed")}
+          </span>
+          <Button variant="ghost" size="sm" onClick={dismissDataBanner}>
+            {getString("btn-close")}
+          </Button>
+        </div>
+      )}
 
       {/* Input row——2026-09-01 清死类（semantic-search-row/journal-search-row
           全 CSS 零规则）改显式 flex 行对齐文献页工具行；is-anchor-mode 同为死类

@@ -177,6 +177,18 @@ const SEARCH_SOURCE_HANDLERS: Record<string, SearchSourceHandler> = {
     return { result, error };
   },
 
+  /** key 变更即失效健康判罚（审计 P1-4 残余）：设置面保存 key 后调用——
+   *  旧 unreachable 状态会短路后续真实搜索与「启用并测试」。 */
+  "searchSources.invalidate": async (payload) => {
+    const id = String(payload?.id || "");
+    if (!findWebSource(id)) {
+      return { result: null, error: `unknown source: ${id}` };
+    }
+    const { default: providerHealthChecker } =
+      await import("../../core/search/ProviderHealthChecker");
+    providerHealthChecker.invalidateStatus(id);
+    return { result: { ok: true }, error: null };
+  },
   "searchSources.remove": async (payload) => {
     const result: any = {};
     let error: string | null = null;
@@ -187,9 +199,10 @@ const SEARCH_SOURCE_HANDLERS: Record<string, SearchSourceHandler> = {
       }
       const added = readAddedList().filter((s) => s !== id);
       writeAddedList(added);
-      // 移除的是默认源 → 落级到剩余第一个已启用源（无则回出厂默认）。
+      // 移除的是默认源 → 落级到剩余第一个**已配置**的启用源（未配置 key 的
+      // 源推成默认只会搜索必败；无则回出厂默认，审计 P2-5）。
       if (getPref(DEFAULT_PROVIDER_KEY) === id) {
-        const fallback = added[0] ?? "duckduckgo";
+        const fallback = added.find((s) => isConfigured(s)) ?? "duckduckgo";
         setPref(DEFAULT_PROVIDER_KEY, fallback);
         result.defaultProvider = fallback;
       }

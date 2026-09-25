@@ -35,7 +35,8 @@ class OpenAlexJournalCacheStore {
   /**
    * Return a non-stale cached OpenAlex record for the given ISSN, or null.
    * Stale (older than 30 days) or missing rows both return null so callers
-   * uniformly fall back to a live request.
+   * uniformly fall back to a live request. Stale rows are deleted best-effort
+   * on read（审计 P2-1：陈旧行此前永不清理，表无限增长）.
    */
   async get(issn: string): Promise<OpenAlexJournal | null> {
     if (!issn) return null;
@@ -48,7 +49,15 @@ class OpenAlexJournalCacheStore {
       );
       const row = rows[0] as CacheRow | undefined;
       if (!row) return null;
-      if (Date.now() - row.cached_at > CACHE_TTL_MS) return null;
+      if (Date.now() - row.cached_at > CACHE_TTL_MS) {
+        void Zotero.DB.queryAsync(
+          `DELETE FROM zsearch_openalex_journal_cache WHERE issn = ?`,
+          [key],
+        ).catch(() => {
+          /* 清理失败无碍——下次读取仍判陈旧 */
+        });
+        return null;
+      }
       return JSON.parse(row.payload) as OpenAlexJournal;
     } catch (e) {
       safeDebug("[z-search] OpenAlexJournalCacheStore.get error: " + e);

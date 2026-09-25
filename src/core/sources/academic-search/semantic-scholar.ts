@@ -75,6 +75,16 @@ export async function searchSemanticScholar(
     publicationType: paper.publicationTypes?.[0] || undefined,
   }));
 
+  // S2 搜索端点不支持服务端排序（审计 P2-4）——按 UI 排序意图在结果集内
+  // 客户端排序，兑现「引用最多 / 日期」的字面语义。
+  if (filters?.sort === "cited") {
+    articles.sort(
+      (a: any, b: any) => (b.citationCount ?? 0) - (a.citationCount ?? 0),
+    );
+  } else if (filters?.sort === "published") {
+    articles.sort((a: any, b: any) => (b.year ?? 0) - (a.year ?? 0));
+  }
+
   return {
     total: data.total || articles.length,
     returned: articles.length,

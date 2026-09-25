@@ -82,6 +82,17 @@ export async function servicesInit(): Promise<void> {
       OpenAlexJournalCacheStore.initialize(),
     ]);
 
+    // 数据集导入失败旗（审计 P1-9）：此前只写 debug 日志，用户在期刊页只见
+    // 「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，可关闭。
+    const markJournalDataFailure = (stage: string) => {
+      try {
+        setPrefDynamic("journalData.importFailed", true);
+        setPrefDynamic("journalData.importFailedStage", stage);
+      } catch {
+        /* 旗写失败不放大错误 */
+      }
+    };
+
     // 1. JCR data — check the DB year BEFORE reading the large JSON.
     try {
       const JCR_EXPECTED_YEAR = 2024; // matches jcr-2024.json's embedded `year`
@@ -124,6 +135,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.jcr_import_failed", { error: String(e) });
+      markJournalDataFailure("jcr");
     }
 
     // 2. CASS quartile data
@@ -165,6 +177,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.cass_import_failed", { error: String(e) });
+      markJournalDataFailure("cass");
     }
 
     // 3. Warning list data
@@ -196,6 +209,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.warninglist_import_failed", { error: String(e) });
+      markJournalDataFailure("warning");
     }
 
     // 4. Beall's list data (predatory journals/publishers/misleading metrics)
@@ -241,6 +255,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.bealls_import_failed", { error: String(e) });
+      markJournalDataFailure("bealls");
     }
   } catch (e) {
     warn("startup.journal_data_failed", { error: String(e) });

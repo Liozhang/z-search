@@ -138,7 +138,7 @@ manifest 的 `update_url` 和 xpi 下载地址都由它渲染，占位地址会�
 
 - Zotero 工具栏按钮（放大镜）或 工具菜单 ▸ 「打开搜索中心」打开搜索窗
 - 条目右键菜单 ▸ 「查找相似文献」直达找相似
-- 深链：`hubWindowManager.openHub("search" | "sources")`
+- 深链：`hubWindowManager.openHub("search")`
 
 ## 架构
 

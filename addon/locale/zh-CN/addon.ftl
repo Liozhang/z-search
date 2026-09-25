@@ -563,6 +563,7 @@ search-sources-test = 测试
 search-sources-test-ok = 可达 · { $count } 条结果
 search-sources-test-auth = key 被拒绝——请检查 API key。
 search-sources-test-missing-key = 未配置 API key——请先在下方填写。
+journal-data-import-failed = 内置期刊数据集（JCR/中科院分区/预警/Beall's）未能加载——期刊指标与风险标记将缺席，重启 Zotero 可重试导入。
 search-sources-test-unreachable = 当前网络不可达。
 search-sources-test-failed = 测试失败：{ $detail }
 search-sources-not-configured = 未填 key

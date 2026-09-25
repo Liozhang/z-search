@@ -35,18 +35,36 @@ interface WebSearchOutcome {
 
 class WebSearchProvider {
   private getDefaultProvider(): string {
+    // 启用清单参与选择（审计 P2-2）：管理面勾选的 addedSources 应实际
+    // 生效——默认源不在启用集时不硬用；自动选择也只在启用集内取。
+    // pref 存 JSON 串（HubSearchSourceHandler.writeAddedList），读侧解包。
+    const addedRaw = getPrefDynamic("search.web.addedSources");
+    let added: string[] = [];
+    if (typeof addedRaw === "string" && addedRaw.trim()) {
+      try {
+        const parsed = JSON.parse(addedRaw);
+        if (Array.isArray(parsed)) added = parsed.map(String);
+      } catch {
+        /* 非法 JSON 按未配置处理 */
+      }
+    }
+    const inAdded = (id: string) => added.length === 0 || added.includes(id);
+
     const configured = getPrefDynamic("search.web.defaultProvider") as string;
     // 跳过运行时检测失效的 configured provider —— 不能硬用已知的失效 provider
     // (例如 serper credits 耗尽被 healthCheck 标 unreachable)。
     if (
       configured &&
+      inAdded(configured) &&
       providerHealthChecker.getStatus(configured) !== "unreachable"
     ) {
       return configured;
     }
     // Auto-select first available provider if user hasn't explicitly chosen one
-    // (or the chosen one is unreachable)
-    const available = providerHealthChecker.getAvailableWebProviders();
+    // (or the chosen one is unreachable / disabled)
+    const available = providerHealthChecker
+      .getAvailableWebProviders()
+      .filter(inAdded);
     if (available.length > 0) return available[0];
     // duckduckgo 不在 PROVIDER_TESTS (无 key 免费 scrape)，getStatus 返 "untested"，
     // 不会被 search() 的 unreachable 拦截挡住 —— 作为最终兜底。

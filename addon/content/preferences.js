@@ -251,6 +251,9 @@ var ZSearchPrefs = {
         // <preference> 绑定（动态行 + 统一审计通路）。
         input.addEventListener("change", function () {
           api.setPrefDynamic(f.prefKey, input.value);
+          // key 变更即失效该源健康判罚——旧 unreachable 会短路后续搜索/测试
+          var m = /^search\.web\.([^.]+)\.apiKey$/.exec(f.prefKey);
+          if (m) void self.call("searchSources.invalidate", { id: m[1] });
           void self.refresh();
         });
         row.appendChild(input);

@@ -124,6 +124,7 @@ export type FluentMessageId =
   | 'journal-cass-category-label'
   | 'journal-cass-quartile-label'
   | 'journal-cass-section'
+  | 'journal-data-import-failed'
   | 'journal-doaj-label'
   | 'journal-empty-hint'
   | 'journal-empty-hint-discover'

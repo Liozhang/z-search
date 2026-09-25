@@ -215,6 +215,10 @@ export function LiteratureResultCard({
                 })}
               </span>
             )}
+            {/* GitHub 仓库星数——与被引语义分离，★ 符号语言中立 */}
+            {!!article.stars && (
+              <span className="lit-result-stars">★ {article.stars}</span>
+            )}
           </div>
           {(article.warningLevel ||
             article.beallsHit ||

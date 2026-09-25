@@ -37,6 +37,8 @@ export interface ArticleResult {
    *  关键词重叠）与出版社级命中不足以对单条检索结果作断言。前端仅作 truthy
    *  信号，文案走 journal-predatory-label，tooltip 披露名单截止时间。 */
   beallsHit?: { category: "standalone" | "hijacked" };
+  /** GitHub 仓库源的星数——与被引语义分离（审计 P2-6），卡片按 ★ 展示。 */
+  stars?: number;
 }
 
 /** literature.fetchFulltext 的逐篇回执。 */

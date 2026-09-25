@@ -561,6 +561,7 @@ search-sources-test = 測試
 search-sources-test-ok = 可達 · { $count } 條結果
 search-sources-test-auth = key 被拒絕——請檢查 API key。
 search-sources-test-missing-key = 未設定 API key——請先在下方填寫。
+journal-data-import-failed = 內建期刊資料集（JCR/中科院分區/預警/Beall's）未能載入——期刊指標與風險標記將缺席，重啟 Zotero 可重試匯入。
 search-sources-test-unreachable = 目前網路不可達。
 search-sources-test-failed = 測試失敗：{ $detail }
 search-sources-not-configured = 未填 key

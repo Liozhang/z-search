@@ -84,7 +84,10 @@ export async function searchGithub(
       doi: "",
       url: repo.html_url,
       pdfUrl: undefined as string | undefined,
-      citationCount: repo.stargazers_count ?? 0,
+      // 星数与被引是两种语义（审计 P2-6）：不再让星数冒充「被引 N」，
+      // 星数走独立字段由卡片按 ★ 徽章展示。
+      citationCount: 0,
+      stars: repo.stargazers_count ?? 0,
       source: "github" as const,
       containerTitle: repo.language || "",
     }));

@@ -219,7 +219,11 @@ const SEMANTIC_ACTIONS: Record<
     } catch (e) {
       safeDebug(`[z-search] semantic.getModelInfo: ${e}`);
     }
-    const hasStale = await PdfChunkStore2.default.hasStaleChunks(info.name);
+    // embedding 未配置（API 模式无模型）时 name 为空——空名对任何存量
+    // chunk 都判 stale，会把「去配置 embedding」误报成「模型已变更，建议
+    // 重建」（审计 P2-3）。空名直接跳过 stale 判定。
+    const hasStale =
+      !!info.name && (await PdfChunkStore2.default.hasStaleChunks(info.name));
     const result: any = { ...info, hasStaleChunks: hasStale };
     return { result, error };
   },
