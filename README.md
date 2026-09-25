@@ -1,5 +1,11 @@
 # z-search
 
+[![Release](https://img.shields.io/github/v/release/Liozhang/z-search?color=blue&logo=github)](https://github.com/Liozhang/z-search/releases)
+[![CI](https://github.com/Liozhang/z-search/actions/workflows/ci.yml/badge.svg)](https://github.com/Liozhang/z-search/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/Liozhang/z-search/total?color=orange)](https://github.com/Liozhang/z-search/releases)
+[![Zotero 9 ~ 10](https://img.shields.io/badge/Zotero-9%20~%2010-CC6633.svg)](https://www.zotero.org/)
+
 **学术搜索 · 网络搜索 · 仓库搜索 · 向量搜索 — 一站式 Zotero 搜索插件。**
 
 z-search 是一个独立的 Zotero 插件，把图书馆内外的全部检索能力收进一个窗口：
@@ -7,6 +13,14 @@ z-search 是一个独立的 Zotero 插件，把图书馆内外的全部检索能
 基于本地/云端嵌入模型的库内向量与全文检索。结果卡直接内置期刊质量信息——
 引用数、影响因子、JCR/中科院分区、顶刊、国际预警、掠夺性期刊标记，
 全部来自随包分发的离线数据库，检索时零额外网络开销。
+
+## 安装
+
+1. 从 [Releases](https://github.com/Liozhang/z-search/releases) 下载最新
+   `z-search.xpi`；
+2. Zotero ▸ 工具 ▸ 插件 ▸ 右上角齿轮 ▸ Install Plugin From File，选择
+   下载的 xpi；
+3. 工具栏出现放大镜按钮即安装成功。已装用户经 update.json 自动升级。
 
 ## 检索结果卡
 
@@ -86,54 +100,6 @@ h 指数 / i10 指数 / 2 年篇均被引 / 发文量、收稿领域与创刊信
 窗口化结果列表 + 期刊搜索（JCR/CASS 指标、预警名单、掠夺性期刊名单、
 发现模式）。
 
-## 构建
-
-```bash
-npm install          # 安装依赖
-npm run build        # 构建 embed-frame + reactBundle + xpi 产物（.scaffold/build）
-npm run build:prod   # 生产构建（压缩、去 console、产 xpi 与 update.json）
-npm run build:react  # 只构建 React iframe bundle
-npm run check:types  # tsc 双配置类型检查
-npm test             # vitest：纯逻辑单测 + 宿主 bundle 冒烟
-```
-
-## 部署到本地 Zotero
-
-```bash
-npm run rebuild      # = 完整构建 + node scripts/deploy.js：拷贝产物到 profile、
-                     # 清缓存、杀掉旧 Zotero、带 -jsconsole 重启
-npm run restart      # 只部署重启（不重新构建）
-```
-
-profile 路径、Zotero 可执行文件路径在 `scripts/deploy.js` 顶部按本机调整；
-工作区有未提交改动时需要 `npm run restart -- --allow-dirty` 放行。
-
-## 测试
-
-```bash
-npm test             # vitest：纯逻辑单测（含富集/名单匹配/宿主 bundle 冒烟）
-npm run test:zotero  # 真实 Zotero 内集成测试（mocha via zotero-plugin test）：
-                     # 开 Hub 窗、验证 iframe React 树渲染、host 桥 RPC 路由、
-                     # 结果卡徽章实机视觉核查（真实检索 + 截图落盘
-                     # tests/zotero/sdt-out/，输出目录不可用时自动跳过）
-```
-
-`test:zotero` 需要通过 `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` 指定本机 zotero.exe
-（见 package.json）。集成套件会重建主插件包；改动 React iframe 侧代码后
-先 `npm run build:react` 再跑，避免用到过期的 reactBundle。
-
-## 发布
-
-```bash
-npm run release      # bump 版本号 → 生产构建 → commit/tag/push（v*）
-                     # tag 触发 GitHub Actions：构建 xpi、创建 GitHub Release
-                     # 并上传，在 `release` tag 下刷新 update.json（自动更新清单）
-```
-
-前置条件：`package.json` 的 `repository.url` 指向真实 GitHub 仓库——
-manifest 的 `update_url` 和 xpi 下载地址都由它渲染，占位地址会让自动更新
-静默失效。首个发布动作建议先本地跑一次 `npm run build:prod` 确认产物。
-
 ## 入口
 
 - Zotero 工具栏按钮（放大镜）或 工具菜单 ▸ 「打开搜索中心」打开搜索窗
@@ -161,6 +127,8 @@ addon/
 ├── prefs.js                           搜索相关偏好默认值
 └── locale/                            en-US / zh-CN / zh-TW Fluent 文案
 ```
+
+构建、测试、部署与发布流程见 [docs/development.md](docs/development.md)。
 
 ## 与 leadero 的差异（移植裁剪）
 
