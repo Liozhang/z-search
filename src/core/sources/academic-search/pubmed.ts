@@ -23,8 +23,16 @@ export async function searchPubMed(args: {
     // Step 1: ESearch - get PMIDs
     let searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=${maxResults}&tool=leadero`;
     if (apiKey) searchUrl += `&api_key=${encodeURIComponent(apiKey)}`;
-    if (args.year)
-      searchUrl += `&mindate=${args.year}&maxdate=${args.year}&datetype=pdat`;
+    // E-utilities 日期只认 YYYY[/MM[/DD]]——区间串原样传入即整源报错归零
+    // （审计 P0-3）。区间拆成 mindate/maxdate，单年保持旧口径。
+    if (args.year) {
+      const range = args.year.match(/^(\d{4})\s*-\s*(\d{4})$/);
+      if (range) {
+        searchUrl += `&mindate=${range[1]}&maxdate=${range[2]}&datetype=pdat`;
+      } else {
+        searchUrl += `&mindate=${args.year}&maxdate=${args.year}&datetype=pdat`;
+      }
+    }
 
     await ncbiThrottle();
     const searchResult = await httpJsonGet(searchUrl, undefined, 15000);

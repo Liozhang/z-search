@@ -540,7 +540,6 @@ chat-citation-nav-no-pdf = This item has no PDF attachment to open.
 chat-citation-nav-not-found = Item not found (the library may not be synced to this device yet).
 # ===== UX fixes round 3 (2026-08-14) =====
 ux3-lit-refreshing = Searching — showing previous results
-ux3-lit-results-capped = Display cap reached ({ $count }). Narrow the filters to surface other results.
 ux3-lit-no-results-desc = No results found. Adjust the keywords or filters and try again.
 ux3-lit-copy-list = Copy List
 ux3-lit-export-csv = Export CSV
@@ -575,6 +574,7 @@ prefs-default-set = Default source set to { $name }.
 search-sources-test = Test
 search-sources-test-ok = Reachable · { $count } result(s)
 search-sources-test-auth = Key rejected — check the API key.
+search-sources-test-missing-key = No API key set — fill it in below first.
 search-sources-test-unreachable = Unreachable from this network.
 search-sources-test-failed = Test failed: { $detail }
 search-sources-not-configured = Key not set

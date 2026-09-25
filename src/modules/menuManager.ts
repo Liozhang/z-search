@@ -22,13 +22,30 @@ export function registerMenus(win: _ZoteroTypes.MainWindow): void {
   const mi = doc.createXULElement("menuitem");
   mi.setAttribute("id", "zsearch-item-find-similar");
   mi.setAttribute("label", getString("menuitem-find-similar"));
+  // 弹出前按选中态启停：找相似只对普通条目（期刊/书籍/文档等）有意义，
+  // note/附件/无选中时禁用而非点了以后静默无结果（2026-09-25 审计 P1-3）
+  const selectedRegularItem = () => {
+    try {
+      const items = win.ZoteroPane?.getSelectedItems?.() ?? [];
+      return items.length === 1 && items[0].isRegularItem() ? items[0] : null;
+    } catch {
+      return null;
+    }
+  };
+  const onShowing = () => {
+    mi.setAttribute("disabled", selectedRegularItem() ? "false" : "true");
+  };
+  itemMenu.addEventListener("popupshowing", onShowing);
   mi.addEventListener("command", () => {
-    void hubWindowManager.openHub("search");
+    // 深链 action=findSimilar：Hub 开窗后 iframe 自动发起找相似，
+    // RPC 侧回退解析主窗选中条目——此前只开窗不检索，是空操作
+    void hubWindowManager.findSimilarFromMenu();
   });
   itemMenu.appendChild(sep);
   itemMenu.appendChild(mi);
 
   registeredMenus.push(() => {
+    itemMenu.removeEventListener("popupshowing", onShowing);
     sep.remove();
     mi.remove();
   });

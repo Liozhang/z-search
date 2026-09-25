@@ -8,6 +8,7 @@
 import { ZSEARCH_HTTP_HEADERS } from "../../../../../utils/httpHeaders";
 import { toErrorMessage } from "../../../../../utils/error";
 import MetadataExtractor from "../../../../metadata/MetadataExtractor";
+import { normalizeDoi } from "../../../../search/literatureSearchHelpers";
 import {
   detectIdentifierType,
   mergeArticleInfo,
@@ -431,12 +432,17 @@ async function callSearchAPI(
 
 function deduplicateArticles(articles: any[]): any[] {
   const seen = new Map<string, any>();
+  const out: any[] = [];
 
   for (const article of articles) {
     if (article.doi) {
-      const key = article.doi.toLowerCase().trim();
+      // DOI 归一化去重（审计 P1-7）：OpenAlex 主搜索回填 https://doi.org/
+      // 全 URL，裸 toLowerCase 比较会让同文跨源各留一条，mergeArticleInfo
+      // 全部失效。normalizeDoi 剥 URL/doi: 前缀。
+      const key = normalizeDoi(article.doi) ?? article.doi.toLowerCase().trim();
       if (!seen.has(key)) {
         seen.set(key, article);
+        out.push(article);
       } else {
         mergeArticleInfo(seen.get(key)!, article);
       }
@@ -444,15 +450,22 @@ function deduplicateArticles(articles: any[]): any[] {
     }
 
     const titleKey = article.title.toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (titleKey.length < 10) continue;
+    // 短标题/CJK 标题（拉丁剥除后 <10 字符）不参与去重但**必须保留**
+    // （审计 P1-4）：旧 continue 把 GitHub 短仓库名、纯中文标题的 DOAJ/HAL
+    // 结果整条静默删除——与前端 externalArticleKey「保留不去重」的口径对齐。
+    if (titleKey.length < 10) {
+      out.push(article);
+      continue;
+    }
     if (!seen.has(titleKey)) {
       seen.set(titleKey, article);
+      out.push(article);
     } else {
       mergeArticleInfo(seen.get(titleKey)!, article);
     }
   }
 
-  return Array.from(seen.values());
+  return out;
 }
 
 const handlers = {

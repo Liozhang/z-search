@@ -110,4 +110,27 @@ describe("enrichJournalMetrics", () => {
     expect(articles[0].jif).toBeUndefined();
     expect(articles[0].beallsHit).toBeUndefined();
   });
+
+  it("2024/2025 预警无级别（warning_level=null）时记录存在即告警（审计 P0-3）", async () => {
+    warnLookup.mockResolvedValue(
+      new Map([
+        ["PAPER MILL JOURNAL", { warning_level: null, warning_level_en: null }],
+      ]),
+    );
+
+    const articles = [{ journalName: "Paper Mill Journal" }];
+    await enrichJournalMetrics(articles);
+    expect(articles[0].warningLevel).toBe("⚠");
+  });
+
+  it('JCR 分区 "N/A" 不进结果——模板串会渲染裸 locale key（审计 P1-5）', async () => {
+    jcrLookup.mockResolvedValue(
+      new Map([["12345678", { jif: 2.1, jif_quartile: "N/A" }]]),
+    );
+
+    const articles = [{ issn: "1234-5678", journalName: "Any Journal" }];
+    await enrichJournalMetrics(articles);
+    expect(articles[0].jif).toBe(2.1);
+    expect(articles[0].jcrQuartile).toBeUndefined();
+  });
 });

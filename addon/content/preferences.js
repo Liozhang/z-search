@@ -395,6 +395,8 @@ var ZSearchPrefs = {
           this.t("search-sources-test-ok", { count: r.count || 1 }),
           "ok",
         );
+      } else if (r && r.kind === "missing-key") {
+        this.setNote(this.t("search-sources-test-missing-key"), "warn");
       } else if (r && r.kind === "auth") {
         this.setNote(this.t("search-sources-test-auth"), "bad");
       } else if (r && r.kind === "unreachable") {

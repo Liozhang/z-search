@@ -24,7 +24,7 @@ import CASSStore from "../data/CASSStore";
 import WarningListStore from "../data/WarningListStore";
 import BeallsListStore from "../data/BeallsListStore";
 import OpenAlexJournalCacheStore from "../data/OpenAlexJournalCacheStore";
-import { normalizeJournalName } from "../data/utils/normalize";
+import { normalizeJournalName, normalizeISSN } from "../data/utils/normalize";
 import {
   searchOpenAlexSources,
   type OpenAlexJournal,
@@ -40,6 +40,12 @@ import { safeDebug } from "../../utils/logger";
 
 /** ISSN pattern: 8 digits with optional dash and X check digit. */
 const ISSN_RE = /^\d{4}-?\d{3}[\dXx]$/;
+
+/** JCR 分区清洗：只放行 Q1-Q4——"N/A"（2,085 行）流入模板串会渲染裸
+ *  locale key（lit-quartile-jcr-q/A）。 */
+function cleanQuartile(q?: string | null): string | undefined {
+  return q && /^Q[1-4]$/.test(q) ? q : undefined;
+}
 
 function isISSN(s: string): boolean {
   return ISSN_RE.test(s.trim());
@@ -112,8 +118,12 @@ class JournalSearchService {
     if (nameForRiskLookup) {
       [warning, bealls] = await Promise.all([
         WarningListStore.lookup(nameForRiskLookup).then((r) => r[0] ?? null),
+        // 断言型面板只认 L1 域名 / L2 精确名（置信 1.0）——缩写(0.9)/关键词
+        // 重叠(0.7)模糊层误报率高，不足以给单本期刊定罪（审计 P1-6）
         BeallsListStore.checkItem(nameForRiskLookup).then((r) =>
-          r.isPredatory ? r : null,
+          r.isPredatory && (r.bestLayer === "url" || r.bestLayer === "exact")
+            ? r
+            : null,
         ),
       ]);
     }
@@ -141,19 +151,35 @@ class JournalSearchService {
       }
     }
     if (!oaSrc) {
-      const openalex = await searchOpenAlexSources({
+      const fetchOa = searchOpenAlexSources({
         issn: issnForLookup,
         search: issnForLookup ? undefined : input,
         limit: 1,
         sortBy: "relevance",
       });
-      oaSrc =
-        !openalex.error && openalex.journals.length > 0
-          ? openalex.journals[0]
-          : null;
-      // Persist the fresh ISSN-keyed result for next time.
-      if (oaSrc && (oaSrc.issn || oaSrc.issnL)) {
-        void OpenAlexJournalCacheStore.upsert(oaSrc);
+      if (hasLocalHit) {
+        // 本地四表已命中时 OpenAlex 仅是增强（topics/h5 等独占字段）——
+        // 8s 竞速上限，网络不可达环境不得让纯本地查证卡满 30s HTTP 超时
+        // （2026-09-25 审计 P1-4）。落空的增强数据下次查询走缓存路径。
+        oaSrc = await Promise.race([
+          fetchOa.then((r) =>
+            !r.error && r.journals.length > 0 ? r.journals[0] : null,
+          ),
+          new Promise<null>((res) => setTimeout(() => res(null), 8000)),
+        ]);
+        if (oaSrc && (oaSrc.issn || oaSrc.issnL)) {
+          void OpenAlexJournalCacheStore.upsert(oaSrc);
+        }
+      } else {
+        // 本地全 miss：OpenAlex 是唯一数据源，等满其自身超时
+        const openalex = await fetchOa;
+        oaSrc =
+          !openalex.error && openalex.journals.length > 0
+            ? openalex.journals[0]
+            : null;
+        if (oaSrc && (oaSrc.issn || oaSrc.issnL)) {
+          void OpenAlexJournalCacheStore.upsert(oaSrc);
+        }
       }
     }
 
@@ -184,7 +210,10 @@ class JournalSearchService {
           finalWarn = r[0] ?? null;
         }),
         BeallsListStore.checkItem(oaSrc.displayName).then((r) => {
-          finalBealls = r.isPredatory ? r : null;
+          finalBealls =
+            r.isPredatory && (r.bestLayer === "url" || r.bestLayer === "exact")
+              ? r
+              : null;
         }),
       );
       await Promise.all(probes);
@@ -215,6 +244,7 @@ class JournalSearchService {
     cass: Awaited<ReturnType<typeof CASSStore.lookup>>;
     warning: {
       warning_level?: string | null;
+      warning_level_en?: string | null;
       warning_reason?: string | null;
       warning_reason_en?: string | null;
     } | null;
@@ -240,11 +270,12 @@ class JournalSearchService {
         undefined,
       eissn: jcr?.eissn || cass?.eissn || undefined,
       publisher: jcr?.publisher ?? undefined,
-      // JCR metrics — local only.
+      // JCR metrics — local only. "N/A" 分区（2,085/18,871 行）不能进模板串
+      // ——卡片会拼出 lit-quartile-jcr-q/A 这类裸 locale key（审计 P1-5）
       jif: jcr?.jif ?? undefined,
       fiveYearJif: jcr?.five_year_jif ?? undefined,
       jci: jcr?.jci ?? undefined,
-      jifQuartile: jcr?.jif_quartile ?? undefined,
+      jifQuartile: cleanQuartile(jcr?.jif_quartile),
       jifRank: jcr?.jif_rank ?? undefined,
       totalCites: jcr?.total_cites ?? undefined,
       totalArticles: jcr?.total_articles ?? undefined,
@@ -258,8 +289,13 @@ class JournalSearchService {
         nameCn: m.nc,
         quartile: m.q,
       })),
-      // Risk flags — local only.
-      warningLevel: warning?.warning_level ?? undefined,
+      // Risk flags — local only. 2024/2025 版预警名单（论文工厂类）不带
+      // 级别字段（warning_level=null 占 29/29）——记录存在即告警，级别缺失
+      // 时以英文级别/⚠ 兜底，否则最新两批名单整体隐身（审计 P0-3）
+      warningLevel:
+        warning?.warning_level ??
+        warning?.warning_level_en ??
+        (warning ? "⚠" : undefined),
       warningReason:
         warning?.warning_reason_en ?? warning?.warning_reason ?? undefined,
       isPredatory: bealls?.isPredatory || undefined,
@@ -436,19 +472,24 @@ class JournalSearchService {
       ]);
 
     // Bealls: per-item (no batch API). Run after the batch lookups to overlap
-    // the awaits with the name->warning map build.
+    // the awaits with the name->warning map build. 断言只认精确层（同 metric
+    // 路径的裁决，审计 P1-6）。
     const beallsPromises = items.map(async (i) => {
       if (!i.name) return undefined;
       const r = await BeallsListStore.checkItem(i.name);
-      return r.isPredatory ? r : undefined;
+      return r.isPredatory && (r.bestLayer === "url" || r.bestLayer === "exact")
+        ? r
+        : undefined;
     });
     const beallsResults = await Promise.all(beallsPromises);
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const issn = item.issn;
-      const jcr = issn ? jcrMap.get(issn) : undefined;
-      const cass = issn ? cassMap.get(issn) : undefined;
+      // Map 键 = normalizeISSN（无连字符大写）——OpenAlex 的 issn 带连字符
+      // （"0028-0836"），裸 get 恒 miss（审计 P0-2）
+      const jcr = issn ? jcrMap.get(normalizeISSN(issn)) : undefined;
+      const cass = issn ? cassMap.get(normalizeISSN(issn)) : undefined;
       const warn = item.name
         ? warnMap.get(normalizeJournalName(item.name))
         : undefined;
@@ -456,7 +497,7 @@ class JournalSearchService {
 
       if (jcr) {
         item.jif = jcr.jif ?? undefined;
-        item.jifQuartile = jcr.jif_quartile ?? undefined;
+        item.jifQuartile = cleanQuartile(jcr.jif_quartile);
       }
       if (cass) {
         item.cassQuartile = cass.major_quartile;
@@ -480,7 +521,9 @@ class JournalSearchService {
         }
       }
       if (warn) {
-        item.warningLevel = warn.warning_level ?? undefined;
+        // 2024/2025 版预警无级别（null）——记录存在即告警（同 composeMetric
+        // 的兜底口径，审计 P0-3）
+        item.warningLevel = warn.warning_level ?? warn.warning_level_en ?? "⚠";
       }
       if (bealls) {
         item.isPredatory = true;

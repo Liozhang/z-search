@@ -108,6 +108,11 @@ const SEARCH_SOURCE_HANDLERS: Record<string, SearchSourceHandler> = {
       }
       const { default: webSearchProvider } =
         await import("../../core/search/WebSearchProvider");
+      const { default: providerHealthChecker } =
+        await import("../../core/search/ProviderHealthChecker");
+      // 手动测试前清旧判罚：unreachable 状态会让 search() 直接短路返回
+      // 缓存错误，真实请求永远发不出去——测试成了自证预言（审计 P1-4）
+      providerHealthChecker.invalidateStatus(id);
       const outcome = await webSearchProvider.search({
         query: "zsearch connectivity test",
         provider: id,
@@ -115,23 +120,35 @@ const SEARCH_SOURCE_HANDLERS: Record<string, SearchSourceHandler> = {
       });
       if (outcome.error) {
         const err = String(outcome.error).toLowerCase();
+        // 分类顺序：missing-key 在 auth 之前——「未填 key」的错误串同样含
+        // "api key" 字样，误归 auth 会误导用户去查一个根本没填的 key
         const kind =
-          /401|403|unauthorized|forbidden|invalid.{0,12}key|api key|quota|429/.test(
+          /requires an api key|no api key|api key is (required|missing|not set)/.test(
             err,
           )
-            ? "auth"
-            : /timeout|timed out|network|unreachable|econn|dns|resolve|000/.test(
+            ? "missing-key"
+            : /401|403|unauthorized|forbidden|invalid.{0,12}key|api key|quota|429/.test(
                   err,
                 )
-              ? "unreachable"
-              : "error";
+              ? "auth"
+              : /timeout|timed out|network|unreachable|econn|dns|resolve|000/.test(
+                    err,
+                  )
+                ? "unreachable"
+                : "error";
         result = {
           ok: false,
           kind,
           detail: String(outcome.error).slice(0, 300),
         };
+        // 结果回写健康缓存：列表页 health 徽标此前永远停在 "untested"
+        providerHealthChecker.setStatus(
+          id,
+          kind === "unreachable" ? "unreachable" : "untested",
+        );
       } else {
         result = { ok: true, count: outcome.results.length };
+        providerHealthChecker.setStatus(id, "ok");
       }
     } catch (e: any) {
       const msg = String(e?.message ?? e);

@@ -482,6 +482,7 @@ class EmbeddingStore {
     embedFn: (text: string) => Promise<number[]>,
     createSearchTextFn: (item: any) => string,
     onProgress?: (current: number, total: number) => void,
+    shouldCancel?: () => boolean,
   ): Promise<{ processed: number; errors: number }> {
     let processed = 0;
     let errors = 0;
@@ -545,6 +546,9 @@ class EmbeddingStore {
       const total = toProcess.length;
 
       for (const item of toProcess) {
+        // 取消即停（2026-09-25）：大库元数据嵌入可跑数分钟，用户点取消后
+        // 不应继续烧推理；已写入批次保留，下次构建按 embeddedIDs 续跑。
+        if (shouldCancel?.()) break;
         try {
           const searchText = createSearchTextFn(item);
           if (!searchText.trim()) continue;

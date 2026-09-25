@@ -14,8 +14,10 @@ export async function searchArxiv(args: {
     if (args.author) {
       searchQuery += ` au:${args.author}`;
     }
+    // UI 的 "published" 对应 arXiv 的提交日排序（audit P2-4：直传 token
+    // 会落回 relevance 分支，published 恒失效）
     const sortParam =
-      args.sort === "submittedDate"
+      args.sort === "submittedDate" || args.sort === "published"
         ? "&sortBy=submittedDate&sortOrder=descending"
         : "&sortBy=relevance";
     const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(searchQuery)}&start=0&max_results=${maxResults}${sortParam}`;

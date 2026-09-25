@@ -2,15 +2,21 @@
  * runFullLibraryBuild — 提取自 HubWindowBridge / SemanticWindowBridge 的
  * semantic.buildIndex / semantic.rebuildIndex（两 bridge 各 2 处，共 4 处重复）。
  *
- * 职责：跑 buildFullLibraryIndex + 通过 notify 回调发 progress/complete/error，
- * + 拼接失败详情列表（≤5 条 + 省略计数）。supersede 语义（buildGeneration）
- * 与 stale-chunk 清理（rebuildIndex 独有）留在各 bridge case，本函数只管构建+通知。
+ * 职责（2026-09-25 审计 P0-1 起）：跑**两段**索引构建 + 通过 notify 回调发
+ * progress/complete/error + 拼接失败详情列表（≤5 条 + 省略计数）。
+ *   1. 条目元数据向量（EmbeddingStore.rebuildIndex，标题/作者/摘要/标签）——
+ *      semantic.search 默认腿、找相似、查重全部读 zsearch_embeddings，
+ *      此前该表从不被构建，三入口恒空结果。
+ *   2. PDF 全文分块向量（buildFullLibraryIndex，原行为）。
+ * supersede 语义（buildGeneration）与 stale-chunk 清理（rebuildIndex 独有）
+ * 留在各 bridge case，本函数只管构建+通知。
  *
  * notify 回调由调用方 bind 到 bridge.sendNotifyToIframe；isCancelled 闭包由调用方
  * 捕获 myGen（这样本函数无需感知 buildGeneration）。
  */
 import type { BuildResult } from "./PdfChunkIndexer";
 import { toErrorMessage } from "../../utils/error";
+import { safeDebug } from "../../utils/logger";
 
 interface IndexerLike {
   buildFullLibraryIndex(
@@ -21,17 +27,96 @@ interface IndexerLike {
 
 type NotifyFn = (event: string, payload: Record<string, unknown>) => void;
 
+/** 条目 → 嵌入用检索文本：标题 + 作者（≤10）+ 年份 + 摘要（≤1500 字符）+
+ *  期刊名 + 标签（≤15），合计截 3000 字符。正文不参与（那是 PDF 分块腿的
+ *  职责）——元数据腿的语义单元是「这篇文献讲什么」。 */
+export function createItemSearchText(item: any): string {
+  if (item.isNote?.()) {
+    return String(item.note ?? "")
+      .replace(/<[^>]+>/g, " ")
+      .slice(0, 2000);
+  }
+  const parts: string[] = [];
+  const push = (s: unknown) => {
+    const v = String(s ?? "").trim();
+    if (v) parts.push(v);
+  };
+  try {
+    push(item.getField("title"));
+  } catch {
+    /* deleted item mid-iteration — skip field */
+  }
+  try {
+    const creators = (item.getCreators?.() ?? [])
+      .map((c: any) => c.lastName || c.name)
+      .filter(Boolean);
+    if (creators.length) push(creators.slice(0, 10).join(", "));
+  } catch {
+    /* no creators */
+  }
+  try {
+    push(String(item.getField("date") ?? "").slice(0, 4));
+    push((item.getField("abstractNote") ?? "").slice(0, 1500));
+    push(item.getField("publicationTitle"));
+  } catch {
+    /* field absent on this item type */
+  }
+  try {
+    const tags = (item.getTags?.() ?? [])
+      .map((t: any) => t.tag)
+      .filter(Boolean);
+    if (tags.length) push(tags.slice(0, 15).join(", "));
+  } catch {
+    /* no tags */
+  }
+  return parts.join("\n").slice(0, 3000);
+}
+
+/** 阶段一：条目元数据向量（zsearch_embeddings）。embedding 未配置（API 模式
+ *  无模型）时静默跳过并回报原因，不影响 PDF 阶段。 */
+async function buildMetadataIndex(
+  notify: NotifyFn,
+  isCancelled: () => boolean,
+): Promise<{ processed: number; errors: number; skipped: boolean }> {
+  try {
+    const { default: EM } = await import("../ai/EmbeddingsManager");
+    const model = EM.getModelInfo().name; // 未配置时抛本地化错误 → 跳过
+    if (!model) return { processed: 0, errors: 0, skipped: true };
+    const { default: EmbeddingStore } = await import("./EmbeddingStore");
+    const r = await EmbeddingStore.rebuildIndex(
+      model,
+      (text: string) => EM.embedText(text),
+      createItemSearchText,
+      (current: number, total: number) => {
+        if (isCancelled()) return;
+        notify("semantic.buildProgress", { current, total, phase: "metadata" });
+      },
+      isCancelled,
+    );
+    return { processed: r.processed, errors: r.errors, skipped: false };
+  } catch (e) {
+    // 未配置 embedding / 模型不可用：跳过本阶段（PDF 阶段有自己的降级路径）
+    safeDebug("[z-search] metadata index skipped: " + toErrorMessage(e));
+    return { processed: 0, errors: 0, skipped: true };
+  }
+}
+
 export async function runFullLibraryBuild(
   indexer: IndexerLike,
   notify: NotifyFn,
   isCancelled: () => boolean,
 ): Promise<void> {
   try {
+    // ── 阶段 1：条目元数据向量（快——每条一次嵌入，无 PDF 解析） ──
+    const meta = await buildMetadataIndex(notify, isCancelled);
+
+    // ── 阶段 2：PDF 全文分块向量（慢——分块 + 逐块嵌入） ──
     const buildResult = await indexer.buildFullLibraryIndex(
       (p: { current: number; total: number }) => {
         notify("semantic.buildProgress", {
           current: p.current,
           total: p.total,
+          phase: "fulltext",
         });
       },
       isCancelled,
@@ -62,15 +147,19 @@ export async function runFullLibraryBuild(
       if (d.reason.startsWith("error:")) continue;
       skipCounts.set(d.reason, (skipCounts.get(d.reason) ?? 0) + 1);
     }
+    if (meta.skipped) {
+      skipCounts.set("metadata-embedding-unavailable", 1);
+    }
     const skips = Array.from(skipCounts, ([reason, count]) => ({
       reason,
       count,
     })).sort((a, b) => b.count - a.count);
 
     notify("semantic.buildComplete", {
-      processed: buildResult.processed,
+      processed: buildResult.processed + meta.processed,
       skipped: buildResult.skipped,
-      errors: buildResult.errors,
+      errors: buildResult.errors + meta.errors,
+      metadataProcessed: meta.processed,
       failedList,
       skips,
     });

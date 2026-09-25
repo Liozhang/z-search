@@ -14,27 +14,42 @@ export async function searchCrossRef(
 
   const filterParts: string[] = [];
   if (year) {
-    const yearNum = parseInt(year, 10);
-    if (!isNaN(yearNum)) {
-      filterParts.push(`from-pub-date:${yearNum}`, `until-pub-date:${yearNum}`);
-    } else if (year.includes("-")) {
-      const [from, to] = year.split("-");
+    // 区间优先匹配：parseInt("2017-2026")=2017 会让区间分支永不可达，
+    // 默认「近10年」被压成单下限年（2026-09-25 审计 P0-1）。
+    const range = year.match(/^(\d{4})\s*-\s*(\d{4})$/);
+    if (range) {
       filterParts.push(
-        `from-pub-date:${from.trim()}`,
-        `until-pub-date:${to.trim()}`,
+        `from-pub-date:${range[1]}`,
+        `until-pub-date:${range[2]}`,
       );
+    } else {
+      const yearNum = parseInt(year, 10);
+      if (!isNaN(yearNum)) {
+        filterParts.push(
+          `from-pub-date:${yearNum}`,
+          `until-pub-date:${yearNum}`,
+        );
+      }
     }
   }
   if (filters?.journal) {
-    filterParts.push(`container-title:${filters.journal}`);
+    // filter 值必须编码：刊名含空格/逗号会拆坏逗号连接的 filter 串
+    filterParts.push(`container-title:${encodeURIComponent(filters.journal)}`);
   }
-  // Crossref supports filtering by work type; review-article covers
-  // literature reviews and systematic reviews.
+  // Crossref 只认 relevance/published/is-referenced-by-count 等——UI 的
+  // "cited" 直传会 HTTP 400，Crossref 源静默归零（2026-09-25 审计 P0-2）
+  const SORT_MAP: Record<string, string> = {
+    relevance: "relevance",
+    published: "published",
+    cited: "is-referenced-by-count",
+  };
+  const sort = SORT_MAP[filters?.sort || "relevance"] || "relevance";
+  // review-article covers literature/systematic reviews.
   if (filters?.reviewOnly) {
     filterParts.push(`type:review-article`);
   }
 
-  let url = `https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=${maxResults}&sort=${filters?.sort || "relevance"}`;
+  let url = `https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=${maxResults}&sort=${sort}`;
 
   if (filterParts.length > 0) {
     url += `&filter=${filterParts.join(",")}`;

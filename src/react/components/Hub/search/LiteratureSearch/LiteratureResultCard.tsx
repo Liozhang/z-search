@@ -206,7 +206,9 @@ export function LiteratureResultCard({
                 </strong>
               </span>
             )}
-            {article.citationCount != null && (
+            {/* 被引 0 不显示（审计 P2-6）：arxiv/pubmed 等源恒 0，成排「被引 0」
+                是噪音；真实计数由跨源字段合并取大后到达 */}
+            {!!article.citationCount && (
               <span className="lit-result-citations">
                 {getString("lit-citations", {
                   args: { count: article.citationCount },
@@ -454,7 +456,9 @@ export function LiteratureResultCard({
             <Button
               variant="outline"
               size="sm"
-              disabled={!article.doi}
+              /* 无 DOI 也可导入：handleImport 走 entries 契约的标题→DOI
+                 回退（与批量导入同链路）——只缺 DOI 与标题才禁用（审计 P1-5） */
+              disabled={!article.doi && !article.title}
               onClick={() => onImport(article, key)}
             >
               {getString("lit-import-btn")}

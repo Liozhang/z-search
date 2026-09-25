@@ -35,6 +35,9 @@ function mapOpenAlexWork(work: any): any {
     oaUrl: work.open_access?.oa_url || "",
     pdfUrl: work.open_access?.oa_url || "",
     citationCount: work.cited_by_count ?? 0,
+    // OA 徽章数据（审计 P2-2）：openalex 系（含 biorxiv/medrxiv 代理）此前
+    // 不映射 is_oa，三席默认源的 OA 徽章恒缺失
+    isOpenAccess: work.open_access?.is_oa === true,
     source: "openalex" as const,
     containerTitle: work.primary_location?.source?.display_name || undefined,
     journalName: work.primary_location?.source?.display_name || undefined,
@@ -169,18 +172,28 @@ export async function searchOpenAlex(args: {
   try {
     const filterParts: string[] = [];
     if (args.year) {
-      const yearNum = parseInt(args.year, 10);
-      if (!isNaN(yearNum)) {
-        filterParts.push(`publication_year:${yearNum}`);
-      } else if (args.year.includes("-")) {
-        filterParts.push(`publication_year:${args.year}`);
+      // 区间优先：parseInt("2017-2026")=2017 会让区间分支永不可达（审计 P0-1）。
+      // OpenAlex 原生支持 publication_year:2017-2026 区间语法。
+      const range = args.year.match(/^(\d{4})\s*-\s*(\d{4})$/);
+      if (range) {
+        filterParts.push(`publication_year:${range[1]}-${range[2]}`);
+      } else {
+        const yearNum = parseInt(args.year, 10);
+        if (!isNaN(yearNum)) {
+          filterParts.push(`publication_year:${yearNum}`);
+        }
       }
     }
     if (args.journal) {
-      filterParts.push(`primary_location.source.display_name:${args.journal}`);
+      // filter 值编码：刊名含空格/逗号会拆坏逗号连接的 filter 串
+      filterParts.push(
+        `primary_location.source.display_name:${encodeURIComponent(args.journal)}`,
+      );
     }
     if (args.author) {
-      filterParts.push(`authorships.author.display_name:${args.author}`);
+      filterParts.push(
+        `authorships.author.display_name:${encodeURIComponent(args.author)}`,
+      );
     }
     // OpenAlex work type "review" covers review articles.
     if (args.reviewOnly) {
@@ -559,7 +572,14 @@ export async function searchOpenAlexSources(args: {
     ];
 
     if (args.issn) {
-      params.push(`filter=issn:${encodeURIComponent(args.issn)}`);
+      // OpenAlex 的 issn: filter 只匹配带连字符形态（实测 issn:00280836 →
+      // 0 结果，0028-0836 → 命中）——本地 JCR/CASS 表存的是无连字符形态，
+      // 此处统一规整为 XXXX-XXXX（审计 P0-1）
+      const hyphenIssn = args.issn.replace(
+        /^(\d{4})-?(\d{3}[\dXx])$/i,
+        "$1-$2",
+      );
+      params.push(`filter=issn:${encodeURIComponent(hyphenIssn)}`);
     } else if (args.search) {
       params.push(`search=${encodeURIComponent(args.search)}`);
     } else {

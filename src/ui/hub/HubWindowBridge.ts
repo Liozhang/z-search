@@ -39,12 +39,14 @@ export class HubWindowBridge extends BaseWindowBridge {
     super.initialize(win, "hubBridge"); // 暴露 win.__hubBridge
   }
 
-  /** 通知 Hub iframe 切换激活的功能标签（中心窗已开时的深链落位）。 */
+  /** 通知 Hub iframe 切换激活的功能标签（中心窗已开时的深链落位）。
+   *  action 携带附带指令（如 "findSimilar"：右键菜单直达找相似）。 */
   setActiveTab(
     tab: string,
     openPalette?: boolean,
     section?: string,
     seedSessionId?: string,
+    action?: string,
   ): void {
     if (!tab && !openPalette) return;
     const payload: {
@@ -52,11 +54,13 @@ export class HubWindowBridge extends BaseWindowBridge {
       openPalette?: boolean;
       section?: string;
       seedSessionId?: string;
+      action?: string;
     } = {};
     if (tab) payload.tab = tab;
     if (openPalette) payload.openPalette = true;
     if (tab === "settings" && section) payload.section = section;
     if (seedSessionId) payload.seedSessionId = seedSessionId;
+    if (action) payload.action = action;
     const send = () => this.sendNotifyToIframe("hub.setActiveTab", payload);
     send(); // 立即尝试（覆盖 Hub 已打开的场景）
     // iframe 刚打开时 iframeWindow 尚未就绪，重试几次确保送达

@@ -58,7 +58,9 @@ class WarningListStore {
 
     try {
       const rows = await queryPlain(
-        `SELECT * FROM zsearch_journal_warnings WHERE journal_name = ?`,
+        // 年份倒序：metric 卡取 r[0] 应得最新记录——无排序时取到哪一年
+        // 取决于物理行序（审计 P1-7）
+        `SELECT * FROM zsearch_journal_warnings WHERE journal_name = ? ORDER BY warning_year DESC`,
         [normalized],
       );
       return (

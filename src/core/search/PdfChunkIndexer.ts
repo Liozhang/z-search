@@ -443,12 +443,9 @@ class PdfChunkIndexerClass {
               skippedDetails: [],
             };
           }
-          // Store version for next time
-          const { setPrefDynamic } = await import("../../utils/prefs");
-          await setPrefDynamic(
-            "pdfIndexer.lastFullTextVersion",
-            currentVersion,
-          );
+          // 版本戳只在**构建正常收尾**后写入（移自此处）——此前先写后建，
+          // 构建被取消/中断时版本已等于当前值，下一次构建（含「重建」）
+          // 直接 fast-skip「已处理 0」，索引永远停在部分状态（审计 P1-2）。
         }
       } catch (e) {
         safeDebug(
@@ -459,7 +456,30 @@ class PdfChunkIndexerClass {
       }
     }
 
-    return this.buildIndexBatch(candidateIds, onProgress, shouldCancel);
+    const batchResult = await this.buildIndexBatch(
+      candidateIds,
+      onProgress,
+      shouldCancel,
+    );
+
+    // 构建完整跑完（未被取消）才落版本戳：取消路径不写，下次可续跑/重建。
+    if (!shouldCancel?.()) {
+      try {
+        const currentVersion = await (
+          Zotero as any
+        ).FullText?.getLibraryVersion(Zotero.Libraries.userLibraryID);
+        if (currentVersion !== undefined && currentVersion !== null) {
+          const { setPrefDynamic } = await import("../../utils/prefs");
+          await setPrefDynamic(
+            "pdfIndexer.lastFullTextVersion",
+            currentVersion,
+          );
+        }
+      } catch {
+        /* 版本戳写失败不影响本次构建结果 */
+      }
+    }
+    return batchResult;
   }
 }
 

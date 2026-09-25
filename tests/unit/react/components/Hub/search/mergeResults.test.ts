@@ -224,4 +224,55 @@ describe("mergeExternalArticles（渐进合并原语）", () => {
   it("空 base + 空 incoming → 空表", () => {
     expect(mergeExternalArticles([], [])).toEqual([]);
   });
+
+  it("同键跨源命中做字段合并而非丢弃（审计 P1-2）：被引取大、标识/指标补空", () => {
+    // PubMed 先回：被引 0、有 pmcid、无 ISSN；OpenAlex 后回同 DOI：
+    // 被引 800、有 ISSN → JCR 富集可达。合并后单条保住两源最优字段。
+    const first = art({
+      title: "Same paper",
+      doi: "10.1/x",
+      citationCount: 0,
+      pmcid: "PMC123",
+      issn: undefined,
+    });
+    const second = art({
+      title: "Same paper",
+      doi: "https://doi.org/10.1/X",
+      citationCount: 800,
+      issn: "1234-5678",
+      jif: 5.9,
+    });
+    const out = mergeExternalArticles([first], [second]);
+    expect(out).toHaveLength(1);
+    expect(out[0].citationCount).toBe(800);
+    expect(out[0].pmcid).toBe("PMC123");
+    expect(out[0].issn).toBe("1234-5678");
+    expect(out[0].jif).toBe(5.9);
+  });
+
+  it("同键合并不丢首到源的非空身份字段（title/source 等不随后到漂移）", () => {
+    const out = mergeExternalArticles(
+      [art({ title: "A", doi: "10.1/x", source: "pubmed" })],
+      [art({ title: "B", doi: "10.1/x", source: "openalex" })],
+    );
+    expect(out[0].title).toBe("A");
+    expect(out[0].source).toBe("pubmed");
+  });
+});
+
+describe("sortMixedResults 对 number year 的健壮性（审计 P0-4）", () => {
+  it("数字 year 不再让 localeCompare 抛 TypeError", () => {
+    const merged = mergeResults(
+      [],
+      [
+        art({ title: "NumYear", year: 2024 as any }),
+        art({ title: "StrYear", year: "2025" }),
+      ],
+    );
+    expect(() => sortMixedResults(merged, "date")).not.toThrow();
+    const titles = sortMixedResults(merged, "date").map((e) =>
+      e.kind === "article" ? e.article.title : e.result.title,
+    );
+    expect(titles[0]).toBe("StrYear");
+  });
 });

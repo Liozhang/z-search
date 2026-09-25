@@ -156,6 +156,9 @@ export function useLiteratureSearch() {
       if (myId !== requestId.current) return;
       const replacing = !firstLanded;
       firstLanded = true;
+      // 不在累积时切片（审计 P1-3）：逐源落地即 slice 会让先到源占满
+      // maxResults 坑位，晚到的高相关/高被引结果整源被截。累积保留全量
+      // 合并集，展示侧（webList / visibleCount）负责排序与窗口。
       if (replacing) {
         setSelectedIds(new Set());
         setImportResults(new Map());
@@ -164,11 +167,9 @@ export function useLiteratureSearch() {
         setFulltextKeys(new Set());
         setFulltextOpenKeys(new Set());
         setFulltextResults(new Map());
-        setResults(mergeExternalArticles([], incoming).slice(0, maxResults));
+        setResults(mergeExternalArticles([], incoming));
       } else {
-        setResults((prev) =>
-          mergeExternalArticles(prev, incoming).slice(0, maxResults),
-        );
+        setResults((prev) => mergeExternalArticles(prev, incoming));
       }
     };
 
@@ -231,6 +232,17 @@ export function useLiteratureSearch() {
       // 全军覆没 ≠ 「0 条结果」——显式 error 态（SE-1 同款立法：失败不说谎）
       if (!landedAny && failedCount >= requestedSources.length) {
         setSearchError(getString("lit-all-sources-failed"));
+      } else if (!landedAny) {
+        // 本次零命中：清掉上一轮结果——否则旧列表继续显示并谎报为本次
+        // 「完成 N 条」（审计 P1-6）
+        setResults([]);
+        setSelectedIds(new Set());
+        setImportResults(new Map());
+        setExpandedKeys(new Set());
+        setTranslationResults(new Map());
+        setFulltextKeys(new Set());
+        setFulltextOpenKeys(new Set());
+        setFulltextResults(new Map());
       }
     } catch (e: unknown) {
       if (myId !== requestId.current) return;

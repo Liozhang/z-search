@@ -72,26 +72,53 @@ export function externalArticleKey(a: {
   return t.length >= 10 ? `title:${t}` : null;
 }
 
+/** 字段级合并（2026-09-25 审计 P1-2）：同一作品跨源命中时后到源不再整条
+ *  丢弃——被引取大、标识（issn/pmid/pmcid/oaUrl/pdfUrl）/摘要/期刊指标
+ *  补空，首个到达者保住位置索引（selection/import key 稳定）。 */
+function mergeEntry<T>(base: T, inc: T): T {
+  const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
+  const incRec = inc as Record<string, unknown>;
+  const baseRec = base as Record<string, unknown>;
+  for (const k of Object.keys(incRec)) {
+    if (k === "citationCount") {
+      out[k] = Math.max(Number(baseRec[k]) || 0, Number(incRec[k]) || 0);
+      continue;
+    }
+    const b = baseRec[k];
+    const i = incRec[k];
+    const empty = (v: unknown) => v === undefined || v === null || v === "";
+    if (empty(b)) out[k] = i;
+    // 非空保留首到值（title/authors/journal/source 等身份字段不随后到源漂移）
+  }
+  return out as T;
+}
+
 /**
- * Merge `incoming` external articles into `base`, dropping entries already
- * present（渐进检索的合并原语：每源 RPC 落地时调用一次，base=已上屏列表，
- * incoming=该源新到的结果。追加式——不移除、不重排既有项，selection/import
- * 状态按 `getArticleKey(article, index)` 的位置索引保持稳定）。Only-appends:
- * same-key items in `incoming` collapse to the first occurrence.
+ * Merge `incoming` external articles into `base`, merging fields of entries
+ * already present（渐进检索的合并原语：每源 RPC 落地时调用一次，base=已上屏
+ * 列表，incoming=该源新到的结果。追加式——不移除既有项；同 key 命中做字段
+ * 合并（见 mergeEntry），selection/import 状态按 `getArticleKey(article,
+ * index)` 的位置索引保持稳定）。
  */
 export function mergeExternalArticles<
   T extends { doi?: string | null; title?: string | null },
 >(base: T[], incoming: T[]): T[] {
-  const seen = new Set<string>();
-  for (const a of base) {
-    const k = externalArticleKey(a);
-    if (k) seen.add(k);
-  }
+  const indexOf = new Map<string, number>();
   const out = base.slice();
+  out.forEach((a, idx) => {
+    const k = externalArticleKey(a);
+    if (k && !indexOf.has(k)) indexOf.set(k, idx);
+  });
   for (const a of incoming) {
     const k = externalArticleKey(a);
-    if (k && seen.has(k)) continue;
-    if (k) seen.add(k);
+    if (k) {
+      const idx = indexOf.get(k);
+      if (idx !== undefined) {
+        out[idx] = mergeEntry(out[idx], a);
+        continue;
+      }
+      indexOf.set(k, out.length);
+    }
     out.push(a);
   }
   return out;
@@ -124,9 +151,11 @@ export function mergeResults(
 }
 
 /** Year-of-record for sorting: library items expose dateAdded (ISO-ish),
- *  external articles a plain year string. */
+ *  external articles a plain year string. String() 防 TypeError：多数适配器
+ *  的 year 是 number（crossref/openalex/arxiv/s2），Number 无 localeCompare
+ *  （2026-09-25 审计 P0-4——「日期」排序曾让结果区整体崩溃）。 */
 function resultYear(entry: MixedResult): string {
-  if (entry.kind === "article") return entry.article.year ?? "";
+  if (entry.kind === "article") return String(entry.article.year ?? "");
   const m = (entry.result.dateAdded ?? "").match(/\d{4}/);
   return m ? m[0] : "";
 }

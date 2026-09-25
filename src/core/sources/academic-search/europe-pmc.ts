@@ -71,6 +71,9 @@ export async function searchEuropePMC(args: {
         source: "europe-pmc" as const,
         containerTitle: item.journalTitle || undefined,
         journalName: item.journalTitle || undefined,
+        // JCR/CASS 富集按 ISSN 查表——journalInfo.issn 可得而此前未映射，
+        // Europe PMC 结果的分区/IF 徽章恒缺失（审计 P2-1）
+        issn: item.journalInfo?.issn || undefined,
         volume: item.journalVolume || undefined,
         issue: item.journalIssue || undefined,
         pages: item.pageInfo || undefined,

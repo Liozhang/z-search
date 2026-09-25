@@ -42,13 +42,14 @@ class HubWindowManager {
     openPalette?: boolean,
     section?: string,
     seedSessionId?: string,
+    action?: string,
   ): void {
     try {
       if (bridge.isDestroyed()) {
         debugOut(`deep-link dropped: live bridge destroyed (tab=${tab})`);
         return;
       }
-      bridge.setActiveTab(tab, openPalette, section, seedSessionId);
+      bridge.setActiveTab(tab, openPalette, section, seedSessionId, action);
     } catch (e) {
       debugOut(`deep-link failed on live bridge (tab=${tab}): ${e}`);
     }
@@ -124,6 +125,7 @@ class HubWindowManager {
     openPalette?: boolean,
     section?: string,
     seedSessionId?: string,
+    action?: string,
   ): Promise<void> {
     await this.openHub();
     const wm = Components.classes[
@@ -137,7 +139,21 @@ class HubWindowManager {
       debugOut("deep-link dropped: no live bridge after openHub");
       return;
     }
-    this.deliver(bridge, tab, openPalette, section, seedSessionId);
+    this.deliver(bridge, tab, openPalette, section, seedSessionId, action);
+  }
+
+  /**
+   * 右键菜单「查找相似文献」入口（2026-09-25 审计 P1-3）：开 Hub 并让
+   * iframe 自动发起找相似（RPC 侧回退到主窗选中条目）。仅普通条目有效。
+   */
+  async findSimilarFromMenu(): Promise<void> {
+    await this.deepLink(
+      "search",
+      undefined,
+      undefined,
+      undefined,
+      "findSimilar",
+    );
   }
 
   /**

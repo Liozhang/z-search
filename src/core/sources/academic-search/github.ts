@@ -11,7 +11,16 @@ export async function searchGithub(
 ): Promise<any> {
   const maxResults = limit ?? 10;
   let q = query;
-  if (year) q += ` created:${year}-01-01..${year}-12-31`;
+  if (year) {
+    // created: 过滤器只认完整日期——区间串 "2017-2026" 原样拼入会 422
+    // 整源归零（审计 P0-3）。区间展开为 lo-01-01..hi-12-31。
+    const range = year.match(/^(\d{4})\s*-\s*(\d{4})$/);
+    if (range) {
+      q += ` created:${range[1]}-01-01..${range[2]}-12-31`;
+    } else {
+      q += ` created:${year}-01-01..${year}-12-31`;
+    }
+  }
 
   const url =
     `https://api.github.com/search/repositories` +

@@ -508,6 +508,13 @@ const providerHealthChecker = {
     this.status.set(id, "untested");
   },
 
+  /** 手动测试结果回写（2026-09-25 审计 P1-4）：「启用并测试」跑出的真实
+   *  结果就是健康事实——写入状态缓存，供列表页 health 徽标与默认源选择
+   *  消费。此前测试结果不回写，health 永远 "untested"。 */
+  setStatus(id: string, status: HealthStatus): void {
+    this.status.set(id, status);
+  },
+
   getStatus(id: string): HealthStatus {
     return this.status.get(id) || "untested";
   },

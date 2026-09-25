@@ -105,8 +105,13 @@ export async function handleLiteratureRequest(
             }),
           );
           for (const resp of responses) {
-            if (resp?.articles) {
+            if (resp?.articles?.length) {
               allArticles.push(...resp.articles);
+            } else if (resp && resp.success === false) {
+              // 适配器失败不抛错（httpJsonGet 一律 return {ok:false}）——
+              // success:false 必须点名进 failedSources，否则「源全挂」被
+              // 谎报成「0 条结果」（2026-09-25 审计 P1-1）
+              failedSources.push(resp.source || "unknown");
             }
           }
 
@@ -127,10 +132,14 @@ export async function handleLiteratureRequest(
               // containerTitle，只有旧 arch 源带 journal——三者取齐，否则
               // 卡片期刊位恒空。
               journal: a.journal || a.journalName || a.containerTitle || "",
-              year: a.year ?? "",
+              // 多数适配器的 year 是 number（crossref date-parts / openalex /
+              // arxiv getFullYear）——字符串化：前端排序的 localeCompare 只在
+              // string 原型上存在（审计 P0-4）
+              year: a.year != null ? String(a.year) : "",
               // DOI 归一化：源站会回填 https://doi.org/ 全 URL——不剥前缀则
               // 展示冗余、href 二次拼接、导入标识带壳。
               doi: normalizeDoi(a.doi),
+              issn: a.issn || undefined,
               citationCount: a.citationCount ?? a.citations ?? 0,
               pdfUrl: a.pdfUrl || a.pdf_url || "",
               isOpenAccess: a.isOpenAccess || a.openAccess || false,

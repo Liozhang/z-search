@@ -197,6 +197,21 @@ export function LiteratureSearchPage({
   };
 
   // 各 tab 的「已检索过」：web 看外部腿 performed，local 看结果头/命中。
+
+  // 右键菜单「查找相似文献」深链（2026-09-25 审计 P1-3）：宿主经
+  // hub.setActiveTab(action=findSimilar) 送达，SearchShell 转 window 事件——
+  // 此处切到本地腿并自动发起找相似（RPC 侧回退解析主窗选中条目）。
+  const deepLinkFindSimilar = sem.handleFindSimilar;
+  useEffect(() => {
+    const onFindSimilar = () => {
+      setScope("local");
+      setResultsView("search");
+      void deepLinkFindSimilar();
+    };
+    window.addEventListener("zsearch:find-similar", onFindSimilar);
+    return () =>
+      window.removeEventListener("zsearch:find-similar", onFindSimilar);
+  }, [deepLinkFindSimilar]);
   const webHasSearched = lit.searchPerformed;
   const localHasSearched = !!sem.resultsHeader || sem.searchResults.length > 0;
   const hasSearched = scope === "web" ? webHasSearched : localHasSearched;
@@ -265,10 +280,19 @@ export function LiteratureSearchPage({
   // 出现条件门控（见状态区 JSX）。
 
   // ── 分 tab 结果列表（mergeResults 单腿化） ────────────────────────────────
-  const webList = useMemo(
-    () => sortMixedResults(mergeResults([], lit.results), displaySort),
-    [lit.results, displaySort],
-  );
+  // 「引用最多」是全局语义：仅 OpenAlex 一家服务端支持 cited 排序，逐源扇出
+  // 后合并顺序=网络到达序——此处对合并集按 citationCount 全局降序，兑现
+  // 排序选项的字面承诺（2026-09-25 审计 P2-4）。首层 displaySort（相关/日期/
+  // 标题）在其后生效。
+  const webList = useMemo(() => {
+    const articles =
+      lit.sortBy === "cited"
+        ? [...lit.results].sort(
+            (a, b) => (b.citationCount ?? 0) - (a.citationCount ?? 0),
+          )
+        : lit.results;
+    return sortMixedResults(mergeResults([], articles), displaySort);
+  }, [lit.results, lit.sortBy, displaySort]);
   const localList = useMemo(
     () => sortMixedResults(mergeResults(sem.searchResults, []), displaySort),
     [sem.searchResults, displaySort],
@@ -733,13 +757,6 @@ export function LiteratureSearchPage({
                   {getString("hub-search-total-count", {
                     args: { count: list.length },
                   })}
-                  {scope === "web" && lit.results.length >= lit.maxResults && (
-                    <span className="[font:var(--ui-font-caption)] opacity-80 font-[var(--font-weight-normal)]">
-                      {getString("ux3-lit-results-capped", {
-                        args: { count: lit.results.length },
-                      })}
-                    </span>
-                  )}
                 </span>
               </div>
               {/* Import status footer */}

@@ -528,7 +528,6 @@ chat-citation-nav-no-pdf = 该文献未找到 PDF 附件，无法跳转。
 chat-citation-nav-not-found = 未找到该文献（可能文献库尚未同步至当前设备）。
 # ===== UX fixes round 3 (2026-08-14) =====
 ux3-lit-refreshing = 检索中——当前显示上次结果
-ux3-lit-results-capped = 已达显示上限（{ $count } 条）。可缩小筛选范围以查看其它结果。
 ux3-lit-no-results-desc = 未找到结果。请调整关键词或筛选条件后重试。
 ux3-lit-copy-list = 复制清单
 ux3-lit-export-csv = 导出 CSV
@@ -563,6 +562,7 @@ prefs-default-set = 默认源已设为 { $name }。
 search-sources-test = 测试
 search-sources-test-ok = 可达 · { $count } 条结果
 search-sources-test-auth = key 被拒绝——请检查 API key。
+search-sources-test-missing-key = 未配置 API key——请先在下方填写。
 search-sources-test-unreachable = 当前网络不可达。
 search-sources-test-failed = 测试失败：{ $detail }
 search-sources-not-configured = 未填 key

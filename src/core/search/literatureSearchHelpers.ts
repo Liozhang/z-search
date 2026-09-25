@@ -69,14 +69,22 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
 
       if (jcr) {
         a.jif = jcr.jif ?? undefined;
-        a.jcrQuartile = jcr.jif_quartile ?? undefined;
+        // 只放行 Q1-Q4："N/A" 分区流入卡片模板串会渲染裸 locale key
+        // （lit-quartile-jcr-q/A，审计 P1-5）
+        a.jcrQuartile =
+          jcr.jif_quartile && /^Q[1-4]$/.test(jcr.jif_quartile)
+            ? jcr.jif_quartile
+            : undefined;
       }
       if (cass) {
         a.cassQuartile = cass.major_quartile ?? undefined;
         a.cassCategory = cass.major_category ?? undefined;
         a.cassIsTop = cass.is_top === true;
       }
-      if (warn) a.warningLevel = warn.warning_level ?? undefined;
+      // 2024/2025 版预警名单不带级别（warning_level=null，论文工厂类）——
+      // 记录存在即告警，级别缺失以英文级别/⚠ 兜底（审计 P0-3）
+      if (warn)
+        a.warningLevel = warn.warning_level ?? warn.warning_level_en ?? "⚠";
       if (beallsHit) a.beallsHit = beallsHit;
     }
   } catch (e) {
