@@ -37,7 +37,7 @@ international warning list or Beall's predatory-journal list are marked with a
 warning badge. Query-term highlighting, on-demand full-text fetching, and
 single/batch import all happen on the same card.
 
-![Academic result card: citations, impact factor, JCR/CASS quartiles, OA badge](docs/screenshots/search-results.png)
+![Academic result card: citations, impact factor, JCR/CASS quartiles, OA badge](docs/screenshots/search-results-en.png)
 
 ## Features
 
@@ -80,7 +80,7 @@ section surfaces international warning list and predatory-list hits directly —
 check a journal before submitting, and screen it before citing, all in one
 place. A "discover by field" mode searches journals by research direction.
 
-![Journal metrics card: predatory marker from a local Beall's list hit](docs/screenshots/journal-metrics.png)
+![Journal metrics card: predatory marker from a local Beall's list hit](docs/screenshots/journal-metrics-en.png)
 
 ### 3. Web Search
 
