@@ -106,41 +106,10 @@ h 指数 / i10 指数 / 2 年篇均被引 / 发文量、收稿领域与创刊信
 - 条目右键菜单 ▸ 「查找相似文献」直达找相似
 - 深链：`hubWindowManager.openHub("search")`
 
-## 架构
+## 开发
 
-```
-src/
-├── index.ts / addon.ts / hooks.ts     插件入口（bootstrap 生命周期）
-├── core/search/                       搜索引擎层（管线/评分/融合/索引）
-├── core/sources/academic-search/      学术源 + GitHub 仓库源适配器
-├── core/ai core/embedding             AI provider 栈 + 嵌入（本地/API）
-├── core/data                          期刊指标/预警/掠夺性名单数据栈
-├── core/translation                   摘要翻译引擎
-├── ui/hub/                            Hub 窗口 host 侧（精简 bridge + RPC handler）
-├── bridge/                            iframe postMessage 桥（协议 zsearch-req/res/notify）
-└── react/                             Hub iframe UI（SearchShell + 搜索面板 + ui kit）
-
-addon/
-├── content/hub/                       XUL 宿主窗 + iframe 壳
-├── content/chat/react/*.css           设计令牌与 Hub 分区样式（<style> 注入）
-├── data/                              JCR/CASS/预警/Bealls 离线数据集
-├── prefs.js                           搜索相关偏好默认值
-└── locale/                            en-US / zh-CN / zh-TW Fluent 文案
-```
-
-构建、测试、部署与发布流程见 [docs/development.md](docs/development.md)。
-
-## 与 leadero 的差异（移植裁剪）
-
-- 去除：聊天/Agent/深度研究工作流、学术脑、关注追踪、图谱、引用网络、
-  阅读器等非搜索功能；搜索页的「知识库腿 / 追踪 / 深度研究」入口随之
-  移除（`useMixedSearch` 简化为库内语义 + 外部学术两腿）
-- 记忆系统（memory-observer）以轻量桩替代：`DiscoveryEngine` 的研究方向
-  积累与库建议特性优雅降级（不报错、返回空）
-- 命名空间：`leadero@leadero.dev` → `zsearch@z-search.dev`；DB 表
-  `leadero_*` → `zsearch_*`；窗口类型 `leadero:hub` → `zsearch:hub`
-- 构建管线：保留 webpack(React) + zotero-plugin-scaffold(addon) +
-  esbuild(embed-frame)，去掉 leadero 的 30+ 个 CSS 约定检查脚本
+架构说明、与上游 leadero 的移植裁剪、构建/测试/部署/发布流程见
+[docs/development.md](docs/development.md)。
 
 ## 许可
 
