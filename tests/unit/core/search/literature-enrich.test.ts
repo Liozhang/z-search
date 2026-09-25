@@ -133,4 +133,62 @@ describe("enrichJournalMetrics", () => {
     expect(articles[0].jif).toBe(2.1);
     expect(articles[0].jcrQuartile).toBeUndefined();
   });
+
+  it("默认英文：无 Zotero locale 时 CASS 大类与预警级别取英文列", async () => {
+    cassLookup.mockResolvedValue(
+      new Map([
+        [
+          "12345678",
+          {
+            major_quartile: 1,
+            major_category: "医学",
+            major_category_en: "Medicine",
+          },
+        ],
+      ]),
+    );
+    warnLookup.mockResolvedValue(
+      new Map([
+        ["ANY JOURNAL", { warning_level: "高", warning_level_en: "High" }],
+      ]),
+    );
+
+    const articles = [{ issn: "1234-5678", journalName: "Any Journal" }];
+    await enrichJournalMetrics(articles);
+    expect(articles[0].cassCategory).toBe("Medicine");
+    expect(articles[0].warningLevel).toBe("High");
+  });
+
+  it("中文界面（Zotero.locale=zh-CN）取中文列", async () => {
+    cassLookup.mockResolvedValue(
+      new Map([
+        [
+          "12345678",
+          {
+            major_quartile: 1,
+            major_category: "医学",
+            major_category_en: "Medicine",
+          },
+        ],
+      ]),
+    );
+    warnLookup.mockResolvedValue(
+      new Map([
+        ["ANY JOURNAL", { warning_level: "高", warning_level_en: "High" }],
+      ]),
+    );
+
+    const g = globalThis as any;
+    const prev = g.Zotero;
+    g.Zotero = { locale: "zh-CN" };
+    try {
+      const articles = [{ issn: "1234-5678", journalName: "Any Journal" }];
+      await enrichJournalMetrics(articles);
+      expect(articles[0].cassCategory).toBe("医学");
+      expect(articles[0].warningLevel).toBe("高");
+    } finally {
+      if (prev === undefined) delete g.Zotero;
+      else g.Zotero = prev;
+    }
+  });
 });

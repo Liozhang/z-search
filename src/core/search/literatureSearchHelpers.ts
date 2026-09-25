@@ -57,6 +57,13 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
         : Promise.resolve(new Map()),
     ]);
 
+    // 数据侧中英列的界面语言选择：中文界面取中文列，其余 locale（含 en 与
+    // 未翻译的第三语言）默认取英文列——CASS 大类名/预警级别否则会在英文
+    // 界面上露出中文。
+    const zhUi = String((globalThis as any).Zotero?.locale ?? "")
+      .toLowerCase()
+      .startsWith("zh");
+
     for (const a of articles) {
       if (!a) continue;
       const issnKey = a.issn ? normIssn(a.issn) : "";
@@ -78,18 +85,17 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       }
       if (cass) {
         a.cassQuartile = cass.major_quartile ?? undefined;
-        a.cassCategory = cass.major_category ?? undefined;
+        // 英文列缺失时回退中文列（部分行 major_category_en 为 null）
+        a.cassCategory =
+          (!zhUi && cass.major_category_en) || cass.major_category || undefined;
         a.cassIsTop = cass.is_top === true;
       }
       // 2024/2025 版预警名单不带级别（warning_level=null，论文工厂类）——
-      // 记录存在即告警；级别按界面语言取值（en 优先 High/Medium/Low），
+      // 记录存在即告警；级别按界面语言取值（中文界面中文、其余默认英文），
       // 全缺回退 ⚠（审计 P0-3 / P2-5）
       if (warn) {
-        const en = String((globalThis as any).Zotero?.locale ?? "")
-          .toLowerCase()
-          .startsWith("en");
-        const primary = en ? warn.warning_level_en : warn.warning_level;
-        const secondary = en ? warn.warning_level : warn.warning_level_en;
+        const primary = zhUi ? warn.warning_level : warn.warning_level_en;
+        const secondary = zhUi ? warn.warning_level_en : warn.warning_level;
         a.warningLevel = primary ?? secondary ?? "⚠";
       }
       if (beallsHit) a.beallsHit = beallsHit;

@@ -9,10 +9,22 @@
  */
 
 import React from "react";
-import { getString } from "../../../../utils/locale";
+import { getString, getLocaleTag } from "../../../../utils/locale";
 import { StatFigure } from "@/components/ui/StatFigure";
 import type { JournalMetric } from "../../../../../types/journalSearch";
 import { normalizeQuartile, formatQuartile } from "./types";
+
+/** CAS 大类中英双列的展示序：中文界面「中文 (English)」，其余界面默认
+    「English (中文)」——英文 Zotero 下不再以中文打头。缺列时单列。 */
+function formatCassCategoryPair(zh: string, en: string | undefined): string {
+  if (!en) return zh;
+  const zhUi = isZhUi();
+  return zhUi ? `${zh} (${en})` : `${en} (${zh})`;
+}
+
+function isZhUi(): boolean {
+  return (getLocaleTag() || "").toLowerCase().startsWith("zh");
+}
 
 /* 分区色阶退役（砚法 §5.3 语义外色相违法；Q3/Q4 撞色不可辨）：Q1 保留
    --accent 单强调档，Q2-Q4 统一 text-primary——分区语义由 Q1-Q4 文字承载，
@@ -267,7 +279,10 @@ export function JournalMetricCard({
           {metric.cassCategory && (
             <MetricRow
               label={getString("journal-cass-category-label")}
-              value={`${metric.cassCategory}${metric.cassCategoryEn ? ` (${metric.cassCategoryEn})` : ""}`}
+              value={formatCassCategoryPair(
+                metric.cassCategory,
+                metric.cassCategoryEn,
+              )}
             />
           )}
           {metric.cassIsTop != null && metric.cassIsTop && (
@@ -288,7 +303,7 @@ export function JournalMetricCard({
                       <span data-quartile={normalizeQuartile(m.quartile) ?? ""}>
                         {formatQuartile(m.quartile)}
                       </span>{" "}
-                      {m.nameCn || m.name}
+                      {isZhUi() ? m.nameCn || m.name : m.name || m.nameCn}
                     </span>
                   ))}
                 </div>

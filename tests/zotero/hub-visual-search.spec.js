@@ -70,12 +70,17 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       ?.contentWindow;
   }
 
-  function findBtn(text) {
+  /** 按钮文本匹配：支持 string（前缀）与 RegExp（整串测试）。双语选择器
+      （en-US 本 spec 强制英语；前缀匹配保留给历史调用兼容）。 */
+  function findBtn(textOrRe) {
     const root = hubRoot();
     return (
-      Array.from(root?.querySelectorAll("button") || []).find((b) =>
-        (b.textContent || "").trim().startsWith(text),
-      ) || null
+      Array.from(root?.querySelectorAll("button") || []).find((b) => {
+        const t = (b.textContent || "").trim();
+        return typeof textOrRe === "string"
+          ? t.startsWith(textOrRe)
+          : textOrRe.test(t);
+      }) || null
     );
   }
 
@@ -114,12 +119,14 @@ describe("z-search hub visual search verification (real Zotero + real network)",
     input.dispatchEvent(new win.Event("input", { bubbles: true }));
     await Zotero.Promise.delay(400);
     // 从输入框向上爬，找最近一个同时装有「搜索」钮的祖先——keep-alive
-    // 让隐藏面板的同名按钮也挂在 DOM 里，全域找钮会点到隐藏面板去
+    // 让隐藏面板的同名按钮也挂在 DOM 里，全域找钮会点到隐藏面板去。
+    // 精确等值（Search / 搜索）避免误配 Searching... 之类的中间态文案。
     let anc = input.parentElement;
     let btn = null;
     while (anc && anc !== root) {
       btn = Array.from(anc.querySelectorAll(":scope > * button")).find(
-        (b) => (b.textContent || "").trim().startsWith("搜索") && !b.disabled,
+        (b) =>
+          /^(Search|搜索)$/.test((b.textContent || "").trim()) && !b.disabled,
       );
       if (btn) break;
       anc = anc.parentElement;
@@ -251,8 +258,72 @@ describe("z-search hub visual search verification (real Zotero + real network)",
     OUTPUTS[name] = path;
   }
 
+  // 切走前的应用 locale（after() 恢复）——本套件按字母序最先跑，后面还有
+  // 按中文断言的套件，不能把 en-US 泄漏给他们。
+  let origRequestedLocales = null;
+  let origZoteroLocale = null;
+
+  function localeService() {
+    // 本 Gecko 无 Services.sys.mjs；chrome 窗口通常已有 Services 全局，
+    // 不可用则直取 XPCOM locale service。
+    return globalThis.Services
+      ? globalThis.Services.locale
+      : Cc["@mozilla.org/intl/localeservice;1"].getService(
+          Ci.mozILocaleService,
+        );
+  }
+
+  function addonInstance() {
+    // runner 页无裸 `addon` 全局（no-undef 也不认 typeof 守卫）——经
+    // globalThis 取，缺省落到 null。
+    return Zotero.ZSearch ?? globalThis.addon ?? null;
+  }
+
+  /** 作废插件的 locale 快照。Fluent 的 Localization 监听
+      intl:app-locales-changed 自行重协商（Zotero 设置里切换语言即生效），
+      但 addon.data.locale.cacheSnapshot 是冻结的字符串映射，必须显式丢弃
+      让 locale.getAll 重新解析。 */
+  function invalidateLocaleSnapshot() {
+    const inst = addonInstance();
+    if (inst?.data?.locale) {
+      delete inst.data.locale.cacheSnapshot;
+      // 保险：若该构建的 Localization 不自动重协商，用 runner 页可见的
+      // Localization 构造器重建实例（getGlobal 在 runner 页不存在）。
+      try {
+        const Loc = globalThis.Localization;
+        if (Loc) {
+          inst.data.locale.current = new Loc(
+            [
+              "zsearch-addon.ftl",
+              "zsearch-preferences.ftl",
+              "zsearch-tracking.ftl",
+            ],
+            true,
+          );
+        }
+      } catch {
+        /* 保留旧实例，依赖其自动重协商 */
+      }
+    }
+  }
+
   before(async function () {
     try {
+      // README 截图要求英文界面（插件默认英语）：把测试实例的应用 locale
+      // 切到 en-US，并作废插件启动时预热的 locale 快照——iframe 的
+      // locale.getAll 会经 localeBatch 重新协商，整个 Hub 以 en-US FTL 渲染。
+      // 这同时是 en-US FTL 键集的实机回归：任何缺失键都会以裸 key 上屏并被
+      // 下面的断言/截图暴露。
+      const ls = localeService();
+      origRequestedLocales = ls.requestedLocales;
+      ls.requestedLocales = ["en-US"];
+      // Zotero.locale 是启动时缓存的普通属性，不随 requestedLocales 运行时
+      // 切换更新——宿主侧富集的 zh/en 列选择（literatureSearchHelpers）读它，
+      // 必须一并覆盖，否则卡片学科徽章仍会取中文列。
+      origZoteroLocale = Zotero.locale;
+      Zotero.locale = "en-US";
+      invalidateLocaleSnapshot();
+
       const mod = await import("../../src/ui/hub/HubWindowManager.js");
       hubWindowManager = mod.hubWindowManager;
       outDirReady = await ensureOutDir();
@@ -266,6 +337,15 @@ describe("z-search hub visual search verification (real Zotero + real network)",
 
   after(function () {
     try {
+      if (origRequestedLocales) {
+        try {
+          localeService().requestedLocales = origRequestedLocales;
+        } catch {
+          /* best-effort */
+        }
+        Zotero.locale = origZoteroLocale;
+        invalidateLocaleSnapshot();
+      }
       hubWindowManager?.closeAll();
     } catch {
       /* best-effort */
@@ -288,14 +368,14 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       // 可靠路径：不做筛选交互，直接全源检索（被墙源失败会被状态条点名）
       const drive = await runUiSearch(
         "cancer immunotherapy",
-        /研究问题|关键词|DOI/i,
+        /research question|keywords|DOI|研究问题|关键词/i,
       );
       const cards = await waitFor(
         () => hubDoc()?.querySelectorAll(".lit-result-journal").length,
         150000,
       );
       // 等检索收尾（「取消」钮变回「搜索」，状态条脱离「检索中」置灰态）
-      await waitFor(() => !!findBtn("搜索"), 60000);
+      await waitFor(() => !!findBtn(/^(Search|搜索)$/), 60000);
       await Zotero.Promise.delay(1500);
 
       // 把带 IF 徽章的卡滚进视口（虚拟列表只在视口内挂载行）
@@ -384,7 +464,7 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       await waitFor(() => {
         const input = Array.from(
           hubRoot()?.querySelectorAll("input") || [],
-        ).find((i) => /刊名|ISSN/i.test(i.placeholder || ""));
+        ).find((i) => /journal name|ISSN|刊名/i.test(i.placeholder || ""));
         if (!input) return null;
         const slot = input.closest(".hub-pane-slot");
         return slot && !/hidden/.test(slot.className) ? input : null;
@@ -392,7 +472,7 @@ describe("z-search hub visual search verification (real Zotero + real network)",
 
       const drive = await runUiSearch(
         "Academic Exchange Quarterly",
-        /刊名|ISSN/i,
+        /journal name|ISSN|刊名/i,
       );
       const hit = await waitFor(
         () => {
