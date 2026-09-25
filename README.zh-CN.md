@@ -66,6 +66,12 @@ h 指数 / i10 指数 / 2 年篇均被引 / 发文量、收稿领域与创刊信
 
 ![期刊指标卡：本地命中 Beall's 名单的掠夺性标记](docs/screenshots/journal-metrics-en.png)
 
+「按领域发现」模式以紧凑行列表呈现命中的期刊——刊名、ISSN、影响因子、
+发文量与内联的 JCR/中科院分区徽章、顶刊星标——可按相关度、JIF、发文量、
+h5 指数排序；点击任意行即钻取到该刊的完整指标卡。
+
+![期刊发现模式：按领域关键字的行式列表，带分区徽章与排序 chips](docs/screenshots/journal-discover-en.png)
+
 ### 3. 网络搜索
 
 - 13 个网页搜索源：DuckDuckGo、Bing(web)、Wikipedia、Archive.org（免 key），

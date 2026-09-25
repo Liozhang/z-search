@@ -518,4 +518,92 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       reportError("hub-visual-bealls", e);
     }
   });
+
+  it("captures the journal discover list for a research field", async function () {
+    try {
+      // 上一用例停在 metric 模式——切到 discover（模式 seg 在仪表盘顶部）
+      const segBtn = Array.from(
+        hubRoot()?.querySelectorAll("button") || [],
+      ).find((b) =>
+        /discover by field|按领域发现/i.test((b.textContent || "").trim()),
+      );
+      if (!segBtn) {
+        reportError("hub-visual-discover", {
+          message: "discover mode toggle missing",
+        });
+      }
+      segBtn.click();
+      await Zotero.Promise.delay(1000);
+
+      // 等 discover 输入框（placeholder 区分于 metric 的刊名/ISSN）。
+      // 可见性用 offsetParent（display:none 祖先下为 null）——keep-alive 的
+      // .hub-pane-slot 隐藏态不落在 class 上，className 探测不可靠。
+      const input = await waitFor(() => {
+        const i = Array.from(hubRoot()?.querySelectorAll("input") || []).find(
+          (x) => /research field|研究方向/i.test(x.placeholder || ""),
+        );
+        return i && i.offsetParent !== null ? i : null;
+      }, 15000);
+      if (!input) {
+        // 现场诊断：seg 按压态 + 全部输入框 placeholder + slot 可见性
+        const diag = {
+          segPressed: segBtn.getAttribute("aria-pressed"),
+          segText: (segBtn.textContent || "").trim(),
+          inputs: Array.from(hubRoot()?.querySelectorAll("input") || []).map(
+            (x) => ({
+              placeholder: x.placeholder,
+              slotHidden: /hidden/.test(
+                x.closest(".hub-pane-slot")?.className || "",
+              ),
+            }),
+          ),
+        };
+        reportError("hub-visual-discover", {
+          message: `discover input not visible: ${JSON.stringify(diag)}`,
+        });
+      }
+
+      // 行选择器：JournalListItemView 行可点（role=button）且次行带 ISSN
+      const countRows = () => {
+        const doc = hubDoc();
+        if (!doc) return 0;
+        return Array.from(doc.querySelectorAll("div[role='button']")).filter(
+          (n) => /ISSN:/.test(n.textContent || ""),
+        ).length;
+      };
+
+      const drive = await runUiSearch("oncology", /research field|研究方向/i);
+      const rows = await waitFor(countRows, 120000);
+      await Zotero.Promise.delay(1000);
+
+      // 首行滚进视口再截（列表可滚动，视口外行未挂载时不至于空拍）
+      const firstRow = Array.from(
+        hubDoc()?.querySelectorAll("div[role='button']") || [],
+      ).find((n) => /ISSN:/.test(n.textContent || ""));
+      firstRow?.scrollIntoView?.({ block: "center" });
+      await Zotero.Promise.delay(800);
+
+      await screenshotHub("hub-visual-journal-discover.png");
+      const rowEls = Array.from(
+        hubDoc()?.querySelectorAll("div[role='button']") || [],
+      ).filter((n) => /ISSN:/.test(n.textContent || ""));
+      await writeReport("hub-visual-journal-discover.json", {
+        query: "oncology",
+        drive,
+        rows,
+        sampleRows: rowEls
+          .slice(0, 8)
+          .map((r) => (r.textContent || "").replace(/\s+/g, " ").trim())
+          .map((t) => t.slice(0, 120)),
+      });
+
+      if (rows === 0) {
+        reportError("hub-visual-discover", {
+          message: "discover list empty after 120s",
+        });
+      }
+    } catch (e) {
+      reportError("hub-visual-discover", e);
+    }
+  });
 });

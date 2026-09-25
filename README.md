@@ -82,6 +82,13 @@ place. A "discover by field" mode searches journals by research direction.
 
 ![Journal metrics card: predatory marker from a local Beall's list hit](docs/screenshots/journal-metrics-en.png)
 
+The discover mode lists journals matching a research field as compact rows —
+name, ISSN, JIF, works count, and inline JCR/CAS quartile badges with
+top-journal stars — sortable by relevance, JIF, works count, or h5-index;
+clicking a row drills into that journal's full metrics card.
+
+![Journal discover mode: field-keyword row list with quartile badges and sort chips](docs/screenshots/journal-discover-en.png)
+
 ### 3. Web Search
 
 - 13 web search sources: DuckDuckGo, Bing(web), Wikipedia, Archive.org
