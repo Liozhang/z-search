@@ -673,3 +673,21 @@ pdf-mineru-auth-rejected = MinerU authentication failed ({ $detail }) - check th
 pdf-mineru-api-error = MinerU API error: { $detail } (code { $code })
 pdf-translate-batch-start = Translating in batch ({ $paragraphs } paragraphs in { $chunks } chunks)…
 pdf-translate-batch-progress = Batch translation: { $done }/{ $total } chunks
+
+# ── Toolbar button & shortcut (main window entry, P0-4) ──
+toolbar-open-search-tooltip = Open Search Center (Ctrl+Shift+K)
+
+# ── In-library badge & OA filter (P0-3) ──
+lit-in-library = In Library
+lit-in-library-tip = This DOI already exists in your Zotero library
+lit-filter-open-access = Open Access
+lit-filter-open-access-hint = Show only open-access results
+
+# ── Citation traversal (P0-2) ──
+lit-cited-by-title = Cited by — { $title }
+lit-references-title = References — { $title }
+lit-references-btn = References
+lit-cited-by-tip = Show papers citing this work (OpenAlex)
+lit-citations-loading = Fetching citations…
+lit-citations-count = { $count } shown of { $total }
+lit-citations-empty = No citation data found

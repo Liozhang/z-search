@@ -22,6 +22,95 @@ const {
   importArticle: doImportArticle,
 } = academicSearch;
 
+/**
+ * OA PDF 附件（P0-1）：导入建项成功后后台拉开放获取 PDF 挂为附件。
+ *
+ * 候选链：卡片透传的 pdfUrl 直链（零成本）→ OpenAlex works/doi 反查
+ * best_oa_location.pdf_url。任何失败静默降级为纯元数据条目；pref
+ * search.importAttachPdf=false 整段跳过。不 await——导入回执不等 PDF。
+ */
+async function attachOaPdf(
+  itemId: number,
+  doi: string,
+  pdfUrlHint?: string,
+): Promise<void> {
+  try {
+    const { getPrefDynamic } = await import("../../utils/prefs");
+    if (getPrefDynamic("search.importAttachPdf") === false) return;
+    const urls: string[] = [];
+    if (pdfUrlHint && /^https?:\/\//.test(pdfUrlHint)) urls.push(pdfUrlHint);
+    try {
+      const resp = await Zotero.HTTP.request(
+        "GET",
+        `https://api.openalex.org/works/doi:${doi}`,
+        { headers: { Accept: "application/json" }, timeout: 15000 },
+      );
+      const best = JSON.parse(resp.responseText ?? "")?.best_oa_location;
+      const u = best?.pdf_url || best?.oa_page_url;
+      if (typeof u === "string" && /^https?:\/\//.test(u)) urls.push(u);
+    } catch {
+      /* OpenAlex 不可达：只有直链候选 */
+    }
+    for (const url of [...new Set(urls)]) {
+      try {
+        // zotero-types 版本未收录 importFromURL（运行时自 Zotero 5 存在）——as any 过桥
+        await (Zotero.Attachments as any).importFromURL({
+          url,
+          parentItemID: itemId,
+          contentType: "application/pdf",
+        });
+        safeDebug(`[z-search] OA PDF attached: ${url}`);
+        return;
+      } catch (e) {
+        safeDebug("[z-search] OA PDF attach failed: " + e);
+      }
+    }
+  } catch (e) {
+    safeDebug("[z-search] attachOaPdf skipped: " + e);
+  }
+}
+
+/**
+ * 已在库标记（P0-3）：对上屏页的条目按归一化 DOI 批量做本地检索比对。
+ *
+ * Zotero.Search 的 doi 条件走字段索引（毫秒级），并发 8 折中批量时延；
+ * best-effort——任何异常整段跳过，检索主流程不受影响。
+ */
+async function markInLibrary(articles: any[]): Promise<void> {
+  try {
+    const dois = [
+      ...new Set(
+        articles.map((a) => normalizeDoi(a?.doi)).filter(Boolean) as string[],
+      ),
+    ];
+    if (dois.length === 0) return;
+    const found = new Set<string>();
+    const CONCURRENCY = 8;
+    for (let i = 0; i < dois.length; i += CONCURRENCY) {
+      const chunk = dois.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        chunk.map(async (doi) => {
+          try {
+            const s = new Zotero.Search();
+            s.addCondition("doi", "is", doi);
+            const ids = await s.search();
+            if (ids?.length) found.add(doi);
+          } catch {
+            /* 单条失败不影响其余 */
+          }
+        }),
+      );
+    }
+    for (const a of articles) {
+      if (normalizeDoi(a?.doi) && found.has(normalizeDoi(a.doi)!)) {
+        a.inLibrary = true;
+      }
+    }
+  } catch (e) {
+    safeDebug("[z-search] in-library check failed: " + e);
+  }
+}
+
 export async function handleLiteratureRequest(
   bridge: HubWindowBridge,
   method: string,
@@ -121,11 +210,20 @@ export async function handleLiteratureRequest(
           }
 
           const deduped = deduplicateArticles(allArticles);
+          // OA 过滤（P0-3）：过滤先于截断，保证 cap 作用在过滤后的集合上。
+          const oaFiltered =
+            payload.openAccessOnly === true
+              ? deduped.filter((a: any) => a.isOpenAccess || a.openAccess)
+              : deduped;
           // 期刊指标/风险富集（JCR/CASS/预警/Beall's）——本地查表、原地写回，
           // 内部吞错，绝不拖垮主检索。
-          await enrichJournalMetrics(deduped);
+          await enrichJournalMetrics(oaFiltered);
+          const page = oaFiltered.slice(0, maxResults);
+          // 已在库标记（P0-3）：对上屏页做 DOI 本地比对（Zotero.Search 走
+          // 索引），best-effort——失败绝不拖垮检索。
+          await markInLibrary(page);
           result = {
-            articles: deduped.slice(0, maxResults).map((a: any) => ({
+            articles: page.map((a: any) => ({
               title: a.title || "",
               authors: a.authors || "",
               // 源侧字段名不统一：Europe PMC/PubMed 回 journalName 或
@@ -158,12 +256,107 @@ export async function handleLiteratureRequest(
               warningLevel: a.warningLevel,
               beallsHit: a.beallsHit,
               stars: a.stars,
+              // 已在库（P0-3）：卡片据此显示「已在库」徽章并停用导入钮
+              inLibrary: a.inLibrary === true,
             })),
             skippedNoKey,
             failedSources,
           };
         } finally {
           bridge._searchAbortSignal.delete(searchId);
+        }
+        break;
+      }
+
+      case "literature.citations": {
+        // 引文钻取（P0-2）：cited-by = filter=cites:W...；references =
+        // 种子作品的 referenced_works 批取。复用 openalex 映射保证字段口径
+        // 与主检索一致，随后走同一富集管线（徽章齐平）。
+        const doi = normalizeDoi(payload?.doi);
+        const direction: "cited-by" | "references" =
+          payload?.direction === "references" ? "references" : "cited-by";
+        const limit = Math.min(Number(payload?.limit) || 25, 50);
+        if (!doi) {
+          error = "literature.citations: missing doi";
+          break;
+        }
+        try {
+          const { openalexRequest, mapOpenAlexWork } =
+            await import("../../core/sources/academic-search/openalex");
+          // DOI → OpenAlex work（拿 W-id 与 referenced_works）
+          const seedResp = await openalexRequest(
+            `https://api.openalex.org/works/doi:${doi}`,
+          );
+          if (!seedResp.ok || !seedResp.body) {
+            result = {
+              direction,
+              articles: [],
+              total: 0,
+              error: "OpenAlex seed lookup failed (unreachable or DOI unknown)",
+            };
+            break;
+          }
+          const seed = JSON.parse(seedResp.body);
+          const workId = String(seed?.id || "").replace(
+            "https://openalex.org/",
+            "",
+          );
+          let works: any[] = [];
+          let total = 0;
+          if (direction === "cited-by") {
+            const url = `https://api.openalex.org/works?filter=cites:${workId}&per_page=${limit}&sort=cited_by_count:desc`;
+            const r = await openalexRequest(url);
+            if (r.ok && r.body) {
+              const d = JSON.parse(r.body);
+              works = d.results || [];
+              total = d.meta?.count ?? works.length;
+            }
+          } else {
+            const refs: string[] = (seed.referenced_works || [])
+              .slice(0, limit)
+              .map((w: string) =>
+                String(w).replace("https://openalex.org/", ""),
+              );
+            if (refs.length > 0) {
+              const url = `https://api.openalex.org/works?filter=openalex:${refs.join("|")}&per_page=${refs.length}`;
+              const r = await openalexRequest(url);
+              if (r.ok && r.body) {
+                works = JSON.parse(r.body).results || [];
+              }
+            }
+            total = (seed.referenced_works || []).length;
+          }
+          const articles = works.map(mapOpenAlexWork);
+          await enrichJournalMetrics(articles);
+          await markInLibrary(articles);
+          result = {
+            direction,
+            total,
+            articles: articles.map((a: any) => ({
+              title: a.title || "",
+              authors: a.authors || "",
+              journal: a.journalName || a.containerTitle || "",
+              year: a.year != null ? String(a.year) : "",
+              doi: normalizeDoi(a.doi) || "",
+              issn: a.issn || undefined,
+              citationCount: a.citationCount ?? 0,
+              pdfUrl: a.pdfUrl || "",
+              isOpenAccess: a.isOpenAccess === true,
+              abstract: a.abstract || "",
+              source: "openalex",
+              oaUrl: a.oaUrl || undefined,
+              jif: a.jif,
+              jcrQuartile: a.jcrQuartile,
+              cassQuartile: a.cassQuartile,
+              cassCategory: a.cassCategory,
+              cassIsTop: a.cassIsTop,
+              warningLevel: a.warningLevel,
+              beallsHit: a.beallsHit,
+              inLibrary: a.inLibrary === true,
+            })),
+          };
+        } catch (e) {
+          error = toErrorMessage(e);
         }
         break;
       }
@@ -187,6 +380,7 @@ export async function handleLiteratureRequest(
           doi?: string;
           title?: string;
           year?: string;
+          pdfUrl?: string;
         }> = [];
         if (Array.isArray(payload?.entries)) {
           for (const e of payload.entries) {
@@ -199,6 +393,11 @@ export async function handleLiteratureRequest(
                     : undefined,
                 title: typeof e.title === "string" ? e.title : undefined,
                 year: typeof e.year === "string" ? e.year : undefined,
+                // OA PDF 零成本提示（P0-1）：卡片已持有的直链，命中免反查
+                pdfUrl:
+                  typeof e.pdfUrl === "string" && /^https?:\/\//.test(e.pdfUrl)
+                    ? e.pdfUrl
+                    : undefined,
               });
             }
           }
@@ -228,7 +427,12 @@ export async function handleLiteratureRequest(
         }
 
         const importResults: ImportResult[] = new Array(rawEntries.length);
-        const doiJobs: Array<{ idx: number; doi: string; title: string }> = [];
+        const doiJobs: Array<{
+          idx: number;
+          doi: string;
+          title: string;
+          pdfUrl?: string;
+        }> = [];
         // 标题→DOI 解析并行化（审计 P2-7）：串行最坏 63s/条，批量 120s RPC
         // 超时下后段条目必超时（前端 toast 失败、后端继续建条目 → 重复导入）。
         // 并发 5 兼顾 Crossref 礼貌池；解析带年份优先吻合候选。
@@ -253,7 +457,12 @@ export async function handleLiteratureRequest(
                 }
               }
               if (doi) {
-                doiJobs.push({ idx, doi, title: e.title || doi });
+                doiJobs.push({
+                  idx,
+                  doi,
+                  title: e.title || doi,
+                  pdfUrl: e.pdfUrl,
+                });
               } else {
                 importResults[idx] = {
                   success: false,
@@ -284,6 +493,11 @@ export async function handleLiteratureRequest(
                 error: itemResult?.error,
                 imported: itemResult?.imported || false,
               };
+              // OA PDF 附件（P0-1）：pref 开启时后台执行，不阻塞导入回执；
+              // 候选 = 卡片直链提示 → OpenAlex best_oa_location 反查。
+              if (itemResult?.success && itemResult?.itemId) {
+                void attachOaPdf(itemResult.itemId, job.doi, job.pdfUrl);
+              }
             }
           } catch (e: any) {
             for (const job of doiJobs) {

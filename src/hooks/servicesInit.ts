@@ -20,6 +20,7 @@ import { safeDebug, warn } from "../utils/logger";
 import { loadDataFile } from "../core/data/DataLoader";
 import { getPrefDynamic, setPrefDynamic } from "../utils/prefs";
 import { handleSearchSourceMethod } from "../ui/hub/HubSearchSourceHandler";
+import { syncToolbarButtons } from "../modules/menuManager";
 import { API_KEY_GROUPS } from "../utils/apiKeySchema";
 import { isAcademicKeyRequired } from "../core/sources/academic-search/keyFields";
 import { config } from "../../package.json";
@@ -288,6 +289,10 @@ export async function servicesInit(): Promise<void> {
   (_globalThis as any).addon.api.searchSources = handleSearchSourceMethod;
   (_globalThis as any).addon.api.getPrefDynamic = getPrefDynamic;
   (_globalThis as any).addon.api.setPrefDynamic = setPrefDynamic;
+  // 工具栏按钮显隐的即时同步（设置面板写 pref 后直调；P0-4）。必须静态
+  // 引用：运行时动态 import 在插件沙箱里解析出另一模块实例，调不到注册
+  // 时用的那份 module state（实机踩坑 2026-09-26）。
+  (_globalThis as any).addon.api.syncToolbarButton = syncToolbarButtons;
   // 学术检索源的 key 字段清单（apiKeySchema 的 academic 组是字段单一事实源，
   // required 取自 academic-search/keyFields.ts），面板据此渲染第二组密钥行；
   // 不复制字段表，防双源漂移。

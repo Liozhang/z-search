@@ -105,3 +105,10 @@ pref-api-key-elsevier-placeholder =
 pref-api-key-wiley = Wiley TDM 客户端令牌
 pref-api-key-wiley-placeholder =
     .placeholder = https://onlinelibrary.wiley.com/tdm（通过 TDM 表单申请）
+
+# ── 通用：入口与导入行为（P0-4 / P0-1）──
+prefs-general-title = 入口与导入
+prefs-toolbar-button = 显示工具栏按钮
+prefs-toolbar-button-desc = 主窗工具栏的放大镜按钮（Ctrl+Shift+K 快捷键始终可用）
+prefs-import-pdf = 导入时自动挂开放获取 PDF
+prefs-import-pdf-desc = 导入时尝试下载开放获取 PDF 作为附件；失败时静默降级为纯元数据

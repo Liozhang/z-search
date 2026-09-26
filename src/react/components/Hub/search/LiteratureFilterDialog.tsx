@@ -50,6 +50,8 @@ export interface LiteratureFilterValues {
   maxResults: number;
   author: string;
   journal: string;
+  // 只看开放获取（web；宿主侧过滤，cap 作用于过滤后集合）
+  openAccessOnly: boolean;
   // 库内全文范围（local）
   useFullText: boolean;
   sectionCategory: string | undefined;
@@ -70,6 +72,7 @@ function getDefaultLiteratureFilters(
     maxResults: scope === "web" ? 100 : 10,
     author: "",
     journal: "",
+    openAccessOnly: false,
     useFullText: false,
     sectionCategory: undefined,
   };
@@ -91,6 +94,7 @@ export function isDefaultLiteratureFilters(
     v.maxResults === def.maxResults &&
     v.author === def.author &&
     v.journal === def.journal &&
+    v.openAccessOnly === def.openAccessOnly &&
     v.useFullText === def.useFullText &&
     v.sectionCategory === def.sectionCategory
   );
@@ -110,7 +114,8 @@ export function countActiveLiteratureFilters(
         (v.sortBy !== def.sortBy ? 1 : 0) +
         (v.maxResults !== def.maxResults ? 1 : 0) +
         (v.author !== def.author ? 1 : 0) +
-        (v.journal !== def.journal ? 1 : 0)
+        (v.journal !== def.journal ? 1 : 0) +
+        (v.openAccessOnly ? 1 : 0)
     : (v.maxResults !== def.maxResults ? 1 : 0) +
         (v.useFullText ? 1 : 0) +
         (v.sectionCategory != null ? 1 : 0);
@@ -413,6 +418,20 @@ export function LiteratureFilterDialog({
                       }
                       placeholder={getString("lit-filter-journal-placeholder")}
                     />
+                  </section>
+
+                  {/* 只看开放获取（P0-3）：宿主侧过滤，cap 作用于过滤后集合 */}
+                  <section className="hub-graph-filter-section">
+                    <div className="hub-graph-filter-switch">
+                      <Switch
+                        checked={values.openAccessOnly}
+                        onChange={(v) =>
+                          onChange({ ...values, openAccessOnly: v })
+                        }
+                        ariaLabel={getString("lit-filter-open-access")}
+                      />
+                      <div>{getString("lit-filter-open-access-hint")}</div>
+                    </div>
                   </section>
                 </FilterZone>
               </>

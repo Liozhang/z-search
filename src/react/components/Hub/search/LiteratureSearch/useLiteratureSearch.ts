@@ -79,6 +79,7 @@ export function useLiteratureSearch() {
   const [maxResults, setMaxResults] = useState(100);
   const [authorFilter, setAuthorFilter] = useState("");
   const [journalFilter, setJournalFilter] = useState("");
+  const [openAccessOnly, setOpenAccessOnly] = useState(false);
 
   // Selection + import state — keyed by stable article identity (doi / title /
   // positional fallback) so state survives result-list reordering / filtering.
@@ -200,6 +201,7 @@ export function useLiteratureSearch() {
             sort: sortBy,
             author: authorFilter || undefined,
             journal: journalFilter || undefined,
+            openAccessOnly: openAccessOnly || undefined,
           },
           60000,
         );
@@ -494,19 +496,21 @@ export function useLiteratureSearch() {
       });
 
       try {
-        // 无 DOI 条目改走 entries 契约：核心侧标题→DOI 回退解析后入库。
+        // entries 契约统一承载（有无 DOI 都走它）：宿主侧标题→DOI 回退解析
+        // 后入库；pdfUrl 是 OA PDF 附件的零成本提示（P0-1，有则免一次
+        // OpenAlex 反查）。
         const data = await semanticRequest<ImportResult[]>(
           "literature.import",
-          article.doi
-            ? { identifiers: [article.doi] }
-            : {
-                entries: [
-                  {
-                    title: article.title,
-                    year: article.year ? String(article.year) : undefined,
-                  },
-                ],
+          {
+            entries: [
+              {
+                doi: article.doi || undefined,
+                title: article.title,
+                year: article.year ? String(article.year) : undefined,
+                pdfUrl: article.pdfUrl || undefined,
               },
+            ],
+          },
           article.doi ? 30000 : 60000,
         );
 
@@ -576,6 +580,8 @@ export function useLiteratureSearch() {
       doi: p.article.doi,
       title: p.article.title,
       year: p.article.year ? String(p.article.year) : undefined,
+      // OA PDF 零成本提示（P0-1）：命中则宿主免一次 OpenAlex 反查
+      pdfUrl: p.article.pdfUrl || undefined,
     }));
     const keys = keyArticlePairs.map((p) => p.key);
 
@@ -731,6 +737,8 @@ export function useLiteratureSearch() {
     setAuthorFilter,
     journalFilter,
     setJournalFilter,
+    openAccessOnly,
+    setOpenAccessOnly,
     // results
     results,
     // selection + import

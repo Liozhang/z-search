@@ -659,3 +659,21 @@ pdf-mineru-auth-rejected = MinerU 認證失敗（{ $detail }），請檢查 API 
 pdf-mineru-api-error = MinerU API 錯誤：{ $detail } (code { $code })
 pdf-translate-batch-start = 正在批量翻譯（{ $paragraphs } 段，分 { $chunks } 塊）…
 pdf-translate-batch-progress = 批量翻譯進度：{ $done }/{ $total } 塊
+
+# ── 主窗工具列按鈕與快捷鍵（入口，P0-4）──
+toolbar-open-search-tooltip = 開啟搜尋中心（Ctrl+Shift+K）
+
+# ── 已在庫徽章與 OA 篩選（P0-3）──
+lit-in-library = 已在庫
+lit-in-library-tip = 該 DOI 已存在於你的 Zotero 文庫
+lit-filter-open-access = 開放取用
+lit-filter-open-access-hint = 只顯示開放取用結果
+
+# ── 引文鑽取（P0-2）──
+lit-cited-by-title = 施引文獻 — { $title }
+lit-references-title = 參考文獻 — { $title }
+lit-references-btn = 參考文獻
+lit-cited-by-tip = 查看引用本文的文獻（OpenAlex）
+lit-citations-loading = 正在取得引文…
+lit-citations-count = 已載 { $count } 條 / 共 { $total } 條
+lit-citations-empty = 未找到引文資料

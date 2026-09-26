@@ -159,31 +159,56 @@ describe("z-search hub window (real Zotero integration)", function () {
     ).that.is.empty;
   });
 
-  it("keeps the main window free of the retired toolbar button", async function () {
+  it("registers the toolbar button (pref-gated) and the shortcut key", async function () {
     const wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
       Ci.nsIWindowMediator,
     );
     const mainWindow = wm.getMostRecentWindow("navigator:browser");
     expect(mainWindow, "main window reachable").to.be.ok;
 
-    // 工具栏 logo 钮已于 2026-09-23 移除：入口重复（Tools 菜单 + 条目右键
-    // 菜单都能打开搜索中心）。这条守卫防止它被顺手加回来，也确认另外两个
-    // 入口仍在。
+    // 2026-09-26 P0-4：工具栏按钮回归（默认显示，search.toolbarButton
+    // 可隐藏且即时生效）+ Ctrl/Cmd+Shift+K 快捷键。另两个入口仍在。
+    const doc = mainWindow.document;
     expect(
-      mainWindow.document.getElementById("zsearch-toolbar-button"),
-      "no toolbar button",
-    ).to.be.null;
+      doc.getElementById("zsearch-tb-open-search"),
+      "toolbar button present (default on)",
+    ).to.be.ok;
     expect(
-      mainWindow.document.getElementById("zsearch-tools-open-search"),
+      doc.getElementById("zsearch-key-open-search"),
+      "shortcut key registered",
+    ).to.be.ok;
+    expect(
+      doc.getElementById("zsearch-tools-open-search"),
       "Tools menu entry still present",
     ).to.be.ok;
     expect(
-      mainWindow.document.getElementById("zsearch-tools-menu-sep"),
-      "Tools menu separator still present",
-    ).to.be.ok;
-    expect(
-      mainWindow.document.getElementById("zsearch-item-find-similar"),
+      doc.getElementById("zsearch-item-find-similar"),
       "item context menu entry still present",
+    ).to.be.ok;
+
+    // pref 关→按钮移除；还原后恢复。插件 pref 的真实地址在 Zotero 分支下
+    // （prefsPrefix=extensions.zotero.zsearch）——写错前缀会让一切静默失配。
+    // 显式 sync API = 设置面板勾选框的同一确定性路径（P0-4）。
+    const PREF = "extensions.zotero.zsearch.search.toolbarButton";
+    Services.prefs.setBoolPref(PREF, false);
+    // 产品路径：设置面板写 pref 后调的同一 api
+    Zotero.ZSearch.api.syncToolbarButton();
+    const diag = {
+      rawValue: Services.prefs.getBoolPref(PREF, true),
+      ourReader: Zotero.ZSearch.api.getPrefDynamic("search.toolbarButton"),
+      syncMark: doc
+        .getElementById("zotero-toolbar-item-tree")
+        ?.getAttribute("data-zsearch-sync"),
+    };
+    expect(
+      doc.getElementById("zsearch-tb-open-search"),
+      `button removed after pref=false + module-sync ${JSON.stringify(diag)}`,
+    ).to.be.null;
+    Services.prefs.setBoolPref(PREF, true);
+    Zotero.ZSearch.api.syncToolbarButton();
+    expect(
+      doc.getElementById("zsearch-tb-open-search"),
+      "button restored after pref=true + module-sync",
     ).to.be.ok;
   });
 

@@ -24,6 +24,8 @@ declare namespace _ZoteroTypes {
       "search.rerankModel": string;
       "search.qualityMemory": string;
       "search.qualityMemory.high": string;
+      "search.toolbarButton": boolean;
+      "search.importAttachPdf": boolean;
       "search.web.defaultProvider": string;
       "search.web.addedSources": string;
       "search.web.serpapi.apiKey": string;

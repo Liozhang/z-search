@@ -82,6 +82,46 @@ var ZSearchPrefs = {
       .getElementById("zsearch-default-popup")
       .addEventListener("popuphidden", () => this.onDefaultPicked());
 
+    // ── 通用开关：入口与导入行为（pref 直绑，command 即写）──
+    var gCap = doc.getElementById("zsearch-general-title");
+    gCap.textContent = this.t("prefs-general-title");
+    var tbCb = doc.getElementById("zsearch-toolbar-button");
+    tbCb.setAttribute("label", this.t("prefs-toolbar-button"));
+    doc.getElementById("zsearch-toolbar-button-desc").textContent = this.t(
+      "prefs-toolbar-button-desc",
+    );
+    var pdfCb = doc.getElementById("zsearch-import-pdf");
+    pdfCb.setAttribute("label", this.t("prefs-import-pdf"));
+    doc.getElementById("zsearch-import-pdf-desc").textContent = this.t(
+      "prefs-import-pdf-desc",
+    );
+    var prefApi =
+      window.Zotero && window.Zotero.ZSearch && window.Zotero.ZSearch.api;
+    var bindCheckbox = function (el, key, dflt) {
+      var cur = prefApi.getPrefDynamic && prefApi.getPrefDynamic(key);
+      if (cur === undefined || cur === null) cur = dflt;
+      el.setAttribute("checked", cur ? "true" : "false");
+      el.addEventListener("command", function () {
+        var on = el.getAttribute("checked") === "true";
+        if (prefApi.setPrefDynamic) prefApi.setPrefDynamic(key, on);
+      });
+    };
+    // 工具栏按钮：写完 pref 即时同步主窗（显式直调，确定性优于 pref 观察者）
+    (function () {
+      var cur =
+        prefApi.getPrefDynamic &&
+        prefApi.getPrefDynamic("search.toolbarButton");
+      if (cur === undefined || cur === null) cur = true;
+      tbCb.setAttribute("checked", cur ? "true" : "false");
+      tbCb.addEventListener("command", function () {
+        var on = tbCb.getAttribute("checked") === "true";
+        if (prefApi.setPrefDynamic)
+          prefApi.setPrefDynamic("search.toolbarButton", on);
+        if (prefApi.syncToolbarButton) prefApi.syncToolbarButton();
+      });
+    })();
+    bindCheckbox(pdfCb, "search.importAttachPdf", true);
+
     void this.refresh();
   },
 

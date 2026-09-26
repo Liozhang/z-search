@@ -39,6 +39,9 @@ export interface ArticleResult {
   beallsHit?: { category: "standalone" | "hijacked" };
   /** GitHub 仓库源的星数——与被引语义分离（审计 P2-6），卡片按 ★ 展示。 */
   stars?: number;
+  /** DOI 已存在于本地文库（宿主侧 Zotero.Search 索引比对，best-effort）——
+   *  卡片显示「已在库」徽标并停用导入钮，防重复导入（P0-3）。 */
+  inLibrary?: boolean;
 }
 
 /** literature.fetchFulltext 的逐篇回执。 */

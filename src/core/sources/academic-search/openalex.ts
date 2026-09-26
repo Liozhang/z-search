@@ -5,7 +5,9 @@ import { httpJsonGet, HttpGetResult } from "../../../utils/http";
 import { safeDebug } from "../../../utils/logger";
 import { openalexThrottle } from "../../../utils/openalexThrottle";
 
-function mapOpenAlexWork(work: any): any {
+/** 公开（P0-2）：literature.citations RPC 复用同一映射，保持钻取结果与
+ *  主检索结果字段口径一致。 */
+export function mapOpenAlexWork(work: any): any {
   const authors = (work.authorships || [])
     .map((a: any) => a.author?.display_name || a.author?.name || "")
     .filter(Boolean)

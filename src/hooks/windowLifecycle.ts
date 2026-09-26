@@ -4,6 +4,8 @@ import {
   unregisterMenus,
   registerToolsMenu,
   unregisterToolsMenu,
+  registerToolbar,
+  unregisterToolbar,
 } from "../modules/menuManager";
 import {
   watchPrefPaneIcon,
@@ -21,11 +23,13 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   await safeRegister("StyleSheet", () => registerStyleSheet(win));
   await safeRegister("Menus", () => registerMenus(win));
   await safeRegister("ToolsMenu", () => registerToolsMenu(win));
+  await safeRegister("Toolbar", () => registerToolbar(win));
   await safeRegister("PrefPaneIcon", () => watchPrefPaneIcon(win));
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
   unregisterStyleSheet(win);
+  unregisterToolbar();
   unregisterToolsMenu(win);
   unregisterMenus(win);
   unwatchPrefPaneIcon(win);

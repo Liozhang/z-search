@@ -74,6 +74,11 @@ export interface LiteratureResultCardProps {
   onToggleExpand: (key: string) => void;
   onTranslate: (article: ArticleResult, key: string) => void;
   onImport: (article: ArticleResult, key: string) => void;
+  /** 引文钻取（P0-2）：被引计数/参考文献入口；无 DOI 的条目不渲染入口。 */
+  onCitations?: (
+    article: ArticleResult,
+    direction: "cited-by" | "references",
+  ) => void;
   /**
    * 全文按需拉取（PMC 开放获取 JATS XML 优先，OA 网页兜底）。已成功的文章
    * 再调用一次即切换展开/收起（hook 内做开关分流）。无任何可用标识
@@ -113,6 +118,7 @@ export function LiteratureResultCard({
   onToggleExpand,
   onTranslate,
   onImport,
+  onCitations,
   onFetchFulltext,
   isFetchingFulltext,
   isFulltextOpen,
@@ -208,13 +214,25 @@ export function LiteratureResultCard({
             )}
             {/* 被引 0 不显示（审计 P2-6）：arxiv/pubmed 等源恒 0，成排「被引 0」
                 是噪音；真实计数由跨源字段合并取大后到达 */}
-            {!!article.citationCount && (
-              <span className="lit-result-citations">
-                {getString("lit-citations", {
-                  args: { count: article.citationCount },
-                })}
-              </span>
-            )}
+            {!!article.citationCount &&
+              (onCitations && article.doi ? (
+                <button
+                  type="button"
+                  className="lit-result-citations underline decoration-[var(--border)] underline-offset-2 hover:text-[color:var(--accent)] cursor-pointer bg-transparent border-0 p-0"
+                  title={getString("lit-cited-by-tip")}
+                  onClick={() => onCitations(article, "cited-by")}
+                >
+                  {getString("lit-citations", {
+                    args: { count: article.citationCount },
+                  })}
+                </button>
+              ) : (
+                <span className="lit-result-citations">
+                  {getString("lit-citations", {
+                    args: { count: article.citationCount },
+                  })}
+                </span>
+              ))}
             {/* GitHub 仓库星数——与被引语义分离，★ 符号语言中立 */}
             {!!article.stars && (
               <span className="lit-result-stars">★ {article.stars}</span>
@@ -395,6 +413,17 @@ export function LiteratureResultCard({
           )}
         </div>
         <div className="lit-result-action flex items-center flex-shrink-0 ml-[var(--space-2)] gap-[var(--space-1)]">
+          {/* 参考文献钻取（P0-2）：ghost 档与追踪/全文同列 */}
+          {onCitations && article.doi && (
+            <Button
+              variant="ghost"
+              size="sm"
+              ariaLabel={getString("lit-references-btn")}
+              onClick={() => onCitations(article, "references")}
+            >
+              {getString("lit-references-btn")}
+            </Button>
+          )}
           {/* JA-2：追踪动作与导入同列（既有动作列形态，不另起范式）；ghost 不抢导入的主位 */}
           {onTrack && (
             <Button
@@ -456,6 +485,12 @@ export function LiteratureResultCard({
               <Spinner size={12} />
               {getString("lit-importing")}
             </Button>
+          ) : article.inLibrary ? (
+            /* 已在库（P0-3）：DOI 命中本地条目——防重复导入。展示徽标态
+               而非可点按钮；title 说明为何不可导 */
+            <span title={getString("lit-in-library-tip")}>
+              <Badge tone="success">{getString("lit-in-library")}</Badge>
+            </span>
           ) : (
             <Button
               variant="outline"

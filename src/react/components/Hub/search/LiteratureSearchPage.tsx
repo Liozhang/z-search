@@ -56,6 +56,10 @@ import {
   VISIBLE_STEP,
 } from "./LiteratureSearch/useLiteratureSearch";
 import { LiteratureResultCard } from "./LiteratureSearch/LiteratureResultCard";
+import CitationExplorerDialog, {
+  type CitationDirection,
+} from "./LiteratureSearch/CitationExplorerDialog";
+import type { ArticleResult } from "./LiteratureSearch/types";
 import { AVAILABLE_SOURCES } from "./LiteratureSearch/types";
 import {
   mergeResults,
@@ -329,6 +333,7 @@ export function LiteratureSearchPage({
     maxResults: scope === "web" ? lit.maxResults : sem.limit,
     author: lit.authorFilter,
     journal: lit.journalFilter,
+    openAccessOnly: lit.openAccessOnly,
     useFullText: sem.useFullText,
     sectionCategory: sem.sectionCategory,
   };
@@ -341,11 +346,33 @@ export function LiteratureSearchPage({
       lit.setMaxResults(v.maxResults);
       lit.setAuthorFilter(v.author);
       lit.setJournalFilter(v.journal);
+      lit.setOpenAccessOnly(v.openAccessOnly);
     } else {
       sem.setLimit(v.maxResults);
       sem.setUseFullText(v.useFullText);
       sem.setSectionCategory(v.sectionCategory);
     }
+  };
+
+  // ── 引文钻取（P0-2）：种子 + 方向即弹窗；行内导入复用 handleImport 链路 ──
+  const [citationSeed, setCitationSeed] = useState<ArticleResult | null>(null);
+  const [citationDirection, setCitationDirection] =
+    useState<CitationDirection>("cited-by");
+  const [citingTitles, setCitingTitles] = useState<Set<string>>(new Set());
+  const openCitations = (article: ArticleResult, dir: CitationDirection) => {
+    setCitationDirection(dir);
+    setCitationSeed(article);
+  };
+  const importFromCitations = (article: ArticleResult) => {
+    const k = getArticleKey(article, -1);
+    setCitingTitles((prev) => new Set(prev).add(article.title));
+    void Promise.resolve(lit.handleImport(article, k)).finally(() => {
+      setCitingTitles((prev) => {
+        const next = new Set(prev);
+        next.delete(article.title);
+        return next;
+      });
+    });
   };
 
   // ── anchor tools（仅本地 tab：作用于 Zotero 主窗口选中条目） ──────────────
@@ -807,6 +834,7 @@ export function LiteratureSearchPage({
                       onToggleExpand={lit.toggleExpand}
                       onTranslate={lit.handleTranslate}
                       onImport={lit.handleImport}
+                      onCitations={openCitations}
                       onFetchFulltext={lit.handleFetchFulltext}
                       isFetchingFulltext={lit.fulltextKeys.has(key)}
                       isFulltextOpen={lit.fulltextOpenKeys.has(key)}
@@ -842,6 +870,15 @@ export function LiteratureSearchPage({
           )}
         </>
       )}
+
+      {/* ═══ 引文钻取弹窗（P0-2）：OpenAlex cited-by / references ═══ */}
+      <CitationExplorerDialog
+        seed={citationSeed}
+        direction={citationDirection}
+        onClose={() => setCitationSeed(null)}
+        onImport={importFromCitations}
+        importingTitles={citingTitles}
+      />
 
       {/* ═══ 筛选弹窗：按 tab 分流分区（改动即时上抛、下次搜索生效） ═══ */}
       <LiteratureFilterDialog

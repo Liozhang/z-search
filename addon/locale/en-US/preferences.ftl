@@ -105,3 +105,10 @@ pref-api-key-elsevier-placeholder =
 pref-api-key-wiley = Wiley TDM Client Token
 pref-api-key-wiley-placeholder =
     .placeholder = https://onlinelibrary.wiley.com/tdm
+
+# ── General: entries & import behavior (P0-4 / P0-1) ──
+prefs-general-title = Entries & Import
+prefs-toolbar-button = Show toolbar button
+prefs-toolbar-button-desc = Magnifier button in the main window toolbar (Ctrl+Shift+K always works)
+prefs-import-pdf = Auto-attach open-access PDF on import
+prefs-import-pdf-desc = Tries to download an open-access PDF as an attachment when importing; falls back to metadata-only on failure

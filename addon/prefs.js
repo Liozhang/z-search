@@ -27,6 +27,11 @@ pref("search.rerankModel", "cohere/rerank-v3.5");
 pref("search.qualityMemory", "{}");
 pref("search.qualityMemory.high", "{}");
 
+// 主窗入口：工具栏按钮显隐（快捷键 Ctrl/Cmd+Shift+K 不受此控，始终可用）
+pref("search.toolbarButton", true);
+// 导入时自动尝试下载开放获取 PDF 挂为附件（失败静默降级为纯元数据）
+pref("search.importAttachPdf", true);
+
 // Web search providers
 pref("search.web.defaultProvider", "duckduckgo");
 pref("search.web.addedSources", "[]");
