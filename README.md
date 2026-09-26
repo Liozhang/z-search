@@ -63,7 +63,13 @@ single/batch import all happen on the same card.
     the badge, to avoid false accusations)
 - Single or batch import into your Zotero library (entries without a DOI fall
   back to title→DOI resolution); imports land in the currently selected
-  collection, or the My Library root if none
+  collection, or the My Library root if none — and open-access PDFs are
+  auto-attached when available (disable in settings)
+- Already-in-library marking (DOI compared against your library) prevents
+  duplicate imports; an "open access only" filter narrows results
+- Citation traversal on every card: click the citation count for "cited by",
+  or the References button, to drill into OpenAlex citation lists and import
+  from there
 - A "Full Text" button on each card fetches the article on demand —
   PMC open-access JATS XML first (DOI/PMID/PMCID resolution with positive and
   negative caching), open-access web page as fallback, rendered inline
@@ -73,6 +79,11 @@ single/batch import all happen on the same card.
 
 ### 2. Journal Metrics Card (verify by name / ISSN)
 
+The same offline badges are available as a column in your library's item
+list (title, authors, … gets a "Journal Metrics" column showing IF, JCR/CAS
+quartiles, top-journal star, and warning/predatory flags) — no API key, no
+network.
+
 Type a journal name or ISSN to get a full profile: JCR impact factor and
 quartile, CASS major-category quartile, h-index / i10-index / 2-year citation
 average / publication volume, subject scope, and founding information. A risk
@@ -81,6 +92,9 @@ check a journal before submitting, and screen it before citing, all in one
 place. A "discover by field" mode searches journals by research direction.
 
 ![Journal metrics card: predatory marker from a local Beall's list hit](docs/screenshots/journal-metrics-en.png)
+
+Optional Chinese core-journal badges (PKU Core / CSCD / CSSCI / Tech Core)
+light up when you set a free easyScholar API key.
 
 The discover mode lists journals matching a research field as compact rows —
 name, ISSN, JIF, works count, and inline JCR/CAS quartile badges with
@@ -110,7 +124,8 @@ clicking a row drills into that journal's full metrics card.
 ### 5. Vector Search (in-library)
 
 - In-library semantic search over two vectors lanes — title/abstract metadata
-  and PDF full-text chunks — fused and ranked with RRF
+  and PDF full-text chunks (notes and PDF annotations included) — fused and
+  ranked with RRF
 - A full-text keyword channel (BM25 + FTS) degrades automatically when vectors
   are unavailable, and the degraded state is visible in the UI
 - Find-similar and duplicate-scan anchor tools operate on the items selected in
@@ -136,7 +151,8 @@ metrics, warning lists, predatory lists, and a discover mode).
 
 ## Entry Points
 
-- Tools menu ▸ "Open Search Center" opens the search window
+- The magnifier toolbar button (hideable in settings), the Ctrl/Cmd+Shift+K
+  shortcut, or Tools menu ▸ "Open Search Center" opens the search window
 - Item context menu ▸ "Find Similar Items" (enabled when exactly one regular
   item is selected) jumps straight to find-similar
 - Deep link: `hubWindowManager.openHub("search")`

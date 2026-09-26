@@ -598,6 +598,10 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       });
 
       if (rows === 0) {
+        // 已知环境限制（2026-09-27）：OpenAlex 无 key 每日配额 1000 credits，
+        // 本机连续实机测试会打满（HTTP 429，Retry-After 实测 7h+），届时
+        // discover 必然空列表——这不是产品回归（同日早前轮次已实证出图）。
+        // 配额恢复后本用例自动回绿；CI 不跑实机套件，不受影响。
         reportError("hub-visual-discover", {
           message: "discover list empty after 120s",
         });
