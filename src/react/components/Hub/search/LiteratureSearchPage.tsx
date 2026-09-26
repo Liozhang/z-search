@@ -201,11 +201,14 @@ export function LiteratureSearchPage({
   // 右键菜单「查找相似文献」深链（2026-09-25 审计 P1-3）：宿主经
   // hub.setActiveTab(action=findSimilar) 送达，SearchShell 转 window 事件——
   // 此处切到本地腿并自动发起找相似（RPC 侧回退解析主窗选中条目）。
+  // 视图必须落在 similar 子页（2026-09-26 实机审计）：结果只在
+  // resultsView==="similar" 分支渲染——此前写成 "search"，检索发了但
+  // 用户永远看不到结果（应用内按钮 runFindSimilar 是切视图的）。
   const deepLinkFindSimilar = sem.handleFindSimilar;
   useEffect(() => {
     const onFindSimilar = () => {
       setScope("local");
-      setResultsView("search");
+      setResultsView("similar");
       void deepLinkFindSimilar();
     };
     window.addEventListener("zsearch:find-similar", onFindSimilar);
