@@ -24,12 +24,12 @@
   "homepage": "https://github.com/Liozhang/z-search#readme",
   "license": "MIT",
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && node scripts/build-ort-assets.cjs",
     "dev": "zotero-plugin serve",
     "build:react": "webpack --config webpack.config.js --mode=production",
     "build:react:dev": "webpack --config webpack.config.js --mode=development",
-    "build": "node scripts/build-embed-frame.cjs && npm run build:react && zotero-plugin build --dev",
-    "build:prod": "node scripts/build-embed-frame.cjs && npm run build:react && zotero-plugin build",
+    "build": "node scripts/build-embed-frame.cjs && node scripts/build-ort-assets.cjs && npm run build:react && zotero-plugin build --dev",
+    "build:prod": "node scripts/build-embed-frame.cjs && node scripts/build-ort-assets.cjs && npm run build:react && zotero-plugin build",
     "release": "zotero-plugin release",
     "rebuild": "npm run build && npm run restart",
     "restart": "node scripts/deploy.js",
@@ -39,7 +39,7 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "check:types": "npx tsc --noEmit && npx tsc -p tsconfig.react.json --noEmit",
-    "test:zotero": "set \"ZOTERO_PLUGIN_ZOTERO_BIN_PATH=D:/zotero10/zotero.exe\" && zotero-plugin test --exit-on-finish"
+    "test:zotero": "node scripts/build-ort-assets.cjs && set \"ZOTERO_PLUGIN_ZOTERO_BIN_PATH=D:/zotero10/zotero.exe\" && zotero-plugin test --exit-on-finish"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.7",

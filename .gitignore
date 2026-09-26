@@ -34,6 +34,10 @@ addon/content/*.reactBundle.js.map
 addon/content/scripts/embed-standalone.js
 addon/content/scripts/embed-standalone.js.map
 
+# Build output copied from node_modules (scripts/build-ort-assets.cjs) —
+# ORT wasm 28MB，postinstall/build/test:zotero 自动就位，不入库
+addon/content/ort/
+
 # Local audit / session artifacts
 .tmp-audit/
 .zcode/
