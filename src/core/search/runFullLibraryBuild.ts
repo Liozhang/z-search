@@ -36,6 +36,20 @@ export function createItemSearchText(item: any): string {
       .replace(/<[^>]+>/g, " ")
       .slice(0, 2000);
   }
+  // PDF 注释条目（P1 批：对齐 All Search 覆盖面）——注释正文 + 批注评论。
+  // 高亮/图形注释的 text 常为空，仅评论文本也值得入库。
+  if (item.isAnnotation?.()) {
+    const strip = (v: unknown) =>
+      String(v ?? "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    const parts = [
+      strip(item.annotationText),
+      strip(item.annotationComment),
+    ].filter(Boolean);
+    return parts.join("\n").slice(0, 2000);
+  }
   const parts: string[] = [];
   const push = (s: unknown) => {
     const v = String(s ?? "").trim();

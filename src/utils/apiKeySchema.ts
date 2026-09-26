@@ -172,6 +172,13 @@ export const API_KEY_GROUPS: ApiKeyFieldGroup[] = [
         labelKey: "pref-api-key-github",
         placeholderKey: "pref-api-key-github-placeholder",
       },
+      {
+        // easyScholar 免费 key（中文核心期刊标识的可选数据源，P1-4）
+        fieldId: "apis-easyscholar-apiKey",
+        prefKey: "apis.easyscholar.apiKey",
+        labelKey: "pref-api-key-easyscholar",
+        placeholderKey: "pref-api-key-easyscholar-placeholder",
+      },
     ],
   },
   {

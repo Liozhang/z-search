@@ -259,6 +259,7 @@ export function useLiteratureSearch() {
     maxResults,
     sortBy,
     authorFilter,
+    openAccessOnly,
     journalFilter,
   ]);
 

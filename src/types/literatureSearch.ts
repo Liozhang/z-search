@@ -42,6 +42,9 @@ export interface ArticleResult {
   /** DOI 已存在于本地文库（宿主侧 Zotero.Search 索引比对，best-effort）——
    *  卡片显示「已在库」徽标并停用导入钮，防重复导入（P0-3）。 */
   inLibrary?: boolean;
+  /** 中文核心名单命中（easyScholar 可选源；稳定码，文案按 locale 取）。
+   *  未配置 key / 未命中时缺省——徽章缺席不是错误（P1-4）。 */
+  chineseCore?: Array<"pku" | "cscd" | "cssci" | "tech">;
 }
 
 /** literature.fetchFulltext 的逐篇回执。 */

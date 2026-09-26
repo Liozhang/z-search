@@ -60,6 +60,14 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
     // 数据侧中英列的界面语言选择：中文界面取中文列，其余 locale（含 en 与
     // 未翻译的第三语言）默认取英文列——CASS 大类名/预警级别否则会在英文
     // 界面上露出中文。
+    // 中文核心名单（P1-4，可选）：仅当 easyScholar key 已配置时才发起；
+    // 未命中/未配置都静默——卡片徽章只是缺席，不是错误。
+    const { batchLookupChineseCore } =
+      await import("../data/EasyScholarClient");
+    const coreMap = await batchLookupChineseCore(
+      names.filter((n: string) => n.length > 0),
+    );
+
     const zhUi = String((globalThis as any).Zotero?.locale ?? "")
       .toLowerCase()
       .startsWith("zh");
@@ -93,6 +101,12 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       // 2024/2025 版预警名单不带级别（warning_level=null，论文工厂类）——
       // 记录存在即告警；级别按界面语言取值（中文界面中文、其余默认英文），
       // 全缺回退 ⚠（审计 P0-3 / P2-5）
+      if (coreMap.size > 0) {
+        const core = nameKey ? coreMap.get(nameKey) : undefined;
+        if (core && core.length > 0) {
+          a.chineseCore = core;
+        }
+      }
       if (warn) {
         const primary = zhUi ? warn.warning_level : warn.warning_level_en;
         const secondary = zhUi ? warn.warning_level_en : warn.warning_level;

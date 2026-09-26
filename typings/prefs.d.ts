@@ -47,6 +47,7 @@ declare namespace _ZoteroTypes {
       "apis.wiley.tdmToken": string;
       "apis.elsevier.apiKey": string;
       "apis.github.token": string;
+      "apis.easyscholar.apiKey": string;
       "apis.uspto.apiKey": string;
       "apis.epo.consumerKey": string;
       "apis.epo.consumerSecret": string;

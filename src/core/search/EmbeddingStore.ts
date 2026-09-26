@@ -538,9 +538,12 @@ class EmbeddingStore {
       const embeddedIDs = await this.getEmbeddedItemIDs(model);
       const items = await Zotero.Items.getAll(Zotero.Libraries.userLibraryID);
 
+      // PDF 注释条目一并入库（对齐 All Search 覆盖面）：注释行让
+      // 高亮文本与批注可被语义检索命中。
       const toProcess = items.filter(
         (item: any) =>
-          (item.isRegularItem() || item.isNote()) && !embeddedIDs.has(item.id),
+          (item.isRegularItem() || item.isNote() || item.isAnnotation?.()) &&
+          !embeddedIDs.has(item.id),
       );
 
       const total = toProcess.length;
@@ -556,7 +559,11 @@ class EmbeddingStore {
           const embedding = await embedFn(searchText);
           pending.push({
             itemId: item.id,
-            itemType: item.isNote() ? "note" : "item",
+            itemType: item.isNote()
+              ? "note"
+              : item.isAnnotation?.()
+                ? "annotation"
+                : "item",
             searchText,
             embedding,
           });

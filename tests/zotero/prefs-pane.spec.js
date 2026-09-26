@@ -200,13 +200,13 @@ describe("z-search preferences pane (real Zotero integration)", function () {
     const rows = doc.getElementById("zsearch-academic-keys-rows");
     // init 异步，等学术 key 行渲染完成
     const deadman = Date.now() + 15000;
-    while (Date.now() < deadman && rows.children.length < 6) {
+    while (Date.now() < deadman && rows.children.length < 7) {
       await Zotero.Promise.delay(200);
     }
     expect(
       rows.children.length,
-      "6 academic key rows (core/semantic-scholar/openalex/dimensions/pubmed/github)",
-    ).to.equal(6);
+      "7 academic key rows (core/semantic-scholar/openalex/dimensions/pubmed/github/easyscholar)",
+    ).to.equal(7);
 
     // 区标题本地化（caption 渲染正文是 textContent）
     expect(
@@ -220,7 +220,7 @@ describe("z-search preferences pane (real Zotero integration)", function () {
 
     // 字段来自 api.getAcademicKeyFields（apiKeySchema.academic + required 标注）
     const fields = prefWin.Zotero.ZSearch.api.getAcademicKeyFields();
-    expect(fields.length, "schema exposes 6 academic fields").to.equal(6);
+    expect(fields.length, "schema exposes 7 academic fields").to.equal(7);
     const requiredKeys = fields
       .filter((f) => f.required)
       .map((f) => f.prefKey)

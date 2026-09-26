@@ -677,3 +677,17 @@ lit-cited-by-tip = 查看引用本文的文獻（OpenAlex）
 lit-citations-loading = 正在取得引文…
 lit-citations-count = 已載 { $count } 條 / 共 { $total } 條
 lit-citations-empty = 未找到引文資料
+
+# ── 條目樹期刊徽章列（P1-1）──
+itemtree-metrics-column = 期刊指標
+itemtree-metrics-if-tip = 影響因子（JCR，離線內建資料）
+itemtree-metrics-jcr-tip = JCR 分區
+itemtree-metrics-cass-tip = 中科院大類分區
+itemtree-metrics-top-tip = 頂刊（中科院）
+
+# ── 中文核心期刊名單（P1-4，配 easyScholar key 後可選啟用）──
+lit-core-pku = 北大核心
+lit-core-cscd = CSCD
+lit-core-cssci = CSSCI
+lit-core-tech = 科技核心
+lit-chinese-core-tip = 命中中文核心期刊名單（經 easyScholar）

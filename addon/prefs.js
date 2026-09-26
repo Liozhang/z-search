@@ -56,6 +56,8 @@ pref("apis.unpaywall.email", "");
 pref("apis.wiley.tdmToken", "");
 pref("apis.elsevier.apiKey", "");
 pref("apis.github.token", "");
+// easyScholar 免费 key（可选；中文核心期刊标识数据源）
+pref("apis.easyscholar.apiKey", "");
 
 // Patent search API keys (kept: sources/academic-search utils reads them)
 pref("apis.uspto.apiKey", "");

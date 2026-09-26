@@ -256,6 +256,7 @@ export async function handleLiteratureRequest(
               warningLevel: a.warningLevel,
               beallsHit: a.beallsHit,
               stars: a.stars,
+              chineseCore: a.chineseCore,
               // 已在库（P0-3）：卡片据此显示「已在库」徽章并停用导入钮
               inLibrary: a.inLibrary === true,
             })),
@@ -352,6 +353,7 @@ export async function handleLiteratureRequest(
               cassIsTop: a.cassIsTop,
               warningLevel: a.warningLevel,
               beallsHit: a.beallsHit,
+              chineseCore: a.chineseCore,
               inLibrary: a.inLibrary === true,
             })),
           };

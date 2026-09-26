@@ -691,3 +691,17 @@ lit-cited-by-tip = Show papers citing this work (OpenAlex)
 lit-citations-loading = Fetching citations…
 lit-citations-count = { $count } shown of { $total }
 lit-citations-empty = No citation data found
+
+# ── Item-tree journal metrics column (P1-1) ──
+itemtree-metrics-column = Journal Metrics
+itemtree-metrics-if-tip = Impact factor (JCR, bundled offline data)
+itemtree-metrics-jcr-tip = JCR quartile
+itemtree-metrics-cass-tip = CAS major-category quartile
+itemtree-metrics-top-tip = Top journal (CAS)
+
+# ── Chinese core journal lists (P1-4, optional via easyScholar key) ──
+lit-core-pku = PKU Core
+lit-core-cscd = CSCD
+lit-core-cssci = CSSCI
+lit-core-tech = Tech Core
+lit-chinese-core-tip = Chinese core journal list hit (via easyScholar)

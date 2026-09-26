@@ -112,3 +112,5 @@ prefs-toolbar-button = 显示工具栏按钮
 prefs-toolbar-button-desc = 主窗工具栏的放大镜按钮（Ctrl+Shift+K 快捷键始终可用）
 prefs-import-pdf = 导入时自动挂开放获取 PDF
 prefs-import-pdf-desc = 导入时尝试下载开放获取 PDF 作为附件；失败时静默降级为纯元数据
+pref-api-key-easyscholar = easyScholar API key（可选，中文核心名单）
+pref-api-key-easyscholar-placeholder = easyscholar.cc 控制台免费申请

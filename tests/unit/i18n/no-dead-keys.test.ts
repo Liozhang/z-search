@@ -31,6 +31,7 @@ const REPO = path.resolve(
 const DYNAMIC_KEY_PREFIXES = [
   "lit-quartile-cass-",
   "lit-quartile-jcr-",
+  "lit-core-",
   "soul-name-",
 ] as const;
 

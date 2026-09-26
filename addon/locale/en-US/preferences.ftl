@@ -112,3 +112,5 @@ prefs-toolbar-button = Show toolbar button
 prefs-toolbar-button-desc = Magnifier button in the main window toolbar (Ctrl+Shift+K always works)
 prefs-import-pdf = Auto-attach open-access PDF on import
 prefs-import-pdf-desc = Tries to download an open-access PDF as an attachment when importing; falls back to metadata-only on failure
+pref-api-key-easyscholar = easyScholar API key (optional, Chinese core lists)
+pref-api-key-easyscholar-placeholder = Free key from easyscholar.cc console

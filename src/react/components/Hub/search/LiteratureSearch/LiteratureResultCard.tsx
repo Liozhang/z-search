@@ -243,7 +243,8 @@ export function LiteratureResultCard({
             article.jcrQuartile ||
             article.cassQuartile ||
             article.cassIsTop ||
-            article.cassCategory) && (
+            article.cassCategory ||
+            article.chineseCore?.length) && (
             <div className="lit-result-metrics flex flex-wrap items-center gap-[var(--space-1-5)] mb-[var(--space-1)]">
               {article.warningLevel && (
                 <span className={`${TAG_BASE} ${TAG_KIND.warning}`}>
@@ -279,6 +280,16 @@ export function LiteratureResultCard({
                   {getString("lit-top")}
                 </span>
               )}
+              {/* 中文核心名单（easyScholar 可选源；P1-4）——稳定码取词 */}
+              {(article.chineseCore || []).map((code) => (
+                <span
+                  key={`core-${code}`}
+                  className={`${TAG_BASE} ${TAG_KIND.source}`}
+                  title={getString("lit-chinese-core-tip")}
+                >
+                  {getString(`lit-core-${code}`)}
+                </span>
+              ))}
               {article.cassCategory && (
                 <span className="lit-result-category text-[length:var(--text-xs)] text-[color:var(--text-secondary)] opacity-[var(--opacity-secondary)]">
                   {article.cassCategory}
