@@ -32,6 +32,7 @@ import {
   searchChinaxiv,
   searchGithub,
 } from "../../../../sources/academic-search";
+import { pickBestTitleMatch } from "../items/citations/doiLookup";
 import { safeDebug } from "../../../../../utils/logger";
 
 async function importArticle(args: {
@@ -70,9 +71,13 @@ async function importArticle(args: {
         extractedId = id.replace(/[^0-9X]/gi, "");
       }
 
-      // Title: search CrossRef first to find DOI
+      // Title: search CrossRef first to find DOI。候选标题必须过相关度
+      // 门槛（pickBestTitleMatch）——bibliographic 检索对乱码/碎片标题也
+      // 恒返"最接近"条目，无条件取第一条会导入错误论文（2026-09-26 实机
+      // 审计：查询「Deep learning」命中了「What's Deep About Deep
+      // Learning?」）。
       if (type === "title") {
-        const cxUrl = `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(id)}&rows=1&sort=relevance`;
+        const cxUrl = `https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(id)}&rows=5&sort=relevance`;
         const cxResp = await Zotero.HTTP.request("GET", cxUrl, {
           headers: {
             Accept: "application/json",
@@ -83,7 +88,15 @@ async function importArticle(args: {
         } as any);
         const cxData = JSON.parse(cxResp.responseText ?? "");
         const cxItems = cxData.message?.items || [];
-        if (cxItems.length === 0 || !cxItems[0].DOI) {
+        const bestDoi = pickBestTitleMatch(
+          id,
+          cxItems.map((it: any) => ({
+            title: Array.isArray(it.title) ? it.title[0] : it.title,
+            doi: it.DOI,
+            year: it.published?.["date-parts"]?.[0]?.[0],
+          })),
+        );
+        if (!bestDoi) {
           results.push({
             identifier: id,
             success: false,
@@ -91,7 +104,7 @@ async function importArticle(args: {
           });
           continue;
         }
-        extractedId = cxItems[0].DOI;
+        extractedId = bestDoi;
         type = "doi";
       }
 
