@@ -136,9 +136,9 @@ metrics, warning lists, predatory lists, and a discover mode).
 
 ## Entry Points
 
-- The magnifier toolbar button, or Tools menu ▸ "Open Search Center", opens the
-  search window
-- Item context menu ▸ "Find Similar Items" jumps straight to find-similar
+- Tools menu ▸ "Open Search Center" opens the search window
+- Item context menu ▸ "Find Similar Items" (enabled when exactly one regular
+  item is selected) jumps straight to find-similar
 - Deep link: `hubWindowManager.openHub("search")`
 
 ## Development
