@@ -260,6 +260,11 @@ async function translateWithBing(
  *   POST {origin}/ttranslatev3?isVertical=1&IG=…&IID=…&SFX=<counter>
  *        &token=…&key=…                              (auth params in the QUERY STRING)
  *     body: fromLang&to&text (form-urlencoded)
+ *     ⚠ fromLang=auto is REJECTED by the endpoint (2026-09-26 live probe:
+ *       {"statusCode":400,"errorMessage":""} while the same session's
+ *       fromLang=en returns normal translations) — callers without an
+ *       explicit source language (the UI's abstract translate sends none)
+ *       get a script-based guess via detectBingSourceLang() instead.
  *
  * Cookies are intentionally NOT forwarded manually — in Zotero the fetch goes
  * through the Firefox network stack, which keeps the bing.com cookie jar alive
@@ -393,12 +398,34 @@ async function postBingWebTranslate(
   }
 }
 
+/**
+ * Bing ttranslatev3 拒绝 fromLang=auto（2026-09-26 实机对照：auto →
+ * {"statusCode":400,"errorMessage":""}，同会话 fromLang=en → 正常译文），
+ * 而 UI 摘要翻译不传 sourceLanguage（useLiteratureSearch 只发 {text}）——
+ * 兜底路径在打到 Bing 前按文字系做轻量源语言判定。翻译场景的常见文种
+ * （中日韩/西里尔/阿拉伯/泰/希伯来）按 Unicode 区段即可高置信区分；
+ * 拉丁文种默认 en（翻译模型对源语言的容错远高于被 400 直接拒绝）。
+ * 返回 Zotero 风格代码，沿用既有 toBingWebLang 映射（zh-CN → zh-Hans）。
+ */
+function detectBingSourceLang(text: string): string {
+  const sample = String(text ?? "").slice(0, 2000);
+  if (/[\uac00-\ud7af]/.test(sample)) return "ko";
+  if (/[\u3040-\u30ff]/.test(sample)) return "ja";
+  if (/[\u4e00-\u9fff]/.test(sample)) return "zh-CN";
+  if (/[\u0400-\u04ff]/.test(sample)) return "ru";
+  if (/[\u0600-\u06ff]/.test(sample)) return "ar";
+  if (/[\u0e00-\u0e7f]/.test(sample)) return "th";
+  if (/[\u0590-\u05ff]/.test(sample)) return "he";
+  return "en";
+}
+
 async function translateWithBingWeb(
   text: string,
   targetLanguage: string,
   sourceLanguage?: string,
 ): Promise<{ success: boolean; translatedText?: string; error?: string }> {
-  const src = toApiSourceLang(sourceLanguage);
+  let src = toApiSourceLang(sourceLanguage);
+  if (src === "auto") src = detectBingSourceLang(text);
   try {
     let result = await postBingWebTranslate(
       text,
