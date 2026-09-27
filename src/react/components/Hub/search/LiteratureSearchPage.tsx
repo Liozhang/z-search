@@ -56,6 +56,7 @@ import {
   VISIBLE_STEP,
 } from "./LiteratureSearch/useLiteratureSearch";
 import { LiteratureResultCard } from "./LiteratureSearch/LiteratureResultCard";
+import { Select } from "@/components/ui/select";
 import CitationExplorerDialog, {
   type CitationDirection,
 } from "./LiteratureSearch/CitationExplorerDialog";

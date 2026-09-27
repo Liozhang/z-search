@@ -691,3 +691,7 @@ lit-core-cscd = CSCD
 lit-core-cssci = CSSCI
 lit-core-tech = 科技核心
 lit-chinese-core-tip = 命中中文核心期刊名单（经 easyScholar）
+
+# ── 导入目标选择器 ──
+lit-import-target-label = 导入到
+lit-import-target-follow = 跟随主窗选择

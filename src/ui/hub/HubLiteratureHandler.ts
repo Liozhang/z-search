@@ -363,6 +363,79 @@ export async function handleLiteratureRequest(
         break;
       }
 
+      case "literature.collections": {
+        // 导入目标选择器的数据源（P2 批）：全部可导入文库（用户库 + 群组库，
+        // 饲料库跳过）及其分类树。平铺带 depth 便于前端缩进渲染；顺序：
+        // 用户库在前，群组库按名称。best-effort——任何一库读取失败跳过
+        // 该库，不影响其余。
+        try {
+          const libs = (await Zotero.Libraries.getAll()).filter(
+            (l: any) => l.libraryType !== "feed",
+          );
+          const sorted = [
+            ...libs.filter((l: any) => l.libraryType === "user"),
+            ...libs.filter((l: any) => l.libraryType !== "user"),
+          ].sort((a: any, b: any) =>
+            a.libraryType === "user"
+              ? -1
+              : b.libraryType === "user"
+                ? 1
+                : String(a.name).localeCompare(String(b.name)),
+          );
+          const out = [];
+          for (const lib of sorted) {
+            try {
+              const cols = await Zotero.Collections.getByLibrary(lib.libraryID);
+              const byId = new Map<number, any>();
+              for (const c of cols) {
+                byId.set(c.id, {
+                  id: c.id,
+                  name: c.name,
+                  parentID: c.parentID ?? null,
+                  children: [],
+                });
+              }
+              const roots: any[] = [];
+              for (const node of byId.values()) {
+                const parent = node.parentID ? byId.get(node.parentID) : null;
+                if (parent) parent.children.push(node);
+                else roots.push(node);
+              }
+              const flat: Array<{
+                id: number;
+                name: string;
+                depth: number;
+              }> = [];
+              const walk = (n: any, depth: number) => {
+                flat.push({ id: n.id, name: n.name, depth });
+                n.children
+                  .sort((a: any, b: any) =>
+                    String(a.name).localeCompare(String(b.name)),
+                  )
+                  .forEach((c: any) => walk(c, depth + 1));
+              };
+              roots
+                .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+                .forEach((r) => walk(r, 0));
+              out.push({
+                libraryID: lib.libraryID,
+                name: lib.name,
+                type: lib.libraryType,
+                collections: flat,
+              });
+            } catch (e) {
+              safeDebug(
+                `[z-search] collections list skipped for library ${lib.libraryID}: ${e}`,
+              );
+            }
+          }
+          result = { libraries: out };
+        } catch (e) {
+          error = toErrorMessage(e);
+        }
+        break;
+      }
+
       case "literature.searchCancel": {
         if (bridge._searchAbortSignal) {
           for (const s of bridge._searchAbortSignal.values()) {
@@ -417,15 +490,45 @@ export async function handleLiteratureRequest(
         }
 
         let collectionId: number | undefined;
+        // 显式目标（P2 批·导入目标选择器）：target.collectionID 优先，其所属
+        // 文库由分类对象权威解析（跨库 ID 不可能错配）；仅给 libraryID = 落
+        // 该文库根。目标失效（分类被删/文库不存在）静默回落主窗选择。
+        let targetLibraryId: number | undefined;
         try {
-          const pane = Zotero.getActiveZoteroPane?.();
-          const selected = pane?.getSelectedCollectionID?.();
-          if (typeof selected === "number" && selected > 0) {
-            collectionId = selected;
+          const t = payload?.target;
+          if (t && typeof t === "object") {
+            const colId = Number(t.collectionID);
+            if (Number.isInteger(colId) && colId > 0) {
+              const col = Zotero.Collections.get(colId);
+              if (col && !col.deleted) {
+                collectionId = colId;
+                targetLibraryId = col.libraryID;
+              }
+            } else {
+              const libId = Number(t.libraryID);
+              if (
+                Number.isInteger(libId) &&
+                libId > 0 &&
+                Zotero.Libraries.get(libId)
+              ) {
+                targetLibraryId = libId;
+              }
+            }
           }
         } catch (e) {
-          safeDebug("[z-search] " + e);
-          /* pane not ready — fall back to My Library root */
+          safeDebug("[z-search] import target invalid: " + e);
+        }
+        if (collectionId == null) {
+          try {
+            const pane = Zotero.getActiveZoteroPane?.();
+            const selected = pane?.getSelectedCollectionID?.();
+            if (typeof selected === "number" && selected > 0) {
+              collectionId = selected;
+            }
+          } catch (e) {
+            safeDebug("[z-search] " + e);
+            /* pane not ready — fall back to My Library root */
+          }
         }
 
         const importResults: ImportResult[] = new Array(rawEntries.length);
@@ -483,6 +586,7 @@ export async function handleLiteratureRequest(
               identifiers: doiJobs.map((j) => j.doi),
               type: payload.type,
               collectionId,
+              libraryId: targetLibraryId,
             });
             const itemResults = r.results ?? [];
             for (const [j, itemResult] of itemResults.entries()) {

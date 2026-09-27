@@ -58,6 +58,19 @@ export type TranslationSource =
 class MetadataExtractor {
   private translationCache: Map<string, MetadataExtractionResult> = new Map();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
+  /**
+   * 保存目标（导入目标选择器）：libraryID 指定文库（含群组库），
+   * collectionID 指定分类。Zotero Translate 基类的 translate(options) 原生
+   * 接受这两个字段（translate.js: this._libraryID = options.libraryID;
+   * collections 校验数组）——条目直接落目标库，无需跨库搬运。
+   * 每次导入前由调用方设置、用后清除（防串目标）。
+   */
+  private _saveTarget: { libraryID?: number; collectionID?: number } | null =
+    null;
+
+  setSaveTarget(target: { libraryID?: number; collectionID?: number } | null) {
+    this._saveTarget = target;
+  }
 
   async extract(
     source: TranslationSource,
@@ -148,6 +161,14 @@ class MetadataExtractor {
 
     const newItems: any[] = await translate.translate({
       saveAttachments: false,
+      // 导入目标选择器（P2 批）：空集合时 collections 传 undefined——
+      // translate 会校验非数组抛错，只在真有目标时携带。
+      ...(this._saveTarget?.libraryID != null
+        ? { libraryID: this._saveTarget.libraryID }
+        : {}),
+      ...(this._saveTarget?.collectionID != null
+        ? { collections: [this._saveTarget.collectionID] }
+        : {}),
     });
 
     if (!newItems || newItems.length === 0) {
@@ -531,6 +552,7 @@ class MetadataExtractor {
   async createItemFromMetadata(
     metadata: MetadataExtractionResult,
     collectionID?: number,
+    libraryID?: number,
   ): Promise<number | null> {
     if (!metadata.success) {
       return null;
@@ -555,7 +577,9 @@ class MetadataExtractor {
 
       // Create new item manually (for non-Translate sources like ISBN/PMID)
       const itemType = (metadata.itemType as any) || "book";
-      const item = new Zotero.Item(itemType);
+      // 构造器第三参即 libraryID（item.js constructor(itemType, id, libraryID)）
+      // zotero-types 未收录三参签名（运行时 constructor(itemType, id, libraryID)）——as any 过桥
+      const item = new (Zotero.Item as any)(itemType, null, libraryID);
       item.setField("title", metadata.title || "");
 
       if (metadata.creators) {

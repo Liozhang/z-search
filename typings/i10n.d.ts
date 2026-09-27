@@ -214,6 +214,8 @@ export type FluentMessageId =
   | 'lit-import-no-doi'
   | 'lit-import-selected'
   | 'lit-import-success'
+  | 'lit-import-target-follow'
+  | 'lit-import-target-label'
   | 'lit-imported'
   | 'lit-imported-count'
   | 'lit-importing'

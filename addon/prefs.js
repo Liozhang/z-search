@@ -31,6 +31,8 @@ pref("search.qualityMemory.high", "{}");
 pref("search.toolbarButton", true);
 // 导入时自动尝试下载开放获取 PDF 挂为附件（失败静默降级为纯元数据）
 pref("search.importAttachPdf", true);
+// 导入目标（JSON：{libraryID, collectionID|null}；空/缺失 = 跟随主窗选择）
+pref("search.importTarget", "");
 
 // Web search providers
 pref("search.web.defaultProvider", "duckduckgo");

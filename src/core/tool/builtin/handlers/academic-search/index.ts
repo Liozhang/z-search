@@ -39,6 +39,8 @@ async function importArticle(args: {
   identifiers: string[];
   type?: IdentifierType;
   collectionId?: number;
+  /** 导入目标文库（含群组库）——经 Translate options 原生落库。 */
+  libraryId?: number;
 }): Promise<any> {
   const results: any[] = [];
 
@@ -108,6 +110,12 @@ async function importArticle(args: {
         type = "doi";
       }
 
+      // 保存目标（P2 批）：本批导入统一目标；用完即清，防串批
+      MetadataExtractor.setSaveTarget(
+        args.libraryId != null || args.collectionId != null
+          ? { libraryID: args.libraryId, collectionID: args.collectionId }
+          : null,
+      );
       const metadata = await MetadataExtractor.extract(type, extractedId);
       if (!metadata.success) {
         results.push({
@@ -121,6 +129,7 @@ async function importArticle(args: {
       const itemId = await MetadataExtractor.createItemFromMetadata(
         metadata,
         args.collectionId,
+        args.libraryId,
       );
       if (!itemId) {
         results.push({
@@ -145,12 +154,14 @@ async function importArticle(args: {
     }
   }
 
-  return {
+  const summary = {
     total: args.identifiers.length,
     succeeded: results.filter((r) => r.success).length,
     failed: results.filter((r) => !r.success).length,
     results,
   };
+  MetadataExtractor.setSaveTarget(null);
+  return summary;
 }
 
 async function searchWeb(args: {

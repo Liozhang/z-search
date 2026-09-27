@@ -440,6 +440,63 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
     }
   });
 
+  it("imports into the RPC-specified collection and library (target picker)", async function () {
+    try {
+      // 建一个专用分类作目标（after 随条目一并清）
+      const col = new Zotero.Collection();
+      col.name = "zsearch-target-test";
+      await col.saveTx();
+      const createdCollections = [col.id];
+
+      // 1) collections RPC：树里必须能看到该分类（用户库在首位）
+      const tree = await bridgeRoute("literature.collections", {});
+      expect(tree, "collections RPC returns libraries").to.be.ok;
+      expect(tree.libraries, "at least the user library").to.have.lengthOf(1);
+      const userLib = tree.libraries[0];
+      expect(userLib.type, "user library listed first").to.equal("user");
+      const found = userLib.collections.find((c) => c.id === col.id);
+      expect(found, "fresh collection appears in the tree").to.be.ok;
+
+      // 2) 指定 target 导入 → 条目应属于目标分类（而非主窗选择）
+      const res = await bridgeRoute("literature.import", {
+        entries: [{ doi: "10.1038/s41586-020-2649-2" }], // AlphaFold 2020
+        target: { libraryID: userLib.libraryID, collectionID: col.id },
+      });
+      expect(res?.[0]?.success, `targeted import: ${res?.[0]?.error || "ok"}`)
+        .to.be.true;
+      fixtures.push(res[0].itemId);
+      const item = await Zotero.Items.getAsync(res[0].itemId);
+      expect(item, "targeted item exists").to.be.ok;
+      expect(
+        item.getCollections().includes(col.id),
+        "imported item belongs to the specified collection",
+      ).to.be.true;
+      expect(item.libraryID, "imported item in the specified library").to.equal(
+        userLib.libraryID,
+      );
+
+      // 3) 目标分类携带的 libraryID 权威——collectionID 无效时静默回落
+      const resFallback = await bridgeRoute("literature.import", {
+        entries: [{ doi: "10.1126/science.aax0868" }],
+        target: { collectionID: 999999999 },
+      });
+      expect(
+        resFallback?.[0]?.success,
+        "invalid target falls back to main-window selection",
+      ).to.be.true;
+      fixtures.push(resFallback[0].itemId);
+
+      // 清理本用例建的分类
+      for (const id of createdCollections) {
+        const c = Zotero.Collections.get(id);
+        if (c) await c.eraseTx();
+      }
+    } catch (e) {
+      globalThis.__lastError = e;
+      throw e;
+    }
+  });
+
   it("rejects an import request without identifiers or entries", async function () {
     try {
       await bridgeRoute("literature.import", { entries: [] });

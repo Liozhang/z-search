@@ -444,6 +444,8 @@ export const ALL_LOCALE_KEYS: readonly string[] = [
   "lit-core-cssci",
   "lit-core-tech",
   "lit-chinese-core-tip",
+  "lit-import-target-label",
+  "lit-import-target-follow",
   "pref-api-keys-web-search",
   "pref-api-keys-academic-search",
   "pref-api-keys-patent",

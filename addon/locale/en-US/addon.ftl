@@ -705,3 +705,7 @@ lit-core-cscd = CSCD
 lit-core-cssci = CSSCI
 lit-core-tech = Tech Core
 lit-chinese-core-tip = Chinese core journal list hit (via easyScholar)
+
+# ── Import target picker ──
+lit-import-target-label = Import to
+lit-import-target-follow = Follow main-window selection

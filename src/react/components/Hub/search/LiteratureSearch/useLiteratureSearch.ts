@@ -15,6 +15,10 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { getString, friendlyErrorMessage } from "../../../../utils/locale";
 import { toErrorMessage } from "../../../../utils/error";
 import { semanticRequest } from "../../../../utils/semanticBridge";
+import {
+  prefsGetDynamic,
+  prefsSetDynamic,
+} from "../../../../utils/prefsHelpers";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -80,6 +84,22 @@ export function useLiteratureSearch() {
   const [authorFilter, setAuthorFilter] = useState("");
   const [journalFilter, setJournalFilter] = useState("");
   const [openAccessOnly, setOpenAccessOnly] = useState(false);
+  // ── 导入目标（P2 批）── null = 跟随主窗选择（旧行为）；
+  // {libraryID, collectionID|null} = 显式目标（collectionID null = 文库根）。
+  // 经 pref search.importTarget 持久化；collectionID 失效时选择器侧自复位。
+  const [importTarget, setImportTarget] = useState<{
+    libraryID: number;
+    collectionID: number | null;
+  } | null>(null);
+  const [collectionsTree, setCollectionsTree] = useState<
+    Array<{
+      libraryID: number;
+      name: string;
+      type: string;
+      collections: Array<{ id: number; name: string; depth: number }>;
+    }>
+  >([]);
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false);
 
   // Selection + import state — keyed by stable article identity (doi / title /
   // positional fallback) so state survives result-list reordering / filtering.
@@ -174,6 +194,41 @@ export function useLiteratureSearch() {
       }
     };
 
+    // 目标树懒加载 + pref 恢复（只跑一次；失败静默——选择器显示「跟随主窗」）
+    const ensureCollections = async () => {
+      if (collectionsLoaded) return;
+      try {
+        const data = await semanticRequest<{
+          libraries: typeof collectionsTree;
+        }>("literature.collections", {}, 15000);
+        if (Array.isArray(data?.libraries)) {
+          setCollectionsTree(data.libraries);
+        }
+      } catch {
+        /* 树不可用：选择器保持跟随主窗 */
+      }
+      setCollectionsLoaded(true);
+      try {
+        const saved = await prefsGetDynamic("search.importTarget");
+        const parsed = typeof saved === "string" ? JSON.parse(saved) : saved;
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          Number.isInteger(parsed.libraryID)
+        ) {
+          setImportTarget({
+            libraryID: Number(parsed.libraryID),
+            collectionID: Number.isInteger(parsed.collectionID)
+              ? Number(parsed.collectionID)
+              : null,
+          });
+        }
+      } catch {
+        /* pref 读取失败保持 null */
+      }
+    };
+    void ensureCollections();
+
     const requestedSources =
       activeSources ?? AVAILABLE_SOURCES.map((s) => s.value);
     setSearchSourceCount(requestedSources.length);
@@ -260,6 +315,7 @@ export function useLiteratureSearch() {
     sortBy,
     authorFilter,
     openAccessOnly,
+    importTarget,
     journalFilter,
   ]);
 
@@ -511,6 +567,12 @@ export function useLiteratureSearch() {
                 pdfUrl: article.pdfUrl || undefined,
               },
             ],
+            target: importTarget
+              ? {
+                  libraryID: importTarget.libraryID,
+                  collectionID: importTarget.collectionID ?? undefined,
+                }
+              : undefined,
           },
           article.doi ? 30000 : 60000,
         );
@@ -592,7 +654,15 @@ export function useLiteratureSearch() {
       // 标题→DOI 解析含外网查询+退避重试，超时较纯 DOI 路径放宽。
       const data = await semanticRequest<ImportResult[]>(
         "literature.import",
-        { entries },
+        {
+          entries,
+          target: importTarget
+            ? {
+                libraryID: importTarget.libraryID,
+                collectionID: importTarget.collectionID ?? undefined,
+              }
+            : undefined,
+        },
         120000,
       );
 
@@ -740,6 +810,15 @@ export function useLiteratureSearch() {
     setJournalFilter,
     openAccessOnly,
     setOpenAccessOnly,
+    // 导入目标（P2 批）：树 + 当前目标 + 选择/清除（写 pref 持久化）
+    collectionsTree,
+    importTarget,
+    chooseImportTarget: (
+      t: { libraryID: number; collectionID: number | null } | null,
+    ) => {
+      setImportTarget(t);
+      void prefsSetDynamic("search.importTarget", t ?? null);
+    },
     // results
     results,
     // selection + import
