@@ -763,6 +763,50 @@ export function LiteratureSearchPage({
                       >
                         {getString("lit-clear-selection")}
                       </Button>
+                      {/* 导入目标选择器（P2 批）：默认跟随主窗选择；显式选定后
+                          单条/批量导入统一落目标（含群组库），pref 持久化。
+                          值编码 t:<libraryID>:<collectionID|空>。 */}
+                      <Select
+                        className="min-w-0 max-w-[220px] [font:var(--ui-font-meta)]"
+                        ariaLabel={getString("lit-import-target-label")}
+                        value={
+                          lit.importTarget
+                            ? `t:${lit.importTarget.libraryID}:${lit.importTarget.collectionID ?? ""}`
+                            : "follow"
+                        }
+                        onChange={(v: string) => {
+                          if (v === "follow") {
+                            lit.chooseImportTarget(null);
+                            return;
+                          }
+                          const [, libStr, colStr] = v.split(":");
+                          const libraryID = Number(libStr);
+                          if (!Number.isInteger(libraryID)) return;
+                          const colNum = Number(colStr);
+                          lit.chooseImportTarget({
+                            libraryID,
+                            collectionID: Number.isInteger(colNum)
+                              ? colNum
+                              : null,
+                          });
+                        }}
+                        options={[
+                          {
+                            value: "follow",
+                            label: getString("lit-import-target-follow"),
+                          },
+                          ...lit.collectionsTree.flatMap((lib) => [
+                            {
+                              value: `t:${lib.libraryID}:`,
+                              label: `📚 ${lib.name}`,
+                            },
+                            ...lib.collections.map((c) => ({
+                              value: `t:${lib.libraryID}:${c.id}`,
+                              label: `${"　".repeat(c.depth)}${c.name}`,
+                            })),
+                          ]),
+                        ]}
+                      />
                       <Button
                         variant="default"
                         size="sm"
