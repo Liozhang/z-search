@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-28
+
 ### 变更
 
 - **品牌标比例微调**：工具栏/偏好窗图标观感失衡的根源是三者比例打架——
@@ -19,6 +21,12 @@
   （列表/网格图标被误读为列表/卡片陈列切换），「网络搜索 | 本地搜索 |
   期刊」三段 tab 上移为 pane 级唯一域切换器；去期刊再回来保留网络/本地
   停驻，右键菜单「查找相似文献」深链仍直达本地找相似。
+- **通知链路瘦身**：退役 hubBridge / usePref / BackendEventNotifier /
+  broadcastPrefChanged 四个无引用桥接模块；进度窗管理削掉虚构 API
+  （canClose/「X 钮关闭探测」均非 Zotero 真实 API），iframe 侧通知统一经
+  bridge notify 上行、宿主代发——搜索页回执不再走错 RPC 通道触发重发风暴。
+- **addonName 更名 Z-Search**：插件显示名大小写归位，Hub 窗回退名弃用
+  Leadero 历史残留。
 
 ### 新增
 
@@ -47,6 +55,22 @@
   选择的分类；可显式指定文库（含群组库）与分类，单条/批量导入统一生效，
   选择持久化（`search.importTarget`）。经 `Zotero.Translate` 原生
   `libraryID/collections` 选项落库，目标失效（分类被删）静默回落主窗选择。
+
+### 修复
+
+- **DOI 批量导入幂等防重**：导入前按归一化 DOI 预检，命中即回执既有条目，
+  不再重复建条（超时重试 / 引文弹窗重复点击 / 批量混入在库条目均覆盖），
+  幂等命中不重复挂 OA 附件；显式指定文库（library-only）目标不再回退主窗
+  当前分类，防跨库误挂；引文导入成功后按钮置灰禁点。
+- **期刊检索错误分流**：OpenAlex 服务侧错误上抛并显示失败态，不再谎报
+  「未找到该期刊」；JIF 徽章悬停显示完整「影响因子 Qx」。
+- **多主窗隔离**：菜单/工具栏/快捷键/期刊徽章列改逐窗登记、逐窗反注册——
+  此前关掉一个主窗会把其余窗的入口一并拆掉；期刊徽章列改引用计数，
+  最后一个主窗卸载才拆列。
+- **设置面板 ApiKeyInput**：Escape 回滚不再被失焦误提交为编辑值；进入
+  编辑态自动聚焦输入框。
+- **语义检索错误文案本地化**：无活动窗格 / 未选中条目 / 条目缺失不再吐
+  英文裸串。
 
 ## [1.1.0] - 2026-09-27
 
@@ -80,6 +104,7 @@
 
 首个内部版本：学术搜索 / 网络搜索 / 仓库搜索 / 向量搜索四合一 Zotero 插件。
 
-[unreleased]: https://github.com/Liozhang/z-search/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/Liozhang/z-search/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Liozhang/z-search/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Liozhang/z-search/releases/tag/v1.1.0
 [0.1.0]: https://github.com/z-search/z-search/releases/tag/v0.1.0
