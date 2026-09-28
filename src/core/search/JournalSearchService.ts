@@ -92,18 +92,22 @@ class JournalSearchService {
     const raw = (payload.query ?? "").trim();
     if (!raw) return { mode: "metric", metric: null };
 
-    const metric = await this.aggregateJournalMetric(raw);
-    return { mode: "metric", metric };
+    const { metric, error } = await this.aggregateJournalMetric(raw);
+    return error
+      ? { mode: "metric", metric, error }
+      : { mode: "metric", metric };
   }
 
   /**
    * Build a full JournalMetric for a name or ISSN. Probes all four local
    * tables in parallel; if any hits, returns a local-sourced metric. If all
    * miss, falls back to OpenAlex /sources by ISSN (preferred) or name search.
+   * OpenAlex 断网等服务侧错误经 error 上抛——UI 区分「失败」与「无结果」
+   * （对齐 discover 路径的 P1-8 口径），不再谎报「未找到该期刊」。
    */
   private async aggregateJournalMetric(
     query: string,
-  ): Promise<JournalMetric | null> {
+  ): Promise<{ metric: JournalMetric | null; error?: string }> {
     const input = query.trim();
     const inputIsISSN = isISSN(input);
 
@@ -189,12 +193,13 @@ class JournalSearchService {
           void OpenAlexJournalCacheStore.upsert(oaSrc);
         }
       } else {
-        // 本地全 miss：OpenAlex 是唯一数据源，等满其自身超时
+        // 本地全 miss：OpenAlex 是唯一数据源，等满其自身超时；服务侧错误
+        // 上抛而非吞掉（此前 error 被丢弃、返回 null → UI 谎报空态）。
         const openalex = await fetchOa;
-        oaSrc =
-          !openalex.error && openalex.journals.length > 0
-            ? openalex.journals[0]
-            : null;
+        if (openalex.error) {
+          return { metric: null, error: openalex.error };
+        }
+        oaSrc = openalex.journals.length > 0 ? openalex.journals[0] : null;
         if (oaSrc && (oaSrc.issn || oaSrc.issnL)) {
           void OpenAlexJournalCacheStore.upsert(oaSrc);
         }
@@ -202,7 +207,7 @@ class JournalSearchService {
     }
 
     // No data from either local or OpenAlex — nothing to show.
-    if (!hasLocalHit && !oaSrc) return null;
+    if (!hasLocalHit && !oaSrc) return { metric: null };
 
     // If local missed (or only warning/bealls hit — ISSN 维度仍空), re-probe
     // local by the ISSN / name OpenAlex returned (handles name-spelling
@@ -242,15 +247,17 @@ class JournalSearchService {
       if (probes.length > 0) await Promise.all(probes);
     }
 
-    return this.composeMetric({
-      query: input,
-      jcr: finalJcr,
-      cass: finalCass,
-      warning: finalWarn,
-      bealls: finalBealls,
-      issnForLookup,
-      oaSrc,
-    });
+    return {
+      metric: this.composeMetric({
+        query: input,
+        jcr: finalJcr,
+        cass: finalCass,
+        warning: finalWarn,
+        bealls: finalBealls,
+        issnForLookup,
+        oaSrc,
+      }),
+    };
   }
 
   /**
@@ -316,8 +323,19 @@ class JournalSearchService {
       // 级别字段（warning_level=null 占 29/29）——记录存在即告警，级别按
       // 界面语言取值、全缺时 ⚠ 兜底（审计 P0-3 / P2-5）
       warningLevel: pickWarningLevel(warning),
-      warningReason:
-        warning?.warning_reason_en ?? warning?.warning_reason ?? undefined,
+      // 原因与级别同口径按界面语言取值——此前无条件英文优先，中文界面
+      // 级别显示「中」而原因恒显 "Paper Mill"，库内中文值被跳过。
+      warningReason: (() => {
+        if (!warning) return undefined;
+        const en = String((Zotero as any).locale ?? "")
+          .toLowerCase()
+          .startsWith("en");
+        const primary = en ? warning.warning_reason_en : warning.warning_reason;
+        const secondary = en
+          ? warning.warning_reason
+          : warning.warning_reason_en;
+        return primary ?? secondary ?? undefined;
+      })(),
       isPredatory: bealls?.isPredatory || undefined,
       predatoryCategory: bealls?.journals[0]?.category,
       // OpenAlex supplementary — always from OpenAlex when available.

@@ -201,6 +201,15 @@ export function JournalSearchDashboard(): React.ReactElement {
         );
         return;
       }
+      // 服务侧错误与「无结果」分流（与 onSearch 同口径）
+      if ((result as { error?: string }).error) {
+        setError(
+          getString("journal-search-failed", {
+            args: { error: String(result.error).slice(0, 160) },
+          }),
+        );
+        return;
+      }
       setMetric(result.metric ?? null);
       setHasSearched(true);
     } catch (e: unknown) {
@@ -218,6 +227,12 @@ export function JournalSearchDashboard(): React.ReactElement {
   // 一次性上抛 + 重试按钮，ref 去重防同一错误重复弹。
   const toast = useToast();
   const errorNotifiedRef = useRef<string | null>(null);
+  // 重试走 latest-ref：常驻错误 toast 的 onClick 持创建时闭包，错误未消期间
+  // 改查询词再点「重试」会按旧查询重查（与页面内错误行的行内重试行为不一致）。
+  const onSearchRef = useRef(onSearch);
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
   useEffect(() => {
     if (!error) {
       errorNotifiedRef.current = null;
@@ -229,12 +244,16 @@ export function JournalSearchDashboard(): React.ReactElement {
       label: getString("btn-retry"),
       onClick: () => {
         errorNotifiedRef.current = null;
-        void onSearch();
+        void onSearchRef.current();
       },
     });
-  }, [error, onSearch, toast]);
+  }, [error, toast]);
 
   const onModeChange = (next: JournalSearchMode) => {
+    // 作废在途请求：竞态守卫只对「又发了新请求」生效，模式不在守卫维度——
+    // 不递增代数的话，加载中切换后旧模式的响应仍会被接受并渲染进新模式
+    // 视图（如 discover 响应回填 metric 视图显示「未找到该期刊」）。
+    requestId.current++;
     setMode(next);
     setError(null);
     setMetric(null);
@@ -251,11 +270,13 @@ export function JournalSearchDashboard(): React.ReactElement {
   return (
     // 水平轨道唯一归 pane 根 --page-inline-pad（R11-D5；2026-09-09 清双 pad 回归，
     // 与文献页同批）：本层只管纵向。2026-09-22 节奏统一收口：上下律从原型
-    // .pane（上 24/下 48 全页统一），32 顶距配方退役。
-    <div className="flex flex-col gap-[var(--space-4)] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] pt-[var(--space-6)] pb-[var(--space-12)]">
+    // .pane（上 24/下 48 全页统一），32 顶距配方退役。2026-09-28：pane 级
+    // 域 tab 行落地后顶距 24→16——与文献页同批（tab 行自带 --space-6 顶距，
+    // 视图与 tab 行之间保持原 seg→内容 16px 节奏）。
+    <div className="flex flex-col gap-[var(--space-4)] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] pt-[var(--space-4)] pb-[var(--space-12)]">
       {/* 模式切换 seg——2026-09-01 用户裁决：underline TabBar→seg（原注释误写
-          pill，semantic-mode-segmented 死类零 CSS），与 pane 级 文献|期刊 切换
-          同款白片轨道，同屏同形；单选清空 no-op 防御与 SearchPane 同款。 */}
+          pill，semantic-mode-segmented 死类零 CSS），与 pane 级 网络/本地/期刊
+          域 tab 同款白片轨道，同屏同形；单选清空 no-op 防御与 SearchPane 同款。 */}
       <ToggleGroup
         multiple={false}
         className="self-start" /* 2026-09-02 值级批：self-center→self-start，用户拍板左对齐；同屏 pane 级 seg 已立法左置 leadero-hub-search.css:23-33 */
@@ -263,7 +284,10 @@ export function JournalSearchDashboard(): React.ReactElement {
         onValueChange={(v) => {
           if (v.length) onModeChange(v[0] as JournalSearchMode);
         }}
-        aria-label={getString("hub-search-seg-journal")}
+        /* 专用 aria：此前复用 hub-search-seg-journal（「期刊」），与 pane 级
+           域 tab 行的第三段（期刊）文案同名——读屏无法区分两组控件
+           （2026-09-28 图标对钮退役后由域 tab 承接，改名维持）。 */
+        aria-label={getString("journal-mode-seg-aria")}
       >
         {MODE_OPTIONS.map((opt) => (
           <ToggleGroupItem key={opt.id} value={opt.id}>

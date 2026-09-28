@@ -67,8 +67,8 @@ export function JournalListItemView({
             <span
               className={QUARTILE_TONE}
               data-quartile={normalizeQuartile(item.jifQuartile) ?? ""}
+              title={`${getString("journal-jif-label")} ${formatQuartile(item.jifQuartile)}`}
             >
-              {getString("journal-jif-label").slice(0, 1)}
               {formatQuartile(item.jifQuartile)}
             </span>
           )}
