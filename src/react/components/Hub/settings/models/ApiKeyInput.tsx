@@ -13,7 +13,7 @@
  *
  * @module react/components/Hub/settings/ApiKeyInput
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getString } from "../../../../utils/locale";
 import { copyText } from "../../../../utils/clipboard";
 import { toErrorMessage } from "../../../../utils/error";
@@ -86,6 +86,14 @@ export function ApiKeyInput({
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  // Escape 回滚触发的 blur 不提交：Escape 分支同步 setDraft(value)+blur()，
+  // 而 React 18 事件内 setState 经微任务才 flush——同步派发的 focusout 里
+  // handleCommit 闭包仍持编辑中的 draft，会把「放弃编辑」变成「提交编辑值」。
+  const skipBlurCommitRef = useRef(false);
+  // 进入编辑态即聚焦输入框（mask 点击/键盘进入时此前不聚焦，鼠标用户需
+  // 二次点击、键盘用户焦点丢失到 body）。
+  const controlRef = useRef<HTMLDivElement | null>(null);
+  const prevEditingRef = useRef(false);
 
   // 外部 value 变化时同步 draft（除非用户正在编辑）
   useEffect(() => {
@@ -106,6 +114,14 @@ export function ApiKeyInput({
     return () => clearTimeout(t);
   }, [copied]);
 
+  // 编辑态进入（false→true）时聚焦输入框；已聚焦的普通输入路径再 focus 是 no-op
+  useEffect(() => {
+    if (editing && !prevEditingRef.current) {
+      controlRef.current?.querySelector("input")?.focus();
+    }
+    prevEditingRef.current = editing;
+  }, [editing]);
+
   // label 解析优先级：直接字符串 > field.labelKey > field.prefKey
   const label =
     labelText ?? (field ? safeText(field.labelKey) || field.prefKey : "");
@@ -117,6 +133,11 @@ export function ApiKeyInput({
 
   const handleCommit = async () => {
     setEditing(false);
+    // Escape 回滚引发的 blur：跳过提交（见 skipBlurCommitRef 注释）
+    if (skipBlurCommitRef.current) {
+      skipBlurCommitRef.current = false;
+      return;
+    }
     // 防重复提交：上一次保存尚未完成时忽略再次 commit（UX-L13）
     if (saveState === "saving") return;
     if (draft === value) return;
@@ -158,7 +179,10 @@ export function ApiKeyInput({
     >
       <div className="hub-api-key-label">{label}</div>
 
-      <div className={`hub-api-key-control${hasActions ? " has-actions" : ""}`}>
+      <div
+        ref={controlRef}
+        className={`hub-api-key-control${hasActions ? " has-actions" : ""}`}
+      >
         {showMaskSummary ? (
           // 外层用 div role=button（HTML 不允许 button 嵌套 button），内层 eye/copy
           // 仍是 button。键盘：Enter/Space 在 mask 上 = 进入编辑（与外层 click 等价）。
@@ -253,6 +277,8 @@ export function ApiKeyInput({
                 }
                 if (e.key === "Escape" && editing) {
                   e.preventDefault();
+                  // 回滚 + 放弃：标记后续 blur 不提交（Enter 路径不受影响）
+                  skipBlurCommitRef.current = true;
                   setDraft(value);
                   setEditing(false);
                   (e.target as HTMLInputElement).blur();
