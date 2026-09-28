@@ -1,4 +1,19 @@
-# z-search
+<h1>
+  <picture>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset="addon/content/icons/icon-dark.svg"
+    />
+    <img
+      src="addon/content/icons/icon.svg"
+      width="42"
+      height="42"
+      alt="z-search logo"
+      align="top"
+    />
+  </picture>
+  z-search
+</h1>
 
 [English](README.md) | **中文**
 
