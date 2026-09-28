@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { getString } from "../../../../utils/locale";
 import { semanticRequest } from "../../../../utils/semanticBridge";
-import type { ArticleResult } from "./types";
+import type { ArticleResult, ImportResult } from "./types";
 
 export type CitationDirection = "cited-by" | "references";
 
@@ -34,6 +34,10 @@ interface CitationExplorerDialogProps {
   /** 行内导入（复用页面的 handleImport 链路：toast/已在库/PDF 附件全套）。 */
   onImport: (article: ArticleResult) => void;
   importingTitles: Set<string>;
+  /** 页面的导入回执表（键 = doi||title，与 importFromCitations 的 key 同源）：
+   *  行内导入成功后据此显示「已导入」并禁用按钮——后端幂等防线之外的 UI
+   *  防重复（此前导入成功后按钮恢复可点，可对同一文献重复建条目）。 */
+  importResults: Map<string, ImportResult>;
 }
 
 interface CitationsResponse {
@@ -52,6 +56,7 @@ export function CitationExplorerDialog({
   onClose,
   onImport,
   importingTitles,
+  importResults,
 }: CitationExplorerDialogProps): React.ReactElement | null {
   const [data, setData] = useState<CitationsResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -131,6 +136,10 @@ export function CitationExplorerDialog({
         <div className="flex flex-col">
           {(data?.articles || []).map((a, idx) => {
             const busy = importingTitles.has(a.title);
+            // 与页面 importFromCitations 的 key 同源（getArticleKey(a, -1)
+            // = doi || title）；导入回执命中即视为已导入。
+            const imported = !!importResults.get(a.doi || a.title || "")
+              ?.imported;
             return (
               <div
                 key={`${a.doi || a.title}-${idx}`}
@@ -174,10 +183,12 @@ export function CitationExplorerDialog({
                   </div>
                 </div>
                 <div className="flex items-center gap-[var(--space-1)] shrink-0">
-                  {a.inLibrary ? (
+                  {a.inLibrary || imported ? (
                     <span title={getString("lit-in-library-tip")}>
                       <Badge tone="success">
-                        {getString("lit-in-library")}
+                        {getString(
+                          imported ? "lit-imported" : "lit-in-library",
+                        )}
                       </Badge>
                     </span>
                   ) : (

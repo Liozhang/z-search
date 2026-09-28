@@ -15,20 +15,12 @@ import { escapeHtml } from "../../../../../utils/escapeHtml";
 import { SearchResult } from "./types";
 import { FileTextIconSvg } from "../../../../utils/icons";
 import { Badge } from "@/components/ui/Badge";
-import Button from "@/components/ui/button";
 
 interface ResultItemProps {
   result: SearchResult;
   /** Search query used for snippet highlighting (full-text search only). */
   query?: string;
   onOpenItem: (itemID: number) => void;
-  /**
-   * JA-2（§30.2 文献条目出口「追踪」）：行内追踪动作，handler 在页面层
-   * （LiteratureSearchPage，toast + 关注页出口都在那）。DOI 或标题皆缺时
-   * 不渲染（无可用标识不假装可用）。
-   */
-  onTrack?: (result: SearchResult) => void;
-  isTracking?: boolean;
 }
 
 /** 格式化 dateAdded 为年份（学术文献惯例显示年份） */
@@ -42,21 +34,14 @@ export function ResultItem({
   result,
   query,
   onOpenItem,
-  onTrack,
-  isTracking,
 }: ResultItemProps): React.ReactElement {
   const open = () => onOpenItem(result.itemID);
   const year = formatYear(result.dateAdded);
   // BM25-only hits（hybrid/bm25 检索）没有 cosine，显示「0%」是误导——
-  // 无分数时整个徽标隐藏；fusedScore 优先展示（RRF/归一 BM25 分）。
+  // 无分数时整个徽标隐藏。
   const hasCosine = typeof result.similarity === "number";
   const similarity = hasCosine ? result.similarity! : 0;
   const similarityPct = (similarity * 100).toFixed(0);
-  // JA-2：DOI 在 → 追踪论文引用；仅标题 → 主题追踪（tooltip 说实话）
-  const canTrack = !!(result.doi || (result.title ?? "").trim());
-  const trackTip = result.doi
-    ? getString("semantic-track-paper-tip")
-    : getString("semantic-track-topic-tip");
   return (
     <div
       /* v2 §4.5 批6：文献卡→文献行——去卡壳（border/radius/bg 三件）改行制：
@@ -125,27 +110,6 @@ export function ResultItem({
           />
         )}
       </div>
-      {/* JA-2 行内追踪动作：整行是 role=button 的打开热区，此槽 stopPropagation
-          隔离 click/keyboard，避免「追踪」误触发行打开 */}
-      {onTrack && canTrack && (
-        <span
-          className="semantic-result-track flex-shrink-0 self-start"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <Button
-            variant="ghost"
-            size="xs"
-            loading={isTracking}
-            disabled={isTracking}
-            tooltip={trackTip}
-            ariaLabel={getString("semantic-track-action")}
-            onClick={() => onTrack(result)}
-          >
-            {getString("semantic-track-action")}
-          </Button>
-        </span>
-      )}
     </div>
   );
 }

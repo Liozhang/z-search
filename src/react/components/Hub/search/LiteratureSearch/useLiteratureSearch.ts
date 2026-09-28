@@ -120,7 +120,6 @@ export function useLiteratureSearch() {
       {
         status: "loading" | "success" | "error";
         translatedText?: string;
-        truncated?: boolean;
         error?: string;
       }
     >
@@ -197,12 +196,14 @@ export function useLiteratureSearch() {
     // 目标树懒加载 + pref 恢复（只跑一次；失败静默——选择器显示「跟随主窗」）
     const ensureCollections = async () => {
       if (collectionsLoaded) return;
+      let libs: typeof collectionsTree | null = null;
       try {
         const data = await semanticRequest<{
           libraries: typeof collectionsTree;
         }>("literature.collections", {}, 15000);
         if (Array.isArray(data?.libraries)) {
-          setCollectionsTree(data.libraries);
+          libs = data.libraries;
+          setCollectionsTree(libs);
         }
       } catch {
         /* 树不可用：选择器保持跟随主窗 */
@@ -210,18 +211,33 @@ export function useLiteratureSearch() {
       setCollectionsLoaded(true);
       try {
         const saved = await prefsGetDynamic("search.importTarget");
-        const parsed = typeof saved === "string" ? JSON.parse(saved) : saved;
+        // 写侧只存 JSON 串（chooseImportTarget）；空串/其他类型 = 未设置。
+        const parsed =
+          typeof saved === "string" && saved ? JSON.parse(saved) : null;
         if (
           parsed &&
           typeof parsed === "object" &&
           Number.isInteger(parsed.libraryID)
         ) {
-          setImportTarget({
-            libraryID: Number(parsed.libraryID),
-            collectionID: Number.isInteger(parsed.collectionID)
-              ? Number(parsed.collectionID)
-              : null,
-          });
+          // 目标失效自复位：分类/文库已删时回落「跟随主窗」，避免选择器
+          // 回显裸编码值 t:<libID>:<collectionID>。
+          const lib = libs?.find(
+            (l) => l.libraryID === Number(parsed.libraryID),
+          );
+          const colOk =
+            parsed.collectionID == null ||
+            (lib?.collections.some(
+              (c) => c.id === Number(parsed.collectionID),
+            ) ??
+              false);
+          if (lib && colOk) {
+            setImportTarget({
+              libraryID: Number(parsed.libraryID),
+              collectionID: Number.isInteger(parsed.collectionID)
+                ? Number(parsed.collectionID)
+                : null,
+            });
+          }
         }
       } catch {
         /* pref 读取失败保持 null */
@@ -315,8 +331,8 @@ export function useLiteratureSearch() {
     sortBy,
     authorFilter,
     openAccessOnly,
-    importTarget,
     journalFilter,
+    collectionsLoaded,
   ]);
 
   const handleClear = useCallback(() => {
@@ -343,6 +359,9 @@ export function useLiteratureSearch() {
     setMaxResults(100);
     setAuthorFilter("");
     setJournalFilter("");
+    // 与弹窗「重置」同口径：openAccessOnly 也是筛选维度之一，漏复位会让
+    // 清除后筛选角标仍显示生效计数。
+    setOpenAccessOnly(false);
     // If a search is in flight, also tell the Bridge to stop iterating
     // sources; otherwise the backend loop keeps running to completion.
     if (wasSearching) {
@@ -375,7 +394,16 @@ export function useLiteratureSearch() {
   }, []);
 
   const selectAll = useCallback(() => {
-    setSelectedIds(new Set(results.map((a, i) => getArticleKey(a, i))));
+    // 已在库条目不进选择集：后端对 DOI 路径无存在性检查，批量导入会对
+    // 它们重复建条目（与 handleBatchImport 的同款过滤成对存在）。
+    setSelectedIds(
+      new Set(
+        results
+          .map((a, i) => ({ a, i }))
+          .filter(({ a }) => !(a as { inLibrary?: boolean }).inLibrary)
+          .map(({ a, i }) => getArticleKey(a, i)),
+      ),
+    );
   }, [results]);
 
   const clearSelection = useCallback(() => {
@@ -407,7 +435,6 @@ export function useLiteratureSearch() {
         const data = await semanticRequest<{
           success: boolean;
           translatedText?: string;
-          truncated?: boolean;
           error?: string;
         }>("literature.translate", { text }, 60000);
         if (data?.success && data.translatedText) {
@@ -416,7 +443,6 @@ export function useLiteratureSearch() {
             next.set(key, {
               status: "success",
               translatedText: data.translatedText,
-              truncated: data.truncated,
             });
             return next;
           });
@@ -605,21 +631,25 @@ export function useLiteratureSearch() {
         });
       }
     },
-    [toast],
+    [toast, importTarget],
   );
 
   const handleBatchImport = useCallback(async () => {
     if (importingRef.current) return;
     importingRef.current = true;
     // Build key→article pairs for all selected articles（无 DOI 条目不再剔除，
-    // 核心侧 entries 契约做标题→DOI 回退；2026-09-10 P0 链）。
+    // 核心侧 entries 契约做标题→DOI 回退；2026-09-10 P0 链）。已在库条目
+    // 剔除——后端对 DOI 路径无存在性检查，混入会对它们重复建条目。
     // Order is preserved so response[i] maps back to keys[i].
     const keyArticlePairs = Array.from(selectedIds)
       .map((k) => {
         const idx = results.findIndex((a, i) => getArticleKey(a, i) === k);
         return idx === -1 ? null : { key: k, article: results[idx] };
       })
-      .filter((p): p is { key: string; article: ArticleResult } => p !== null);
+      .filter(
+        (p): p is { key: string; article: ArticleResult } =>
+          p !== null && !(p.article as { inLibrary?: boolean }).inLibrary,
+      );
 
     if (keyArticlePairs.length === 0) {
       importingRef.current = false;
@@ -694,8 +724,7 @@ export function useLiteratureSearch() {
       setImportingIds(new Set());
       importingRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIds, results, importResults, toast]);
+  }, [selectedIds, results, importResults, importTarget, confirm, toast]);
 
   const selectedCount = selectedIds.size;
   const importCount = Array.from(importResults.values()).filter(
@@ -813,11 +842,14 @@ export function useLiteratureSearch() {
     // 导入目标（P2 批）：树 + 当前目标 + 选择/清除（写 pref 持久化）
     collectionsTree,
     importTarget,
+    // 持久化必须 JSON 序列化：search.importTarget 是 string 型 pref，原始
+    // 对象/null 会被宿主侧 Zotero.Prefs.set 字符串化成 "[object Object]"，
+    // 重启恢复时 JSON.parse 抛错被吞、静默回落「跟随主窗」。空串 = 未设置。
     chooseImportTarget: (
       t: { libraryID: number; collectionID: number | null } | null,
     ) => {
       setImportTarget(t);
-      void prefsSetDynamic("search.importTarget", t ?? null);
+      void prefsSetDynamic("search.importTarget", t ? JSON.stringify(t) : "");
     },
     // results
     results,

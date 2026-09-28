@@ -518,7 +518,11 @@ export async function handleLiteratureRequest(
         } catch (e) {
           safeDebug("[z-search] import target invalid: " + e);
         }
-        if (collectionId == null) {
+        // 主窗分类回退只在「无显式目标」时适用：显式 library-only 目标
+        // （落文库根）若也回退，条目会同时落目标库 + 主窗当前选中的
+        // （多半属于另一个库的）分类——与「仅给 libraryID = 落该文库根」
+        // 的注释承诺相悖。
+        if (collectionId == null && targetLibraryId == null) {
           try {
             const pane = Zotero.getActiveZoteroPane?.();
             const selected = pane?.getSelectedCollectionID?.();
@@ -581,40 +585,82 @@ export async function handleLiteratureRequest(
         }
 
         if (doiJobs.length > 0) {
-          try {
-            const r = await doImportArticle({
-              identifiers: doiJobs.map((j) => j.doi),
-              type: payload.type,
-              collectionId,
-              libraryId: targetLibraryId,
-            });
-            const itemResults = r.results ?? [];
-            for (const [j, itemResult] of itemResults.entries()) {
-              const job = doiJobs[j];
-              if (!job) continue;
-              importResults[job.idx] = {
-                success: itemResult?.success || false,
-                itemId: itemResult?.itemId,
-                title: itemResult?.title || job.title,
-                error: itemResult?.error,
-                imported: itemResult?.imported || false,
-              };
-              // OA PDF 附件（P0-1）：pref 开启时后台执行，不阻塞导入回执；
-              // 候选 = 卡片直链提示 → OpenAlex best_oa_location 反查。
-              if (itemResult?.success && itemResult?.itemId) {
-                void attachOaPdf(itemResult.itemId, job.doi, job.pdfUrl);
+          // DOI 幂等防重：core 侧 createItemFromMetadata 无存在性检查，
+          // 前端超时重试/引文弹窗重复点击/批量混入已在库条目都会重复建条
+          // 目。此处按归一化 DOI 预检（Zotero.Search 的 doi 条件走字段索引，
+          // 与 markInLibrary 同机制），命中即回执既有条目、不再新建。
+          const existingByDoi = new Map<string, number>();
+          const IDMP_CONCURRENCY = 8;
+          for (let i = 0; i < doiJobs.length; i += IDMP_CONCURRENCY) {
+            const chunk = doiJobs.slice(i, i + IDMP_CONCURRENCY);
+            await Promise.all(
+              chunk.map(async (j) => {
+                const doi = normalizeDoi(j.doi);
+                if (!doi) return;
+                try {
+                  const s = new Zotero.Search();
+                  s.addCondition("doi", "is", doi);
+                  const ids = await s.search();
+                  if (ids?.length) existingByDoi.set(doi, ids[0]);
+                } catch {
+                  /* 预检失败不阻断导入，退回原行为 */
+                }
+              }),
+            );
+          }
+          const freshJobs = doiJobs.filter(
+            (j) => !existingByDoi.has(normalizeDoi(j.doi) ?? ""),
+          );
+          for (const j of doiJobs) {
+            const existingId = existingByDoi.get(normalizeDoi(j.doi) ?? "");
+            if (existingId == null) continue;
+            const item = Zotero.Items.get(existingId);
+            importResults[j.idx] = {
+              success: true,
+              itemId: existingId,
+              title: item?.getField("title") || j.title,
+              imported: true,
+            };
+          }
+          if (freshJobs.length > 0) {
+            try {
+              const r = await doImportArticle({
+                identifiers: freshJobs.map((j) => j.doi),
+                type: payload.type,
+                collectionId,
+                libraryId: targetLibraryId,
+              });
+              const itemResults = r.results ?? [];
+              for (const [j, itemResult] of itemResults.entries()) {
+                const job = freshJobs[j];
+                if (!job) continue;
+                importResults[job.idx] = {
+                  success: itemResult?.success || false,
+                  itemId: itemResult?.itemId,
+                  title: itemResult?.title || job.title,
+                  error: itemResult?.error,
+                  imported: itemResult?.imported || false,
+                };
+                // OA PDF 附件（P0-1）：pref 开启时后台执行，不阻塞导入回执；
+                // 候选 = 卡片直链提示 → OpenAlex best_oa_location 反查。
+                // 幂等命中的既有条目不重复挂附件。
+                if (itemResult?.success && itemResult?.itemId) {
+                  void attachOaPdf(itemResult.itemId, job.doi, job.pdfUrl);
+                }
+              }
+            } catch (e: any) {
+              for (const job of freshJobs) {
+                importResults[job.idx] = {
+                  success: false,
+                  title: job.title,
+                  error: toErrorMessage(e),
+                  imported: false,
+                };
               }
             }
-          } catch (e: any) {
-            for (const job of doiJobs) {
-              importResults[job.idx] = {
-                success: false,
-                title: job.title,
-                error: toErrorMessage(e),
-                imported: false,
-              };
-            }
           }
+          result = importResults;
+          break;
         }
         result = importResults;
         break;
@@ -669,7 +715,7 @@ export async function handleLiteratureRequest(
 
       case "literature.translate": {
         // 摘要翻译：走统一翻译引擎（默认 Google 免费端点，无需配 key；
-        // 可在 translate.engineType 切 AI/Bing/DeepL/custom）。
+        // 可在 translate.engineType 切 Bing web/Bing/DeepL/AI/custom）。
         if (!payload?.text || typeof payload.text !== "string") {
           error = "literature.translate: missing text";
           break;
@@ -677,8 +723,11 @@ export async function handleLiteratureRequest(
         try {
           const { createTranslator } =
             await import("../../core/translation/translationEngines");
+          // 目标语言缺省跟随 Zotero 界面语言，兜底 en-US——不再硬编码
+          // zh-CN（那对非中文用户会把英文摘要译成中文）。引擎可达性由
+          // translate.engineType / utils/region 管。
           const targetLanguage =
-            payload.targetLanguage || (Zotero as any).locale || "zh-CN";
+            payload.targetLanguage || (Zotero as any).locale || "en-US";
           const translate = createTranslator(
             targetLanguage,
             payload.sourceLanguage,

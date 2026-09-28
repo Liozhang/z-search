@@ -67,7 +67,6 @@ export interface LiteratureResultCardProps {
   translation?: {
     status: "loading" | "success" | "error";
     translatedText?: string;
-    truncated?: boolean;
     error?: string;
   };
   onToggleSelect: (key: string) => void;
@@ -88,13 +87,6 @@ export interface LiteratureResultCardProps {
   isFetchingFulltext?: boolean;
   isFulltextOpen?: boolean;
   fulltext?: FulltextResult;
-  /**
-   * JA-2（§30.2 文献条目出口「追踪」）：行内追踪动作，handler 在页面层。
-   * 有 DOI → 论文引用追踪；无 DOI → 标题作检索式的主题追踪（tooltip 说实话）。
-   * 作者/期刊名需宿主侧 OpenAlex 解析才有可信标识——该类动作不显示，不硬造。
-   */
-  onTrack?: (article: ArticleResult, key: string) => void;
-  isTracking?: boolean;
   /**
    * JA-7（§4.9 批5）：导入成功行的「打开」出口。宿主回执 ImportResult.itemId
    * （新建 Zotero 条目 id）经此打开原文，通道与库内行同一（semantic.openItem，
@@ -123,8 +115,6 @@ export function LiteratureResultCard({
   isFetchingFulltext,
   isFulltextOpen,
   fulltext,
-  onTrack,
-  isTracking,
   onOpen,
 }: LiteratureResultCardProps): React.ReactElement {
   // JA-7：导入成功才有可信 itemId（ImportResult 契约），提起局部变量供收窄
@@ -146,10 +136,13 @@ export function LiteratureResultCard({
     >
       <div className="lit-result-main flex items-start gap-[var(--space-3)]">
         <Checkbox
-          className={`lit-result-checkbox mt-[var(--space-1)] [accent-color:var(--accent)] cursor-pointer w-[var(--icon-md)] h-[var(--icon-md)] flex-shrink-0${isImporting || isImported ? " opacity-40 cursor-default" : ""}`}
+          className={`lit-result-checkbox mt-[var(--space-1)] [accent-color:var(--accent)] cursor-pointer w-[var(--icon-md)] h-[var(--icon-md)] flex-shrink-0${isImporting || isImported || article.inLibrary ? " opacity-40 cursor-default" : ""}`}
           checked={isSelected}
           onChange={() => onToggleSelect(key)}
-          disabled={isImporting || isImported}
+          disabled={isImporting || isImported || article.inLibrary}
+          aria-label={getString("aria-select-result", {
+            args: { title: article.title || article.doi || "" },
+          })}
         />
         <div className="lit-result-content flex-1 min-w-0">
           {/* 2026-08-31 C3：标题色 --data-blue-dark → --text-primary
@@ -340,11 +333,6 @@ export function LiteratureResultCard({
                   <div className="lit-translation-text text-[length:var(--text-sm)] text-[color:var(--text-secondary)] leading-[var(--leading-normal)] whitespace-pre-wrap break-words">
                     {translation.translatedText}
                   </div>
-                  {translation.truncated && (
-                    <div className="lit-translation-truncated mt-[var(--space-1)] text-[length:var(--text-2xs)] text-[color:var(--signal-yellow-text)]">
-                      {getString("lit-translate-truncated")}
-                    </div>
-                  )}
                 </div>
               )}
               {translation?.status === "error" && (
@@ -433,24 +421,6 @@ export function LiteratureResultCard({
               onClick={() => onCitations(article, "references")}
             >
               {getString("lit-references-btn")}
-            </Button>
-          )}
-          {/* JA-2：追踪动作与导入同列（既有动作列形态，不另起范式）；ghost 不抢导入的主位 */}
-          {onTrack && (
-            <Button
-              variant="ghost"
-              size="sm"
-              loading={isTracking}
-              disabled={isTracking}
-              tooltip={
-                article.doi
-                  ? getString("semantic-track-paper-tip")
-                  : getString("semantic-track-topic-tip")
-              }
-              ariaLabel={getString("semantic-track-action")}
-              onClick={() => onTrack(article, key)}
-            >
-              {getString("semantic-track-action")}
             </Button>
           )}
           {/* 全文按需拉取（PMC 开放获取 JATS XML 优先）——ghost 不抢主位；

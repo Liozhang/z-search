@@ -23,13 +23,15 @@ import { useToast } from "@/components/ui/toast";
 import { SearchResult, DuplicateGroup, ModelInfo } from "./types";
 
 /** 跳过原因码 → 本地化键（buildComplete.skips 的渲染用；未收录码原样展示）。
- *  与 PdfChunkIndexer 的 reason 常量保持同步。 */
+ *  与 PdfChunkIndexer / runFullLibraryBuild 的 reason 常量保持同步。 */
 const SKIP_REASON_KEYS: Record<string, string> = {
   "no-pdf-attachment": "semantic-skip-no-pdf-attachment",
   "extraction-failed": "semantic-skip-extraction-failed",
   "low-quality-text": "semantic-skip-low-quality-text",
   "empty-parse": "semantic-skip-empty-parse",
   "already-indexed": "semantic-skip-already-indexed",
+  "metadata-embedding-unavailable":
+    "semantic-skip-metadata-embedding-unavailable",
 };
 
 export interface SemanticSearchState {
@@ -159,6 +161,9 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
   // Race-condition guards for search / findSimilar
   const searchRequestId = useRef(0);
   const similarRequestId = useRef(0);
+  // 找相似在途守卫（与 isBuildingRef 同款）：深链/按钮重复触发时直接忽略
+  // 新请求，而不是让两次 RPC 竞速（后到者使先到者作废、双双真实跑一遍）。
+  const isFindingSimilarRef = useRef(false);
 
   // Progress watchdog timestamps
   const buildProgressAt = useRef<number>(Date.now());
@@ -487,9 +492,16 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
     setSearchResults([]);
     setResultsHeader("");
     setError(null);
+    // 与 web 腿 handleClear 同口径：筛选维度一并复位（limit/全文/章节范围），
+    // 否则「清除」后筛选角标仍显示生效计数。
+    setLimit(10);
+    setUseFullText(false);
+    setSectionCategory(undefined);
   }, []);
 
   const handleFindSimilar = useCallback(async () => {
+    if (isFindingSimilarRef.current) return;
+    isFindingSimilarRef.current = true;
     const myId = ++similarRequestId.current;
     lastActionRef.current = "findSimilar";
 
@@ -515,6 +527,7 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
       if (myId !== similarRequestId.current) return;
       setError(handleUiError(e, { silent: true }));
     } finally {
+      isFindingSimilarRef.current = false;
       if (myId === similarRequestId.current) setIsFindingSimilar(false);
     }
   }, []);
