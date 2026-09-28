@@ -1,11 +1,14 @@
 /**
  * translationEngines — Unified translation engine dispatcher.
  *
- * Supports five engine types:
+ * Supports six engine types:
  *   - "google"  → Google Translate HTTP API (default; free endpoint or Cloud
  *                 Translation; falls back to keyless Bing web on failure)
  *   - "ai"      → Leadero's configured AI model (preserves formula tokens)
- *   - "bing"    → Azure Cognitive Services Translator
+ *   - "bing"    → Azure Cognitive Services Translator (needs a key + region)
+ *   - "bing-web" → keyless Bing web translator. Selectable since 2026-09-28:
+ *                 it is the only keyless engine reachable in mainland China,
+ *                 so it has to be a user choice, not just a hardcoded fallback.
  *   - "deepl"   → DeepL API
  *   - "custom"  → OpenAI-compatible chat completions endpoint
  *
@@ -31,7 +34,13 @@ import { toErrorMessage } from "../../utils/error";
 import { getString } from "../../utils/locale";
 
 export type TranslationEngineType =
-  "ai" | "google" | "bing" | "deepl" | "custom" | "zotero-pdf-translate";
+  | "ai"
+  | "google"
+  | "bing"
+  | "bing-web"
+  | "deepl"
+  | "custom"
+  | "zotero-pdf-translate";
 
 export interface GoogleTranslateOptions {
   apiKey?: string;
@@ -250,8 +259,10 @@ async function translateWithBing(
 /**
  * Keyless Bing web translator (the Bing Translator web app endpoint, same
  * engine behind bing.com/translator). Reachable in regions where Google is not
- * (e.g. mainland China), which is why it backs the default Google engine. Not
- * exposed as a selectable engine — it only serves as fallback.
+ * (e.g. mainland China), which is why it backs the default Google engine —
+ * and, since 2026-09-28, why it is also selectable as its own engine
+ * ("bing-web"): a user who knows Google is blocked should be able to pick the
+ * reachable engine up front instead of paying the 10s timeout per paragraph.
  *
  * Request shape reverse-engineered from the live page (2026-08-29):
  *   GET  https://www.bing.com/translator            (redirects to cn.bing.com in CN)
@@ -770,6 +781,19 @@ function createTranslatorUncached(
             apiKey: cfg.bingApiKey,
             region: cfg.bingRegion || "global",
           },
+        );
+        if (!result.success)
+          throw new Error(
+            result.error || getString("translation-error-bing-failed"),
+          );
+        return result.translatedText!;
+      };
+    case "bing-web":
+      return async (text: string) => {
+        const result = await translateWithBingWeb(
+          text,
+          targetLanguage,
+          sourceLanguage,
         );
         if (!result.success)
           throw new Error(

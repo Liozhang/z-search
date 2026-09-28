@@ -35,8 +35,6 @@ time-days-ago = { $count ->
 }
 
 # Chat Sidebar
-recommend-add-success = Added to library: { $title }
-recommend-add-failed = Failed to add: { $title }
 # Chat Message List
 # Chat Window - System Messages
 # Chat Window - Toolbar & Status
@@ -45,7 +43,6 @@ recommend-add-failed = Failed to add: { $title }
 # Item Picker
 # Model Quick Switch
 # Progress Bar
-progress-status-processing = Processing...
 
 # Export Dialog
 # Agent & Progress
@@ -136,9 +133,6 @@ semantic-sort-title = Title
 semantic-tab-similar = Find Similar
 semantic-tab-duplicates = Duplicate Detection
 # JA-2（2026-09-17 Hub 评审批 3）：检索结果行内追踪动作（§30.2 文献条目出口）
-semantic-track-action = Track
-semantic-track-paper-tip = Track citation changes for this paper
-semantic-track-topic-tip = No DOI — track new papers matching this title as a topic
 # JA-3（2026-09-17 Hub 评审批 3）：库内结果行「打开」的成功回执（§31.1 页内点击 → Hub toast）
 semantic-opened-in-zotero = Selected in Zotero
 semantic-opened-focus-failed = Selected in Zotero — couldn't bring the Zotero window to the front
@@ -252,7 +246,6 @@ profile-dim-language-style = Language Style
 # Chat Errors
 copy-success = Copy Successful
 copy-failed = Copy Failed
-save-note-success = Note saved successfully
 chat-error-generic = An unexpected error occurred. Please try again.
 chat-error-auth = Invalid API key. Please check your API key in settings.
 chat-error-forbidden = Access denied. Your API key does not have permission for this action.
@@ -265,7 +258,6 @@ chat-error-cancelled = Request was cancelled.
 chat-error-no-provider = No AI model is configured for this feature yet. Open Leadero Settings → AI Models and assign a model to it (Chat and Agent each need their own assignment).
 chat-error-with-detail = Error: { $error }
 # ── Queue panel (sends during execution are enqueued; ZCode lessons batch 2026-09-07) ──
-chat-init-timeout = Chat failed to initialize within 30 seconds.
 
 # Slash Menu Commands — keep in sync with src/react/components/Input/slashCommands.ts
 # ── Soul / Agent Names ──
@@ -331,9 +323,6 @@ window-init-failed = { $name } failed to initialize.
 window-init-failed-retry = Please try closing and reopening the window.
 
 # Embedding Progress
-embedding-progress-init = Preparing embeddings...
-embedding-progress-done = Completed: { $count } items in { $elapsed }s
-embedding-progress-eta = ETA { $eta }s
 
 # Embedding fallback notifications
 # Multi-agent tasks
@@ -433,7 +422,6 @@ lit-abstract-label = Abstract
 lit-translate-btn = Translate
 lit-translating = Translating...
 lit-translate-error = Translation failed
-lit-translate-truncated = Abstract too long, translation truncated
 
 # Full text (PMC open-access JATS XML first, OA web page fallback)
 lit-fulltext-title = Full text
@@ -467,8 +455,6 @@ hub-tab-home = Home
 semantic-vector-gap-desc = Build the full-text index to enable semantic ranking, similar items, and duplicate detection.
 hub-tab-search = Search
 # { $count } -> total nodes; { $limit } -> recommended cap
-hub-search-page-title = Search
-hub-search-seg-literature = Literature
 hub-search-seg-journal = Journal
 hub-search-source-library = Library
 hub-search-engine-external = External
@@ -536,8 +522,6 @@ hub-settings-section-tools = Tools
 embedding-not-configured-error = Semantic index is not configured: assign a model under Settings → AI Models → Embedding (API mode), or switch to local mode.
 decision-not-configured-error = Decision model is not enabled: turn it on under Settings → AI Models → Decision and make sure an OpenRouter API key is configured.
 decision-unavailable-error = Decision service is temporarily unavailable — the call was skipped and the regular path was used.
-chat-citation-nav-no-pdf = This item has no PDF attachment to open.
-chat-citation-nav-not-found = Item not found (the library may not be synced to this device yet).
 # ===== UX fixes round 3 (2026-08-14) =====
 ux3-lit-refreshing = Searching — showing previous results
 ux3-lit-no-results-desc = No results found. Adjust the keywords or filters and try again.
@@ -579,9 +563,49 @@ journal-data-import-failed = Built-in journal datasets (JCR / CAS / warning list
 search-sources-test-unreachable = Unreachable from this network.
 search-sources-test-failed = Test failed: { $detail }
 search-sources-not-configured = Key not set
+
+# ── Network region: which part of the internet the user is on (2026-09-28) ──
+prefs-region-title = Network Region
+prefs-region-desc =
+    Some services only work in part of the world: easyScholar, the MinerU cloud and the Chinese core lists are mainland-China only, while Google Translate, DuckDuckGo and most AI providers are unreachable there.
+    Declaring your network lets the plugin pick reachable defaults, and every region-locked endpoint below can still point at your own mirror.
+prefs-region-label = Network region
+prefs-region-auto = Auto - no declaration (international-first defaults)
+prefs-region-global = Global - international internet
+prefs-region-cn = Mainland China
+prefs-region-apply = Apply recommended defaults
+prefs-region-applied = { $region }: updated { $changes }.
+prefs-region-nochange = { $region }: no recommended values applied - settings you changed yourself are always left untouched.
+prefs-region-change-web = default web search source to { $value }
+prefs-region-change-engine = translation engine to { $value }
+prefs-endpoints-title = Region-locked Endpoints
+prefs-endpoints-desc =
+    These services live in one region only. Leave a field blank to keep the built-in endpoint, or fill one in to use a mirror / self-hosted proxy. Changes apply to the next request.
+pref-endpoint-easyscholar = easyScholar endpoint
+pref-endpoint-easyscholar-placeholder = Built-in: https://www.easyscholar.cc/openapi/api/paper/query
+pref-endpoint-mineru = MinerU cloud endpoint
+pref-endpoint-mineru-placeholder = Built-in: https://mineru.net/api/v4
+pref-endpoint-wikipedia = Wikipedia host
+pref-endpoint-wikipedia-placeholder = Built-in: follows the Zotero interface language (e.g. zh.wikipedia.org)
+
+pref-endpoint-jre-mirror = Java runtime (JRE) download mirror
+pref-endpoint-jre-mirror-placeholder = Built-in: https://api.adoptium.net/v3 (used only when the PDF backend needs a bundled Java)
+pref-endpoint-invalid = Not a valid endpoint - use a full http(s) URL, or a bare host name such as zh.wikipedia.org.
+prefs-translate-title = Translation
+prefs-translate-desc =
+    Engine used for abstracts and PDF translation. Reachability differs by network: a blocked engine costs a timeout per paragraph, so pick one you can actually reach.
+prefs-translate-engine-label = Engine
+prefs-translate-engine-google = Google (free endpoint, no key)
+prefs-translate-engine-bing-web = Bing web (no key)
+prefs-translate-engine-bing = Azure Translator (key required)
+prefs-translate-engine-deepl = DeepL (key required)
+prefs-translate-engine-ai = AI model (keeps formulas)
+prefs-translate-engine-custom = Custom OpenAI-compatible endpoint
+prefs-translate-engine-zotero-pdf-translate = zotero-pdf-translate (if installed)
+prefs-translate-bingregion-label = Azure region
+prefs-translate-note = The Azure region applies to the Azure Translator engine only. Engine API keys are not surfaced in this pane yet - set them under extensions.zotero.zsearch.translate.* in the Config Editor.
 soul-name-datasource-manager-soul = Data Source Manager
 # ── 进程超时对话框 / OAuth 落地页 / 聊天与进度兜底文案（2026-09-17 清理批六）
-embedding-failed-fallback = Embedding failed
 
 # === Shortcut Manager：帮助弹窗 + Hub 设置页快捷键列表（2026-09-17 i18n 批）===
 # 数据侧仍存 action id 与英文分类 id（注册/匹配/分组语义不变），本族键只供展示取词：
@@ -675,7 +699,7 @@ pdf-translate-batch-start = Translating in batch ({ $paragraphs } paragraphs in 
 pdf-translate-batch-progress = Batch translation: { $done }/{ $total } chunks
 
 # ── Toolbar button & shortcut (main window entry, P0-4) ──
-toolbar-open-search-tooltip = Open Search Center (Ctrl+Shift+K)
+toolbar-open-search-tooltip = Open Search Center ({ $shortcut })
 
 # ── In-library badge & OA filter (P0-3) ──
 lit-in-library = In Library
@@ -709,3 +733,12 @@ lit-chinese-core-tip = Chinese core journal list hit (via easyScholar)
 # ── Import target picker ──
 lit-import-target-label = Import to
 lit-import-target-follow = Follow main-window selection
+
+# ── 2026-09-28 交互审计修复批 ──────────────────────────────────────────
+hub-init-timeout = Search failed to start within 30 seconds. Please reopen the window.
+semantic-error-no-pane = No active Zotero window
+semantic-open-not-found = Item not found in the library
+semantic-skip-metadata-embedding-unavailable = Embedding not configured — skipped metadata indexing
+journal-mode-seg-aria = Search mode
+search-sources-reachable = Reachable
+aria-select-result = Select { $title }

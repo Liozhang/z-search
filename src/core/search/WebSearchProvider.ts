@@ -7,6 +7,7 @@
  */
 
 import { getPrefDynamic } from "../../utils/prefs";
+import { resolveWikiHost } from "../../utils/region";
 import providerHealthChecker from "./ProviderHealthChecker";
 import { ZSEARCH_HTTP_HEADERS } from "../../utils/httpHeaders";
 import { getString } from "../../utils/locale";
@@ -640,7 +641,11 @@ class WebSearchProvider {
 
   // --- Wikipedia (free encyclopedia search) ---
   private async searchWikipedia(query: string, maxResults: number) {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=${maxResults}&format=json`;
+    // 域名跟随 Zotero 界面语言（可被 search.web.wikipedia.host 覆盖）：
+    // 中文界面下英文维基的覆盖远小于中文维基，硬写 en 是对全球用户的
+    // 默认亏待——见 utils/region。
+    const host = resolveWikiHost((globalThis as any).Zotero?.locale);
+    const url = `https://${host}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=${maxResults}&format=json`;
 
     const resp = await Zotero.HTTP.request("GET", url, {
       headers: { ...ZSEARCH_HTTP_HEADERS },
@@ -665,7 +670,7 @@ class WebSearchProvider {
       source: "wikipedia",
       results: items.slice(0, maxResults).map((item: any) => ({
         title: item.title || "",
-        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title || "")}`,
+        url: `https://${host}/wiki/${encodeURIComponent(item.title || "")}`,
         snippet: (item.snippet || "").replace(/<[^>]+>/g, ""),
         source: "wikipedia",
       })),

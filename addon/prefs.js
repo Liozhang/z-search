@@ -20,6 +20,9 @@ pref("ai.maxIterations", 100);
 pref("ai.multiStepPilot", false);
 pref("ai.model.maxContext", 128000);
 
+// ── 网络区域（插件的全球性开关；auto = 不声明，沿用国际优先的出厂默认）──
+pref("region", "auto"); // "auto" | "global" | "cn"
+
 // ── Search ──────────────────────────────────────────────────────────
 pref("search.queryRewrite", true);
 pref("search.rerankEnabled", false);
@@ -36,6 +39,8 @@ pref("search.importTarget", "");
 
 // Web search providers
 pref("search.web.defaultProvider", "duckduckgo");
+// 维基百科域名（空 = 跟随 Zotero 界面语言；跨境用户可填镜像或其它语言站）
+pref("search.web.wikipedia.host", "");
 pref("search.web.addedSources", "[]");
 pref("search.web.serpapi.apiKey", "");
 pref("search.web.brave.apiKey", "");
@@ -60,6 +65,9 @@ pref("apis.elsevier.apiKey", "");
 pref("apis.github.token", "");
 // easyScholar 免费 key（可选；中文核心期刊标识数据源）
 pref("apis.easyscholar.apiKey", "");
+// easyScholar 端点覆盖（空 = 内置 https://www.easyscholar.cc/...；
+// 国内可达性变化/自建代理时由用户指定）
+pref("apis.easyscholar.serverUrl", "");
 
 // Patent search API keys (kept: sources/academic-search utils reads them)
 pref("apis.uspto.apiKey", "");
@@ -81,10 +89,12 @@ pref("pdfParser.opendataloader.enabled", true);
 pref("pdfParser.opendataloader.tableEnable", "default");
 pref("pdfParser.opendataloader.returnImages", false);
 pref("pdfParser.opendataloader.timeout", 300);
+pref("pdfParser.opendataloader.jreMirror", ""); // JRE 下载镜像（空 = 官方 api.adoptium.net）
 pref("pdfParser.opendataloader.autoWatch", false);
 pref("pdfParser.opendataloader.useStructTree", false);
 pref("pdfParser.mineru.mode", "cloud"); // "cloud" | "local"
 pref("pdfParser.mineru.apiToken", ""); // cloud: sk-... Bearer token
+pref("pdfParser.mineru.cloudUrl", ""); // cloud: 端点覆盖（空 = 内置 mineru.net）
 pref("pdfParser.mineru.serverUrl", "http://127.0.0.1:8000"); // local: self-hosted endpoint
 pref("pdfParser.mineru.model", "vlm"); // "vlm" | "pipeline"
 pref("pdfParser.mineru.language", "en"); // OCR / document language

@@ -25,7 +25,6 @@ progress-saving = 儲存中...
 error-boundary-message = 發生錯誤
 error-bridge-timeout = 請求逾時：{ $method } 無回應，請重試；若反覆出現，請檢查網路、索引或模型設定。
 # Chat init timeout
-chat-init-timeout = 聊天未能在 30 秒內完成初始化。
 
 # Relative time
 time-just-now = 剛剛
@@ -34,8 +33,6 @@ time-hours-ago = { $count } 小時前
 time-days-ago = { $count } 天前
 
 # Chat Sidebar
-recommend-add-success = 已加入文獻庫：{ $title }
-recommend-add-failed = 加入失敗：{ $title }
 # Chat Message List
 # Chat Window - System Messages
 # Chat Window - Toolbar & Status
@@ -44,7 +41,6 @@ recommend-add-failed = 加入失敗：{ $title }
 # Item Picker
 # Model Quick Switch
 # Progress Bar
-progress-status-processing = 正在處理...
 
 # Export Dialog
 # Agent & Progress
@@ -143,9 +139,6 @@ semantic-sort-title = 標題
 semantic-tab-similar = 尋找相似
 semantic-tab-duplicates = 重複偵測
 # JA-2（2026-09-17 Hub 評審批 3）：檢索結果行內追蹤動作（§30.2 文獻條目出口）
-semantic-track-action = 追蹤
-semantic-track-paper-tip = 追蹤此論文的引用動態
-semantic-track-topic-tip = 無 DOI——以此標題為檢索式追蹤相關新論文
 # JA-3（2026-09-17 Hub 評審批 3）：庫內結果行「開啟」的成功回執（§31.1 頁內點擊 → Hub toast）
 semantic-opened-in-zotero = 已在 Zotero 中選取該條目
 semantic-opened-focus-failed = 已在 Zotero 中選取該條目——無法切換至 Zotero 視窗
@@ -204,7 +197,7 @@ journal-source-openalex = OpenAlex
 journal-no-data = 本地與 OpenAlex 均無資料
 journal-empty-hint = 輸入刊名或 ISSN 查詢期刊指標
 journal-empty-hint-discover = 輸入研究領域關鍵詞探索期刊
-journal-predatory-data-year = Beall's list cutoff: Jan 2017
+journal-predatory-data-year = Beall 清單截止：2017 年 1 月
 journal-not-found = 未找到該期刊
 journal-jcr-section = JCR 指標
 journal-cass-section = 中科院分區
@@ -259,7 +252,6 @@ profile-dim-language-style = 語言風格
 # Chat Errors
 copy-success = 已複製到剪貼簿
 copy-failed = 複製失敗
-save-note-success = 筆記已儲存
 chat-error-generic = 發生意外錯誤，請重試。
 chat-error-auth = API 金鑰無效，請在設定中檢查您的金鑰。
 chat-error-forbidden = 存取被拒絕，您的 API 金鑰沒有執行此操作的權限。
@@ -402,7 +394,6 @@ lit-abstract-label = 摘要
 lit-translate-btn = 翻譯
 lit-translating = 翻譯中...
 lit-translate-error = 翻譯失敗
-lit-translate-truncated = 摘要過長，已截斷翻譯
 
 # Full text（PMC 開放取得 JATS XML 優先，開放取得網頁兜底）
 lit-fulltext-title = 全文
@@ -426,9 +417,6 @@ window-init-failed = { $name } 初始化失敗。
 window-init-failed-retry = 請嘗試關閉並重新開啟視窗。
 
 # Embedding Progress
-embedding-progress-init = 正在準備嵌入...
-embedding-progress-done = 嵌入完成：共 { $count } 篇，耗時 { $elapsed }s
-embedding-progress-eta = 預估剩餘 { $eta }s
 
 # Embedding fallback notifications
 tracker-state-n-unread = { $count } 條未讀變化
@@ -448,8 +436,6 @@ hub-tab-home = 首頁
 semantic-vector-gap-desc = 建立全文索引後，可啟用語意排序、相似文獻與重複偵測。
 hub-tab-search = 搜尋
 # { $count } -> 總節點數；{ $limit } -> 建議上限
-hub-search-page-title = 搜尋
-hub-search-seg-literature = 文獻
 hub-search-seg-journal = 期刊
 hub-search-source-library = 庫內
 hub-search-engine-external = 外部
@@ -516,8 +502,6 @@ hub-settings-section-tools = 工具
 embedding-not-configured-error = 語意索引未設定：請到 設定 → AI 模型 → 嵌入 指派模型（API 模式），或切換本地模式。
 decision-not-configured-error = 決策模型未啟用：請到 設定 → AI 模型 → 決策模型 開啟，並確認已設定 OpenRouter API 金鑰。
 decision-unavailable-error = 決策服務暫時不可用——本次呼叫已跳過，走常規路徑。
-chat-citation-nav-no-pdf = 該文獻未找到 PDF 附件，無法跳轉。
-chat-citation-nav-not-found = 未找到該文獻（可能文獻庫尚未同步至此裝置）。
 # ===== UX fixes round 3 (2026-08-14) =====
 ux3-lit-refreshing = 檢索中——目前顯示上次結果
 ux3-lit-no-results-desc = 未找到結果。請調整關鍵字或篩選條件後重試。
@@ -566,10 +550,50 @@ search-sources-test-unreachable = 目前網路不可達。
 search-sources-test-failed = 測試失敗：{ $detail }
 search-sources-not-configured = 未填 key
 
+# ── 網路區域：使用者身在哪一片網際網路（2026-09-28）──
+prefs-region-title = 網路區域
+prefs-region-desc =
+    有些服務只在地球的一部分可用：easyScholar、MinerU 雲與中文核心名單只在中國大陸營運，而 Google 翻譯、DuckDuckGo 與大多數 AI 服務商在中國大陸不可達。
+    宣告所在網路後，外掛據此選取可達的預設值；下方每個區域限定端點也仍可指向你自己的鏡像。
+prefs-region-label = 網路區域
+prefs-region-auto = 自動——不宣告（沿用國際優先的出廠預設）
+prefs-region-global = 國際——可正常訪問國際網際網路
+prefs-region-cn = 中國大陸
+prefs-region-apply = 套用推薦預設值
+prefs-region-applied = { $region }：已更新 { $changes }。
+prefs-region-nochange = { $region }：無可套用的推薦值——你自己改過的設定始終不動。
+prefs-region-change-web = 預設網頁搜尋源 → { $value }
+prefs-region-change-engine = 翻譯引擎 → { $value }
+prefs-endpoints-title = 區域限定端點
+prefs-endpoints-desc =
+    這些服務只在各自所屬區域營運。留空即用內建端點；填入則改用鏡像或自建代理，改動在下次請求時生效。
+pref-endpoint-easyscholar = easyScholar 端點
+pref-endpoint-easyscholar-placeholder = 內建：https://www.easyscholar.cc/openapi/api/paper/query
+pref-endpoint-mineru = MinerU 雲端端點
+pref-endpoint-mineru-placeholder = 內建：https://mineru.net/api/v4
+pref-endpoint-wikipedia = 維基百科網域名稱
+pref-endpoint-wikipedia-placeholder = 內建：跟隨 Zotero 介面語言（如 zh.wikipedia.org）
+
+pref-endpoint-jre-mirror = Java 執行環境（JRE）下載鏡像
+pref-endpoint-jre-mirror-placeholder = 內建：https://api.adoptium.net/v3（僅在 PDF 解析後端需要自帶 Java 時下載）
+pref-endpoint-invalid = 不是合法端點——需完整的 http(s) URL，或 zh.wikipedia.org 這樣的裸主機名。
+prefs-translate-title = 翻譯
+prefs-translate-desc =
+    摘要與 PDF 翻譯使用的引擎。各引擎可達性因網路而異：被牆的引擎會讓每一段都白等一次逾時，請選真正可達的那個。
+prefs-translate-engine-label = 引擎
+prefs-translate-engine-google = Google（免費端點，免 key）
+prefs-translate-engine-bing-web = Bing 網頁版（免 key）
+prefs-translate-engine-bing = Azure Translator（需 key）
+prefs-translate-engine-deepl = DeepL（需 key）
+prefs-translate-engine-ai = AI 模型（保留公式）
+prefs-translate-engine-custom = 自訂 OpenAI 相容端點
+prefs-translate-engine-zotero-pdf-translate = zotero-pdf-translate（若已安裝）
+prefs-translate-bingregion-label = Azure 訂閱區
+prefs-translate-note = Azure 訂閱區僅對 Azure Translator 引擎生效。各引擎的 API key 尚未在本面板露出——請在配置編輯器裡改 extensions.zotero.zsearch.translate.*。
+
 {$edits}
 soul-name-datasource-manager-soul = 文獻品質資料源管理專家
 # ── 进程超时对话框 / OAuth 落地页 / 聊天与进度兜底文案（2026-09-17 清理批六）
-embedding-failed-fallback = 向量化失敗
 
 # === Shortcut Manager：說明彈窗 + Hub 設定頁快速鍵清單（2026-09-17 i18n 批）===
 # 資料側仍存 action id 與英文分類 id（註冊/匹配/分組語義不變），本族鍵只供展示取詞：
@@ -661,7 +685,7 @@ pdf-translate-batch-start = 正在批量翻譯（{ $paragraphs } 段，分 { $ch
 pdf-translate-batch-progress = 批量翻譯進度：{ $done }/{ $total } 塊
 
 # ── 主窗工具列按鈕與快捷鍵（入口，P0-4）──
-toolbar-open-search-tooltip = 開啟搜尋中心（Ctrl+Shift+K）
+toolbar-open-search-tooltip = 開啟搜尋中心（{ $shortcut }）
 
 # ── 已在庫徽章與 OA 篩選（P0-3）──
 lit-in-library = 已在庫
@@ -695,3 +719,12 @@ lit-chinese-core-tip = 命中中文核心期刊名單（經 easyScholar）
 # ── 匯入目標選擇器 ──
 lit-import-target-label = 匯入到
 lit-import-target-follow = 跟隨主窗選擇
+
+# ── 2026-09-28 交互审计修復批 ─────────────────────────────────────────
+hub-init-timeout = 搜尋介面未能在 30 秒內啟動，請重新開啟視窗。
+semantic-error-no-pane = 無可用的 Zotero 主視窗
+semantic-open-not-found = 庫中未找到該條目
+semantic-skip-metadata-embedding-unavailable = 未配置 Embedding，已跳過元資料索引
+journal-mode-seg-aria = 檢索模式
+search-sources-reachable = 可達
+aria-select-result = 選擇 { $title }

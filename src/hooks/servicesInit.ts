@@ -22,6 +22,17 @@ import { getPrefDynamic, setPrefDynamic } from "../utils/prefs";
 import { handleSearchSourceMethod } from "../ui/hub/HubSearchSourceHandler";
 import { syncToolbarButtons } from "../modules/menuManager";
 import { API_KEY_GROUPS } from "../utils/apiKeySchema";
+import { ENDPOINT_FIELDS } from "../utils/endpointSchema";
+import {
+  normalizeEndpointValue,
+  validateEndpointValue,
+} from "../utils/endpointSchema";
+import {
+  applyRegionRecommendations,
+  getNetworkRegion,
+  normalizeRegion,
+  setNetworkRegion,
+} from "../utils/region";
 import { isAcademicKeyRequired } from "../core/sources/academic-search/keyFields";
 import { config } from "../../package.json";
 
@@ -84,11 +95,14 @@ export async function servicesInit(): Promise<void> {
     ]);
 
     // 数据集导入失败旗（审计 P1-9）：此前只写 debug 日志，用户在期刊页只见
-    // 「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，可关闭。
-    const markJournalDataFailure = (stage: string) => {
+    // 「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，可关闭；
+    // 本轮全部 stage 成功即复位（否则一次失败后即使重启导入成功，横幅
+    // 也会每次打开都挂起，与横幅自身文案相悖）。
+    let journalDataFailed = false;
+    const markJournalDataFailure = () => {
+      journalDataFailed = true;
       try {
         setPrefDynamic("journalData.importFailed", true);
-        setPrefDynamic("journalData.importFailedStage", stage);
       } catch {
         /* 旗写失败不放大错误 */
       }
@@ -136,7 +150,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.jcr_import_failed", { error: String(e) });
-      markJournalDataFailure("jcr");
+      markJournalDataFailure();
     }
 
     // 2. CASS quartile data
@@ -178,7 +192,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.cass_import_failed", { error: String(e) });
-      markJournalDataFailure("cass");
+      markJournalDataFailure();
     }
 
     // 3. Warning list data
@@ -210,7 +224,7 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.warninglist_import_failed", { error: String(e) });
-      markJournalDataFailure("warning");
+      markJournalDataFailure();
     }
 
     // 4. Beall's list data (predatory journals/publishers/misleading metrics)
@@ -256,7 +270,16 @@ export async function servicesInit(): Promise<void> {
       }
     } catch (e) {
       warn("startup.bealls_import_failed", { error: String(e) });
-      markJournalDataFailure("bealls");
+      markJournalDataFailure();
+    }
+    // 本轮无任何 stage 失败（含「数据已是期望年份、无需导入」的正常路径）
+    // → 复位失败旗：上一版本遗留的 importFailed=true 不再永久挂横幅。
+    if (!journalDataFailed) {
+      try {
+        setPrefDynamic("journalData.importFailed", false);
+      } catch {
+        /* 复位失败不放大 */
+      }
     }
   } catch (e) {
     warn("startup.journal_data_failed", { error: String(e) });
@@ -305,6 +328,41 @@ export async function servicesInit(): Promise<void> {
       required: isAcademicKeyRequired(f.prefKey),
     }));
   };
+  // 区域限定端点字段表（endpointSchema 是单一事实源：面板渲染 + 各客户端
+  // 求值同源），与 getAcademicKeyFields 同一制式。校验/归一化也走宿主侧：
+  // 面板是 chrome 沙箱里的 XUL 脚本，能不持有正则就不持有（防双源漂移）。
+  (_globalThis as any).addon.api.getEndpointFields = (): any[] => [
+    ...ENDPOINT_FIELDS,
+  ];
+  (_globalThis as any).addon.api.validateEndpointValue = (
+    fieldId: string,
+    value: string,
+  ): string => {
+    const field = ENDPOINT_FIELDS.find((f) => f.fieldId === fieldId);
+    return field
+      ? validateEndpointValue(field, value)
+      : "pref-endpoint-invalid";
+  };
+  (_globalThis as any).addon.api.normalizeEndpointValue = (
+    fieldId: string,
+    value: string,
+  ): string => {
+    const field = ENDPOINT_FIELDS.find((f) => f.fieldId === fieldId);
+    return field ? normalizeEndpointValue(field, value) : String(value ?? "");
+  };
+  // 网络区域选择：读/写/套用推荐值都在宿主侧完成（推荐值的写入守门看
+  // 「当前值是否仍是出厂默认」，那判断必须与 prefs 同进程，故不放面板里）。
+  (_globalThis as any).addon.api.getNetworkRegion = (): string =>
+    getNetworkRegion();
+  (_globalThis as any).addon.api.setNetworkRegion = (region: string): void =>
+    setNetworkRegion(normalizeRegion(region));
+  (_globalThis as any).addon.api.applyRegionRecommendations = (
+    region: string,
+    force?: boolean,
+  ): string[] =>
+    applyRegionRecommendations(normalizeRegion(region), {
+      force: !!force,
+    }) as string[];
   (_globalThis as any).addon.api.t = (
     key: string,
     args?: Record<string, unknown>,

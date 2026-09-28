@@ -25,6 +25,20 @@
     <description id="zsearch-import-pdf-desc" class="pane-desc" />
   </groupbox>
 
+  <!-- ═══ 网络区域（全球性开关）═══ -->
+  <groupbox id="zsearch-region-group">
+    <caption id="zsearch-region-title" />
+    <description id="zsearch-region-desc" class="pane-desc" />
+    <hbox align="center" class="sources-toolbar">
+      <label id="zsearch-region-label" control="zsearch-region-picker" />
+      <menulist id="zsearch-region-picker" class="pane-menulist" native="true">
+        <menupopup id="zsearch-region-popup" />
+      </menulist>
+      <button id="zsearch-region-apply" class="pane-button" />
+    </hbox>
+    <description id="zsearch-region-note" class="pane-note" role="status" />
+  </groupbox>
+
   <!-- ═══ 网页搜索源 ═══ -->
   <groupbox id="zsearch-sources-group">
     <caption id="zsearch-sources-title" />
@@ -58,5 +72,47 @@
     <caption id="zsearch-academic-keys-title" />
     <description id="zsearch-academic-keys-desc" class="pane-desc" />
     <vbox id="zsearch-academic-keys-rows" class="keys-rows" />
+  </groupbox>
+
+  <!-- ═══ 区域限定端点（可覆盖为镜像/自建）═══ -->
+  <groupbox id="zsearch-endpoints-group">
+    <caption id="zsearch-endpoints-title" />
+    <description id="zsearch-endpoints-desc" class="pane-desc" />
+    <vbox id="zsearch-endpoints-rows" class="keys-rows" />
+    <description id="zsearch-endpoints-note" class="pane-note" role="status" />
+  </groupbox>
+
+  <!-- ═══ 翻译引擎 ═══ -->
+  <groupbox id="zsearch-translate-group">
+    <caption id="zsearch-translate-title" />
+    <description id="zsearch-translate-desc" class="pane-desc" />
+    <hbox align="center" class="sources-toolbar">
+      <label
+        id="zsearch-translate-engine-label"
+        control="zsearch-translate-engine"
+      />
+      <menulist
+        id="zsearch-translate-engine"
+        class="pane-menulist"
+        native="true"
+      >
+        <menupopup id="zsearch-translate-engine-popup" />
+      </menulist>
+    </hbox>
+    <hbox align="center" class="sources-toolbar">
+      <label
+        id="zsearch-translate-bingregion-label"
+        control="zsearch-translate-bingregion"
+      />
+      <menulist
+        id="zsearch-translate-bingregion"
+        class="pane-menulist"
+        editable="true"
+        native="true"
+      >
+        <menupopup id="zsearch-translate-bingregion-popup" />
+      </menulist>
+    </hbox>
+    <description id="zsearch-translate-note" class="pane-note" role="status" />
   </groupbox>
 </vbox>

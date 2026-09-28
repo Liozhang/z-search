@@ -129,6 +129,21 @@ clicking a row drills into that journal's full metrics card.
 - Scheduled uniformly by `WebSearchProvider`; the academic review-scan channel
   reuses the same stack
 
+### Network Region (global by design)
+
+- **Settings → Network region** declares which part of the internet you are on
+  (auto / global / mainland China). Declaring a region only retunes the
+  defaults that are still factory-fresh (default web source, translation
+  engine, Azure Translator region) — anything you chose yourself is never
+  overwritten, and the "Apply recommended defaults" button re-applies on demand.
+- **Region-locked endpoints are yours to point elsewhere**: easyScholar, the
+  MinerU cloud API, the Adoptium JRE download and the Wikipedia host are only
+  reachable from their own region (or language edition), so each has an override
+  field (blank = built-in) for mirrors and self-hosted proxies.
+- **Translation engines are selectable**, including a keyless Bing web engine
+  (the only keyless engine reachable in mainland China), and the Azure
+  Translator subscription region is finally editable in the pane.
+
 ### 4. Repository Search
 
 - GitHub repository search (`api.github.com/search/repositories`, sorted by

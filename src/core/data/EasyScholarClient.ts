@@ -8,6 +8,9 @@
  * （[{rankName,…}]）两种已知形状，任何不识别的形状静默返回未命中，
  * 绝不猜测。未配置 key 时整条链路短路（零请求）。
  *
+ * 端点是区域限定的（服务只在中国大陆运营）：`apis.easyscholar.serverUrl`
+ * 可覆盖为代理/镜像，见 `resolveEasyScholarEndpoint` 与 utils/region。
+ *
  * @module core/data/EasyScholarClient
  */
 
@@ -26,6 +29,28 @@ let active = 0;
 const MAX_CONCURRENT = 4;
 
 const ENDPOINT = "https://www.easyscholar.cc/openapi/api/paper/query";
+
+/** 端点覆盖 pref（空 = 内置 ENDPOINT）。国内可达性变化或走自建代理时由用户指定。 */
+const ENDPOINT_PREF = "extensions.zotero.zsearch.apis.easyscholar.serverUrl";
+
+/**
+ * 当前生效的 easyScholar 端点。
+ *
+ * 该服务只在中国大陆运营（控制台与 openapi 均无海外入口），所以端点是
+ * 区域限定的：内置值只是今天可达的那一个，用户需要时用
+ * `apis.easyscholar.serverUrl` 换成自己的代理/镜像。
+ */
+export function resolveEasyScholarEndpoint(): string {
+  try {
+    const v = (globalThis as any).Zotero?.Prefs?.get(ENDPOINT_PREF, true);
+    if (typeof v === "string" && /^https?:\/\//i.test(v.trim())) {
+      return v.trim().replace(/\/+$/, "");
+    }
+  } catch {
+    /* 读 pref 失败 → 回落内置端点 */
+  }
+  return ENDPOINT;
+}
 
 /** 名单名（API 返回的中文键）→ 稳定码。别名容忍不同版本的键名。 */
 const LIST_NAME_TO_CODE: Array<[RegExp, ChineseCoreCode]> = [
@@ -91,7 +116,7 @@ async function fetchCore(
   try {
     const resp = await Zotero.HTTP.request(
       "GET",
-      `${ENDPOINT}?searchName=${encodeURIComponent(name)}&key=${encodeURIComponent(key)}`,
+      `${resolveEasyScholarEndpoint()}?searchName=${encodeURIComponent(name)}&key=${encodeURIComponent(key)}`,
       { headers: { Accept: "application/json" }, timeout: 15000 },
     );
     const body = JSON.parse(resp.responseText ?? "{}");

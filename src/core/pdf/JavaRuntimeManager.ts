@@ -23,6 +23,7 @@
  */
 
 import { safeDebug } from "../../utils/logger";
+import { getPrefDynamic } from "../../utils/prefs";
 import { getString } from "../../utils/locale";
 
 export interface JavaStatus {
@@ -392,6 +393,23 @@ interface AdoptiumAsset {
 }
 
 /**
+ * Adoptium API 基址。
+ *
+ * 默认 PDF 解析后端（OpenDataLoader）要跑 Java，机器上没有 Java 11+ 时由
+ * 这里下载 Temurin 便携 JRE。api.adoptium.net 在国内可达但慢/偶发限流，
+ * 而镜像（或自建反代）需要换基址——与 EasyScholar / MinerU 云同一处置：
+ * 端点可由 `pdfParser.opendataloader.jreMirror` 覆盖，留空用官方地址。
+ */
+const ADOPTIUM_BASE = "https://api.adoptium.net/v3";
+
+export function resolveAdoptiumBase(): string {
+  const override = (getPrefDynamic("pdfParser.opendataloader.jreMirror") ||
+    "") as string;
+  const v = override.trim();
+  return /^https?:\/\//i.test(v) ? v.replace(/\/+$/, "") : ADOPTIUM_BASE;
+}
+
+/**
  * Build the Adoptium binary download URL for the current platform/arch.
  * The API responds 307 → the actual GitHub release asset.
  */
@@ -414,7 +432,7 @@ function resolveAdoptiumAsset(featureVersion: number): AdoptiumAsset {
     archive = "tar.gz";
   }
 
-  const url = `https://api.adoptium.net/v3/binary/latest/${featureVersion}/ga/${os}/${arch}/jre/hotspot/normal/eclipse`;
+  const url = `${resolveAdoptiumBase()}/binary/latest/${featureVersion}/ga/${os}/${arch}/jre/hotspot/normal/eclipse`;
   // Filename is best-effort (only used for logging); the server sets it.
   const filename = `temurin-${featureVersion}-jre-${os}-${arch}.${archive}`;
   return { url, filename, archive };

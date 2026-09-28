@@ -39,11 +39,28 @@ export interface MinerUConfig {
   mode: "cloud" | "local";
   apiToken: string;
   serverUrl: string;
+  /** cloud 模式端点基址（pref 覆盖；内置值为 mineru.net，国内专属服务）。 */
+  cloudBaseUrl: string;
   model: string; // "vlm" | "pipeline"
   language: string;
 }
 
 const CLOUD_BASE = "https://mineru.net/api/v4";
+
+/**
+ * 当前生效的 MinerU 云端基址。
+ *
+ * mineru.net 只在中国大陆运营，与 EasyScholar 同属区域限定端点：本地
+ * 自建模式早有 `pdfParser.mineru.serverUrl`，云端却没有对应覆盖，跨境
+ * 用户（或站点变更时）只能改代码。`pdfParser.mineru.cloudUrl` 补上这一半。
+ */
+export function resolveMinerUCloudBaseUrl(): string {
+  const override =
+    (getPrefDynamic("pdfParser.mineru.cloudUrl") as string) || "";
+  return /^https?:\/\//i.test(override.trim())
+    ? override.trim().replace(/\/+$/, "")
+    : CLOUD_BASE;
+}
 
 export function loadMinerUConfig(): MinerUConfig {
   const rawMode =
@@ -54,6 +71,7 @@ export function loadMinerUConfig(): MinerUConfig {
     serverUrl:
       (getPrefDynamic("pdfParser.mineru.serverUrl") as string) ||
       "http://127.0.0.1:8000",
+    cloudBaseUrl: resolveMinerUCloudBaseUrl(),
     model: (getPrefDynamic("pdfParser.mineru.model") as string) || "vlm",
     language: (getPrefDynamic("pdfParser.mineru.language") as string) || "en",
   };
@@ -103,7 +121,7 @@ async function parseCloud(
   onProgress(getString("pdf-mineru-requesting-url"));
   const fileName = filePath.split(/[\\/]/).pop() || "document.pdf";
 
-  const batchResp = await fetchJson(`${CLOUD_BASE}/file-urls/batch`, {
+  const batchResp = await fetchJson(`${config.cloudBaseUrl}/file-urls/batch`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${config.apiToken}`,
@@ -156,6 +174,7 @@ async function parseCloud(
   onProgress(getString("pdf-mineru-parsing"));
   const result = await pollBatchResult(
     batchId,
+    config.cloudBaseUrl,
     config.apiToken,
     signal,
     onProgress,
@@ -184,11 +203,12 @@ async function parseCloud(
 /** Poll batch results with 2s interval, 5min timeout. */
 async function pollBatchResult(
   batchId: string,
+  cloudBaseUrl: string,
   token: string,
   signal: AbortSignal | undefined,
   onProgress: (msg: string) => void,
 ): Promise<any> {
-  const url = `${CLOUD_BASE}/extract-results/batch/${batchId}`;
+  const url = `${cloudBaseUrl}/extract-results/batch/${batchId}`;
   const maxWaitMs = 5 * 60 * 1000;
   const intervalMs = 2000;
   const start = Date.now();
@@ -339,7 +359,7 @@ export async function checkMinerUHealth(): Promise<MinerUHealthResult> {
       };
     }
     try {
-      const resp = await fetchJson(`${CLOUD_BASE}/file-urls/batch`, {
+      const resp = await fetchJson(`${config.cloudBaseUrl}/file-urls/batch`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${config.apiToken}`,

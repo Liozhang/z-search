@@ -19,6 +19,7 @@ declare namespace _ZoteroTypes {
       "ai.maxIterations": number;
       "ai.multiStepPilot": boolean;
       "ai.model.maxContext": number;
+      "region": string;
       "search.queryRewrite": boolean;
       "search.rerankEnabled": boolean;
       "search.rerankModel": string;
@@ -28,6 +29,7 @@ declare namespace _ZoteroTypes {
       "search.importAttachPdf": boolean;
       "search.importTarget": string;
       "search.web.defaultProvider": string;
+      "search.web.wikipedia.host": string;
       "search.web.addedSources": string;
       "search.web.serpapi.apiKey": string;
       "search.web.brave.apiKey": string;
@@ -49,6 +51,7 @@ declare namespace _ZoteroTypes {
       "apis.elsevier.apiKey": string;
       "apis.github.token": string;
       "apis.easyscholar.apiKey": string;
+      "apis.easyscholar.serverUrl": string;
       "apis.uspto.apiKey": string;
       "apis.epo.consumerKey": string;
       "apis.epo.consumerSecret": string;
@@ -64,10 +67,12 @@ declare namespace _ZoteroTypes {
       "pdfParser.opendataloader.tableEnable": string;
       "pdfParser.opendataloader.returnImages": boolean;
       "pdfParser.opendataloader.timeout": number;
+      "pdfParser.opendataloader.jreMirror": string;
       "pdfParser.opendataloader.autoWatch": boolean;
       "pdfParser.opendataloader.useStructTree": boolean;
       "pdfParser.mineru.mode": string;
       "pdfParser.mineru.apiToken": string;
+      "pdfParser.mineru.cloudUrl": string;
       "pdfParser.mineru.serverUrl": string;
       "pdfParser.mineru.model": string;
       "pdfParser.mineru.language": string;

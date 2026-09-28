@@ -31,8 +31,6 @@ time-hours-ago = { $count } 小时前
 time-days-ago = { $count } 天前
 
 # Chat Sidebar
-recommend-add-success = 已添加到文献库：{ $title }
-recommend-add-failed = 添加失败：{ $title }
 # Chat Message List
 # Chat Window - System Messages
 # Chat Window - Toolbar & Status
@@ -41,7 +39,6 @@ recommend-add-failed = 添加失败：{ $title }
 # Item Picker
 # Model Quick Switch
 # Progress Bar
-progress-status-processing = 正在处理...
 
 # Export Dialog
 # Agent & Progress
@@ -132,9 +129,6 @@ semantic-sort-title = 标题
 semantic-tab-similar = 查找相似
 semantic-tab-duplicates = 重复检测
 # JA-2（2026-09-17 Hub 评审批 3）：检索结果行内追踪动作（§30.2 文献条目出口）
-semantic-track-action = 追踪
-semantic-track-paper-tip = 追踪此论文的引用动态
-semantic-track-topic-tip = 无 DOI——以此标题为检索式追踪相关新论文
 # JA-3（2026-09-17 Hub 评审批 3）：库内结果行「打开」的成功回执（§31.1 页内点击 → Hub toast）
 semantic-opened-in-zotero = 已在 Zotero 中选中该条目
 semantic-opened-focus-failed = 已在 Zotero 中选中该条目——未能切换到 Zotero 窗口
@@ -248,7 +242,6 @@ profile-dim-language-style = 语言风格
 # Chat Errors
 copy-success = 复制成功
 copy-failed = 复制失败
-save-note-success = 笔记已保存
 chat-error-generic = 发生意外错误，请重试。
 chat-error-auth = API 密钥无效，请在设置中检查您的密钥。
 chat-error-forbidden = 访问被拒绝，您的 API 密钥没有执行此操作的权限。
@@ -261,7 +254,6 @@ chat-error-cancelled = 请求已取消。
 chat-error-no-provider = 尚未为该功能配置 AI 模型。请打开 Leadero 设置 → AI 模型，为对应功能指派模型（聊天与智能体需分别指派）。
 chat-error-with-detail = 错误：{ $error }
 # ── 排队面板（运行中提交入队；借鉴 ZCode 批 2026-09-07）──
-chat-init-timeout = 聊天未能在 30 秒内完成初始化。
 
 # Slash Menu Commands — keep in sync with src/react/components/Input/slashCommands.ts
 # ── Soul / Agent 名称 ──
@@ -322,9 +314,6 @@ window-init-failed = { $name } 初始化失败。
 window-init-failed-retry = 请尝试关闭并重新打开窗口。
 
 # Embedding Progress
-embedding-progress-init = 正在准备嵌入...
-embedding-progress-done = 嵌入完成：共 { $count } 篇，耗时 { $elapsed }s
-embedding-progress-eta = 预估剩余 { $eta }s
 
 # Embedding fallback notifications
 # Multi-agent tasks
@@ -420,7 +409,6 @@ lit-abstract-label = 摘要
 lit-translate-btn = 翻译
 lit-translating = 翻译中...
 lit-translate-error = 翻译失败
-lit-translate-truncated = 摘要过长，已截断翻译
 
 # Full text（PMC 开放获取 JATS XML 优先，开放获取网页兜底）
 lit-fulltext-title = 全文
@@ -455,8 +443,6 @@ hub-tab-home = 主页
 semantic-vector-gap-desc = 构建全文索引后，可启用语义排序、相似文献与重复检测。
 hub-tab-search = 搜索
 # { $count } -> 总节点数；{ $limit } -> 推荐上限
-hub-search-page-title = 搜索
-hub-search-seg-literature = 文献
 hub-search-seg-journal = 期刊
 hub-search-source-library = 库内
 hub-search-engine-external = 外部
@@ -524,8 +510,6 @@ hub-settings-section-tools = 工具
 embedding-not-configured-error = 语义索引未配置：请到 设置 → AI 模型 → 嵌入 指派模型（API 模式），或切换本地模式。
 decision-not-configured-error = 决策模型未启用：请到 设置 → AI 模型 → 决策模型 开启，并确认已配置 OpenRouter API 密钥。
 decision-unavailable-error = 决策服务暂时不可用——本次调用已跳过，走常规路径。
-chat-citation-nav-no-pdf = 该文献未找到 PDF 附件，无法跳转。
-chat-citation-nav-not-found = 未找到该文献（可能文献库尚未同步至当前设备）。
 # ===== UX fixes round 3 (2026-08-14) =====
 ux3-lit-refreshing = 检索中——当前显示上次结果
 ux3-lit-no-results-desc = 未找到结果。请调整关键词或筛选条件后重试。
@@ -567,9 +551,49 @@ journal-data-import-failed = 内置期刊数据集（JCR/中科院分区/预警/
 search-sources-test-unreachable = 当前网络不可达。
 search-sources-test-failed = 测试失败：{ $detail }
 search-sources-not-configured = 未填 key
+
+# ── 网络区域：用户身处哪一片互联网（2026-09-28）──
+prefs-region-title = 网络区域
+prefs-region-desc =
+    有些服务只在地球的一部分可用：easyScholar、MinerU 云与中文核心名单只在中国大陆运营，而 Google 翻译、DuckDuckGo 与大多数 AI 服务商在中国大陆不可达。
+    声明所在网络后，插件据此选取可达的默认值；下方每个区域限定端点也仍可指向你自己的镜像。
+prefs-region-label = 网络区域
+prefs-region-auto = 自动——不声明（沿用国际优先的出厂默认）
+prefs-region-global = 国际——可正常访问国际互联网
+prefs-region-cn = 中国大陆
+prefs-region-apply = 套用推荐默认值
+prefs-region-applied = { $region }：已更新 { $changes }。
+prefs-region-nochange = { $region }：无可套用的推荐值——你自己改过的设置始终不动。
+prefs-region-change-web = 默认网页搜索源 → { $value }
+prefs-region-change-engine = 翻译引擎 → { $value }
+prefs-endpoints-title = 区域限定端点
+prefs-endpoints-desc =
+    这些服务只在各自所属区域运营。留空即用内置端点；填入则改用镜像或自建代理，改动在下次请求时生效。
+pref-endpoint-easyscholar = easyScholar 端点
+pref-endpoint-easyscholar-placeholder = 内置：https://www.easyscholar.cc/openapi/api/paper/query
+pref-endpoint-mineru = MinerU 云端端点
+pref-endpoint-mineru-placeholder = 内置：https://mineru.net/api/v4
+pref-endpoint-wikipedia = 维基百科域名
+pref-endpoint-wikipedia-placeholder = 内置：跟随 Zotero 界面语言（如 zh.wikipedia.org）
+
+pref-endpoint-jre-mirror = Java 运行时（JRE）下载镜像
+pref-endpoint-jre-mirror-placeholder = 内置：https://api.adoptium.net/v3（仅在 PDF 解析后端需要自带 Java 时下载）
+pref-endpoint-invalid = 不是合法端点——需完整的 http(s) URL，或 zh.wikipedia.org 这样的裸主机名。
+prefs-translate-title = 翻译
+prefs-translate-desc =
+    摘要与 PDF 翻译使用的引擎。各引擎可达性因网络而异：被墙的引擎会让每一段都白等一次超时，请选真正可达的那个。
+prefs-translate-engine-label = 引擎
+prefs-translate-engine-google = Google（免费端点，免 key）
+prefs-translate-engine-bing-web = Bing 网页版（免 key）
+prefs-translate-engine-bing = Azure Translator（需 key）
+prefs-translate-engine-deepl = DeepL（需 key）
+prefs-translate-engine-ai = AI 模型（保留公式）
+prefs-translate-engine-custom = 自定义 OpenAI 兼容端点
+prefs-translate-engine-zotero-pdf-translate = zotero-pdf-translate（若已安装）
+prefs-translate-bingregion-label = Azure 订阅区
+prefs-translate-note = Azure 订阅区仅对 Azure Translator 引擎生效。各引擎的 API key 尚未在本面板露出——请在配置编辑器里改 extensions.zotero.zsearch.translate.*。
 soul-name-datasource-manager-soul = 文献质量数据源管理专家
 # ── 进程超时对话框 / OAuth 落地页 / 聊天与进度兜底文案（2026-09-17 清理批六）
-embedding-failed-fallback = 向量化失败
 
 # === Shortcut Manager：帮助弹窗 + Hub 设置页快捷键列表（2026-09-17 i18n 批）===
 # 数据侧仍存 action id 与英文分类 id（注册/匹配/分组语义不变），本族键只供展示取词：
@@ -661,7 +685,7 @@ pdf-translate-batch-start = 正在批量翻译（{ $paragraphs } 段，分 { $ch
 pdf-translate-batch-progress = 批量翻译进度：{ $done }/{ $total } 块
 
 # ── 主窗工具栏按钮与快捷键（入口，P0-4）──
-toolbar-open-search-tooltip = 打开搜索中心（Ctrl+Shift+K）
+toolbar-open-search-tooltip = 打开搜索中心（{ $shortcut }）
 
 # ── 已在库徽章与 OA 筛选（P0-3）──
 lit-in-library = 已在库
@@ -695,3 +719,12 @@ lit-chinese-core-tip = 命中中文核心期刊名单（经 easyScholar）
 # ── 导入目标选择器 ──
 lit-import-target-label = 导入到
 lit-import-target-follow = 跟随主窗选择
+
+# ── 2026-09-28 交互审计修复批 ──────────────────────────────────────────
+hub-init-timeout = 搜索界面未能在 30 秒内启动，请重新打开窗口。
+semantic-error-no-pane = 无可用的 Zotero 主窗口
+semantic-open-not-found = 库中未找到该条目
+semantic-skip-metadata-embedding-unavailable = 未配置 Embedding，已跳过元数据索引
+journal-mode-seg-aria = 检索模式
+search-sources-reachable = 可达
+aria-select-result = 选择 { $title }

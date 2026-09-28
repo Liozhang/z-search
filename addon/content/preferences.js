@@ -26,6 +26,53 @@ function xul(tag) {
   return document.createElementNS(XUL_NS, tag);
 }
 
+/**
+ * 网络区域选项（值 = region pref；文案走 FTL）。
+ * 顺序即菜单顺序：auto 在最前（缺省 = 不声明）。
+ */
+var REGION_OPTIONS = [
+  { value: "auto", labelKey: "prefs-region-auto" },
+  { value: "global", labelKey: "prefs-region-global" },
+  { value: "cn", labelKey: "prefs-region-cn" },
+];
+
+/**
+ * 翻译引擎选项（值 = translate.engineType；引擎语义见
+ * core/translation/translationEngines）。可达性是跨境用户的主要决策依据，
+ * 故 label 里直接写明「免 key / 需 key」。
+ */
+var ENGINE_OPTIONS = [
+  { value: "google", labelKey: "prefs-translate-engine-google" },
+  { value: "bing-web", labelKey: "prefs-translate-engine-bing-web" },
+  { value: "bing", labelKey: "prefs-translate-engine-bing" },
+  { value: "deepl", labelKey: "prefs-translate-engine-deepl" },
+  { value: "ai", labelKey: "prefs-translate-engine-ai" },
+  { value: "custom", labelKey: "prefs-translate-engine-custom" },
+  {
+    value: "zotero-pdf-translate",
+    labelKey: "prefs-translate-engine-zotero-pdf-translate",
+  },
+];
+
+/** Azure Translator 订阅区常用值（可编辑：非列出的 region 手填即可）。 */
+var AZURE_REGIONS = [
+  "global",
+  "chinanorth",
+  "chinanorth2",
+  "eastasia",
+  "southeastasia",
+  "westeurope",
+  "eastus",
+  "westus",
+];
+
+/** 区域推荐值改动的三个 pref 键 → 回显用 FTL 片段 key。 */
+var REGION_CHANGE_LABELS = {
+  "search.web.defaultProvider": "prefs-region-change-web",
+  "translate.engineType": "prefs-region-change-engine",
+  "translate.bing.region": "prefs-region-change-bingregion",
+};
+
 var ZSearchPrefs = {
   /** searchSources.list 的结果快照。 */
   data: null,
@@ -122,7 +169,84 @@ var ZSearchPrefs = {
     })();
     bindCheckbox(pdfCb, "search.importAttachPdf", true);
 
+    this.initRegion();
+    this.initEndpoints();
+    this.initTranslate();
+
     void this.refresh();
+  },
+
+  // ── 网络区域 ═══════════════════════════════════════════════════════════
+
+  /** 区域组静态文案 + 菜单 + 两个写入口（切选即套用推荐值 / 按钮 force 重套）。 */
+  initRegion() {
+    var doc = document;
+    doc.getElementById("zsearch-region-title").textContent =
+      this.t("prefs-region-title");
+    doc.getElementById("zsearch-region-desc").textContent =
+      this.t("prefs-region-desc");
+    doc
+      .getElementById("zsearch-region-label")
+      .setAttribute("value", this.t("prefs-region-label"));
+    var btn = doc.getElementById("zsearch-region-apply");
+    btn.setAttribute("label", this.t("prefs-region-apply"));
+    this.renderRegionMenu();
+    doc
+      .getElementById("zsearch-region-popup")
+      .addEventListener("popuphidden", () => this.onRegionPicked());
+    btn.addEventListener("command", () => this.applyRegion(true));
+  },
+
+  // ── 区域限定端点 ═══════════════════════════════════════════════════════
+
+  initEndpoints() {
+    var doc = document;
+    doc.getElementById("zsearch-endpoints-title").textContent = this.t(
+      "prefs-endpoints-title",
+    );
+    doc.getElementById("zsearch-endpoints-desc").textContent = this.t(
+      "prefs-endpoints-desc",
+    );
+    this.renderEndpoints();
+  },
+
+  // ── 翻译引擎 ═══════════════════════════════════════════════════════════
+
+  initTranslate() {
+    var doc = document;
+    doc.getElementById("zsearch-translate-title").textContent = this.t(
+      "prefs-translate-title",
+    );
+    doc.getElementById("zsearch-translate-desc").textContent = this.t(
+      "prefs-translate-desc",
+    );
+    doc
+      .getElementById("zsearch-translate-engine-label")
+      .setAttribute("value", this.t("prefs-translate-engine-label"));
+    doc
+      .getElementById("zsearch-translate-bingregion-label")
+      .setAttribute("value", this.t("prefs-translate-bingregion-label"));
+    doc.getElementById("zsearch-translate-note").textContent = this.t(
+      "prefs-translate-note",
+    );
+    this.renderTranslateEngine();
+    this.renderTranslateBingRegion();
+    var api = window.Zotero.ZSearch.api;
+    doc
+      .getElementById("zsearch-translate-engine-popup")
+      .addEventListener("popuphidden", () => {
+        var engine =
+          doc.getElementById("zsearch-translate-engine").value || "google";
+        api.setPrefDynamic("translate.engineType", engine);
+        this.syncBingRegionEnabled(engine);
+      });
+    // 可编辑菜单：手输 region 未必触发 popuphidden，change 事件兜底落盘
+    doc
+      .getElementById("zsearch-translate-bingregion")
+      .addEventListener("change", () => {
+        var ml = doc.getElementById("zsearch-translate-bingregion");
+        api.setPrefDynamic("translate.bing.region", ml.value.trim());
+      });
   },
 
   // ── 数据 ────────────────────────────────────────────────────────────────
@@ -194,7 +318,9 @@ var ZSearchPrefs = {
       return { text: this.t("search-sources-not-configured"), tone: "warn" };
     if (s.health === "ok")
       return {
-        text: this.t("search-sources-test-ok", { count: 1 }),
+        // 行状态只说「可达」——真实条数只在「测试」按钮的即时回执里
+        // （runTestSelected 的 setNote）；此前这里硬编码 count:1 谎报条数。
+        text: this.t("search-sources-reachable"),
         tone: "ok",
       };
     if (s.health === "unreachable")
@@ -291,8 +417,12 @@ var ZSearchPrefs = {
         // <preference> 绑定（动态行 + 统一审计通路）。
         input.addEventListener("change", function () {
           api.setPrefDynamic(f.prefKey, input.value);
-          // key 变更即失效该源健康判罚——旧 unreachable 会短路后续搜索/测试
-          var m = /^search\.web\.([^.]+)\.apiKey$/.exec(f.prefKey);
+          // key/实例 URL/cx 变更即失效该源健康判罚——旧 unreachable 会短路
+          // 后续搜索/测试（此前只匹配 *.apiKey：SearXNG instanceUrl 与
+          // Google cx 改动不触发，行状态仍显 bad 需重启或手动测试才恢复）。
+          var m = /^search\.web\.([^.]+)\.(apiKey|instanceUrl|cx)$/.exec(
+            f.prefKey,
+          );
           if (m) void self.call("searchSources.invalidate", { id: m[1] });
           void self.refresh();
         });
@@ -389,11 +519,213 @@ var ZSearchPrefs = {
 
   /** 状态行（测试结果/错误）：文本 + 色档，具名 tone-*。 */
   setNote(text, tone) {
-    var el = document.getElementById("zsearch-source-note");
-    // description 的渲染正文是 textContent（Zotero 偏好窗自身同款：
-    // preferences.js 会把 value 同步进 textContent），勿写 .value。
+    this.setNoteEl(document.getElementById("zsearch-source-note"), text, tone);
+  },
+
+  /** 具名提示行：区域/端点/翻译三组各占一行，互不擦写。 */
+  setNoteEl(el, text, tone) {
+    if (!el) return;
     el.textContent = text || "";
     el.setAttribute("class", "pane-note" + (tone ? " tone-" + tone : ""));
+  },
+
+  // ── 网络区域 ────────────────────────────────────────────────────────────
+
+  /** 区域菜单项（label 走 FTL，值即 region pref）。 */
+  renderRegionMenu() {
+    var popup = document.getElementById("zsearch-region-popup");
+    while (popup.firstChild) popup.removeChild(popup.firstChild);
+    var self = this;
+    var cur = this.regionValue();
+    REGION_OPTIONS.forEach(function (o) {
+      var mi = xul("menuitem");
+      mi.setAttribute("label", self.t(o.labelKey));
+      mi.setAttribute("value", o.value);
+      if (o.value === cur) mi.setAttribute("selected", "true");
+      popup.appendChild(mi);
+    });
+    document.getElementById("zsearch-region-picker").value = cur;
+  },
+
+  regionValue() {
+    var api = window.Zotero.ZSearch.api;
+    var v = api.getNetworkRegion && api.getNetworkRegion();
+    return v === "global" || v === "cn" ? v : "auto";
+  },
+
+  /** 区域选项的中文/英文显示名（回显用）。 */
+  regionLabel(value) {
+    for (var i = 0; i < REGION_OPTIONS.length; i++) {
+      if (REGION_OPTIONS[i].value === value)
+        return this.t(REGION_OPTIONS[i].labelKey);
+    }
+    return String(value || "auto");
+  },
+
+  /**
+   * 切换区域：写 pref + 套用该区域的推荐默认值。
+   *
+   * 套用是守门的（宿主侧只改「仍是出厂默认」的键）——用户自己选过的搜索源/
+   * 引擎不被区域选择推翻；按钮的「重新应用」才 force 覆盖。
+   *
+   * popuphidden 在「点开又 Esc 关掉」时也会 onto，故这里按值去重：只有区域
+   * 真的变了才写 pref、才动提示行。
+   */
+  async onRegionPicked() {
+    var ml = document.getElementById("zsearch-region-picker");
+    var region = ml.value || "auto";
+    var api = window.Zotero.ZSearch.api;
+    if (region === this.regionValue()) return;
+    if (api.setNetworkRegion) api.setNetworkRegion(region);
+    await this.applyRegion(false);
+  },
+
+  async applyRegion(force) {
+    var self = this;
+    var api = window.Zotero.ZSearch.api;
+    var ml = document.getElementById("zsearch-region-picker");
+    var region = ml.value || "auto";
+    var note = document.getElementById("zsearch-region-note");
+    var written =
+      (api.applyRegionRecommendations &&
+        api.applyRegionRecommendations(region, !!force)) ||
+      [];
+    if (!written.length) {
+      this.setNoteEl(
+        note,
+        this.t("prefs-region-nochange", { region: this.regionLabel(region) }),
+        "warn",
+      );
+    } else {
+      var parts = written.map(function (k) {
+        var v = String(api.getPrefDynamic(k) ?? "");
+        return self.t(REGION_CHANGE_LABELS[k], { value: v || "—" });
+      });
+      this.setNoteEl(
+        note,
+        this.t("prefs-region-applied", {
+          region: this.regionLabel(region),
+          changes: parts.join(" · "),
+        }),
+        "ok",
+      );
+    }
+    // 默认搜索源可能被推荐值改写 → 重拉 list 让默认源菜单跟上（keepNote：
+    // 不擦上面刚写的提示）。
+    await this.refresh(true);
+  },
+
+  // ── 区域限定端点 ────────────────────────────────────────────────────────
+
+  /**
+   * 端点覆盖行（easyScholar / MinerU 云 / 维基百科域名）。
+   *
+   * 留空 = 用内置端点；校验形状后才落盘（非法值不写，提示行报错）——
+   * 这三个字段都会被拼进请求 URL，坏值必须当场拦住。
+   */
+  renderEndpoints() {
+    var rows = document.getElementById("zsearch-endpoints-rows");
+    if (!rows) return;
+    while (rows.firstChild) rows.removeChild(rows.firstChild);
+    var self = this;
+    var api = window.Zotero.ZSearch.api;
+    var fields = (api.getEndpointFields && api.getEndpointFields()) || [];
+    fields.forEach(function (f) {
+      var row = xul("hbox");
+      row.setAttribute("class", "key-row");
+      row.setAttribute("align", "center");
+
+      var label = xul("label");
+      label.setAttribute("class", "key-label");
+      label.value = self.t(f.labelKey);
+      label.setAttribute("flex", "1");
+      row.appendChild(label);
+
+      var input = xul("textbox");
+      input.setAttribute("class", "key-input");
+      input.setAttribute("type", "text");
+      input.setAttribute("size", "28");
+      input.setAttribute("flex", "1");
+      input.setAttribute("tooltiptext", self.t(f.placeholderKey));
+      input.value = String(api.getPrefDynamic(f.prefKey) ?? "");
+      input.addEventListener("change", function () {
+        var raw = input.value;
+        // 校验与归一化都问宿主（endpointSchema 单一事实源）：面板沙箱不持正则，
+        // 非法值不落盘，提示行报错。
+        var bad = api.validateEndpointValue
+          ? api.validateEndpointValue(f.fieldId, raw)
+          : "";
+        if (bad) {
+          self.setNoteEl(
+            document.getElementById("zsearch-endpoints-note"),
+            self.t(bad),
+            "bad",
+          );
+          return;
+        }
+        var value = api.normalizeEndpointValue
+          ? api.normalizeEndpointValue(f.fieldId, raw)
+          : String(raw || "").trim();
+        api.setPrefDynamic(f.prefKey, value);
+        self.setNoteEl(
+          document.getElementById("zsearch-endpoints-note"),
+          "",
+          "",
+        );
+      });
+      row.appendChild(input);
+      rows.appendChild(row);
+    });
+  },
+
+  // ── 翻译引擎 ────────────────────────────────────────────────────────────
+
+  renderTranslateEngine() {
+    var popup = document.getElementById("zsearch-translate-engine-popup");
+    while (popup.firstChild) popup.removeChild(popup.firstChild);
+    var self = this;
+    var api = window.Zotero.ZSearch.api;
+    var cur =
+      String(api.getPrefDynamic("translate.engineType") ?? "") || "google";
+    ENGINE_OPTIONS.forEach(function (o) {
+      var mi = xul("menuitem");
+      mi.setAttribute("label", self.t(o.labelKey));
+      mi.setAttribute("value", o.value);
+      if (o.value === cur) mi.setAttribute("selected", "true");
+      popup.appendChild(mi);
+    });
+    var ml = document.getElementById("zsearch-translate-engine");
+    ml.value = cur;
+    this.syncBingRegionEnabled(cur);
+  },
+
+  /** Azure 订阅区只对 Azure Translator 引擎有意义——其余引擎置灰。 */
+  syncBingRegionEnabled(engine) {
+    var ml = document.getElementById("zsearch-translate-bingregion");
+    var lab = document.getElementById("zsearch-translate-bingregion-label");
+    if (engine === "bing") {
+      ml.removeAttribute("disabled");
+      if (lab) lab.removeAttribute("disabled");
+    } else {
+      ml.setAttribute("disabled", "true");
+      if (lab) lab.setAttribute("disabled", "true");
+    }
+  },
+
+  renderTranslateBingRegion() {
+    var popup = document.getElementById("zsearch-translate-bingregion-popup");
+    while (popup.firstChild) popup.removeChild(popup.firstChild);
+    var api = window.Zotero.ZSearch.api;
+    var cur =
+      String(api.getPrefDynamic("translate.bing.region") ?? "") || "global";
+    AZURE_REGIONS.forEach(function (r) {
+      var mi = xul("menuitem");
+      mi.setAttribute("label", r);
+      mi.setAttribute("value", r);
+      if (r === cur) mi.setAttribute("selected", "true");
+      popup.appendChild(mi);
+    });
+    document.getElementById("zsearch-translate-bingregion").value = cur;
   },
 
   // ── 交互 ────────────────────────────────────────────────────────────────
