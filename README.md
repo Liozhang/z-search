@@ -134,8 +134,16 @@ clicking a row drills into that journal's full metrics card.
 - **Settings → Network region** declares which part of the internet you are on
   (auto / global / mainland China). Declaring a region only retunes the
   defaults that are still factory-fresh (default web source, translation
-  engine, Azure Translator region) — anything you chose yourself is never
-  overwritten, and the "Apply recommended defaults" button re-applies on demand.
+  engine, Azure Translator region, CAS journal-ranking visibility) — anything
+  you chose yourself is never overwritten, and the "Apply recommended
+  defaults" button re-applies on demand.
+- **China-only data follows the region, and stays yours to override**: the CAS
+  journal partition (China's research-evaluation system, built in offline)
+  shows by default; declaring mainland China keeps it, while declaring global
+  hides it from journal metrics, literature badges and academic scoring
+  (scoring falls back to pure JCR) and the item-tree metrics column. An
+  independent auto/show/hide dropdown in the same group overrides that default
+  — global users study Chinese journals too, so it is never hard-removed.
 - **Region-locked endpoints are yours to point elsewhere**: easyScholar, the
   MinerU cloud API, the Adoptium JRE download and the Wikipedia host are only
   reachable from their own region (or language edition), so each has an override
