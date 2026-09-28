@@ -10,11 +10,14 @@
  *     这个 tab——状态条只读库内腿，构建/重建/进度住状态区，而「构建全文
  *     索引」的主按钮住空态（无索引或向量缺口时，空态即引导，不再平铺横幅）。
  *
- * tab 即范围：筛选弹窗按 scope 分流分区（web=来源/查询，local=库内全文
- * 范围），includeLibrary 开关与混列表随之退役。
+ * 2026-09-28 域 tab 三段化（用户裁决）：页内 tab 行上移为 pane 级三段
+ * （网络/本地/期刊，见 SearchPane），scope 随之改为受控 props——本组件
+ * 不再持有 tab 状态，程序化写回（深链切本地/navigateHome 回网络）经
+ * onScopeChange 上抛。tab 即范围：筛选弹窗按 scope 分流分区（web=来源/
+ * 查询，local=库内全文范围），includeLibrary 开关与混列表随之退役。
  *
  * 三段稳定骨架（任何状态高度恒定零跳动）：
- *   tab 行 + 工具行（唯一）：查询输入 + 搜索/取消 ‖ 锚点工具（按 tab 分流）；
+ *   工具行（唯一）：查询输入 + 搜索/取消 ‖ 锚点工具（按 tab 分流）；
  *   状态区（条件渲染）：当前 tab 的单腿读数 +（本地）索引生命周期；
  *   结果区：唯一滚动容器，结果头 + 窗口化列表；锚点工具输出以整块替换
  *   body（✕ 返回横幅，仅本地 tab）。
@@ -79,13 +82,9 @@ import {
 /** Results-area view: query-mixed list (default) or an anchor tool's output. */
 type ResultsView = "search" | "similar" | "duplicates";
 
-/** 页面 tab：网络=外部数据库，本地=文库（tab 即范围）。 */
-type SearchScope = "web" | "local";
-
-const SCOPE_TABS: ReadonlyArray<{ id: SearchScope; labelKey: string }> = [
-  { id: "web", labelKey: "hub-search-tab-web" },
-  { id: "local", labelKey: "hub-search-tab-local" },
-];
+/** 页面 tab：网络=外部数据库，本地=文库（tab 即范围）。
+ *  受控自 SearchPane 的三段域 tab（web/local 两段落本页）。 */
+export type SearchScope = "web" | "local";
 
 /** 源值 → 本地化展示名（来源标签单源在 AVAILABLE_SOURCES；未知值回落原值）。 */
 const sourceNames = (values: string[]): string =>
@@ -132,14 +131,19 @@ function EngineMark({ tone }: { tone: string }): React.ReactElement {
 
 export function LiteratureSearchPage({
   isActive = true,
+  scope,
+  onScopeChange,
 }: {
   isActive?: boolean;
+  /** 当前 tab（范围）——受控自 SearchPane 三段域 tab。 */
+  scope: SearchScope;
+  /** 程序化写回 tab（深链切本地/navigateHome 回网络）；pane 据此同步
+   *  域 tab 行高亮。 */
+  onScopeChange: (scope: SearchScope) => void;
 }): React.ReactElement {
   const sem = useSemanticSearchState(isActive);
   const lit = useLiteratureSearch();
 
-  // tab（范围）：默认网络——零配置即可用；本地 tab 承接全部索引生命周期。
-  const [scope, setScope] = useState<SearchScope>("web");
   // 筛选弹窗开关（页面唯一的配置入口）。
   const [showFilters, setShowFilters] = useState(false);
   // Which tool owns the results area (search results vs 找相似 / 查重 output).
@@ -194,32 +198,42 @@ export function LiteratureSearchPage({
     else sem.handleClear();
     setResultsView("search");
   };
-  const switchScope = (next: SearchScope) => {
-    if (next === scope) return;
-    setScope(next);
-    // 相似/查重输出是本地 tab 的整块替换视图，不跨 tab 逗留。
-    setResultsView("search");
-  };
+  // scope 受控后的视图复位：相似/查重输出是本地 tab 的整块替换视图，不跨
+  // tab 逗留——scope 一变即回 search。深链时序（见下）：切 scope 与挂
+  // similar 视图同批发生，复位 effect 晚于监听器落地；pendingToolView 让
+  // 「随 scope 变更而来的 similar 意图」穿过复位，不被吞成 search。
+  const pendingToolView = useRef<ResultsView | null>(null);
+  useEffect(() => {
+    setResultsView(pendingToolView.current ?? "search");
+    pendingToolView.current = null;
+  }, [scope]);
 
   // 各 tab 的「已检索过」：web 看外部腿 performed，local 看结果头/命中。
 
   // 右键菜单「查找相似文献」深链（2026-09-25 审计 P1-3）：宿主经
-  // hub.setActiveTab(action=findSimilar) 送达，SearchShell 转 window 事件——
-  // 此处切到本地腿并自动发起找相似（RPC 侧回退解析主窗选中条目）。
-  // 视图必须落在 similar 子页（2026-09-26 实机审计）：结果只在
-  // resultsView==="similar" 分支渲染——此前写成 "search"，检索发了但
-  // 用户永远看不到结果（应用内按钮 runFindSimilar 是切视图的）。
+  // hub.setActiveTab(action=findSimilar) 送达，SearchShell 转 window 事件；
+  // pane 级监听把域 tab 切到本地，本页监听挂 similar 结果视图并发起检索
+  // （RPC 侧回退解析主窗选中条目）。视图必须落在 similar 子页（2026-09-26
+  // 实机审计）：结果只在 resultsView==="similar" 分支渲染——此前写成
+  // "search"，检索发了但用户永远看不到结果（应用内按钮 runFindSimilar 是
+  // 切视图的）。scope 已在本地直接挂视图；否则经 onScopeChange 上抛并把
+  // 意图记入 pendingToolView（子组件监听先于 pane 注册，本监听先跑、
+  // pane 的 switchTab 后跑，scope 终值一致，幂等）。
   const deepLinkFindSimilar = sem.handleFindSimilar;
   useEffect(() => {
     const onFindSimilar = () => {
-      setScope("local");
-      setResultsView("similar");
+      if (scope === "local") {
+        setResultsView("similar");
+      } else {
+        pendingToolView.current = "similar";
+        onScopeChange("local");
+      }
       void deepLinkFindSimilar();
     };
     window.addEventListener("zsearch:find-similar", onFindSimilar);
     return () =>
       window.removeEventListener("zsearch:find-similar", onFindSimilar);
-  }, [deepLinkFindSimilar]);
+  }, [deepLinkFindSimilar, scope, onScopeChange]);
   const webHasSearched = lit.searchPerformed;
   const localHasSearched = !!sem.resultsHeader || sem.searchResults.length > 0;
   const hasSearched = scope === "web" ? webHasSearched : localHasSearched;
@@ -293,13 +307,22 @@ export function LiteratureSearchPage({
   // 排序选项的字面承诺（2026-09-25 审计 P2-4）。首层 displaySort（相关/日期/
   // 标题）在其后生效。
   const webList = useMemo(() => {
+    // cited 全局排序只重排展示顺序：sourceIndex 必须仍指向 lit.results 的
+    // 原位置——selection/import/expand 的 key 与 useLiteratureSearch 同源
+    // （getArticleKey(article, i-in-lit.results)），先排序再合并会让「无 DOI
+    // 且无标题」的位置回退条目（idx-N）在渲染与勾选间错位。
+    const origIndex = new Map(lit.results.map((a, i) => [a, i]));
     const articles =
       lit.sortBy === "cited"
         ? [...lit.results].sort(
             (a, b) => (b.citationCount ?? 0) - (a.citationCount ?? 0),
           )
         : lit.results;
-    return sortMixedResults(mergeResults([], articles), displaySort);
+    return sortMixedResults(mergeResults([], articles), displaySort).map((e) =>
+      e.kind === "article"
+        ? { ...e, sourceIndex: origIndex.get(e.article) ?? e.sourceIndex }
+        : e,
+    );
   }, [lit.results, lit.sortBy, displaySort]);
   const localList = useMemo(
     () => sortMixedResults(mergeResults(sem.searchResults, []), displaySort),
@@ -386,6 +409,14 @@ export function LiteratureSearchPage({
     void sem.handleScanDuplicates();
   };
   const backToSearch = () => setResultsView("search");
+  // 面包屑「首页」= 直达本页默认落点（网络搜索 tab），与「返回」区分：
+  // 返回只退出子页、保留当前 scope；首页回到默认 web（SubPageHeader 契约
+  // 「根节点=首页永远可点（直达）」——此前两个回调传同一个函数，点「首页」
+  // 实际只是返回）。
+  const navigateHome = () => {
+    setResultsView("search");
+    onScopeChange("web");
+  };
 
   const showToolResults =
     scope === "local" &&
@@ -394,29 +425,10 @@ export function LiteratureSearchPage({
   return (
     /* 水平轨道唯一归 pane 根 --page-inline-pad（R11-D5；2026-09-09 清双 pad
        回归：视图层再消费水平 padding 会与 seg 错位 40px），本层只管纵向。
-       2026-09-22 节奏统一收口：上下律从原型 .pane（上 24/下 48 全页统一）。 */
-    <div className="hub-lit-page flex flex-col h-full pt-[var(--space-6)] pb-[var(--space-12)] gap-[var(--space-4)] overflow-hidden">
-      {/* ═══ tab 行：网络/本地（2026-09-23 双 tab 化）═══
-          词汇与期刊仪表盘模式 seg 同款（ToggleGroup 白片轨道、单选、清空
-          no-op 防御）；pane 级「文献/期刊」图标对钮不动——两层切换，期刊页
-          同构。tab 即范围：工具行/状态条/空态/筛选分区全部随之分流。 */}
-      <ToggleGroup
-        multiple={false}
-        className="self-start"
-        value={[scope]}
-        onValueChange={(v) => {
-          if (!v.length) return;
-          switchScope(v[0] as SearchScope);
-        }}
-        aria-label={getString("hub-search-tab-label")}
-      >
-        {SCOPE_TABS.map((t) => (
-          <ToggleGroupItem key={t.id} value={t.id}>
-            {getString(t.labelKey)}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-
+       2026-09-22 节奏统一收口：上下律从原型 .pane（上 24/下 48 全页统一）。
+       2026-09-28：tab 行上移 pane 级后顶距降为 --space-4——pane 级 tab 行
+       与本页之间保持原 tab→内容 16px 节奏。 */
+    <div className="hub-lit-page flex flex-col h-full pt-[var(--space-4)] pb-[var(--space-12)] gap-[var(--space-4)] overflow-hidden">
       {/* ═══ 工具行：输入即页面（v2 §4.5 批6）═══
           搜索页 95% 的会话以输入框为起点，它是本页唯一「主动作」——查询输入
           升为一级控件（lg 档 40px，body 字号）。锚点工具（筛选/找相似/查重/
@@ -567,17 +579,28 @@ export function LiteratureSearchPage({
           </span>
         )}
 
-        {/* 索引生命周期（本地 tab 专属）。CTA 横幅已退役——「构建全文
-              索引」的主按钮住空态（2026-09-23 用户裁决：缺乏索引时空态
-              提供按钮），状态区只留纯读数与低频管理操作。 */}
-        {sem.buildProgress && (
-          <span className="[font:var(--ui-font-caption)] text-[color:var(--text-secondary)]">
+        {/* 索引生命周期（本地 tab 专属——注释即契约：web tab 不显示库内索引
+              读数）。CTA 横幅已退役——「构建全文索引」的主按钮住空态
+              （2026-09-23 用户裁决：缺乏索引时空态提供按钮），状态区只留
+              纯读数与低频管理操作。 */}
+        {scope === "local" && sem.buildProgress && (
+          <span className="flex items-center gap-[var(--space-2)] [font:var(--ui-font-caption)] text-[color:var(--text-secondary)]">
             {getString("semantic-building", { args: sem.buildProgress })}
+            {/* README 承诺的构建「取消」入口：hook 侧 handleCancelBuild 一直
+                存在但此前无任何 UI 消费点（唯一出路是关窗或 5 分钟看门狗）。 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!sem.isBuilding}
+              onClick={() => void sem.handleCancelBuild()}
+            >
+              {getString("btn-cancel")}
+            </Button>
           </span>
         )}
 
         {/* Model stale warning */}
-        {sem.modelInfo?.hasStaleChunks && (
+        {scope === "local" && sem.modelInfo?.hasStaleChunks && (
           <div className="hub-status" data-tone="warn" role="status">
             <span>{getString("semantic-model-changed-warning")}</span>
             <ConfirmButton
@@ -595,7 +618,7 @@ export function LiteratureSearchPage({
         )}
 
         {/* 上次构建摘要：折叠 meta 行替代裸 pre 块 */}
-        {sem.buildResult && (
+        {scope === "local" && sem.buildResult && (
           <div>
             <Button
               variant="ghost"
@@ -616,7 +639,12 @@ export function LiteratureSearchPage({
       </div>
 
       {showToolResults ? (
-        <ToolResultsView view={resultsView} sem={sem} onBack={backToSearch} />
+        <ToolResultsView
+          view={resultsView}
+          sem={sem}
+          onBack={backToSearch}
+          onNavigateHome={navigateHome}
+        />
       ) : (
         <>
           {isSearching && list.length === 0 ? (
@@ -782,12 +810,16 @@ export function LiteratureSearchPage({
                           const [, libStr, colStr] = v.split(":");
                           const libraryID = Number(libStr);
                           if (!Number.isInteger(libraryID)) return;
-                          const colNum = Number(colStr);
+                          // 文库根选项值是 `t:<libID>:`（尾冒号）——空串
+                          // Number("") === 0 会把 collectionID 解析成 0，
+                          // Select 回显就变成裸编码值而非「📚 库名」。
+                          const colNum = colStr === "" ? NaN : Number(colStr);
                           lit.chooseImportTarget({
                             libraryID,
-                            collectionID: Number.isInteger(colNum)
-                              ? colNum
-                              : null,
+                            collectionID:
+                              Number.isInteger(colNum) && colNum > 0
+                                ? colNum
+                                : null,
                           });
                         }}
                         options={[
@@ -923,6 +955,7 @@ export function LiteratureSearchPage({
         onClose={() => setCitationSeed(null)}
         onImport={importFromCitations}
         importingTitles={citingTitles}
+        importResults={lit.importResults}
       />
 
       {/* ═══ 筛选弹窗：按 tab 分流分区（改动即时上抛、下次搜索生效） ═══ */}
@@ -943,10 +976,13 @@ function ToolResultsView({
   view,
   sem,
   onBack,
+  onNavigateHome,
 }: {
   view: "similar" | "duplicates";
   sem: ReturnType<typeof useSemanticSearchState>;
   onBack: () => void;
+  /** 面包屑根节点「首页」：直达页面默认落点，与 onBack（仅退出子页）区分。 */
+  onNavigateHome: () => void;
 }): React.ReactElement {
   const titleKey =
     view === "similar"
@@ -961,7 +997,7 @@ function ToolResultsView({
         parentLabel={getString("hub-tab-search")}
         currentLabel={getString(titleKey)}
         onBack={onBack}
-        onNavigateHome={onBack}
+        onNavigateHome={onNavigateHome}
       />
       {view === "similar" ? (
         sem.isFindingSimilar ? (
@@ -974,13 +1010,17 @@ function ToolResultsView({
             <EmptyState
               icon={<SearchIconSvg size={ICON.xl} />}
               /* JA-4：空结果按结算旗归因（查重 hasScanned 同款两分支）——
-                  未跑成（主窗无选中）→「请先选择一个条目」；跑成但 0 相似
-                 →「没有找到相似文献」，不再误报未选中。 */
-              desc={getString(
-                sem.hasSimilarScan
-                  ? "semantic-no-similar"
-                  : "common-no-selection",
-              )}
+                  RPC 失败（含已选中但扫描出错）→ 显示真实错误，不再误报
+                  「请先选择一个条目」；未发起 →「请先选择一个条目」；
+                  跑成但 0 相似 →「没有找到相似文献」。 */
+              desc={
+                sem.error ??
+                getString(
+                  sem.hasSimilarScan
+                    ? "semantic-no-similar"
+                    : "common-no-selection",
+                )
+              }
             />
           </div>
         ) : (

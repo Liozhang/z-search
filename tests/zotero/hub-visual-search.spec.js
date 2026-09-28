@@ -452,12 +452,14 @@ describe("z-search hub visual search verification (real Zotero + real network)",
 
       // 期刊仪表盘的 metric 查证是纯本地命中（JCR/CASS/预警/Beall's 内置
       // 库）——确定性渲染掠夺性徽章。文献结果卡的徽章渲染由同一配方覆盖。
-      const header = hubDoc()?.querySelector("header");
-      const journalBtn = header?.querySelectorAll("button")?.[1];
-      if (!journalBtn) {
-        reportError("hub-visual-bealls", { message: "journal toggle missing" });
+      // 2026-09-28 域 tab 三段化：期刊入口 = tab 行文字钮（页头图标对钮退役）。
+      const journalTab = Array.from(
+        hubDoc()?.querySelectorAll("button") || [],
+      ).find((b) => (b.textContent || "").trim() === "期刊");
+      if (!journalTab) {
+        reportError("hub-visual-bealls", { message: "journal tab missing" });
       }
-      journalBtn.click();
+      journalTab.click();
       await Zotero.Promise.delay(1500);
 
       // 等 journal 面板的输入框出现在「未隐藏」的 pane 槽里
@@ -466,7 +468,7 @@ describe("z-search hub visual search verification (real Zotero + real network)",
           hubRoot()?.querySelectorAll("input") || [],
         ).find((i) => /journal name|ISSN|刊名/i.test(i.placeholder || ""));
         if (!input) return null;
-        const slot = input.closest(".hub-pane-slot");
+        const slot = input.closest(".hub-search-slot");
         return slot && !/hidden/.test(slot.className) ? input : null;
       }, 15000);
 

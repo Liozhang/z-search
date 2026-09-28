@@ -9,7 +9,8 @@
  *      给出实心「构建全文索引」主按钮（用户裁决：按钮住空态，不平铺横幅）；
  *   T4 清除按需渲染：输入后出现、点了真清空；
  *   T5 筛选弹窗按 tab 分流：网络弹出现源 chips 组，本地弹不出；
- *   T6 pane 级「文献/期刊」对钮仍能切换并切回。
+ *   T6 域 tab 行三段（2026-09-28 三段化）：期刊 tab 切到期刊仪表盘并能
+ *      切回网络（页头「文献/期刊」图标对钮已退役）。
  *
  * 走 iframe 真实 DOM（chrome 同源可达）。React 受控输入用原生 value setter +
  * input 事件驱动（不经 OS 输入层）。若运行环境库内已建索引，T3 CTA 分支
@@ -211,32 +212,31 @@ describe("z-search search page UI states (real Zotero integration)", function ()
     await sleep(500);
   });
 
-  it("T6: pane-level view toggle switches to the journal dashboard and back", async function () {
-    const header = doc.querySelector("header");
-    const segBtns = header.querySelectorAll("button");
-    const litBtn = segBtns[0];
-    const journalBtn = segBtns[1];
+  it("T6: domain tab row switches to the journal dashboard and back", async function () {
+    // 2026-09-28 域 tab 三段化：期刊与 网络/本地 同排（页头图标对钮退役）。
+    const journalTab = findBtn("期刊");
+    expect(journalTab, "journal tab present in the domain tab row").to.be.ok;
     expect(
-      litBtn.getAttribute("aria-pressed"),
-      "literature is the default view",
-    ).to.equal("true");
-    journalBtn.click();
+      journalTab.getAttribute("aria-pressed"),
+      "journal is not the default tab",
+    ).to.equal("false");
+    journalTab.click();
     await sleep(1500);
     expect(
-      journalBtn.getAttribute("aria-pressed"),
+      journalTab.getAttribute("aria-pressed"),
       "journal view active after click",
     ).to.equal("true");
-    // 期刊仪表盘的自持三模式对钮（aria-label 与 seg 钮 title 同键）
-    const journalLabel = journalBtn.getAttribute("title");
+    // 期刊仪表盘的自持检索模式 seg（专用 aria 键 journal-mode-seg-aria，
+    // 与域 tab 行的 hub-search-tab-label 不同名——读屏可区分两组控件）。
     const modeGroup = Array.from(doc.querySelectorAll('[role="group"]')).find(
-      (g) => g.getAttribute("aria-label") === journalLabel,
+      (g) => g.getAttribute("aria-label") === "检索模式",
     );
     expect(modeGroup, "journal dashboard mode toggle rendered").to.be.ok;
-    litBtn.click();
+    findBtn("网络搜索").click();
     await sleep(1200);
     expect(
-      litBtn.getAttribute("aria-pressed"),
-      "back to literature view",
+      findBtn("网络搜索").getAttribute("aria-pressed"),
+      "back to the web tab",
     ).to.equal("true");
   });
 });

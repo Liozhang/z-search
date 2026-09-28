@@ -1,7 +1,7 @@
-/* leadero-hub-search.css — Hub 样式分区（原 leadero-hub.css 1102-1172 行：Search Pane（单页双视图：文献=全域并联 / 期刊））。
+/* leadero-hub-search.css — Hub 样式分区（原 leadero-hub.css 1102-1172 行：Search Pane（三段域 tab：网络/本地/期刊））。
  * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
  * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
-/* ==================== Search Pane（单页双视图：文献=全域并联 / 期刊） ==================== */
+/* ==================== Search Pane（三段域 tab：网络/本地/期刊） ==================== */
 /* hub-search-pane: non-scrolling flex column shell (Research/Stats pattern).
  * 页头 + 视图 seg 固定在上，每个视图 slot (hub-search-slot) 自管 scroll + padding。 */
 .leadero-root .hub-search-pane {
@@ -18,42 +18,13 @@
   padding-inline: var(--page-inline-pad);
 }
 
-/* 视图切换对钮容器（砚法 §8.10 定式 2；§15-31 页签式 tab 退役——原 ToggleGroup
-   文字 seg 随 v1.20 改判视图对钮，2026-09-20 砚化批落地，组件轨道/白片视觉退役）。
-   行配方 = space-4 顶部；水平归页根 --page-inline-pad 轨（2026-09-07 D5 收编，
-   与 hub-search-slot 内容左缘对齐）。
-   ── R14 拍板销案（2026-09-09 用户裁决）：维持切换器上置——它是双视图共享
-   切换器，必须在两视图之上；DOM 序不动。
-   ── 2026-09-23 可用性审计 P1：对钮由独占行并入 PaneHeader 右缘动作区（§8.0
-   法定入口位）——「上置、不随滚动」的 R14 实质不变（页头本就不滚），独占行
-   与 space-4 行距退役（margin 归零，高度归页头 flex 居中承担）。 */
-.leadero-root .hub-search-seg {
-  flex-shrink: 0;
-  position: relative;
-  z-index: var(--z-base);
-  /* 2026-09-02 P1：column flex 父级（hub-search-pane）内 inline-flex 容器被
-     默认 stretch 拉满整行——补 align-self: flex-start 让容器收缩宽左置
-     （对钮组宽度=内容宽，不占满行）。页头动作区内 ml-auto 已推右缘，此条
-     兜底防 flex stretch。 */
-  align-self: flex-start;
-  margin: 0;
-}
-
-/* 定式 2 活动钮：沉纸底（--surface-zone 材质角色）+ 交互蓝图标（§5.3 交互蓝
-   =全产品唯一选中语义色）；未选钮图标重墨降档，示能靠按钮容器本身（ghost
-   1px 发丝边）+title/aria 文字双通道（§10.5 颜色非唯一通道）。 */
-.leadero-root .hub-search-view-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-0-5);
-}
-.leadero-root .hub-search-view-toggle .hub-search-view-btn {
-  color: var(--text-secondary);
-}
-.leadero-root .hub-search-view-toggle .hub-search-view-btn.is-active {
-  background: var(--surface-zone);
-  color: var(--accent);
-}
+/* 域切换行（.hub-search-seg / .hub-search-view-toggle / .hub-search-view-btn
+   墓碑注，2026-09-28 规则退役）：原页头右缘「文献/期刊」图标对钮的容器与
+   活动态规则随对钮退役——列表/网格图标被误读为陈列形态切换（用户裁决），
+   域切换下行到页下首行三段文字 tab（SearchPane TSX，ToggleGroup 默认白片
+   制式 + Tailwind self-start 左置，无需专属 CSS）。历史沿革：独占行 seg
+   （§15-31 页签立法）→ 2026-09-20 砚化批图标对钮 → 2026-09-23 并入页头
+   右缘 → 2026-09-28 退役。 */
 
 /* keep-alive slot：flex column 撑满，display:flex + .hidden 切换（FollowingPane 范式）。
  * 两视图均自带 scroll 骨架 → 一律 is-self-scroll（slot 只管显隐与高度传播）。 */
