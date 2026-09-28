@@ -10,7 +10,7 @@
   ],
   "description": "Academic, web, repository and vector search for Zotero — standalone search plugin",
   "config": {
-    "addonName": "z-search",
+    "addonName": "Z-Search",
     "addonID": "zsearch@z-search.dev",
     "addonRef": "zsearch",
     "addonInstance": "ZSearch",

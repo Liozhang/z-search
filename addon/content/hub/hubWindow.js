@@ -120,7 +120,7 @@ function createHubIframe() {
     var container = document.getElementById("zsearch-hub-iframe-container");
     try {
       var winName =
-        document.l10n.formatValueSync("zsearch-hub-window.title") || "Leadero";
+        document.l10n.formatValueSync("zsearch-hub-window.title") || "z-search";
       var failMsg =
         document.l10n.formatValueSync("window-init-failed", {
           name: winName,
