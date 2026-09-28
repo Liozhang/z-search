@@ -8,14 +8,44 @@
  *  - 条目右键菜单：「查找相似文献」（对选中条目发起库内向量相似检索）
  */
 import { getString } from "../utils/locale";
-import { getPref, setPref } from "../utils/prefs";
+import { getPref } from "../utils/prefs";
 import { hubWindowManager } from "../ui/hub/HubWindowManager";
 
-const registeredMenus: (() => void)[] = [];
+/**
+ * 逐窗登记的反注册器（多主窗隔离）：Zotero 支持 File▸New Window 开多个
+ * 主窗，反注册必须只拆本窗的入口——此前是模块级单数组、任一窗卸载即
+ * splice 全部，关掉 A 窗会把 B 窗的菜单/工具栏/快捷键一并拆掉且不再重挂。
+ */
+const disposersByWin = new WeakMap<Window, Array<() => void>>();
+
+function pushDisposer(win: Window, off: () => void): void {
+  const list = disposersByWin.get(win) ?? [];
+  list.push(off);
+  disposersByWin.set(win, list);
+}
+
+function runDisposers(win: Window): void {
+  const list = disposersByWin.get(win);
+  if (!list) return;
+  disposersByWin.delete(win);
+  for (const off of list) {
+    try {
+      off();
+    } catch {
+      /* element may already be gone */
+    }
+  }
+}
+
 /** search.toolbarButton 当前值（未设置=默认显示）。 */
 function toolbarButtonEnabled(): boolean {
   const v = getPref("search.toolbarButton");
   return v === undefined || v === null ? true : !!v;
+}
+
+/** 快捷键名（macOS 上 accel=Cmd；tooltip 文案据此生成）。 */
+function shortcutName(): string {
+  return Zotero.isMac ? "Cmd+Shift+K" : "Ctrl+Shift+K";
 }
 
 export function registerMenus(win: _ZoteroTypes.MainWindow): void {
@@ -52,21 +82,15 @@ export function registerMenus(win: _ZoteroTypes.MainWindow): void {
   itemMenu.appendChild(sep);
   itemMenu.appendChild(mi);
 
-  registeredMenus.push(() => {
+  pushDisposer(win, () => {
     itemMenu.removeEventListener("popupshowing", onShowing);
     sep.remove();
     mi.remove();
   });
 }
 
-export function unregisterMenus(_win: Window): void {
-  for (const off of registeredMenus.splice(0)) {
-    try {
-      off();
-    } catch {
-      /* element may already be gone */
-    }
-  }
+export function unregisterMenus(win: Window): void {
+  runDisposers(win);
 }
 
 export function registerToolsMenu(win: _ZoteroTypes.MainWindow): void {
@@ -86,20 +110,14 @@ export function registerToolsMenu(win: _ZoteroTypes.MainWindow): void {
   toolsMenu.appendChild(sep);
   toolsMenu.appendChild(mi);
 
-  registeredMenus.push(() => {
+  pushDisposer(win, () => {
     sep.remove();
     mi.remove();
   });
 }
 
-export function unregisterToolsMenu(_win: Window): void {
-  for (const off of registeredMenus.splice(0)) {
-    try {
-      off();
-    } catch {
-      /* element may already be gone */
-    }
-  }
+export function unregisterToolsMenu(win: Window): void {
+  runDisposers(win);
 }
 
 /**
@@ -108,7 +126,9 @@ export function unregisterToolsMenu(_win: Window): void {
  * 按钮 fill 走 context-fill（-moz-context-properties: fill），与 Zotero 7+
  * 自带工具栏图标同一套主题适配机制；插入位选主工具栏末尾（sync 按钮后），
  * 不挤占 Zotero 原生按钮。search.toolbarButton=false 时按钮隐藏（快捷键
- * 仍可用），pref 变更即时生效（registerObserver 增删）。
+ * 仍可用）；pref 变更的生效路径 = 设置面板写完 pref 后直调 syncToolbarButtons
+ * （servicesInit 暴露为 addon.api.syncToolbarButton——Zotero.Prefs 观察者
+ * 在本插件作用域实测不可靠，显式同步是确定性路径，commit 019d55b）。
  */
 /** 主窗按钮工具栏（Add/Magic Wand 所在的条目树工具栏）。Zotero 9/10 的
  *  真实元素 id 是 zotero-toolbar-item-tree——不存在裸 "zotero-toolbar"
@@ -128,7 +148,14 @@ function attachToolbarButton(doc: Document): void {
   const btn = doc.createXULElement("toolbarbutton");
   btn.setAttribute("id", "zsearch-tb-open-search");
   btn.setAttribute("class", "zotero-tb-button");
-  btn.setAttribute("tooltiptext", getString("toolbar-open-search-tooltip"));
+  // 键名按平台生成：modifiers=accel 在 macOS 上映射为 Cmd，tooltip 写死
+  // 「Ctrl+Shift+K」会让 Mac 用户照着按无效。
+  btn.setAttribute(
+    "tooltiptext",
+    getString("toolbar-open-search-tooltip", {
+      args: { shortcut: shortcutName() },
+    }),
+  );
   btn.setAttribute(
     "style",
     "list-style-image: url('chrome://zsearch/content/icons/search-16.svg'); -moz-context-properties: fill; fill: var(--fill-secondary);",
@@ -160,25 +187,17 @@ export function registerToolbar(win: _ZoteroTypes.MainWindow): void {
   // ── 工具栏按钮（pref 控制显隐，默认显示）──
   if (toolbarButtonEnabled()) attachToolbarButton(doc);
 
-  registeredMenus.push(() => {
+  pushDisposer(win, () => {
     doc.getElementById("zsearch-tb-open-search")?.remove();
   });
-  if (keyEl) registeredMenus.push(() => keyEl!.remove());
-}
-
-export function unregisterToolbar(): void {
-  for (const off of registeredMenus.splice(0)) {
-    try {
-      off();
-    } catch {
-      /* element may already be gone */
-    }
+  if (keyEl) {
+    const el = keyEl;
+    pushDisposer(win, () => el.remove());
   }
 }
 
-/** 设置面板「显示工具栏按钮」开关的直写入口（preferences.js sandbox 调用）。 */
-export function setToolbarButtonPref(value: boolean): void {
-  setPref("search.toolbarButton", value);
+export function unregisterToolbar(win: Window): void {
+  runDisposers(win);
 }
 
 /**

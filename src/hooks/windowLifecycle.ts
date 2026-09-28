@@ -29,17 +29,18 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   await safeRegister("ToolsMenu", () => registerToolsMenu(win));
   await safeRegister("Toolbar", () => registerToolbar(win));
   await safeRegister("PrefPaneIcon", () => watchPrefPaneIcon(win));
-  // 条目树期刊徽章列（P1-1）：ItemTreeManager 全局一次注册，随窗卸载反注册
-  await safeRegister("MetricsColumn", () => registerMetricsColumn());
+  // 条目树期刊徽章列（P1-1）：ItemTreeManager 全局一列，逐窗引用计数——
+  // 最后一个主窗卸载才反注册
+  await safeRegister("MetricsColumn", () => registerMetricsColumn(win));
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {
   unregisterStyleSheet(win);
-  unregisterToolbar();
+  unregisterToolbar(win);
   unregisterToolsMenu(win);
   unregisterMenus(win);
   unwatchPrefPaneIcon(win);
-  unregisterMetricsColumn();
+  unregisterMetricsColumn(win);
 }
 
 export { onMainWindowLoad, onMainWindowUnload };

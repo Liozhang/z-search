@@ -140,8 +140,13 @@ function renderBadges(doc: Document, b: JournalBadges): HTMLElement {
   return cell;
 }
 
-/** 注册列（幂等）。windowLifecycle 在主窗加载时调用。 */
-export async function registerMetricsColumn(): Promise<void> {
+/** 注册列（幂等 + 逐窗引用计数）。windowLifecycle 在各主窗加载时调用：
+ *  ItemTreeManager 是全局的——多主窗共用一列，只有最后一个主窗卸载才
+ *  反注册（此前任一窗卸载即全局拆列，其余窗的期刊徽章列随之消失）。 */
+const columnWindows = new Set<Window>();
+
+export async function registerMetricsColumn(win: Window): Promise<void> {
+  columnWindows.add(win);
   if (registered) return;
   try {
     const mgr = (Zotero as any).ItemTreeManager;
@@ -201,7 +206,9 @@ export async function registerMetricsColumn(): Promise<void> {
   }
 }
 
-export function unregisterMetricsColumn(): void {
+export function unregisterMetricsColumn(win: Window): void {
+  columnWindows.delete(win);
+  if (columnWindows.size > 0) return;
   try {
     (Zotero as any).ItemTreeManager?.unregisterColumn?.(DATA_KEY);
   } catch {
