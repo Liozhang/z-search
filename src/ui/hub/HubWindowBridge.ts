@@ -14,6 +14,7 @@
  */
 import { BaseWindowBridge } from "../../bridge/BaseWindowBridge";
 import { getPrefDynamic, setPrefDynamic } from "../../utils/prefs";
+import { showProgressNotification } from "../../utils/NotificationHelper";
 import { toErrorMessage } from "../../utils/error";
 import { safeDebug } from "../../utils/logger";
 import { handleSemanticRequest } from "./HubSemanticHandler";
@@ -28,6 +29,9 @@ export class HubWindowBridge extends BaseWindowBridge {
   public _searchAbortSignal: Map<number, { aborted: boolean }> | null = null;
   public _searchIdCounter = 0;
 
+  /** 宿主 XUL 窗（hub.closeWindow 等上行通知需要它执行窗操作）。 */
+  private _win: Window | null = null;
+
   /** RM-1：深链落位回执守望（hub.setActiveTab 是单向 notify） */
   private _activeTabAckWatch: {
     timer: ReturnType<typeof setTimeout> | null;
@@ -36,6 +40,7 @@ export class HubWindowBridge extends BaseWindowBridge {
   private _activeTabAckSeq = 0;
 
   initialize(win: Window): void {
+    this._win = win;
     super.initialize(win, "hubBridge"); // 暴露 win.__hubBridge
   }
 
@@ -102,7 +107,7 @@ export class HubWindowBridge extends BaseWindowBridge {
     this._activeTabAckWatch = { timer: setTimeout(tick, 400), attempts: 0 };
   }
 
-  /** iframe → host 的 fire-and-forget 通知（深链回执）。 */
+  /** iframe → host 的 fire-and-forget 通知（深链回执、原生通知代发、关窗）。 */
   protected override handleNotify(event: string, payload: any): void {
     if (event === "hub.setActiveTabAck") {
       const watch = this._activeTabAckWatch;
@@ -110,6 +115,27 @@ export class HubWindowBridge extends BaseWindowBridge {
         if (watch.timer) clearTimeout(watch.timer);
         this._activeTabAckWatch = null;
         this._activeTabAckSeq++; // 在途重发回调全部失效
+      }
+      return;
+    }
+    if (event === "zoteroNotify") {
+      // iframe 内拿不到 Zotero 原生通知面——宿主代发（ProgressWindow
+      // toast）。此前这条上行被静默丢弃，而它是 semantic.openItem 失败等
+      // 错误路径唯一的用户反馈通道（React 侧 zoteroNotify 100% 落空）。
+      const message =
+        typeof payload?.message === "string"
+          ? payload.message
+          : String(payload ?? "");
+      if (message) showProgressNotification("z-search", message);
+      return;
+    }
+    if (event === "hub.closeWindow") {
+      // Ctrl/Cmd+W：iframe 获得焦点后按键不冒泡到 XUL 宿主（hubWindow.js
+      // 的宿主级监听失效），iframe 侧捕获后经 notify 请宿主关窗。
+      try {
+        this._win?.close();
+      } catch (e) {
+        safeDebug("[z-search] hub.closeWindow failed: " + e);
       }
       return;
     }
@@ -204,6 +230,7 @@ export class HubWindowBridge extends BaseWindowBridge {
     if (watch?.timer) clearTimeout(watch.timer);
     this._activeTabAckWatch = null;
     this._activeTabAckSeq++;
+    this._win = null;
     // 中止在途文献搜索
     if (this._searchAbortSignal) {
       for (const s of this._searchAbortSignal.values()) s.aborted = true;

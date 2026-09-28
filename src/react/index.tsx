@@ -29,7 +29,6 @@ import { SearchShell } from "./components/Hub/SearchShell";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { ConfirmProvider } from "./components/ui/ConfirmDialog";
 import { ToastProvider } from "./components/ui/toast";
-import { BackendEventNotifier } from "./components/ui/BackendEventNotifier";
 import { PortalScopeRoot } from "./components/ui/portal-scope";
 
 /* Bundle CSS as raw strings via webpack asset/source.
@@ -46,7 +45,6 @@ import leaderoHubSearchCss from "../../addon/content/chat/react/leadero-hub-sear
 import leaderoHubControlsCss from "../../addon/content/chat/react/leadero-hub-controls.css";
 import leaderoHubOverridesCss from "../../addon/content/chat/react/leadero-hub-overrides.css";
 import leaderoHubResponsiveCss from "../../addon/content/chat/react/leadero-hub-responsive.css";
-import leaderoHubSettingsCss from "../../addon/content/chat/react/leadero-hub-settings.css";
 import shadcnUtilsCss from "../../addon/content/chat/react/shadcn-utils.css";
 import twCss from "../../addon/content/chat/react/tw.css";
 import { safeDebug } from "../utils/logger";
@@ -82,7 +80,6 @@ try {
     leaderoHubControlsCss,
     leaderoHubOverridesCss,
     leaderoHubResponsiveCss,
-    leaderoHubSettingsCss,
     shadcnUtilsCss,
     twCss,
   );
@@ -116,11 +113,9 @@ function mountDashboard(
       <PortalScopeRoot>
         <ConfirmProvider>
           <ToastProvider>
-            <BackendEventNotifier>
-              <ErrorBoundary fallbackMessage={fallbackMessage}>
-                {element}
-              </ErrorBoundary>
-            </BackendEventNotifier>
+            <ErrorBoundary fallbackMessage={fallbackMessage}>
+              {element}
+            </ErrorBoundary>
           </ToastProvider>
         </ConfirmProvider>
       </PortalScopeRoot>
@@ -242,7 +237,7 @@ if (
             }}
           >
             {localized(
-              "chat-init-timeout",
+              "hub-init-timeout",
               "Search failed to start. Please reopen the window.",
             )}
           </div>

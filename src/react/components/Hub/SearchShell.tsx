@@ -12,8 +12,7 @@
  */
 import React, { useEffect } from "react";
 import { getString } from "../../utils/locale";
-import { getBridge, onBridgeReady } from "../../utils/bridge";
-import { hubNotify } from "../../utils/hubBridge";
+import { getBridge, onBridgeReady, sendToBackend } from "../../utils/bridge";
 import { SearchPane } from "./SearchPane";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
@@ -31,7 +30,11 @@ export function SearchShell(): React.ReactElement {
       const off = bridge.on(
         "hub.setActiveTab",
         (payload: { tab?: string; action?: string }) => {
-          void hubNotify("hub.setActiveTabAck", { tab: payload?.tab });
+          // 回执必须走 notify 通道（sendToBackend → zsearch-notify）——宿主
+          // 在 handleNotify 等它。此前误用 hubNotify（RPC 请求通道），宿主
+          // 对 unknown method 报错、回执永远收不到：守望器 400ms×12 重发
+          // 风暴，findSimilar 深链被重复触发十余次。
+          sendToBackend("hub.setActiveTabAck", { tab: payload?.tab });
           if (payload?.action === "findSimilar") {
             // 右键菜单深链：切到本地腿并自动发起找相似（页面侧监听消费）
             window.dispatchEvent(
@@ -50,6 +53,23 @@ export function SearchShell(): React.ReactElement {
       unsub = () => off();
     }
     return () => unsub?.();
+  }, []);
+
+  // Ctrl/Cmd+W 关窗：快捷键监听挂在 XUL 宿主窗（hubWindow.js），而 iframe
+  // 铺满全窗——焦点进入 iframe 后按键不冒泡到宿主，宿主监听失效。iframe
+  // 侧自行捕获并经 notify 请宿主关窗（宿主 handleNotify 的 hub.closeWindow）。
+  // iframe 里无 Zotero 全局，平台判定用 UA（与宿主侧 Zotero.isMac 同口径）。
+  useEffect(() => {
+    const isMac = navigator.userAgent.includes("Mac");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== "w") return;
+      if (!(isMac ? e.metaKey : e.ctrlKey)) return;
+      if (e.altKey || e.shiftKey) return;
+      e.preventDefault();
+      sendToBackend("hub.closeWindow");
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
   return (
