@@ -568,7 +568,7 @@ search-sources-not-configured = Key not set
 prefs-region-title = Network Region
 prefs-region-desc =
     Some services only work in part of the world: easyScholar, the MinerU cloud and the Chinese core lists are mainland-China only, while Google Translate, DuckDuckGo and most AI providers are unreachable there.
-    Declaring your network lets the plugin pick reachable defaults, and every region-locked endpoint below can still point at your own mirror.
+    Declaring your network lets the plugin pick reachable defaults and also drives the visibility of China-only data such as the CAS journal ranking (individually overridable); every region-locked endpoint below can still point at your own mirror.
 prefs-region-label = Network region
 prefs-region-auto = Auto - no declaration (international-first defaults)
 prefs-region-global = Global - international internet
@@ -578,6 +578,13 @@ prefs-region-applied = { $region }: updated { $changes }.
 prefs-region-nochange = { $region }: no recommended values applied - settings you changed yourself are always left untouched.
 prefs-region-change-web = default web search source to { $value }
 prefs-region-change-engine = translation engine to { $value }
+prefs-region-change-bingregion = Azure Translator region to { $value }
+prefs-region-change-cass = CAS journal ranking visibility to { $value }
+prefs-region-cass-label = CAS Journal Ranking (China-only data)
+prefs-region-cass-auto = Auto - follow the network region
+prefs-region-cass-show = Show
+prefs-region-cass-hide = Hide
+prefs-region-cass-applied = CAS journal ranking → { $value }; applies immediately to journal searches, scoring and item-tree badges from now on.
 prefs-endpoints-title = Region-locked Endpoints
 prefs-endpoints-desc =
     These services live in one region only. Leave a field blank to keep the built-in endpoint, or fill one in to use a mirror / self-hosted proxy. Changes apply to the next request.

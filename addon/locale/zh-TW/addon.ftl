@@ -554,7 +554,7 @@ search-sources-not-configured = 未填 key
 prefs-region-title = 網路區域
 prefs-region-desc =
     有些服務只在地球的一部分可用：easyScholar、MinerU 雲與中文核心名單只在中國大陸營運，而 Google 翻譯、DuckDuckGo 與大多數 AI 服務商在中國大陸不可達。
-    宣告所在網路後，外掛據此選取可達的預設值；下方每個區域限定端點也仍可指向你自己的鏡像。
+    宣告所在網路後，外掛據此選取可達的預設值，中科院分區等中國區數據也隨之顯隱（可單獨覆蓋）；下方每個區域限定端點也仍可指向你自己的鏡像。
 prefs-region-label = 網路區域
 prefs-region-auto = 自動——不宣告（沿用國際優先的出廠預設）
 prefs-region-global = 國際——可正常訪問國際網際網路
@@ -564,6 +564,13 @@ prefs-region-applied = { $region }：已更新 { $changes }。
 prefs-region-nochange = { $region }：無可套用的推薦值——你自己改過的設定始終不動。
 prefs-region-change-web = 預設網頁搜尋源 → { $value }
 prefs-region-change-engine = 翻譯引擎 → { $value }
+prefs-region-change-bingregion = Azure Translator 訂閱區 → { $value }
+prefs-region-change-cass = 中科院分區顯隱 → { $value }
+prefs-region-cass-label = 中科院分區（中國區數據）
+prefs-region-cass-auto = 自動——跟隨網路區域
+prefs-region-cass-show = 顯示
+prefs-region-cass-hide = 隱藏
+prefs-region-cass-applied = 中科院分區 → { $value }；對後續的期刊檢索、評分與條目樹徽章即時生效。
 prefs-endpoints-title = 區域限定端點
 prefs-endpoints-desc =
     這些服務只在各自所屬區域營運。留空即用內建端點；填入則改用鏡像或自建代理，改動在下次請求時生效。

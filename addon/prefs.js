@@ -22,6 +22,10 @@ pref("ai.model.maxContext", 128000);
 
 // ── 网络区域（插件的全球性开关；auto = 不声明，沿用国际优先的出厂默认）──
 pref("region", "auto"); // "auto" | "global" | "cn"
+// 中科院分区显隐（中国科研评价体系数据，离线内置）：auto = 跟随网络区域
+// （cn 显示 / global 隐藏 / 未声明沿用历史行为——默认展示），show/hide 为
+// 用户显式覆盖（全球用户同样可能在研究中国期刊，绝不硬性剥夺）
+pref("region.cassPartition", "auto"); // "auto" | "show" | "hide"
 
 // ── Search ──────────────────────────────────────────────────────────
 pref("search.queryRewrite", true);

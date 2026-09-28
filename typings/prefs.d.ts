@@ -20,6 +20,7 @@ declare namespace _ZoteroTypes {
       "ai.multiStepPilot": boolean;
       "ai.model.maxContext": number;
       "region": string;
+      "region.cassPartition": string;
       "search.queryRewrite": boolean;
       "search.rerankEnabled": boolean;
       "search.rerankModel": string;

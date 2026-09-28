@@ -37,6 +37,7 @@ import type {
   JournalSortBy,
 } from "../../types/journalSearch";
 import { safeDebug } from "../../utils/logger";
+import { isCassPartitionVisible } from "../../utils/region";
 
 /** ISSN pattern: 8 digits with optional dash and X check digit. */
 const ISSN_RE = /^\d{4}-?\d{3}[\dXx]$/;
@@ -111,6 +112,11 @@ class JournalSearchService {
     const input = query.trim();
     const inputIsISSN = isISSN(input);
 
+    // 中科院分区是中国科研评价体系的数据（区域限定功能）——按区域/用户选择
+    // 显隐；隐藏时 CASS 维度整体缺席，hasLocalHit/名称回填只由其余三表承担
+    // （JCR 是国际通用数据，不门控）。
+    const cassEnabled = isCassPartitionVisible();
+
     // First pass: JCR/CASS by ISSN-or-name, plus Warning/Bealls by name.
     // (Warning table has no ISSN column; Bealls matches by title — so when the
     //  user typed an ISSN, we can't probe them until JCR/CASS gives us a name.)
@@ -120,11 +126,13 @@ class JournalSearchService {
         eissn: inputIsISSN ? input : undefined,
         journalName: inputIsISSN ? undefined : input,
       }),
-      CASSStore.lookup({
-        issn: inputIsISSN ? input : undefined,
-        eissn: inputIsISSN ? input : undefined,
-        journalName: inputIsISSN ? undefined : input,
-      }),
+      cassEnabled
+        ? CASSStore.lookup({
+            issn: inputIsISSN ? input : undefined,
+            eissn: inputIsISSN ? input : undefined,
+            journalName: inputIsISSN ? undefined : input,
+          })
+        : Promise.resolve(null),
     ]);
 
     // Resolve the journal name to use for Warning/Bealls: the typed name, or
@@ -225,10 +233,14 @@ class JournalSearchService {
           JCRStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
             finalJcr = r;
           }),
-          CASSStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
-            finalCass = r;
-          }),
         );
+        if (cassEnabled) {
+          probes.push(
+            CASSStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
+              finalCass = r;
+            }),
+          );
+        }
       }
       if (!warning && !bealls) {
         probes.push(
@@ -519,6 +531,10 @@ class JournalSearchService {
   ): Promise<void> {
     if (items.length === 0) return;
 
+    // 区域限定功能（中科院分区）隐藏时，两个 CASS 批查询整段跳过——
+    // 下方的 !cass 按名兜底自然落空（cassQuartileByName 恒为空 Map）。
+    const cassEnabled = isCassPartitionVisible();
+
     const issns = items.map((i) => i.issn).filter((x): x is string => !!x);
     const names = items.map((i) => i.name).filter(Boolean);
 
@@ -527,7 +543,7 @@ class JournalSearchService {
         issns.length
           ? JCRStore.batchLookupByIssn(issns)
           : Promise.resolve(new Map()),
-        issns.length
+        issns.length && cassEnabled
           ? CASSStore.batchLookupByIssn(issns)
           : Promise.resolve(new Map()),
         names.length
@@ -538,7 +554,7 @@ class JournalSearchService {
         names.length
           ? JCRStore.batchLookupQuartiles(names)
           : Promise.resolve(new Map()),
-        names.length
+        names.length && cassEnabled
           ? CASSStore.batchLookupQuartiles(names)
           : Promise.resolve(new Map()),
       ]);

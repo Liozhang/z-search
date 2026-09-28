@@ -21,6 +21,7 @@ import { getString } from "../utils/locale";
 import { normalizeJournalName } from "../core/data/utils/normalize";
 import { queryPlain } from "../core/data/queryPlain";
 import { safeDebug } from "../utils/logger";
+import { isCassPartitionVisible } from "../utils/region";
 
 /** 刊名归一化 → 徽章数据（任一命中才有 entry）。 */
 interface JournalBadges {
@@ -47,13 +48,18 @@ async function loadBadgeMap(): Promise<Map<string, JournalBadges>> {
     map.set(n, cur ? { ...cur, ...patch } : patch);
   };
   try {
+    // 中科院分区是区域限定功能：隐藏时不载入 CASS 行（省一次全表查询），
+    // CAS/顶刊徽章随之缺席；JCR/预警/掠夺性是国际通用数据，不门控。
+    const cassVisible = isCassPartitionVisible();
     const [jcrRows, cassRows, warnRows, beallsRows] = await Promise.all([
       queryPlain(
         `SELECT journal_name, jif, jif_quartile FROM zsearch_impact_factors WHERE jcr_year = (SELECT MAX(jcr_year) FROM zsearch_impact_factors) AND (jif IS NOT NULL OR jif_quartile IS NOT NULL)`,
       ),
-      queryPlain(
-        `SELECT journal_name, major_quartile, is_top FROM zsearch_cass_quartiles WHERE cass_year = (SELECT MAX(cass_year) FROM zsearch_cass_quartiles) AND major_quartile IS NOT NULL`,
-      ),
+      cassVisible
+        ? queryPlain(
+            `SELECT journal_name, major_quartile, is_top FROM zsearch_cass_quartiles WHERE cass_year = (SELECT MAX(cass_year) FROM zsearch_cass_quartiles) AND major_quartile IS NOT NULL`,
+          )
+        : Promise.resolve([]),
       queryPlain(`SELECT journal_name FROM zsearch_journal_warnings`),
       queryPlain(`SELECT journal_name FROM zsearch_bealls_journals`),
     ]);
@@ -117,7 +123,10 @@ function renderBadges(doc: Document, b: JournalBadges): HTMLElement {
     cell.appendChild(
       mk(b.jcrQuartile, Q_STYLE, getString("itemtree-metrics-jcr-tip")),
     );
-  if (b.cassQuartile)
+  // CASS 徽章在渲染时再查一次显隐：badgeMap 是启动缓存，区域/覆盖选择
+  // 中途变更时单元格即时跟随，不必等重载。
+  const cassVisible = isCassPartitionVisible();
+  if (cassVisible && b.cassQuartile)
     cell.appendChild(
       mk(
         `CAS ${b.cassQuartile}`,
@@ -125,7 +134,7 @@ function renderBadges(doc: Document, b: JournalBadges): HTMLElement {
         getString("itemtree-metrics-cass-tip"),
       ),
     );
-  if (b.cassTop)
+  if (cassVisible && b.cassTop)
     cell.appendChild(mk("★", IF_STYLE, getString("itemtree-metrics-top-tip")));
   if (b.warning)
     cell.appendChild(mk("⚠", WARN_STYLE, getString("lit-warning")));

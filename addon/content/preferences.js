@@ -37,6 +37,16 @@ var REGION_OPTIONS = [
 ];
 
 /**
+ * 中科院分区显隐选项（值 = region.cassPartition pref；文案走 FTL）。
+ * auto = 跟随网络区域（cn 显示 / global 隐藏 / 未声明沿用默认展示）。
+ */
+var CASS_OPTIONS = [
+  { value: "auto", labelKey: "prefs-region-cass-auto" },
+  { value: "show", labelKey: "prefs-region-cass-show" },
+  { value: "hide", labelKey: "prefs-region-cass-hide" },
+];
+
+/**
  * 翻译引擎选项（值 = translate.engineType；引擎语义见
  * core/translation/translationEngines）。可达性是跨境用户的主要决策依据，
  * 故 label 里直接写明「免 key / 需 key」。
@@ -66,11 +76,12 @@ var AZURE_REGIONS = [
   "westus",
 ];
 
-/** 区域推荐值改动的三个 pref 键 → 回显用 FTL 片段 key。 */
+/** 区域推荐值改动的 pref 键 → 回显用 FTL 片段 key。 */
 var REGION_CHANGE_LABELS = {
   "search.web.defaultProvider": "prefs-region-change-web",
   "translate.engineType": "prefs-region-change-engine",
   "translate.bing.region": "prefs-region-change-bingregion",
+  "region.cassPartition": "prefs-region-change-cass",
 };
 
 var ZSearchPrefs = {
@@ -190,11 +201,18 @@ var ZSearchPrefs = {
       .setAttribute("value", this.t("prefs-region-label"));
     var btn = doc.getElementById("zsearch-region-apply");
     btn.setAttribute("label", this.t("prefs-region-apply"));
+    doc
+      .getElementById("zsearch-cass-label")
+      .setAttribute("value", this.t("prefs-region-cass-label"));
     this.renderRegionMenu();
     doc
       .getElementById("zsearch-region-popup")
       .addEventListener("popuphidden", () => this.onRegionPicked());
     btn.addEventListener("command", () => this.applyRegion(true));
+    this.renderCassMenu();
+    doc
+      .getElementById("zsearch-cass-popup")
+      .addEventListener("popuphidden", () => this.onCassPicked());
   },
 
   // ── 区域限定端点 ═══════════════════════════════════════════════════════
@@ -613,6 +631,56 @@ var ZSearchPrefs = {
     // 默认搜索源可能被推荐值改写 → 重拉 list 让默认源菜单跟上（keepNote：
     // 不擦上面刚写的提示）。
     await this.refresh(true);
+  },
+
+  // ── 中科院分区显隐（region.cassPartition）──────────────────────────────
+
+  /** 分区显隐菜单项（label 走 FTL，值即 region.cassPartition pref）。 */
+  renderCassMenu() {
+    var popup = document.getElementById("zsearch-cass-popup");
+    while (popup.firstChild) popup.removeChild(popup.firstChild);
+    var self = this;
+    var cur = this.cassValue();
+    CASS_OPTIONS.forEach(function (o) {
+      var mi = xul("menuitem");
+      mi.setAttribute("label", self.t(o.labelKey));
+      mi.setAttribute("value", o.value);
+      if (o.value === cur) mi.setAttribute("selected", "true");
+      popup.appendChild(mi);
+    });
+    document.getElementById("zsearch-cass-picker").value = cur;
+  },
+
+  cassValue() {
+    var api = window.Zotero.ZSearch.api;
+    var v = String(api.getPrefDynamic("region.cassPartition") ?? "auto");
+    return v === "show" || v === "hide" ? v : "auto";
+  },
+
+  /** 显隐选项的显示名（回显用）。 */
+  cassLabel(value) {
+    for (var i = 0; i < CASS_OPTIONS.length; i++) {
+      if (CASS_OPTIONS[i].value === value)
+        return this.t(CASS_OPTIONS[i].labelKey);
+    }
+    return String(value || "auto");
+  },
+
+  /**
+   * 切换分区显隐：写 pref 即生效（后续检索/评分/徽章按新值取数）。
+   * 与区域切换同样按值去重——「点开又 Esc 关掉」不落盘、不动提示行。
+   */
+  onCassPicked() {
+    var ml = document.getElementById("zsearch-cass-picker");
+    var value = ml.value || "auto";
+    var api = window.Zotero.ZSearch.api;
+    if (value === this.cassValue()) return;
+    api.setPrefDynamic("region.cassPartition", value);
+    this.setNoteEl(
+      document.getElementById("zsearch-region-note"),
+      this.t("prefs-region-cass-applied", { value: this.cassLabel(value) }),
+      "ok",
+    );
   },
 
   // ── 区域限定端点 ────────────────────────────────────────────────────────

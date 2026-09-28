@@ -11,10 +11,12 @@
  *
  *   1. `region` pref（auto | global | cn）声明用户的网络环境；
  *   2. 每个声明区域带一份推荐值（默认网页搜索源 / 翻译引擎 / Azure
- *      订阅区域），仅在目标键**仍是出厂默认值**时套用——用户改过的
- *      设置永不被覆盖；
+ *      订阅区域 / 中科院分区的显隐），仅在目标键**仍是出厂默认值**时套
+ *      用——用户改过的设置永不被覆盖；
  *   3. 区域限定的端点一律可由 pref 覆盖（easyScholar / MinerU 云 /
- *      维基百科域名），镜像与自建实例是跨境用户的常规操作。
+ *      维基百科域名），镜像与自建实例是跨境用户的常规操作；
+ *   4. 区域限定的**功能**（中科院分区等中国区数据）随声明区域显隐，
+ *      且每项都有用户显式覆盖（见 isCassPartitionVisible）。
  *
  * auto 是缺省：不声明就完全沿用今天的行为（国际优先端点 + 兜底链），
  * 不猜用户在哪——按 IP/时区推断在学术插件里不可接受（隐私 + 误判代价
@@ -32,6 +34,55 @@ export const NETWORK_REGIONS = ["auto", "global", "cn"] as const;
 /** 用户的网络环境。`auto` = 未声明（沿用出厂默认，不做任何推断）。 */
 export type NetworkRegion = (typeof NETWORK_REGIONS)[number];
 
+// ── 区域限定功能的显隐（中科院分区等中国区数据）────────────────────────
+
+export const REGION_FEATURE_PREF_CHOICES = ["auto", "show", "hide"] as const;
+
+/**
+ * 区域限定功能的用户选择：`auto` = 跟随网络区域推荐，`show`/`hide` =
+ * 显式覆盖（分区数据是离线内置的，全球用户也可能研究中国期刊——故只做
+ * 默认显隐，绝不硬性剥夺）。
+ */
+export type RegionFeatureChoice = (typeof REGION_FEATURE_PREF_CHOICES)[number];
+
+export const CASS_PARTITION_PREF_KEY = "region.cassPartition";
+
+/** 归一化：非法值（含空串/旧版残留）一律回落 auto。 */
+export function normalizeRegionFeatureChoice(
+  value: unknown,
+): RegionFeatureChoice {
+  const v = typeof value === "string" ? value.trim() : "";
+  return (REGION_FEATURE_PREF_CHOICES as readonly string[]).includes(v)
+    ? (v as RegionFeatureChoice)
+    : "auto";
+}
+
+/**
+ * 中科院分区（CASS，2025 年度快照；中国科研评价体系的数据）当前是否
+ * 参与富集/评分/徽章展示。
+ *
+ * `show`/`hide` 是用户的最终决定；`auto` 跟随网络区域——`cn` 显示，
+ * `global` 隐藏，区域未声明（auto）沿用 1.x 的历史行为：本地离线数据，
+ * 默认展示（不猜测用户身份）。
+ *
+ * 本函数在富集/评分/渲染热路径上被同步调用且调用方的 catch 多为「整段
+ * 放弃」——故任何读 pref 异常都回落 true（历史行为），绝不拖垮调用方。
+ */
+export function isCassPartitionVisible(): boolean {
+  try {
+    const choice = normalizeRegionFeatureChoice(
+      getPrefDynamic(CASS_PARTITION_PREF_KEY),
+    );
+    if (choice !== "auto") return choice === "show";
+    const region = getNetworkRegion();
+    if (region === "cn") return true;
+    if (region === "global") return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 /** 声明区域后给出的推荐取值（只做默认值，用户随时可改）。 */
 export interface RegionProfile {
   /** 免 key 网页搜索源里当前区域可达的默认源（webSourceRegistry 的 id）。 */
@@ -40,6 +91,8 @@ export interface RegionProfile {
   translateEngine: string;
   /** Azure Translator 订阅区域（仅 engineType = "bing" 时使用）。 */
   bingRegion: string;
+  /** 中国区专属功能（中科院分区）在该区域下的显隐。 */
+  cassPartition: RegionFeatureChoice;
 }
 
 export const REGION_PROFILES: Record<
@@ -51,6 +104,7 @@ export const REGION_PROFILES: Record<
     webDefaultProvider: "duckduckgo",
     translateEngine: "google",
     bingRegion: "global",
+    cassPartition: "hide",
   },
   // 中国大陆：Google / DuckDuckGo 不可达——默认源落 Bing（web），翻译
   // 走同源的免 key Bing web 端点（Azure 订阅区取国内 region，配了
@@ -59,6 +113,7 @@ export const REGION_PROFILES: Record<
     webDefaultProvider: "bing-html",
     translateEngine: "bing-web",
     bingRegion: "chinanorth",
+    cassPartition: "show",
   },
 };
 
@@ -67,6 +122,7 @@ const SHIPPED_DEFAULTS: Record<string, string> = {
   "search.web.defaultProvider": "duckduckgo",
   "translate.engineType": "google",
   "translate.bing.region": "",
+  [CASS_PARTITION_PREF_KEY]: "auto",
 };
 
 /** 推荐值写入的目标键（顺序即 UI 展示顺序）。 */
@@ -74,6 +130,7 @@ export const REGION_RECOMMENDED_KEYS = [
   "search.web.defaultProvider",
   "translate.engineType",
   "translate.bing.region",
+  CASS_PARTITION_PREF_KEY,
 ] as const;
 
 export type RegionRecommendedKey = (typeof REGION_RECOMMENDED_KEYS)[number];
@@ -117,6 +174,7 @@ export function regionRecommendation(
   if (!profile) return SHIPPED_DEFAULTS[key];
   if (key === "search.web.defaultProvider") return profile.webDefaultProvider;
   if (key === "translate.engineType") return profile.translateEngine;
+  if (key === CASS_PARTITION_PREF_KEY) return profile.cassPartition;
   return profile.bingRegion;
 }
 

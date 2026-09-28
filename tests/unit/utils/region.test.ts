@@ -39,7 +39,9 @@ import {
   applyRegionRecommendations,
   getNetworkRegion,
   getRegionProfile,
+  isCassPartitionVisible,
   normalizeRegion,
+  normalizeRegionFeatureChoice,
   regionRecommendation,
   resolveWikiHost,
   setNetworkRegion,
@@ -56,6 +58,7 @@ function seedShippedDefaults() {
   );
   h.prefs.set("extensions.zotero.zsearch.translate.engineType", "google");
   h.prefs.set("extensions.zotero.zsearch.translate.bing.region", "");
+  h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "auto");
 }
 
 describe("normalizeRegion", () => {
@@ -105,20 +108,23 @@ describe("region profiles", () => {
     );
     expect(regionRecommendation("translate.engineType", "auto")).toBe("google");
     expect(regionRecommendation("translate.bing.region", "auto")).toBe("");
+    expect(regionRecommendation("region.cassPartition", "auto")).toBe("auto");
   });
 
-  it("global 推荐国际可达链路", () => {
+  it("global 推荐国际可达链路（中国区数据默认隐藏）", () => {
     const p = getRegionProfile("global")!;
     expect(p.webDefaultProvider).toBe("duckduckgo");
     expect(p.translateEngine).toBe("google");
     expect(p.bingRegion).toBe("global");
+    expect(p.cassPartition).toBe("hide");
   });
 
-  it("cn 推荐国内可达链路（Bing 网页 / Bing 网页翻译 / 华北订阅区）", () => {
+  it("cn 推荐国内可达链路（Bing 网页 / Bing 网页翻译 / 华北订阅区，中国区数据显示）", () => {
     const p = getRegionProfile("cn")!;
     expect(p.webDefaultProvider).toBe("bing-html");
     expect(p.translateEngine).toBe("bing-web");
     expect(p.bingRegion).toBe("chinanorth");
+    expect(p.cassPartition).toBe("show");
   });
 
   it("两份 profile 覆盖 REGION_PROFILES 全表", () => {
@@ -129,9 +135,10 @@ describe("region profiles", () => {
 describe("applyRegionRecommendations", () => {
   beforeEach(seedShippedDefaults);
 
-  it("全默认态：cn 一次改写三项", () => {
+  it("全默认态：cn 一次改写四项", () => {
     const written = applyRegionRecommendations("cn");
     expect(written.sort()).toEqual([
+      "region.cassPartition",
       "search.web.defaultProvider",
       "translate.bing.region",
       "translate.engineType",
@@ -145,6 +152,9 @@ describe("applyRegionRecommendations", () => {
     expect(h.prefs.get("extensions.zotero.zsearch.translate.bing.region")).toBe(
       "chinanorth",
     );
+    expect(h.prefs.get("extensions.zotero.zsearch.region.cassPartition")).toBe(
+      "show",
+    );
   });
 
   it("守门：用户改过的默认源不被区域选择推翻", () => {
@@ -157,11 +167,22 @@ describe("applyRegionRecommendations", () => {
     expect(
       h.prefs.get("extensions.zotero.zsearch.search.web.defaultProvider"),
     ).toBe("searxng");
-    // 其余两项仍是出厂默认 → 照改
+    // 其余三项仍是出厂默认 → 照改
     expect(written.sort()).toEqual([
+      "region.cassPartition",
       "translate.bing.region",
       "translate.engineType",
     ]);
+  });
+
+  it("守门：用户显式选过的分区显隐不被区域选择推翻", () => {
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "show");
+    expect(applyRegionRecommendations("global")).not.toContain(
+      "region.cassPartition",
+    );
+    expect(h.prefs.get("extensions.zotero.zsearch.region.cassPartition")).toBe(
+      "show",
+    );
   });
 
   it("force：设置面板的「重新应用」才覆盖用户选过的值", () => {
@@ -194,6 +215,72 @@ describe("applyRegionRecommendations", () => {
 
   it("非法区域值按 auto 处理（不写）", () => {
     expect(applyRegionRecommendations("bogus" as any)).toEqual([]);
+  });
+});
+
+describe("normalizeRegionFeatureChoice", () => {
+  it("放行三个合法值", () => {
+    expect(normalizeRegionFeatureChoice("auto")).toBe("auto");
+    expect(normalizeRegionFeatureChoice("show")).toBe("show");
+    expect(normalizeRegionFeatureChoice("hide")).toBe("hide");
+  });
+
+  it("坏值一律回落 auto（空串 / null / 拼写错误 / 大小写）", () => {
+    expect(normalizeRegionFeatureChoice("")).toBe("auto");
+    expect(normalizeRegionFeatureChoice(undefined)).toBe("auto");
+    expect(normalizeRegionFeatureChoice(null)).toBe("auto");
+    expect(normalizeRegionFeatureChoice("visible")).toBe("auto");
+    expect(normalizeRegionFeatureChoice("HIDE")).toBe("auto");
+    expect(normalizeRegionFeatureChoice(true)).toBe("auto");
+  });
+});
+
+describe("isCassPartitionVisible（中科院分区 = 中国区数据的显隐）", () => {
+  beforeEach(() => {
+    h.prefs.clear();
+    h.prefs.set("extensions.zotero.zsearch.region", "auto");
+  });
+
+  it("未声明区域 + 未覆盖：沿用历史行为（本地离线数据默认展示）", () => {
+    expect(isCassPartitionVisible()).toBe(true);
+  });
+
+  it("auto 跟随网络区域：cn 显示、global 隐藏", () => {
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    expect(isCassPartitionVisible()).toBe(true);
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    expect(isCassPartitionVisible()).toBe(false);
+  });
+
+  it("显式 show 覆盖优先于 global 区域（全球用户也可能研究中国期刊）", () => {
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "show");
+    expect(isCassPartitionVisible()).toBe(true);
+  });
+
+  it("显式 hide 覆盖优先于 cn 区域", () => {
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "hide");
+    expect(isCassPartitionVisible()).toBe(false);
+  });
+
+  it("覆盖值躺在 pref 里是坏值时按 auto 处理（不得让坏值改变行为）", () => {
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "off");
+    expect(isCassPartitionVisible()).toBe(false);
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    expect(isCassPartitionVisible()).toBe(true);
+  });
+
+  it("pref 环境不可用（如宿主未就绪）时回落 true，绝不抛错拖垮富集调用方", () => {
+    const g = globalThis as any;
+    const prev = g.Zotero;
+    g.Zotero = {}; // 无 Prefs —— getPref 会抛，getPrefDynamic 返回 undefined
+    try {
+      expect(isCassPartitionVisible()).toBe(true);
+    } finally {
+      g.Zotero = prev;
+    }
   });
 });
 

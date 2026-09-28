@@ -13,6 +13,7 @@
 
 import type { ScoreFactor } from "../../tool/builtin/atomic/paper-quality-scorer";
 import { safeDebug } from "../../../utils/logger";
+import { isCassPartitionVisible } from "../../../utils/region";
 
 // ---------------------------------------------------------------------------
 // Input / Output types
@@ -182,19 +183,27 @@ export async function prefetchMetrics(
   };
   if (names.length === 0) return emptyResult;
 
+  // 中科院分区是区域限定功能（中国科研评价体系）——隐藏时 CASS 维度不参与
+  // 取分（journalTierScore 退化为纯 JCR），全球用户的排序不受中国区先验影响。
+  const cassEnabled = isCassPartitionVisible();
+
   const [jcrQuartileMap, cassQuartileMap, warningMap] = await Promise.all([
     prefetchJCRQuartiles(articles),
-    (async () => {
-      try {
-        const cassStore = (await import("../../data/CASSStore")).default;
-        return await cassStore.batchLookupQuartiles(names);
-      } catch (e) {
-        safeDebug(
-          "[z-search] academic-scorer.prefetchCASSQuartiles failed: " + e,
-        );
-        return new Map<string, { quartile: number; isTop: boolean }>();
-      }
-    })(),
+    cassEnabled
+      ? (async () => {
+          try {
+            const cassStore = (await import("../../data/CASSStore")).default;
+            return await cassStore.batchLookupQuartiles(names);
+          } catch (e) {
+            safeDebug(
+              "[z-search] academic-scorer.prefetchCASSQuartiles failed: " + e,
+            );
+            return new Map<string, { quartile: number; isTop: boolean }>();
+          }
+        })()
+      : Promise.resolve(
+          new Map<string, { quartile: number; isTop: boolean }>(),
+        ),
     (async () => {
       try {
         const warningStore = (await import("../../data/WarningListStore"))

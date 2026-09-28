@@ -23,9 +23,14 @@
  * Exported + exposed via testAccess for integration testing.
  */
 import { safeDebug } from "../../utils/logger";
+import { isCassPartitionVisible } from "../../utils/region";
 
 export async function enrichJournalMetrics(articles: any[]): Promise<void> {
   try {
+    // 中科院分区是中国科研评价体系的数据（区域限定功能）——网络区域声明为
+    // 国际、或用户显式隐藏时，查询与徽章字段一并缺席（JCR/预警/掠夺性名单
+    // 是国际通用数据，不受区域门控）。
+    const cassEnabled = isCassPartitionVisible();
     const { default: JCRStore } = await import("../data/JCRStore");
     const { default: CASSStore } = await import("../data/CASSStore");
     const { default: WarningListStore } =
@@ -46,7 +51,7 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       issns.length
         ? JCRStore.batchLookupByIssn(issns)
         : Promise.resolve(new Map()),
-      issns.length
+      issns.length && cassEnabled
         ? CASSStore.batchLookupByIssn(issns)
         : Promise.resolve(new Map()),
       names.length
