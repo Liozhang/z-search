@@ -3,6 +3,7 @@
  */
 
 import { runFullLibraryBuild } from "../../core/search/runFullLibraryBuild";
+import { getString } from "../../utils/locale";
 import { toErrorMessage } from "../../utils/error";
 import { safeDebug } from "../../utils/logger";
 
@@ -66,12 +67,13 @@ const SEMANTIC_ACTIONS: Record<
     if (!itemID) {
       const zoteroPane = (Zotero as any).getActiveZoteroPane?.();
       if (!zoteroPane) {
-        error = "No active Zotero pane";
+        // 用户可见错误走本地化（前端原样 toast 出这串）
+        error = getString("semantic-error-no-pane");
         return { result, error };
       }
       const selected = zoteroPane.getSelectedItems?.() ?? [];
       if (selected.length === 0) {
-        error = "No item selected";
+        error = getString("common-no-selection");
         return { result, error };
       }
       itemID = selected[0].id;
@@ -270,7 +272,7 @@ const SEMANTIC_ACTIONS: Record<
     }
     const item = Zotero.Items.get(payload.itemID);
     if (!item) {
-      error = "Item not found";
+      error = getString("semantic-open-not-found");
       return { result, error };
     }
     const zoteroPane = (Zotero as any).getActiveZoteroPane?.();
