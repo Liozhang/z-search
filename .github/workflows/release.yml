@@ -12,6 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 浅克隆下仓库里只有当前 tag 和发布提交自身：scaffold 的发布说明
+          # 生成器取「上一 tag → 当前 tag」的提交集，唯一提交（发布提交）
+          # 又被按提交模板过滤，集合恒空 → Release 说明恒为「No significant
+          # changes」（v1.2.3 实证）。全量历史连全部标签一起拉取才能定位
+          # 上一 tag 并抽取 CHANGELOG 对应小节。
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
