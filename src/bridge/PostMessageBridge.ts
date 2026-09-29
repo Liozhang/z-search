@@ -71,7 +71,7 @@ export function restoreUndefined(obj: any): any {
   return out;
 }
 
-const _LEADERO_ENVELOPE_SCHEMAS = [
+const _ZSEARCH_ENVELOPE_SCHEMAS = [
   RequestEnvelopeSchema,
   ResponseEnvelopeSchema,
   NotifyEnvelopeSchema,
@@ -193,8 +193,8 @@ export class PostMessageBridge {
     if (!data || typeof data !== "object") return;
 
     // 2026-09-10 安全批：入站来源闸门。此前子侧不校验来源——任何拿到本 iframe
-    // 窗口句柄的窗口都能伪造 leadero-res（伪造工具结果/通知进 UI）或
-    // leadero-req。判据用 origin 字符串（XPCNativeWrapper 陷阱见 originGate.ts
+    // 窗口句柄的窗口都能伪造 zsearch-res（伪造工具结果/通知进 UI）或
+    // zsearch-req。判据用 origin 字符串（XPCNativeWrapper 陷阱见 originGate.ts
     // 头注）；origin 不可判定时按降级契约放行。
     const verdict = checkInbound(e.origin, this.parent);
     if (!verdict.accept) {

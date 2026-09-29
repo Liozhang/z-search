@@ -2,22 +2,22 @@
  * PortalScope — 统一作用域容器（Base UI 迁移基础设施）。
  *
  * 问题背景：
- *   leadero 所有 design token（`--accent-*` / `--space-*` / `--fill-*` 桥接）
- *   都挂载在 `.leadero-root` 节点上，所有 CSS 选择器强制以 `.leadero-root`
+ *   插件所有 design token（`--accent-*` / `--space-*` / `--fill-*` 桥接）
+ *   都挂载在 `.zsearch-root` 节点上，所有 CSS 选择器强制以 `.zsearch-root`
  *   起始（check-css-scope.cjs）。而 Base UI 的 Dialog/Popover/Tooltip/Menu/
  *   Select/Combobox/Toast 默认把浮层 Portal 到 `document.body`，脱离
- *   `.leadero-root` 子树 → token 解析失败、CSS 选择器命中失败。
+ *   `.zsearch-root` 子树 → token 解析失败、CSS 选择器命中失败。
  *
  * 解法：
  *   在每个 React 根挂一个 `<PortalScopeRoot>`，它渲染一个物理上位于
- *   `.leadero-root` 子树内的专用容器节点 `.leadero-portal-layer`，并通过
+ *   `.zsearch-root` 子树内的专用容器节点 `.zsearch-portal-layer`，并通过
  *   Context 向下暴露该容器的 ref。所有 Base UI 浮层封装组件
  *   （`ui/*`）读取这个 ref，作为 `*.Portal` 的 `container` prop，
- *   使浮层 DOM 物理上落在 `.leadero-root` 内。
+ *   使浮层 DOM 物理上落在 `.zsearch-root` 内。
  *
- *   关键：该容器自身带 `.leadero-root` 类，因此
- *     (a) `.leadero-root` 前缀的 CSS 选择器能命中它及内部浮层；
- *     (b) 它作为外层 `.leadero-root` 的子节点，CSS 变量沿 DOM 树继承，
+ *   关键：该容器自身带 `.zsearch-root` 类，因此
+ *     (a) `.zsearch-root` 前缀的 CSS 选择器能命中它及内部浮层；
+ *     (b) 它作为外层 `.zsearch-root` 的子节点，CSS 变量沿 DOM 树继承，
  *         无需额外注入 token。
  *
  * 挂载位置（两条路径，见 index.tsx）：
@@ -64,15 +64,15 @@ interface PortalScopeRootProps {
  * PortalScopeRoot —— 在 React 根内渲染一个专用 portal 容器节点，并通过
  * Context 向整个子树暴露该容器的 ref。
  *
- * 容器样式（leadero-baseui.css 中定义）：
- *   - position: absolute; inset: 0 —— 覆盖整个父级作用域（.leadero-root
+ * 容器样式（zsearch-baseui.css 中定义）：
+ *   - position: absolute; inset: 0 —— 覆盖整个父级作用域（.zsearch-root
  *     在 baseui.css 里设了 position:relative 作为定位参考）
  *   - pointer-events: none —— 容器本身不拦截鼠标；浮层各自 pointer-events: auto
- *   - 不设 z-index —— 依赖 .leadero-root 的 `isolation: isolate`（官方
+ *   - 不设 z-index —— 依赖 .zsearch-root 的 `isolation: isolate`（官方
  *     quick-start 要求）创建独立堆叠上下文，内部浮层各自用 --z-* token
  *
- * 前置依赖（leadero-baseui.css 顶部）：
- *   .leadero-root { isolation: isolate; position: relative; }
+ * 前置依赖（zsearch-baseui.css 顶部）：
+ *   .zsearch-root { isolation: isolate; position: relative; }
  *   这是 Base UI 官方 quick-start 的硬性要求，确保浮层 z-index 在应用
  *   scope 内独立解析，不与 Zotero 主窗口冲突。
  *
@@ -89,14 +89,14 @@ export function PortalScopeRoot({
     <PortalScopeContext.Provider value={containerRef}>
       {children}
       {/*
-        portal-layer：物理上在 .leadero-root 子树内（此组件渲染在应用根
-        的 .leadero-root 节点之下），所有 Base UI 浮层会 portal 到这里。
+        portal-layer：物理上在 .zsearch-root 子树内（此组件渲染在应用根
+        的 .zsearch-root 节点之下），所有 Base UI 浮层会 portal 到这里。
         pointer-events:none 防止空容器拦截点击；浮层组件自身样式设 auto。
       */}
       <div
         ref={containerRef}
-        className="leadero-root leadero-portal-layer"
-        data-leadero-portal-layer=""
+        className="zsearch-root zsearch-portal-layer"
+        data-zsearch-portal-layer=""
       />
     </PortalScopeContext.Provider>
   );

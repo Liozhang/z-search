@@ -3,10 +3,10 @@
  *
  * 基于 @base-ui/react/dialog，flat 子组件导出（DialogContent / DialogClose）。
  * 类串对齐 v4.shadcn.com 注册表；官方 tw-animate-css 动画类翻译为 Base UI 的
- * data-starting/ending-style 过渡。Portal 经 useReuiPortal 注入 `.leadero-root`
+ * data-starting/ending-style 过渡。Portal 经 useReuiPortal 注入 `.zsearch-root`
  * 作用域（overlay 否则丢失令牌）。
  *
- * leadero 扩展（消费点 API 冻结）：
+ * 插件扩展（消费点 API 冻结）：
  *   - DialogContent: overlayClassName / showCloseButton / ariaLabel
  *   - DialogTitle 支持 Base UI render prop（ConfirmDialog 用 render={<h3/>}）
  *

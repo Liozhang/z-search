@@ -34,7 +34,7 @@ export async function parseItemPdfToMarkdown(
       images: {},
       source: "opendataloader-pdf",
       error:
-        "OpenDataLoader PDF is not enabled. Enable it in Leadero preferences.",
+        "OpenDataLoader PDF is not enabled. Enable it in z-search preferences.",
     };
   }
 
@@ -118,7 +118,7 @@ export async function parseItemPdfToJson(
       data: null,
       source: "opendataloader-pdf",
       error:
-        "OpenDataLoader PDF is not enabled. Enable it in Leadero preferences.",
+        "OpenDataLoader PDF is not enabled. Enable it in z-search preferences.",
     };
   }
 

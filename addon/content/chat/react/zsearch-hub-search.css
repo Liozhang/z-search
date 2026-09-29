@@ -1,10 +1,10 @@
-/* leadero-hub-search.css — Hub 样式分区（原 leadero-hub.css 1102-1172 行：Search Pane（三段域 tab：网络/本地/期刊））。
+/* zsearch-hub-search.css — Hub 样式分区（原 zsearch-hub.css 1102-1172 行：Search Pane（三段域 tab：网络/本地/期刊））。
  * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
  * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
 /* ==================== Search Pane（三段域 tab：网络/本地/期刊） ==================== */
 /* hub-search-pane: non-scrolling flex column shell (Research/Stats pattern).
  * 页头 + 视图 seg 固定在上，每个视图 slot (hub-search-slot) 自管 scroll + padding。 */
-.leadero-root .hub-search-pane {
+.zsearch-root .hub-search-pane {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -28,7 +28,7 @@
 
 /* keep-alive slot：flex column 撑满，display:flex + .hidden 切换（FollowingPane 范式）。
  * 两视图均自带 scroll 骨架 → 一律 is-self-scroll（slot 只管显隐与高度传播）。 */
-.leadero-root .hub-search-slot {
+.zsearch-root .hub-search-slot {
   /* v1.52 二轮：死基座配方退役——唯一消费点即挂 is-self-scroll（视图自带滚动骨架），
      基座只承担 flex 骨架与 hidden 切换（原 overflow+padding 永不生效） */
   flex: 1;
@@ -38,11 +38,11 @@
   flex-direction: column;
   animation: hub-pane-enter var(--transition-normal);
 }
-.leadero-root .hub-search-slot.hidden {
+.zsearch-root .hub-search-slot.hidden {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .leadero-root .hub-search-slot {
+  .zsearch-root .hub-search-slot {
     animation: none;
   }
 }
@@ -58,20 +58,20 @@
  * 2026-09-09 清 D5 双 pad 回归：视图 TSX 的 px-[--page-content-padding] 退役——
  * 水平轨道唯一归 pane 根 --page-inline-pad（页根 40px 轨，与 seg 左缘对齐），
  * 视图层只管纵向 py（文献/期刊两视图同批）。 */
-.leadero-root .hub-lit-page {
+.zsearch-root .hub-lit-page {
   flex: 1;
   min-height: 0;
 }
 
-.leadero-root .hub-search-slot.is-self-scroll {
+.zsearch-root .hub-search-slot.is-self-scroll {
   overflow: hidden;
 }
 
 /* ---- 引擎状态条（库内/外部逐路结算；§23.4 状态=点+文字） ---- */
-.leadero-root .hub-search-engine-strip {
+.zsearch-root .hub-search-engine-strip {
   flex-shrink: 0;
 }
-.leadero-root .hub-search-engine-dot {
+.zsearch-root .hub-search-engine-dot {
   width: var(--hub-dot-size);
   height: var(--hub-dot-size);
   border-radius: var(--radius-full);
@@ -82,7 +82,7 @@
    筛选生效维度计数角标：currentColor 描边+tabular 数字——常态随按钮文字色，
    has-filter 黑 chip 态（background=text-primary/color=background）自动反白，
    不引入第二套配色。数字进 aria 由按钮文本承担，此处 aria-hidden 防重复播报。 */
-.leadero-root .hub-tool-count {
+.zsearch-root .hub-tool-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,17 +97,17 @@
 }
 
 /* ---- 知识库腿结果卡（B3 第三腿：学术脑概念，点击跳概念详情） ---- */
-.leadero-root .hub-search-knowledge-card {
+.zsearch-root .hub-search-knowledge-card {
   border-bottom: 1px solid var(--hub-row-divider);
   padding: var(--space-2) 0;
 }
-.leadero-root .hub-search-knowledge-badge {
+.zsearch-root .hub-search-knowledge-badge {
   font: var(--ui-font-overline);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--text-tertiary);
 }
-.leadero-root .hub-search-knowledge-chip {
+.zsearch-root .hub-search-knowledge-chip {
   font-size: var(--text-3xs);
   color: var(--text-secondary);
   border: 1px solid var(--border-strong);

@@ -22,7 +22,7 @@
 (function (root, factory) {
   var api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (root) root.LeaderoOriginGate = api;
+  if (root) root.ZSearchOriginGate = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   /**
    * 把「窗口 or 元素」归一成窗口。

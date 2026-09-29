@@ -8,8 +8,8 @@
  * data-starting/ending-style 过渡（官方的 tw-animate-css 类不在依赖内，等价实现）。
  *
  * Portal container 走 PortalScope（reui-portal），与 dialog/select/
- * combobox/dropdown-menu/sheet 一致：默认 body 会让浮层脱离 .leadero-root
- * 子树——tw.css 工具类全部是 `.leadero-root ` 后代选择器，bg-foreground/
+ * combobox/dropdown-menu/sheet 一致：默认 body 会让浮层脱离 .zsearch-root
+ * 子树——tw.css 工具类全部是 `.zsearch-root ` 后代选择器，bg-foreground/
  * px-3/rounded-md 一律不命中，tooltip 退化为透明裸文本，token 也解析失败
  * （见 reui-portal.tsx 头注释）。传值必须解 ref：RefObject 直传在首次
  * 渲染 ref.current 为 null 时会触发 floating-ui tabbable 扫描
@@ -59,7 +59,7 @@ function TooltipContent({
     TooltipPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
   > & {
-    /** Portal 挂载点；缺省走 PortalScope（.leadero-portal-layer） */
+    /** Portal 挂载点；缺省走 PortalScope（.zsearch-portal-layer） */
     container?: TooltipPrimitive.Portal.Props["container"];
   }) {
   const portalRef = useReuiPortal();

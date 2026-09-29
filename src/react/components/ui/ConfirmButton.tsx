@@ -2,7 +2,7 @@
  * ConfirmButton — 触发公用 ConfirmDialog 弹窗的按钮。
  *
  * 原为行内两次点击确认（inline），现改为命令式调用 useConfirm() 弹 modal
- * （更强制的确认反馈，风格与 leadero 其他 dialog 一致）。
+ * （更强制的确认反馈，风格与其他 dialog 一致）。
  *
  * 调用方接口不变：<ConfirmButton confirmMessage confirmLabel onConfirm />
  * 点击 → 弹 ConfirmDialog → 用户确认 → onConfirm()

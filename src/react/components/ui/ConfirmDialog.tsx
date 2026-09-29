@@ -2,8 +2,8 @@
  * ConfirmDialog — 公用确认弹窗（modal overlay），命令式 API。
  *
  * 替代 window.confirm / Services.prompt（在 chat iframe 内焦点割裂、风格不一致）。
- * 基于 Base UI Dialog（经 leadero 封装，portal 到 .leadero-root 内），
- * 复用现有 .leadero-dialog-overlay / .leadero-dialog CSS。
+ * 基于 Base UI Dialog（经插件封装，portal 到 .zsearch-root 内），
+ * 复用现有 .zsearch-dialog-overlay / .zsearch-dialog CSS。
  *
  * 用法：
  *   // 1. 树顶挂 Provider（index.tsx，包住所有 dashboard）
@@ -118,7 +118,7 @@ interface ConfirmDialogProps extends ConfirmOptions {
  *
  * Base UI 自带：focus trap、restore focus、scroll lock、Escape 关闭、
  * 点击 overlay/外部关闭。无需手写 useDialogFocus / keydown / click 处理。
- * 复用 .leadero-dialog-overlay / .leadero-dialog CSS（视觉零变化）。
+ * 复用 .zsearch-dialog-overlay / .zsearch-dialog CSS（视觉零变化）。
  */
 export function ConfirmDialog({
   open,
@@ -144,7 +144,7 @@ export function ConfirmDialog({
       <DialogContent
         // 2026-09-02 值级批：删 sm:max-w-[424px]——424 系八档进一误登（原 420）；
         // 回落 dialog 基座 --form-dialog-width 440（=原型 :496 .dlg min(440px,92vw) 全族单源）
-        className="leadero-confirm-dialog w-full gap-0 p-0"
+        className="zsearch-confirm-dialog w-full gap-0 p-0"
         ariaLabel={title || message}
       >
         {title && (

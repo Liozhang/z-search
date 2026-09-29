@@ -1,9 +1,9 @@
 /**
- * Toast.tsx — Base UI Toast（保留 leadero useToast API）。
+ * Toast.tsx — Base UI Toast（保留上游 useToast API）。
  *
- * 基于 @base-ui/react/toast，对外保持 leadero 原 useToast() API 不变
+ * 基于 @base-ui/react/toast，对外保持上游原 useToast() API 不变
  * （show/success/error/info/warning），消费端零改动。内部用 Base UI
- * Toast.Provider + useToastManager + Viewport（portal 到 .leadero-root 内）。
+ * Toast.Provider + useToastManager + Viewport（portal 到 .zsearch-root 内）。
  *
  * 视觉用 Tailwind 工具类（圆角 --card-radius 6px + 左色条 border-l-4，cn-toast 已退役）。
  *
@@ -86,10 +86,10 @@ const DEDUP_WINDOW_MS = 2000;
 
 /**
  * ToastProvider —— 挂 React 树顶，渲染 Base UI Toast Provider + Viewport，
- * 暴露 leadero 风格的 useToast() API。
+ * 暴露插件风格的 useToast() API。
  *
- * Viewport portal 到 .leadero-root 内的 portal-layer（与其他浮层一致），
- * 视觉样式全量使用 Tailwind 工具类，无专用 .leadero-toast* CSS。
+ * Viewport portal 到 .zsearch-root 内的 portal-layer（与其他浮层一致），
+ * 视觉样式全量使用 Tailwind 工具类，无专用 .zsearch-toast* CSS。
  */
 export function ToastProvider({
   children,
@@ -108,7 +108,7 @@ export function ToastProvider({
 
 /**
  * ToastApiBridge —— 在 Toast.Provider 内部调用 useToastManager，把 Base UI 的
- * add/close 适配为 leadero 的 show/success/error/info/warning API，注入 Context。
+ * add/close 适配为插件的 show/success/error/info/warning API，注入 Context。
  */
 function ToastApiBridge({
   children,

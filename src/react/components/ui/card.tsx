@@ -2,7 +2,7 @@
  * card.tsx — shadcn/ui Card（官方 v4 形态，Base UI 底座）。
  *
  * 类串对齐 v4.shadcn.com 注册表；刻意省略官方 shadow-sm，遵守
- * leadero §19 平地红线：静态内容卡片零投影。
+ * 设计规范 §19 平地红线：静态内容卡片零投影。
  *
  * @module react/components/ui/card
  */

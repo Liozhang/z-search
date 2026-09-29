@@ -2,14 +2,14 @@
  * reui-portal — ReUI/shadcn 浮层组件的 PortalScope 适配器。
  *
  * 背景：
- *   leadero 的所有 design token 挂在 `.leadero-root` 节点，且构建强制
- *   要求类选择器以 `.leadero-root` 起始（check-css-scope.cjs）。Base UI
+ *   插件的所有 design token 挂在 `.zsearch-root` 节点，且构建强制
+ *   要求类选择器以 `.zsearch-root` 起始（check-css-scope.cjs）。Base UI
  *   的浮层（Dialog/Popover/Tooltip/Select/Combobox/Menu）默认 Portal 到
- *   document.body，会脱离 `.leadero-root` 子树 → token 解析失败、Tailwind
+ *   document.body，会脱离 `.zsearch-root` 子树 → token 解析失败、Tailwind
  *   工具类选择器无法命中。
  *
- *   leadero 已有成熟的 PortalScope 基础设施（portal-scope），在每个
- *   React 根挂一个 `.leadero-root.leadero-portal-layer` 容器。本模块把它
+ *   插件已有成熟的 PortalScope 基础设施（portal-scope），在每个
+ *   React 根挂一个 `.zsearch-root.zsearch-portal-layer` 容器。本模块把它
  *   暴露给新落地的 shadcn/ReUI 组件使用。
  *
  * 用法（在 shadcn 浮层组件内）：

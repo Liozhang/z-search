@@ -76,7 +76,7 @@ translation-error-pdf-translate-failed = zotero-pdf-translate translation failed
 translation-error-bing-not-configured = Bing translation has no API key configured
 translation-error-deepl-not-configured = DeepL translation has no API key configured
 translation-error-custom-url-missing = Custom translation API URL is not configured
-translation-error-ai-not-configured = No AI provider configured for translation. Assign a model to the Translation feature in Leadero Settings → AI Models.
+translation-error-ai-not-configured = No AI provider configured for translation. Assign a model to the Translation feature in z-search Settings → AI Models.
 translation-error-google-fallback-failed = Google translation failed ({ $googleError }); the Bing fallback also failed ({ $bingError })
 translation-error-unknown = Unknown error
 translation-error-bing-token-unavailable = Could not obtain the Bing translation token (the page structure may have changed)
@@ -255,13 +255,13 @@ chat-error-unavailable = AI service is temporarily unavailable. Please try again
 chat-error-token-limit = Request too long. Try shortening your message or starting a new conversation.
 chat-error-network = Network error. Please check your internet connection.
 chat-error-cancelled = Request was cancelled.
-chat-error-no-provider = No AI model is configured for this feature yet. Open Leadero Settings → AI Models and assign a model to it (Chat and Agent each need their own assignment).
+chat-error-no-provider = No AI model is configured for this feature yet. Open z-search Settings → AI Models and assign a model to it (Chat and Agent each need their own assignment).
 chat-error-with-detail = Error: { $error }
 # ── Queue panel (sends during execution are enqueued; ZCode lessons batch 2026-09-07) ──
 
 # Slash Menu Commands — keep in sync with src/react/components/Input/slashCommands.ts
 # ── Soul / Agent Names ──
-soul-name-default = Leadero Assistant
+soul-name-default = z-search Assistant
 soul-name-reader-copilot = Reader Copilot
 soul-name-synthesis-agent = Cross-Paper Analyst
 soul-name-digest-agent = Annotation Synthesizer
@@ -280,7 +280,7 @@ soul-name-discussion-facilitator = Discussion Facilitator
 # ── Grill / Alignment ──
 # ── Research Dashboard UI ──
 # R-6 (2026-09-15 deployed-build review): the required marker is rendered by
-# NewResearchForm's <span class="leadero-form-required"> (styled red), so this
+# NewResearchForm's <span class="zsearch-form-required"> (styled red), so this
 # value must not carry its own literal "*" — otherwise the label renders as
 # "Research Question * *" (confirmed by zoomed screenshot).
 # 统一 gap 入口（2026-09-21）：空白卡预览

@@ -1,11 +1,11 @@
-/* leadero-hub-base.css — Hub 样式分区（原 leadero-hub.css 1-135 行：基础：Tab 共享基座 / Body+Sidebar / Main / Content Container）。
+/* zsearch-hub-base.css — Hub 样式分区（原 zsearch-hub.css 1-135 行：基础：Tab 共享基座 / Body+Sidebar / Main / Content Container）。
  * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
  * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
 /*
- * leadero-hub.css
+ * zsearch-hub.css
  * Hub 窗口骨架布局样式 + 图谱视图样式 + 研究功能区样式。
  *
- * 本文件合并了原 discovery-forms.css / leadero-shared.css 的部分内容。
+ * 本文件合并了原 discovery-forms.css / zsearch-shared.css 的部分内容。
  * 参考 docs/hub-design-spec.md 的视觉意图：Hub 骨架类（标题栏 / 功能 Tab /
  * 主窗 / 侧栏外壳 / 面包屑 / 工具栏 / 内容容器 / 占位）按规范提取；
  * 图谱视图类（hub-graph-*）按 GraphPane / UnifiedGraphCanvas 实际结构设计；
@@ -14,13 +14,13 @@
  * 其余功能模块的内容样式（stat-card / phase / track-row / bubble / dialog / set-card 等）属于 P2b-P5。
  *
  * 颜色 / 间距 / 字号一律用 var(--xxx)：
- *   - leadero token（--leadero-brand / --accent-* / --space-* / --text-* /
- *     --radius-* / --shadow-* / --transition-*）由 leadero-tokens.css 在
- *     .leadero-root scope 提供；
+ *   - 插件 token（--zsearch-brand / --accent-* / --space-* / --text-* /
+ *     --radius-* / --shadow-* / --transition-*）由 zsearch-tokens.css 在
+ *     .zsearch-root scope 提供；
  *   - Zotero 原生变量（--fill-* / --card-bg）由 Zotero :root 提供。
  *   故本文件不带 mockup 中模拟 :root 的 --fill-* / @media dark :root 定义。
  *
- * 所有选择器以 .leadero-root 起始（check-css-scope.cjs 构建时强制要求）。
+ * 所有选择器以 .zsearch-root 起始（check-css-scope.cjs 构建时强制要求）。
  *
  * ┌─────────────────────────────────────────────────────────────┐
  * │ 容器规格索引（详细规格见 docs/component-spec.md §13）        │
@@ -41,7 +41,7 @@
    styling comes from TabBar's inline Tailwind classes (data-[selected]). */
 
 /* ==================== Body + Sidebar ==================== */
-.leadero-root .hub-sidebar {
+.zsearch-root .hub-sidebar {
   width: var(--dash-nav-width);
   flex-shrink: 0;
   background: var(
@@ -63,16 +63,16 @@
    2px 为结构线宽豁免（--stroke-edge 档）；圆角由 sidebar-menu-button 基件
    自带，本规则不重复。图标不透明度由本规则单源控制，button 级 opacity 已从
    lean 变体移除。 */
-.leadero-root [data-slot="sidebar-menu-button"][data-active] {
+.zsearch-root [data-slot="sidebar-menu-button"][data-active] {
   position: relative;
   background: var(--paper-raised);
   color: var(--ink-scorch);
   box-shadow: inset 2px 0 0 var(--accent);
 }
-.leadero-root [data-slot="sidebar-menu-button"] svg {
+.zsearch-root [data-slot="sidebar-menu-button"] svg {
   opacity: 0.75;
 }
-.leadero-root [data-slot="sidebar-menu-button"][data-active] svg {
+.zsearch-root [data-slot="sidebar-menu-button"][data-active] svg {
   opacity: 1;
 }
 
@@ -84,7 +84,7 @@
    lg 32→28 = 控件高档（§5.4 控件 24/28/32 的 28 档已铸为 --ctl-h，直接引用，
    不落字面量）。--row-height-sm 两档同为 24 不覆盖。卷域（报告/聊天正文
    行高 --lh-prose）不消费行阶梯，法定「不参与密度开关」自动成立。 */
-.leadero-root [data-hub-density="compact"] {
+.zsearch-root [data-hub-density="compact"] {
   --row-height-md: var(--row-height-sm);
   --row-height-lg: var(--ctl-h);
 }
@@ -101,7 +101,7 @@
    P1 阶段无独立样式，留给 P2-P5 各功能侧栏填充。 */
 
 /* ==================== Main Area ==================== */
-.leadero-root .hub-main {
+.zsearch-root .hub-main {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -113,7 +113,7 @@
 }
 
 /* ==================== Content Container ==================== */
-.leadero-root .hub-content {
+.zsearch-root .hub-content {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -133,7 +133,7 @@
 /* gallery 阅读宽（2026-08-25 登记的 gallery 自治声明点；2026-09-02 §13.5 起
    消费 --reading-max，860 档退役）。逐子级居中收窄：滚动容器保持全宽
    （滚动条贴窗缘），节间 hairline 随内容收窄与原型 .section 一致。 */
-.leadero-root .hub-gallery-scroll > * {
+.zsearch-root .hub-gallery-scroll > * {
   max-width: var(--reading-max);
   margin-left: auto;
   margin-right: auto;
@@ -145,16 +145,16 @@
    data-slot 且自带正确档位（default=14 与本规则同值），窄化到 :not([data-slot])
    后只兜裸控件；sm 档 11px vs 原型 btn-sm 12px 为字梯缺 12px 梯级的登记残差
    （2026-08-31 拍板：不铸 12px 档）。 */
-.leadero-root .hub-content button:not([data-slot]),
-.leadero-root .hub-content input:not([data-slot]),
-.leadero-root .hub-content select:not([data-slot]) {
+.zsearch-root .hub-content button:not([data-slot]),
+.zsearch-root .hub-content input:not([data-slot]),
+.zsearch-root .hub-content select:not([data-slot]) {
   font-size: var(--text-control);
 }
 
 /* keep-alive slot（P6：lazy mount + display 切换，挂载后不卸载保留状态）。
    横向溢出由各 pane/组件内部容器自管（overflow-x:auto），本层禁止横向滚动条。
    纵向滚动由各 pane 自身滚动容器承担。 */
-.leadero-root .hub-pane-root {
+.zsearch-root .hub-pane-root {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -164,14 +164,14 @@
 /* discussion 页滚动容器（2026-09-15 布局批：三态共用 padding 上移至 CSS，
    避免 TSX 三处重复 py/px utility，并统一消费 --page-inline-pad）。
    2026-09-22 复审节奏统一收口：上下律从原型 .pane（上 24/下 48 全页统一）。 */
-.leadero-root .hub-discuss-scroll {
+.zsearch-root .hub-discuss-scroll {
   padding: var(--space-6) var(--page-inline-pad) var(--space-12);
 }
 
 /* keep-alive slot（P6：lazy mount + display 切换，挂载后不卸载保留状态）。
    横向溢出由各 pane/组件内部容器自管（overflow-x:auto），本层禁止横向滚动条。
    纵向滚动由各 pane 自身滚动容器承担。 */
-.leadero-root .hub-pane-slot {
+.zsearch-root .hub-pane-slot {
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -182,39 +182,39 @@
 
 /* .hub-pane-slot 自身 specificity 0,2,0，高于 .hidden 的 0,1,0，
    故需显式声明 .hub-pane-slot.hidden 覆盖，否则 inactive slot 的 display:none 被覆盖。 */
-.leadero-root .hub-pane-slot.hidden {
+.zsearch-root .hub-pane-slot.hidden {
   display: none;
 }
 
 /* 面板切换进场动画：绑在 animationClassName 上（由 KeepAliveSlot 传入），
    每次切换重播（slot 不卸载，仅 hidden toggle，animation 在恢复显示时重新触发）。 */
-.leadero-root .hub-pane-slot {
+.zsearch-root .hub-pane-slot {
   animation: hub-pane-enter var(--transition-normal);
 }
 @media (prefers-reduced-motion: reduce) {
-  .leadero-root .hub-pane-slot {
+  .zsearch-root .hub-pane-slot {
     animation: none;
   }
 }
 
 /* ── 砚法合规修复批（2026-09-20）──────────────────────────────
- * leadero-breathe-dot — 讨论室运行态状态点脉冲消费类（§8.5：speaker 活跃期
- * =名字旁状态点脉冲）。动画本体=leadero-active-dot-breathe（keyframes 在
- * leadero-theme.css；§7 全站唯一循环动效=墨点呼吸 2s opacity 0.5↔1）。
+ * zsearch-breathe-dot — 讨论室运行态状态点脉冲消费类（§8.5：speaker 活跃期
+ * =名字旁状态点脉冲）。动画本体=zsearch-active-dot-breathe（keyframes 在
+ * zsearch-theme.css；§7 全站唯一循环动效=墨点呼吸 2s opacity 0.5↔1）。
  * 点色由消费点按语境直给语义令牌（进行中=info，§5.3）——落 data-tone 属性
  * 由本表承担（跟随 hub-status info 点=--data-blue 单源，避免 TSX 侧
  * bg-[color:…] 字面量进对比度用法审计）。 */
-.leadero-root .leadero-breathe-dot {
-  animation: leadero-active-dot-breathe 2s ease-in-out infinite;
+.zsearch-root .zsearch-breathe-dot {
+  animation: zsearch-active-dot-breathe 2s ease-in-out infinite;
 }
-.leadero-root .leadero-breathe-dot[data-tone="info"] {
+.zsearch-root .zsearch-breathe-dot[data-tone="info"] {
   background: var(--data-blue);
 }
-.leadero-root .leadero-breathe-dot[data-tone="accent"] {
+.zsearch-root .zsearch-breathe-dot[data-tone="accent"] {
   background: var(--accent);
 }
 @media (prefers-reduced-motion: reduce) {
-  .leadero-root .leadero-breathe-dot {
+  .zsearch-root .zsearch-breathe-dot {
     animation: none;
   }
 }

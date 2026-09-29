@@ -32,7 +32,7 @@ declare module "react-dom/client" {
 
 /**
  * react-dom 主入口桩（2026-09-07 布局审计批补）：ItemPicker 浮层锚定层上移
- * 需要 createPortal（ChatInput → .leadero-content）。运行时 React 18/19 主入口
+ * 需要 createPortal（ChatInput → .zsearch-content）。运行时 React 18/19 主入口
  * 均导出 createPortal；此处只声明用到的面。
  */
 declare module "react-dom" {

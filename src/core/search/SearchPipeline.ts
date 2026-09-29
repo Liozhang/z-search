@@ -2,7 +2,7 @@
  * SearchPipeline — Multi-round iterative deep search engine.
  *
  * Ported from CrawlerScheduler (src/scheduler.py),
- * adapted to Leadero's TypeScript / Zotero plugin environment.
+ * adapted to z-search's TypeScript / Zotero plugin environment.
  *
  * Architecture: Agent calls `deep-search` once → Pipeline runs N rounds internally.
  * Each round: search → filter → full-text fetch → heuristic scoring → AI evaluation

@@ -6,7 +6,7 @@
  * tag into an off-screen about:blank iframe created by EmbedFrameHost.
  *
  * Why an iframe: ORT's wasm backend loads its factory via dynamic import(),
- * which Gecko refuses in the bootstrap subscript sandbox leadero.js runs in
+ * which Gecko refuses in the bootstrap subscript sandbox zsearch.js runs in
  * ("No ScriptLoader found for the current context" — no script loader without
  * a document). An iframe IS a window context, so import() works there, and
  * the iframe's standard HTML document satisfies every DOM assumption ORT and

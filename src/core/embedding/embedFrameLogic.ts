@@ -5,7 +5,7 @@
  * runs @huggingface/transformers inside an off-screen about:blank iframe whose
  * document is a standard HTML document — dynamic import() (required by the ORT
  * wasm backend to load its factory mjs) works there, unlike the bootstrap
- * subscript sandbox leadero.js runs in (see LocalEmbeddingProvider header for
+ * subscript sandbox zsearch.js runs in (see LocalEmbeddingProvider header for
  * the three-layer root cause).
  *
  * This module holds the context-free decisions so vitest can test them
@@ -24,7 +24,7 @@ export interface EmbedFrameRequest {
   text: string;
   /** "query" | "passage" — drives the E5 prefix. */
   mode: "query" | "passage";
-  /** file:// URI of {DataDir}/leadero/models — transformers localModelPath. */
+  /** file:// URI of {DataDir}/zsearch/models — transformers localModelPath. */
   modelsRootUri?: string;
   /** file:// URI base of addon/content/ort/ — ORT wasmPaths {mjs,wasm} join. */
   ortBaseUri?: string;

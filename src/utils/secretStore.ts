@@ -19,7 +19,9 @@
 import { safeDebug } from "./logger";
 
 const SECRET_ORIGIN = "chrome://zsearch";
-const SECRET_REALM = "Leadero AI Secrets";
+const SECRET_REALM = "z-search AI Secrets";
+/** Realm used before the brand rename. Migrated to SECRET_REALM at startup. */
+const LEGACY_SECRET_REALM = "Leadero AI Secrets";
 
 /** Stable usernames within the realm. Provider keys use `provider:<id>`. */
 export const SECRET_USERNAMES = {
@@ -65,10 +67,51 @@ function findLogin(username: string): any | null {
   try {
     // Positional findLogins — see module doc (Gecko matchData inconsistency).
     const all = logins.findLogins(SECRET_ORIGIN, null, SECRET_REALM) as any[];
-    return all.find((l) => l.username === username) ?? null;
+    const hit = all.find((l) => l.username === username);
+    if (hit) return hit;
+    // Read-through: credentials saved under the pre-rename realm stay
+    // readable until migrateLegacyRealm() moves them (and setSecret()
+    // rewrites them into the new realm on next save).
+    const legacy = logins.findLogins(
+      SECRET_ORIGIN,
+      null,
+      LEGACY_SECRET_REALM,
+    ) as any[];
+    return legacy.find((l) => l.username === username) ?? null;
   } catch (e) {
     safeDebug(`[z-search] SecretStore: findLogins failed: ${e}`);
     return null;
+  }
+}
+
+/**
+ * One-time migration: move credentials saved under LEGACY_SECRET_REALM into
+ * SECRET_REALM. Idempotent — usernames already present in the new realm are
+ * skipped and the legacy copies are removed either way, so it converges even
+ * if interrupted between add and remove. Resolves false when the keychain is
+ * unavailable or the migration failed.
+ */
+export async function migrateLegacyRealm(): Promise<boolean> {
+  const logins = getLoginsService();
+  if (!logins) return false;
+  try {
+    const legacy = logins.findLogins(
+      SECRET_ORIGIN,
+      null,
+      LEGACY_SECRET_REALM,
+    ) as any[];
+    for (const login of legacy) {
+      if (!findLogin(login.username)) {
+        await logins.addLoginAsync(
+          makeLoginInfo(login.username, String(login.password ?? "")),
+        );
+      }
+      logins.removeLogin(login);
+    }
+    return legacy.length > 0;
+  } catch (e) {
+    safeDebug(`[z-search] SecretStore: legacy realm migration failed: ${e}`);
+    return false;
   }
 }
 

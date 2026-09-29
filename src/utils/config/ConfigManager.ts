@@ -1,5 +1,5 @@
 /**
- * Configuration Manager for Leadero
+ * Configuration Manager for z-search
  *
  * Dynamic provider/model system with three-tier architecture:
  * Provider (connection) -> Model (params) -> Feature Assignment

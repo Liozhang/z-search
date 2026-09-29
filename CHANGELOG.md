@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+### 变更
+
+- **清除 Leadero 品牌残留（更名收尾）**：语言文件界面文案（「Leadero
+  设置」「Leadero 助手」等）改为 z-search；12 个 `leadero-*.css` 更名
+  `zsearch-*.css`；AI 生成笔记的标签值由 `leadero-ai-generated` 改为
+  `zsearch-ai-generated`（既有笔记保留旧标签，仅新笔记用新值）；删除无
+  引用的 `PREF_PREFIX` 死代码，注释中的旧品牌措辞一并清理。
+- **密钥存储域更名迁移**：登录管理器中的密钥域由「Leadero AI Secrets」
+  改为「z-search AI Secrets」。启动时执行一次性幂等迁移：新域已有的凭据
+  跳过，旧域副本无论成败都会清除；迁移完成前旧域保持可读兜底——用户已
+  存的 API 密钥在更名后不丢。
+
 ## [1.2.1] - 2026-09-29
 
 ### 修复

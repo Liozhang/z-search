@@ -23,7 +23,7 @@ export async function prefsGetDynamic(key: string): Promise<any> {
     }>("prefs.getDynamic", { key });
     return res?.data;
   }
-  return (window as any).leaderoAPI?.prefs?.getDynamic?.(key) ?? null;
+  return (window as any).zsearchAPI?.prefs?.getDynamic?.(key) ?? null;
 }
 
 /** 写一个 dynamic pref（不触发副作用；Hub Settings 内应优先用 hubRequest('settings.*')）。 */
@@ -33,7 +33,7 @@ export async function prefsSetDynamic(key: string, value: any): Promise<void> {
     await bridge.request("prefs.setDynamic", { key, value });
     return;
   }
-  (window as any).leaderoAPI?.prefs?.setDynamic?.(key, value);
+  (window as any).zsearchAPI?.prefs?.setDynamic?.(key, value);
 }
 
 /**
@@ -46,5 +46,5 @@ export async function prefsClearDynamic(key: string): Promise<void> {
     await bridge.request("prefs.clearDynamic", { key });
     return;
   }
-  (window as any).leaderoAPI?.prefs?.clearDynamic?.(key);
+  (window as any).zsearchAPI?.prefs?.clearDynamic?.(key);
 }

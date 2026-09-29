@@ -2,7 +2,7 @@
  * Named preference-default constants.
  *
  * 2026-09-25 审计 P2-6 清理：原文件的 DEFAULT_PREFS 全量映射（约百键，
- * 大半是 leadero 遗留的 chat/agent/mcp/a2a/brain 等未落地功能）既无运行时
+ * 大半是上游遗留的 chat/agent/mcp/a2a/brain 等未落地功能）既无运行时
  * 消费方，宣称的 prefs.js 一致性对拍测试也不存在——"single source of
  * truth" 的头注是不成立的声明。删除映射，只保留真实被消费的命名常量
  * （decision 域与 PDF/embedding 常量的消费方见各自 import）。

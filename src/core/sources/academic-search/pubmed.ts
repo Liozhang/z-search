@@ -21,7 +21,7 @@ export async function searchPubMed(args: {
       ? `(${args.query}) AND Review[ptyp]`
       : args.query;
     // Step 1: ESearch - get PMIDs
-    let searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=${maxResults}&tool=leadero`;
+    let searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=${maxResults}&tool=zsearch`;
     if (apiKey) searchUrl += `&api_key=${encodeURIComponent(apiKey)}`;
     // E-utilities 日期只认 YYYY[/MM[/DD]]——区间串原样传入即整源报错归零
     // （审计 P0-3）。区间拆成 mindate/maxdate，单年保持旧口径。
@@ -55,7 +55,7 @@ export async function searchPubMed(args: {
 
     // Step 2: ESummary - get metadata (JSON)
     const pmids = idList.join(",");
-    let summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${pmids}&retmode=json&tool=leadero`;
+    let summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${pmids}&retmode=json&tool=zsearch`;
     if (apiKey) summaryUrl += `&api_key=${encodeURIComponent(apiKey)}`;
 
     await ncbiThrottle();
@@ -88,7 +88,7 @@ export async function searchPubMed(args: {
       }
     >();
     try {
-      let fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids}&retmode=xml&tool=leadero`;
+      let fetchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${pmids}&retmode=xml&tool=zsearch`;
       if (apiKey) fetchUrl += `&api_key=${encodeURIComponent(apiKey)}`;
 
       await ncbiThrottle();

@@ -31,9 +31,9 @@ export interface ParagraphTranslation {
  * A translator function — injected rather than imported, so the pipeline stays
  * decoupled from the bridge wiring order and is testable with a stub.
  *
- * Implementations typically wrap LeaderoAPI.translate.translateText
- * (src/bridge/LeaderoAPI.ts:684-731), which already resolves the configured model
- * and includes a system prompt. The Phase 1 orchestrator passes a thin wrapper.
+ * Implementations typically wrap the AI engine built by `createTranslator`
+ * (src/core/translation/translationEngines.ts), which already resolves the configured
+ * model and includes a system prompt. The Phase 1 orchestrator passes a thin wrapper.
  */
 export type ParagraphTranslator = (
   text: string,

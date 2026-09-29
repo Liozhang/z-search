@@ -20,7 +20,7 @@ import { ICON } from "../../../../utils/iconSizes";
 import { highlightSegments } from "../../../../utils/highlight";
 import type { ArticleResult, FulltextResult, ImportResult } from "./types";
 
-/* lit-tag 配方（原 leadero-literature-search.css 全量迁移，文件已删除）：
+/* lit-tag 配方（原 zsearch-literature-search.css 全量迁移，文件已删除）：
    基底 + 语义色 kind。2026-08-31 C3：Q 徽标分区色阶梯（Q1 最深→Q4 最浅）退役，
    回原型 .q 徽标（:635-636）——见 QUARTILE_STYLE。 */
 const TAG_BASE =

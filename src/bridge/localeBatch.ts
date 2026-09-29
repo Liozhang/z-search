@@ -79,7 +79,7 @@ export function resolveAllLocaleKeys(
 
   let loc = addonInstance?.data?.locale?.current;
   if (!loc) {
-    // Child windows (brain, usage, research, etc.) no longer load leadero.js,
+    // Child windows (brain, usage, research, etc.) no longer load zsearch.js,
     // so addon is not in their global scope.  Fallback: create a standalone
     // Localization instance — Zotero.getGlobal("Localization") is always
     // available in chrome:// context.

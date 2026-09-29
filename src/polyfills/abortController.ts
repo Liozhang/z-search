@@ -15,7 +15,7 @@
  *   2. `Components.utils.importGlobalProperties(["AbortController"])` — the
  *      canonical way to expose Web APIs in privileged Gecko scopes.
  *   3. Native class from a Zotero main window (real DOM/XUL windows have it).
- *   4. Minimal shim covering the surface leadero actually uses:
+ *   4. Minimal shim covering the surface the plugin actually uses:
  *      `new AbortController()`, `controller.abort()`, `controller.signal`,
  *      `signal.aborted`, `signal.addEventListener/removeEventListener("abort")`.
  *

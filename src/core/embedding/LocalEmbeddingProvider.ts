@@ -58,7 +58,7 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
 
   async embed(text: string, mode: EmbedMode = "passage"): Promise<number[]> {
     const modelName = this.name;
-    // Model files live under {DataDir}/leadero/models (ModelDownloadManager's
+    // Model files live under {DataDir}/zsearch/models (ModelDownloadManager's
     // layout); the frame resolves them via file:// URIs — a bare Windows path
     // fails fetch() with NetworkError (verified on real machine).
     let modelsRootUri: string | undefined;

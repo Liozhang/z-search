@@ -19,10 +19,10 @@ export function getStore(): ReturnType<typeof createStore> {
   // Z 为 any，expando 属性直接可写，不再需要 ts-expect-error。
   const Z = (globalThis as any).Zotero;
   if (Z) {
-    if (!Z.__leaderoJotaiStore) {
-      Z.__leaderoJotaiStore = createStore();
+    if (!Z.__zsearchJotaiStore) {
+      Z.__zsearchJotaiStore = createStore();
     }
-    store = Z.__leaderoJotaiStore;
+    store = Z.__zsearchJotaiStore;
   } else {
     store = createStore();
   }

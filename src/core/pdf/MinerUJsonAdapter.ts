@@ -1,5 +1,5 @@
 /**
- * MinerUJsonAdapter — Map MinerU layout.json output to Leadero PdfIR.
+ * MinerUJsonAdapter — Map MinerU layout.json output to z-search's PdfIR.
  *
  * MinerU's layout.json (also called middle.json) is a hierarchical structure:
  *   root.pdf_info[] → pages

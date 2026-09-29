@@ -143,7 +143,7 @@ export abstract class BaseWindowBridge {
     this.dispatchNotify(event, payload);
   }
 
-  /** Low-level dispatch: send a leadero-notify message to the iframe. */
+  /** Low-level dispatch: send a zsearch-notify message to the iframe. */
   protected dispatchNotify(event: string, payload: any): void {
     if (this.destroyed) return;
     try {

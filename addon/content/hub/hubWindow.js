@@ -15,11 +15,11 @@ var _readyHandler = null;
 var _themeObserver = null;
 
 /** Tag for injected base-font style — removed on re-injection (font-size change) */
-var _THEME_STYLE_CLASS = "leadero-theme-inject";
+var _THEME_STYLE_CLASS = "zsearch-theme-inject";
 
 /** Sync the XUL host root font-size into the iframe html so rem calculations
  *  match Zotero (user font-size / UI-density preference). This is the ONLY
- *  runtime style sync left: since the 2026-08-25 decoupling batch, leadero
+ *  runtime style sync left: since the 2026-08-25 decoupling batch, z-search
  *  CSS variables are fully static and light/dark follows prefers-color-scheme
  *  (driven by Zotero's browser.theme.toolbar-theme) purely in CSS — no
  *  variable snapshot is injected anymore. */
@@ -188,7 +188,7 @@ function onIframeMessage(e) {
     _originUnknownWarned = true;
     try {
       Zotero.debug(
-        "[Leadero] hubWindow: iframe origin unreadable — inbound origin check skipped (" +
+        "[z-search] hubWindow: iframe origin unreadable — inbound origin check skipped (" +
           gate.reason +
           ")",
       );
@@ -208,7 +208,7 @@ var _originUnknownWarned = false;
 
 /** 来源闸门调用：originGate.js 缺失时降级为放行，绝不因守卫缺失而断通信。 */
 function _checkInbound(e) {
-  var g = window.LeaderoOriginGate;
+  var g = window.ZSearchOriginGate;
   if (!g || typeof g.checkInbound !== "function") {
     return { accept: true, enforced: false, reason: "gate-missing" };
   }
@@ -255,7 +255,7 @@ async function onLoad() {
 
   // Watch for Zotero font-size / UI-density changes (root style mutations)
   // and re-sync the base font so the Hub iframe follows without a reopen.
-  // Light/dark switches need no JS: leadero tokens are fully static since the
+  // Light/dark switches need no JS: z-search tokens are fully static since the
   // 2026-08-25 decoupling batch, and in chrome documents prefers-color-scheme
   // follows Zotero's theme pref (browser.theme.toolbar-theme, incl. auto mode
   // tracking the OS), so the CSS @media dark overrides switch on their own.

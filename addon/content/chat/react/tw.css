@@ -142,22 +142,22 @@
   }
 }
 @layer utilities {
-  .leadero-root .\@container {
+  .zsearch-root .\@container {
     container-type: inline-size;
   }
-  .leadero-root .pointer-events-auto {
+  .zsearch-root .pointer-events-auto {
     pointer-events: auto;
   }
-  .leadero-root .pointer-events-none {
+  .zsearch-root .pointer-events-none {
     pointer-events: none;
   }
-  .leadero-root .collapse {
+  .zsearch-root .collapse {
     visibility: collapse;
   }
-  .leadero-root .visible {
+  .zsearch-root .visible {
     visibility: visible;
   }
-  .leadero-root .sr-only {
+  .zsearch-root .sr-only {
     clip-path: inset(50%);
     white-space: nowrap;
     border-width: 0;
@@ -168,224 +168,224 @@
     position: absolute;
     overflow: hidden;
   }
-  .leadero-root .absolute {
+  .zsearch-root .absolute {
     position: absolute;
   }
-  .leadero-root .fixed {
+  .zsearch-root .fixed {
     position: fixed;
   }
-  .leadero-root .relative {
+  .zsearch-root .relative {
     position: relative;
   }
-  .leadero-root .static {
+  .zsearch-root .static {
     position: static;
   }
-  .leadero-root .sticky {
+  .zsearch-root .sticky {
     position: sticky;
   }
-  .leadero-root .inset-0 {
+  .zsearch-root .inset-0 {
     inset: 0;
   }
-  .leadero-root .inset-y-0 {
+  .zsearch-root .inset-y-0 {
     inset-block: 0;
   }
-  .leadero-root .-top-\[var\(--space-0-5\)\] {
+  .zsearch-root .-top-\[var\(--space-0-5\)\] {
     top: calc(var(--space-0-5) * -1);
   }
-  .leadero-root .top-0 {
+  .zsearch-root .top-0 {
     top: 0;
   }
-  .leadero-root .top-1 {
+  .zsearch-root .top-1 {
     top: var(--spacing);
   }
-  .leadero-root .top-1\.5 {
+  .zsearch-root .top-1\.5 {
     top: calc(var(--spacing) * 1.5);
   }
-  .leadero-root .top-1\/2 {
+  .zsearch-root .top-1\/2 {
     top: 50%;
   }
-  .leadero-root .top-3\.5 {
+  .zsearch-root .top-3\.5 {
     top: calc(var(--spacing) * 3.5);
   }
-  .leadero-root .top-4 {
+  .zsearch-root .top-4 {
     top: calc(var(--spacing) * 4);
   }
-  .leadero-root .top-20 {
+  .zsearch-root .top-20 {
     top: calc(var(--spacing) * 20);
   }
-  .leadero-root .top-\[50\%\] {
+  .zsearch-root .top-\[50\%\] {
     top: 50%;
   }
-  .leadero-root .top-\[var\(--space-1\)\] {
+  .zsearch-root .top-\[var\(--space-1\)\] {
     top: var(--space-1);
   }
-  .leadero-root .-right-\[var\(--space-0-5\)\] {
+  .zsearch-root .-right-\[var\(--space-0-5\)\] {
     right: calc(var(--space-0-5) * -1);
   }
-  .leadero-root .right-0 {
+  .zsearch-root .right-0 {
     right: 0;
   }
-  .leadero-root .right-1 {
+  .zsearch-root .right-1 {
     right: var(--spacing);
   }
-  .leadero-root .right-2 {
+  .zsearch-root .right-2 {
     right: calc(var(--spacing) * 2);
   }
-  .leadero-root .right-3 {
+  .zsearch-root .right-3 {
     right: calc(var(--spacing) * 3);
   }
-  .leadero-root .right-4 {
+  .zsearch-root .right-4 {
     right: calc(var(--spacing) * 4);
   }
-  .leadero-root .right-8 {
+  .zsearch-root .right-8 {
     right: calc(var(--spacing) * 8);
   }
-  .leadero-root .right-\[var\(--space-5\)\] {
+  .zsearch-root .right-\[var\(--space-5\)\] {
     right: var(--space-5);
   }
-  .leadero-root .right-\[var\(--space-6\)\] {
+  .zsearch-root .right-\[var\(--space-6\)\] {
     right: var(--space-6);
   }
-  .leadero-root .bottom-0 {
+  .zsearch-root .bottom-0 {
     bottom: 0;
   }
-  .leadero-root .bottom-\[calc\(var\(--space-3\)\+40px\)\] {
+  .zsearch-root .bottom-\[calc\(var\(--space-3\)\+40px\)\] {
     bottom: calc(var(--space-3) + 40px);
   }
-  .leadero-root .bottom-\[var\(--space-1\)\] {
+  .zsearch-root .bottom-\[var\(--space-1\)\] {
     bottom: var(--space-1);
   }
-  .leadero-root .bottom-\[var\(--space-3\)\] {
+  .zsearch-root .bottom-\[var\(--space-3\)\] {
     bottom: var(--space-3);
   }
-  .leadero-root .bottom-\[var\(--space-6\)\] {
+  .zsearch-root .bottom-\[var\(--space-6\)\] {
     bottom: var(--space-6);
   }
-  .leadero-root .left-0 {
+  .zsearch-root .left-0 {
     left: 0;
   }
-  .leadero-root .left-1\/2 {
+  .zsearch-root .left-1\/2 {
     left: 50%;
   }
-  .leadero-root .left-2 {
+  .zsearch-root .left-2 {
     left: calc(var(--spacing) * 2);
   }
-  .leadero-root .left-3 {
+  .zsearch-root .left-3 {
     left: calc(var(--spacing) * 3);
   }
-  .leadero-root .left-\[50\%\] {
+  .zsearch-root .left-\[50\%\] {
     left: 50%;
   }
-  .leadero-root .left-\[var\(--space-3\)\] {
+  .zsearch-root .left-\[var\(--space-3\)\] {
     left: var(--space-3);
   }
-  .leadero-root .isolate {
+  .zsearch-root .isolate {
     isolation: isolate;
   }
-  .leadero-root .z-10 {
+  .zsearch-root .z-10 {
     z-index: 10;
   }
-  .leadero-root .z-20 {
+  .zsearch-root .z-20 {
     z-index: 20;
   }
-  .leadero-root .z-\[var\(--z-base\)\] {
+  .zsearch-root .z-\[var\(--z-base\)\] {
     z-index: var(--z-base);
   }
-  .leadero-root .z-\[var\(--z-layout\)\] {
+  .zsearch-root .z-\[var\(--z-layout\)\] {
     z-index: var(--z-layout);
   }
-  .leadero-root .z-\[var\(--z-overlay\)\] {
+  .zsearch-root .z-\[var\(--z-overlay\)\] {
     z-index: var(--z-overlay);
   }
-  .leadero-root .z-\[var\(--z-sticky\)\] {
+  .zsearch-root .z-\[var\(--z-sticky\)\] {
     z-index: var(--z-sticky);
   }
-  .leadero-root .z-\[var\(--z-toolbar\)\] {
+  .zsearch-root .z-\[var\(--z-toolbar\)\] {
     z-index: var(--z-toolbar);
   }
-  .leadero-root .z-dropdown {
+  .zsearch-root .z-dropdown {
     z-index: var(--z-dropdown);
   }
-  .leadero-root .z-modal {
+  .zsearch-root .z-modal {
     z-index: var(--z-modal);
   }
-  .leadero-root .z-tooltip {
+  .zsearch-root .z-tooltip {
     z-index: var(--z-tooltip);
   }
-  .leadero-root .z-topmost {
+  .zsearch-root .z-topmost {
     z-index: var(--z-topmost);
   }
-  .leadero-root .col-3 {
+  .zsearch-root .col-3 {
     grid-column: 3;
   }
-  .leadero-root .col-4 {
+  .zsearch-root .col-4 {
     grid-column: 4;
   }
-  .leadero-root .col-6 {
+  .zsearch-root .col-6 {
     grid-column: 6;
   }
-  .leadero-root .container {
+  .zsearch-root .container {
     width: 100%;
   }
   @media (min-width: 40rem) {
-    .leadero-root .container {
+    .zsearch-root .container {
       max-width: 40rem;
     }
   }
   @media (min-width: 48rem) {
-    .leadero-root .container {
+    .zsearch-root .container {
       max-width: 48rem;
     }
   }
   @media (min-width: 64rem) {
-    .leadero-root .container {
+    .zsearch-root .container {
       max-width: 64rem;
     }
   }
   @media (min-width: 80rem) {
-    .leadero-root .container {
+    .zsearch-root .container {
       max-width: 80rem;
     }
   }
   @media (min-width: 96rem) {
-    .leadero-root .container {
+    .zsearch-root .container {
       max-width: 96rem;
     }
   }
-  .leadero-root .m-0 {
+  .zsearch-root .m-0 {
     margin: 0;
   }
-  .leadero-root .-mx-\[var\(--space-2\)\] {
+  .zsearch-root .-mx-\[var\(--space-2\)\] {
     margin-inline: calc(var(--space-2) * -1);
   }
-  .leadero-root .mx-2 {
+  .zsearch-root .mx-2 {
     margin-inline: calc(var(--spacing) * 2);
   }
-  .leadero-root .mx-3\.5 {
+  .zsearch-root .mx-3\.5 {
     margin-inline: calc(var(--spacing) * 3.5);
   }
-  .leadero-root .mx-\[var\(--space-2\)\] {
+  .zsearch-root .mx-\[var\(--space-2\)\] {
     margin-inline: var(--space-2);
   }
-  .leadero-root .mx-\[var\(--space-3\)\] {
+  .zsearch-root .mx-\[var\(--space-3\)\] {
     margin-inline: var(--space-3);
   }
-  .leadero-root .mx-auto {
+  .zsearch-root .mx-auto {
     margin-inline: auto;
   }
-  .leadero-root .my-\[var\(--space-1\)\] {
+  .zsearch-root .my-\[var\(--space-1\)\] {
     margin-block: var(--space-1);
   }
-  .leadero-root .my-\[var\(--space-1-5\)\] {
+  .zsearch-root .my-\[var\(--space-1-5\)\] {
     margin-block: var(--space-1-5);
   }
-  .leadero-root .my-\[var\(--space-2\)\] {
+  .zsearch-root .my-\[var\(--space-2\)\] {
     margin-block: var(--space-2);
   }
-  .leadero-root .my-\[var\(--space-4\)\] {
+  .zsearch-root .my-\[var\(--space-4\)\] {
     margin-block: var(--space-4);
   }
-  .leadero-root .prose {
+  .zsearch-root .prose {
     color: var(--tw-prose-body);
     max-width: 65ch;
   }
@@ -777,7 +777,7 @@
     font-size: 0.875em;
     line-height: 1.42857;
   }
-  .leadero-root .prose {
+  .zsearch-root .prose {
     --tw-prose-body: oklch(37.3% 0.034 259.733);
     --tw-prose-headings: oklch(21% 0.034 264.665);
     --tw-prose-lead: oklch(44.6% 0.03 256.802);
@@ -940,686 +940,686 @@
     ) {
     margin-bottom: 0;
   }
-  .leadero-root .-mt-1 {
+  .zsearch-root .-mt-1 {
     margin-top: calc(var(--spacing) * -1);
   }
-  .leadero-root .-mt-\[2em\] {
+  .zsearch-root .-mt-\[2em\] {
     margin-top: -2em;
   }
-  .leadero-root .mt-4 {
+  .zsearch-root .mt-4 {
     margin-top: calc(var(--spacing) * 4);
   }
-  .leadero-root .mt-\[var\(--space-0-5\)\] {
+  .zsearch-root .mt-\[var\(--space-0-5\)\] {
     margin-top: var(--space-0-5);
   }
-  .leadero-root .mt-\[var\(--space-1\)\] {
+  .zsearch-root .mt-\[var\(--space-1\)\] {
     margin-top: var(--space-1);
   }
-  .leadero-root .mt-\[var\(--space-1-5\)\] {
+  .zsearch-root .mt-\[var\(--space-1-5\)\] {
     margin-top: var(--space-1-5);
   }
-  .leadero-root .mt-\[var\(--space-2\)\] {
+  .zsearch-root .mt-\[var\(--space-2\)\] {
     margin-top: var(--space-2);
   }
-  .leadero-root .mt-\[var\(--space-3\)\] {
+  .zsearch-root .mt-\[var\(--space-3\)\] {
     margin-top: var(--space-3);
   }
-  .leadero-root .mt-\[var\(--space-4\)\] {
+  .zsearch-root .mt-\[var\(--space-4\)\] {
     margin-top: var(--space-4);
   }
-  .leadero-root .mt-\[var\(--space-8\)\] {
+  .zsearch-root .mt-\[var\(--space-8\)\] {
     margin-top: var(--space-8);
   }
-  .leadero-root .mt-\[var\(--space-px\)\] {
+  .zsearch-root .mt-\[var\(--space-px\)\] {
     margin-top: var(--space-px);
   }
-  .leadero-root .mt-auto {
+  .zsearch-root .mt-auto {
     margin-top: auto;
   }
-  .leadero-root .-mr-1 {
+  .zsearch-root .-mr-1 {
     margin-right: calc(var(--spacing) * -1);
   }
-  .leadero-root .mr-\[var\(--space-1\)\] {
+  .zsearch-root .mr-\[var\(--space-1\)\] {
     margin-right: var(--space-1);
   }
-  .leadero-root .mb-0 {
+  .zsearch-root .mb-0 {
     margin-bottom: 0;
   }
-  .leadero-root .mb-1 {
+  .zsearch-root .mb-1 {
     margin-bottom: var(--spacing);
   }
-  .leadero-root .mb-8 {
+  .zsearch-root .mb-8 {
     margin-bottom: calc(var(--spacing) * 8);
   }
-  .leadero-root .mb-\[var\(--space-1\)\] {
+  .zsearch-root .mb-\[var\(--space-1\)\] {
     margin-bottom: var(--space-1);
   }
-  .leadero-root .mb-\[var\(--space-1-5\)\] {
+  .zsearch-root .mb-\[var\(--space-1-5\)\] {
     margin-bottom: var(--space-1-5);
   }
-  .leadero-root .mb-\[var\(--space-2\)\] {
+  .zsearch-root .mb-\[var\(--space-2\)\] {
     margin-bottom: var(--space-2);
   }
-  .leadero-root .mb-\[var\(--space-2-5\)\] {
+  .zsearch-root .mb-\[var\(--space-2-5\)\] {
     margin-bottom: var(--space-2-5);
   }
-  .leadero-root .mb-\[var\(--space-3\)\] {
+  .zsearch-root .mb-\[var\(--space-3\)\] {
     margin-bottom: var(--space-3);
   }
-  .leadero-root .mb-\[var\(--space-4\)\] {
+  .zsearch-root .mb-\[var\(--space-4\)\] {
     margin-bottom: var(--space-4);
   }
-  .leadero-root .ml-\[var\(--space-1\)\] {
+  .zsearch-root .ml-\[var\(--space-1\)\] {
     margin-left: var(--space-1);
   }
-  .leadero-root .ml-\[var\(--space-1-5\)\] {
+  .zsearch-root .ml-\[var\(--space-1-5\)\] {
     margin-left: var(--space-1-5);
   }
-  .leadero-root .ml-\[var\(--space-2\)\] {
+  .zsearch-root .ml-\[var\(--space-2\)\] {
     margin-left: var(--space-2);
   }
-  .leadero-root .ml-auto {
+  .zsearch-root .ml-auto {
     margin-left: auto;
   }
-  .leadero-root .box-border {
+  .zsearch-root .box-border {
     box-sizing: border-box;
   }
-  .leadero-root .line-clamp-2 {
+  .zsearch-root .line-clamp-2 {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     display: -webkit-box;
     overflow: hidden;
   }
-  .leadero-root .\[display\:-webkit-box\] {
+  .zsearch-root .\[display\:-webkit-box\] {
     display: -webkit-box;
   }
-  .leadero-root .block {
+  .zsearch-root .block {
     display: block;
   }
-  .leadero-root .flex {
+  .zsearch-root .flex {
     display: flex;
   }
-  .leadero-root .grid {
+  .zsearch-root .grid {
     display: grid;
   }
-  .leadero-root .hidden {
+  .zsearch-root .hidden {
     display: none;
   }
-  .leadero-root .inline {
+  .zsearch-root .inline {
     display: inline;
   }
-  .leadero-root .inline-block {
+  .zsearch-root .inline-block {
     display: inline-block;
   }
-  .leadero-root .inline-flex {
+  .zsearch-root .inline-flex {
     display: inline-flex;
   }
-  .leadero-root .list-item {
+  .zsearch-root .list-item {
     display: list-item;
   }
-  .leadero-root .table {
+  .zsearch-root .table {
     display: table;
   }
-  .leadero-root .table-caption {
+  .zsearch-root .table-caption {
     display: table-caption;
   }
-  .leadero-root .table-cell {
+  .zsearch-root .table-cell {
     display: table-cell;
   }
-  .leadero-root .table-row {
+  .zsearch-root .table-row {
     display: table-row;
   }
-  .leadero-root .field-sizing-content {
+  .zsearch-root .field-sizing-content {
     field-sizing: content;
   }
-  .leadero-root .aspect-square {
+  .zsearch-root .aspect-square {
     aspect-ratio: 1;
   }
-  .leadero-root .size-3 {
+  .zsearch-root .size-3 {
     width: calc(var(--spacing) * 3);
     height: calc(var(--spacing) * 3);
   }
-  .leadero-root .size-3\.5 {
+  .zsearch-root .size-3\.5 {
     width: calc(var(--spacing) * 3.5);
     height: calc(var(--spacing) * 3.5);
   }
-  .leadero-root .size-4 {
+  .zsearch-root .size-4 {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
   }
-  .leadero-root .size-5 {
+  .zsearch-root .size-5 {
     width: calc(var(--spacing) * 5);
     height: calc(var(--spacing) * 5);
   }
-  .leadero-root .size-6 {
+  .zsearch-root .size-6 {
     width: calc(var(--spacing) * 6);
     height: calc(var(--spacing) * 6);
   }
-  .leadero-root .size-7 {
+  .zsearch-root .size-7 {
     width: calc(var(--spacing) * 7);
     height: calc(var(--spacing) * 7);
   }
-  .leadero-root .size-8 {
+  .zsearch-root .size-8 {
     width: calc(var(--spacing) * 8);
     height: calc(var(--spacing) * 8);
   }
-  .leadero-root .size-10 {
+  .zsearch-root .size-10 {
     width: calc(var(--spacing) * 10);
     height: calc(var(--spacing) * 10);
   }
-  .leadero-root .size-\[26px\] {
+  .zsearch-root .size-\[26px\] {
     width: 26px;
     height: 26px;
   }
-  .leadero-root .size-\[var\(--hub-dot-size\)\] {
+  .zsearch-root .size-\[var\(--hub-dot-size\)\] {
     width: var(--hub-dot-size);
     height: var(--hub-dot-size);
   }
-  .leadero-root .size-\[var\(--icon-base\)\] {
+  .zsearch-root .size-\[var\(--icon-base\)\] {
     width: var(--icon-base);
     height: var(--icon-base);
   }
-  .leadero-root .size-\[var\(--icon-sm\)\] {
+  .zsearch-root .size-\[var\(--icon-sm\)\] {
     width: var(--icon-sm);
     height: var(--icon-sm);
   }
-  .leadero-root .size-\[var\(--icon-xs\)\] {
+  .zsearch-root .size-\[var\(--icon-xs\)\] {
     width: var(--icon-xs);
     height: var(--icon-xs);
   }
-  .leadero-root .size-full {
+  .zsearch-root .size-full {
     width: 100%;
     height: 100%;
   }
-  .leadero-root .h-1 {
+  .zsearch-root .h-1 {
     height: var(--spacing);
   }
-  .leadero-root .h-2\.5 {
+  .zsearch-root .h-2\.5 {
     height: calc(var(--spacing) * 2.5);
   }
-  .leadero-root .h-3 {
+  .zsearch-root .h-3 {
     height: calc(var(--spacing) * 3);
   }
-  .leadero-root .h-4 {
+  .zsearch-root .h-4 {
     height: calc(var(--spacing) * 4);
   }
-  .leadero-root .h-5 {
+  .zsearch-root .h-5 {
     height: calc(var(--spacing) * 5);
   }
-  .leadero-root .h-6 {
+  .zsearch-root .h-6 {
     height: calc(var(--spacing) * 6);
   }
-  .leadero-root .h-7 {
+  .zsearch-root .h-7 {
     height: calc(var(--spacing) * 7);
   }
-  .leadero-root .h-8 {
+  .zsearch-root .h-8 {
     height: calc(var(--spacing) * 8);
   }
-  .leadero-root .h-9 {
+  .zsearch-root .h-9 {
     height: calc(var(--spacing) * 9);
   }
-  .leadero-root .h-10 {
+  .zsearch-root .h-10 {
     height: calc(var(--spacing) * 10);
   }
-  .leadero-root .h-12 {
+  .zsearch-root .h-12 {
     height: calc(var(--spacing) * 12);
   }
-  .leadero-root .h-14 {
+  .zsearch-root .h-14 {
     height: calc(var(--spacing) * 14);
   }
-  .leadero-root .h-\[2em\] {
+  .zsearch-root .h-\[2em\] {
     height: 2em;
   }
-  .leadero-root .h-\[2px\] {
+  .zsearch-root .h-\[2px\] {
     height: 2px;
   }
-  .leadero-root .h-\[6px\] {
+  .zsearch-root .h-\[6px\] {
     height: 6px;
   }
-  .leadero-root .h-\[calc\(100\%-1px\)\] {
+  .zsearch-root .h-\[calc\(100\%-1px\)\] {
     height: calc(100% - 1px);
   }
-  .leadero-root .h-\[var\(--dot-md\)\] {
+  .zsearch-root .h-\[var\(--dot-md\)\] {
     height: var(--dot-md);
   }
-  .leadero-root .h-\[var\(--dot-sm\)\] {
+  .zsearch-root .h-\[var\(--dot-sm\)\] {
     height: var(--dot-sm);
   }
-  .leadero-root .h-\[var\(--gallery-thumb-height\)\] {
+  .zsearch-root .h-\[var\(--gallery-thumb-height\)\] {
     height: var(--gallery-thumb-height);
   }
-  .leadero-root .h-\[var\(--hub-dot-size\)\] {
+  .zsearch-root .h-\[var\(--hub-dot-size\)\] {
     height: var(--hub-dot-size);
   }
-  .leadero-root .h-\[var\(--icon-2xl\)\] {
+  .zsearch-root .h-\[var\(--icon-2xl\)\] {
     height: var(--icon-2xl);
   }
-  .leadero-root .h-\[var\(--icon-base\)\] {
+  .zsearch-root .h-\[var\(--icon-base\)\] {
     height: var(--icon-base);
   }
-  .leadero-root .h-\[var\(--icon-md\)\] {
+  .zsearch-root .h-\[var\(--icon-md\)\] {
     height: var(--icon-md);
   }
-  .leadero-root .h-\[var\(--icon-sm\)\] {
+  .zsearch-root .h-\[var\(--icon-sm\)\] {
     height: var(--icon-sm);
   }
-  .leadero-root .h-\[var\(--icon-xl\)\] {
+  .zsearch-root .h-\[var\(--icon-xl\)\] {
     height: var(--icon-xl);
   }
-  .leadero-root .h-\[var\(--icon-xs\)\] {
+  .zsearch-root .h-\[var\(--icon-xs\)\] {
     height: var(--icon-xs);
   }
-  .leadero-root .h-\[var\(--space-1\)\] {
+  .zsearch-root .h-\[var\(--space-1\)\] {
     height: var(--space-1);
   }
-  .leadero-root .h-\[var\(--space-3\)\] {
+  .zsearch-root .h-\[var\(--space-3\)\] {
     height: var(--space-3);
   }
-  .leadero-root .h-\[var\(--space-5\)\] {
+  .zsearch-root .h-\[var\(--space-5\)\] {
     height: var(--space-5);
   }
-  .leadero-root .h-\[var\(--space-7\)\] {
+  .zsearch-root .h-\[var\(--space-7\)\] {
     height: var(--space-7);
   }
-  .leadero-root .h-\[var\(--space-8\)\] {
+  .zsearch-root .h-\[var\(--space-8\)\] {
     height: var(--space-8);
   }
-  .leadero-root .h-auto {
+  .zsearch-root .h-auto {
     height: auto;
   }
-  .leadero-root .h-full {
+  .zsearch-root .h-full {
     height: 100%;
   }
-  .leadero-root .h-px {
+  .zsearch-root .h-px {
     height: 1px;
   }
-  .leadero-root .h-svh {
+  .zsearch-root .h-svh {
     height: 100svh;
   }
-  .leadero-root .max-h-40 {
+  .zsearch-root .max-h-40 {
     max-height: calc(var(--spacing) * 40);
   }
-  .leadero-root .max-h-\[40vh\] {
+  .zsearch-root .max-h-\[40vh\] {
     max-height: 40vh;
   }
-  .leadero-root .max-h-\[80vh\] {
+  .zsearch-root .max-h-\[80vh\] {
     max-height: 80vh;
   }
-  .leadero-root .max-h-\[160px\] {
+  .zsearch-root .max-h-\[160px\] {
     max-height: 160px;
   }
-  .leadero-root .max-h-\[calc\(2\*var\(--text-xs\)\*1\.5\)\] {
+  .zsearch-root .max-h-\[calc\(2\*var\(--text-xs\)\*1\.5\)\] {
     max-height: calc(2 * var(--text-xs) * 1.5);
   }
-  .leadero-root .max-h-\[min\(var\(--available-height\)\,384px\)\] {
+  .zsearch-root .max-h-\[min\(var\(--available-height\)\,384px\)\] {
     max-height: min(var(--available-height), 384px);
   }
-  .leadero-root .max-h-\[var\(--available-height\)\] {
+  .zsearch-root .max-h-\[var\(--available-height\)\] {
     max-height: var(--available-height);
   }
-  .leadero-root .max-h-\[var\(--dialog-max-h\)\] {
+  .zsearch-root .max-h-\[var\(--dialog-max-h\)\] {
     max-height: var(--dialog-max-h);
   }
-  .leadero-root .max-h-\[var\(--dropdown-max-height\)\] {
+  .zsearch-root .max-h-\[var\(--dropdown-max-height\)\] {
     max-height: var(--dropdown-max-height);
   }
-  .leadero-root .max-h-\[var\(--nested-timeline-max-height\)\] {
+  .zsearch-root .max-h-\[var\(--nested-timeline-max-height\)\] {
     max-height: var(--nested-timeline-max-height);
   }
-  .leadero-root .max-h-\[var\(--tool-result-max-h\)\] {
+  .zsearch-root .max-h-\[var\(--tool-result-max-h\)\] {
     max-height: var(--tool-result-max-h);
   }
-  .leadero-root .max-h-full {
+  .zsearch-root .max-h-full {
     max-height: 100%;
   }
-  .leadero-root .max-h-none {
+  .zsearch-root .max-h-none {
     max-height: none;
   }
-  .leadero-root .max-h-screen {
+  .zsearch-root .max-h-screen {
     max-height: 100vh;
   }
-  .leadero-root .min-h-0 {
+  .zsearch-root .min-h-0 {
     min-height: 0;
   }
-  .leadero-root .min-h-16 {
+  .zsearch-root .min-h-16 {
     min-height: calc(var(--spacing) * 16);
   }
-  .leadero-root .min-h-\[40px\] {
+  .zsearch-root .min-h-\[40px\] {
     min-height: 40px;
   }
-  .leadero-root .min-h-\[80px\] {
+  .zsearch-root .min-h-\[80px\] {
     min-height: 80px;
   }
-  .leadero-root .min-h-\[var\(--layout-graph-min-h\)\] {
+  .zsearch-root .min-h-\[var\(--layout-graph-min-h\)\] {
     min-height: var(--layout-graph-min-h);
   }
-  .leadero-root .min-h-\[var\(--row-height-md\)\] {
+  .zsearch-root .min-h-\[var\(--row-height-md\)\] {
     min-height: var(--row-height-md);
   }
-  .leadero-root .min-h-\[var\(--row-height-sm\)\] {
+  .zsearch-root .min-h-\[var\(--row-height-sm\)\] {
     min-height: var(--row-height-sm);
   }
-  .leadero-root .min-h-\[var\(--space-6\)\] {
+  .zsearch-root .min-h-\[var\(--space-6\)\] {
     min-height: var(--space-6);
   }
-  .leadero-root .w-\(--sidebar-width\) {
+  .zsearch-root .w-\(--sidebar-width\) {
     width: var(--sidebar-width);
   }
-  .leadero-root .w-1\/2 {
+  .zsearch-root .w-1\/2 {
     width: 50%;
   }
-  .leadero-root .w-2 {
+  .zsearch-root .w-2 {
     width: calc(var(--spacing) * 2);
   }
-  .leadero-root .w-2\.5 {
+  .zsearch-root .w-2\.5 {
     width: calc(var(--spacing) * 2.5);
   }
-  .leadero-root .w-4 {
+  .zsearch-root .w-4 {
     width: calc(var(--spacing) * 4);
   }
-  .leadero-root .w-5 {
+  .zsearch-root .w-5 {
     width: calc(var(--spacing) * 5);
   }
-  .leadero-root .w-6 {
+  .zsearch-root .w-6 {
     width: calc(var(--spacing) * 6);
   }
-  .leadero-root .w-8 {
+  .zsearch-root .w-8 {
     width: calc(var(--spacing) * 8);
   }
-  .leadero-root .w-12 {
+  .zsearch-root .w-12 {
     width: calc(var(--spacing) * 12);
   }
-  .leadero-root .w-24 {
+  .zsearch-root .w-24 {
     width: calc(var(--spacing) * 24);
   }
-  .leadero-root .w-48 {
+  .zsearch-root .w-48 {
     width: calc(var(--spacing) * 48);
   }
-  .leadero-root .w-70 {
+  .zsearch-root .w-70 {
     width: calc(var(--spacing) * 70);
   }
-  .leadero-root .w-80 {
+  .zsearch-root .w-80 {
     width: calc(var(--spacing) * 80);
   }
-  .leadero-root .w-\[2rem\] {
+  .zsearch-root .w-\[2rem\] {
     width: 2rem;
   }
-  .leadero-root .w-\[44\%\] {
+  .zsearch-root .w-\[44\%\] {
     width: 44%;
   }
-  .leadero-root .w-\[60\%\] {
+  .zsearch-root .w-\[60\%\] {
     width: 60%;
   }
-  .leadero-root .w-\[88\%\] {
+  .zsearch-root .w-\[88\%\] {
     width: 88%;
   }
-  .leadero-root .w-\[88px\] {
+  .zsearch-root .w-\[88px\] {
     width: 88px;
   }
-  .leadero-root .w-\[160px\] {
+  .zsearch-root .w-\[160px\] {
     width: 160px;
   }
-  .leadero-root .w-\[180px\] {
+  .zsearch-root .w-\[180px\] {
     width: 180px;
   }
-  .leadero-root .w-\[200px\] {
+  .zsearch-root .w-\[200px\] {
     width: 200px;
   }
-  .leadero-root .w-\[220px\] {
+  .zsearch-root .w-\[220px\] {
     width: 220px;
   }
-  .leadero-root .w-\[230px\] {
+  .zsearch-root .w-\[230px\] {
     width: 230px;
   }
-  .leadero-root .w-\[260px\] {
+  .zsearch-root .w-\[260px\] {
     width: 260px;
   }
-  .leadero-root .w-\[280px\] {
+  .zsearch-root .w-\[280px\] {
     width: 280px;
   }
-  .leadero-root .w-\[320px\] {
+  .zsearch-root .w-\[320px\] {
     width: 320px;
   }
-  .leadero-root .w-\[340px\] {
+  .zsearch-root .w-\[340px\] {
     width: 340px;
   }
-  .leadero-root .w-\[min\(var\(--w-compact\)\,calc\(100vw-32px\)\)\] {
+  .zsearch-root .w-\[min\(var\(--w-compact\)\,calc\(100vw-32px\)\)\] {
     width: min(var(--w-compact), calc(100vw - 32px));
   }
-  .leadero-root .w-\[var\(--anchor-width\)\] {
+  .zsearch-root .w-\[var\(--anchor-width\)\] {
     width: var(--anchor-width);
   }
-  .leadero-root .w-\[var\(--dash-nav-width\)\] {
+  .zsearch-root .w-\[var\(--dash-nav-width\)\] {
     width: var(--dash-nav-width);
   }
-  .leadero-root .w-\[var\(--dot-md\)\] {
+  .zsearch-root .w-\[var\(--dot-md\)\] {
     width: var(--dot-md);
   }
-  .leadero-root .w-\[var\(--dot-sm\)\] {
+  .zsearch-root .w-\[var\(--dot-sm\)\] {
     width: var(--dot-sm);
   }
-  .leadero-root .w-\[var\(--form-dialog-width\)\] {
+  .zsearch-root .w-\[var\(--form-dialog-width\)\] {
     width: var(--form-dialog-width);
   }
-  .leadero-root .w-\[var\(--gallery-demo-width\)\] {
+  .zsearch-root .w-\[var\(--gallery-demo-width\)\] {
     width: var(--gallery-demo-width);
   }
-  .leadero-root .w-\[var\(--gallery-media-width\)\] {
+  .zsearch-root .w-\[var\(--gallery-media-width\)\] {
     width: var(--gallery-media-width);
   }
-  .leadero-root .w-\[var\(--gallery-thumb-width\)\] {
+  .zsearch-root .w-\[var\(--gallery-thumb-width\)\] {
     width: var(--gallery-thumb-width);
   }
-  .leadero-root .w-\[var\(--hub-dot-size\)\] {
+  .zsearch-root .w-\[var\(--hub-dot-size\)\] {
     width: var(--hub-dot-size);
   }
-  .leadero-root .w-\[var\(--hub-indicator-width\)\] {
+  .zsearch-root .w-\[var\(--hub-indicator-width\)\] {
     width: var(--hub-indicator-width);
   }
-  .leadero-root .w-\[var\(--icon-2xl\)\] {
+  .zsearch-root .w-\[var\(--icon-2xl\)\] {
     width: var(--icon-2xl);
   }
-  .leadero-root .w-\[var\(--icon-base\)\] {
+  .zsearch-root .w-\[var\(--icon-base\)\] {
     width: var(--icon-base);
   }
-  .leadero-root .w-\[var\(--icon-md\)\] {
+  .zsearch-root .w-\[var\(--icon-md\)\] {
     width: var(--icon-md);
   }
-  .leadero-root .w-\[var\(--icon-sm\)\] {
+  .zsearch-root .w-\[var\(--icon-sm\)\] {
     width: var(--icon-sm);
   }
-  .leadero-root .w-\[var\(--icon-xl\)\] {
+  .zsearch-root .w-\[var\(--icon-xl\)\] {
     width: var(--icon-xl);
   }
-  .leadero-root .w-\[var\(--icon-xs\)\] {
+  .zsearch-root .w-\[var\(--icon-xs\)\] {
     width: var(--icon-xs);
   }
-  .leadero-root .w-\[var\(--space-1\)\] {
+  .zsearch-root .w-\[var\(--space-1\)\] {
     width: var(--space-1);
   }
-  .leadero-root .w-\[var\(--space-7\)\] {
+  .zsearch-root .w-\[var\(--space-7\)\] {
     width: var(--space-7);
   }
-  .leadero-root .w-\[var\(--space-8\)\] {
+  .zsearch-root .w-\[var\(--space-8\)\] {
     width: var(--space-8);
   }
-  .leadero-root .w-auto {
+  .zsearch-root .w-auto {
     width: auto;
   }
-  .leadero-root .w-fit {
+  .zsearch-root .w-fit {
     width: fit-content;
   }
-  .leadero-root .w-full {
+  .zsearch-root .w-full {
     width: 100%;
   }
-  .leadero-root .max-w-\(--skeleton-width\) {
+  .zsearch-root .max-w-\(--skeleton-width\) {
     max-width: var(--skeleton-width);
   }
-  .leadero-root .max-w-64 {
+  .zsearch-root .max-w-64 {
     max-width: calc(var(--spacing) * 64);
   }
-  .leadero-root .max-w-\[28em\] {
+  .zsearch-root .max-w-\[28em\] {
     max-width: 28em;
   }
-  .leadero-root .max-w-\[44ch\] {
+  .zsearch-root .max-w-\[44ch\] {
     max-width: 44ch;
   }
-  .leadero-root .max-w-\[64ch\] {
+  .zsearch-root .max-w-\[64ch\] {
     max-width: 64ch;
   }
-  .leadero-root .max-w-\[68ch\] {
+  .zsearch-root .max-w-\[68ch\] {
     max-width: 68ch;
   }
-  .leadero-root .max-w-\[75\%\] {
+  .zsearch-root .max-w-\[75\%\] {
     max-width: 75%;
   }
-  .leadero-root .max-w-\[80\%\] {
+  .zsearch-root .max-w-\[80\%\] {
     max-width: 80%;
   }
-  .leadero-root .max-w-\[90vw\] {
+  .zsearch-root .max-w-\[90vw\] {
     max-width: 90vw;
   }
-  .leadero-root .max-w-\[200px\] {
+  .zsearch-root .max-w-\[200px\] {
     max-width: 200px;
   }
-  .leadero-root .max-w-\[224px\] {
+  .zsearch-root .max-w-\[224px\] {
     max-width: 224px;
   }
-  .leadero-root .max-w-\[240px\] {
+  .zsearch-root .max-w-\[240px\] {
     max-width: 240px;
   }
-  .leadero-root .max-w-\[280px\] {
+  .zsearch-root .max-w-\[280px\] {
     max-width: 280px;
   }
-  .leadero-root .max-w-\[384px\] {
+  .zsearch-root .max-w-\[384px\] {
     max-width: 384px;
   }
-  .leadero-root .max-w-\[400px\] {
+  .zsearch-root .max-w-\[400px\] {
     max-width: 400px;
   }
-  .leadero-root .max-w-\[480px\] {
+  .zsearch-root .max-w-\[480px\] {
     max-width: 480px;
   }
-  .leadero-root .max-w-\[520px\] {
+  .zsearch-root .max-w-\[520px\] {
     max-width: 520px;
   }
-  .leadero-root .max-w-\[560px\] {
+  .zsearch-root .max-w-\[560px\] {
     max-width: 560px;
   }
-  .leadero-root .max-w-\[620px\] {
+  .zsearch-root .max-w-\[620px\] {
     max-width: 620px;
   }
-  .leadero-root .max-w-\[calc\(100\%-2rem\)\] {
+  .zsearch-root .max-w-\[calc\(100\%-2rem\)\] {
     max-width: calc(100% - 2rem);
   }
-  .leadero-root .max-w-\[min\(var\(--chip-max-w\)\,100\%\)\] {
+  .zsearch-root .max-w-\[min\(var\(--chip-max-w\)\,100\%\)\] {
     max-width: min(var(--chip-max-w), 100%);
   }
-  .leadero-root .max-w-\[var\(--bubble-max-width\)\] {
+  .zsearch-root .max-w-\[var\(--bubble-max-width\)\] {
     max-width: var(--bubble-max-width);
   }
-  .leadero-root .max-w-\[var\(--gallery-demo-width\)\] {
+  .zsearch-root .max-w-\[var\(--gallery-demo-width\)\] {
     max-width: var(--gallery-demo-width);
   }
-  .leadero-root .max-w-\[var\(--measure\)\] {
+  .zsearch-root .max-w-\[var\(--measure\)\] {
     max-width: var(--measure);
   }
-  .leadero-root .max-w-\[var\(--w-std\)\] {
+  .zsearch-root .max-w-\[var\(--w-std\)\] {
     max-width: var(--w-std);
   }
-  .leadero-root .max-w-full {
+  .zsearch-root .max-w-full {
     max-width: 100%;
   }
-  .leadero-root .max-w-lg {
+  .zsearch-root .max-w-lg {
     max-width: var(--container-lg);
   }
-  .leadero-root .max-w-none {
+  .zsearch-root .max-w-none {
     max-width: none;
   }
-  .leadero-root .max-w-sm {
+  .zsearch-root .max-w-sm {
     max-width: var(--container-sm);
   }
-  .leadero-root .max-w-xs {
+  .zsearch-root .max-w-xs {
     max-width: var(--container-xs);
   }
-  .leadero-root .min-w-0 {
+  .zsearch-root .min-w-0 {
     min-width: 0;
   }
-  .leadero-root .min-w-5 {
+  .zsearch-root .min-w-5 {
     min-width: calc(var(--spacing) * 5);
   }
-  .leadero-root .min-w-\[3em\] {
+  .zsearch-root .min-w-\[3em\] {
     min-width: 3em;
   }
-  .leadero-root .min-w-\[4\.5em\] {
+  .zsearch-root .min-w-\[4\.5em\] {
     min-width: 4.5em;
   }
-  .leadero-root .min-w-\[180px\] {
+  .zsearch-root .min-w-\[180px\] {
     min-width: 180px;
   }
-  .leadero-root .min-w-\[200px\] {
+  .zsearch-root .min-w-\[200px\] {
     min-width: 200px;
   }
-  .leadero-root .min-w-\[var\(--space-4\)\] {
+  .zsearch-root .min-w-\[var\(--space-4\)\] {
     min-width: var(--space-4);
   }
-  .leadero-root .min-w-\[var\(--space-5\)\] {
+  .zsearch-root .min-w-\[var\(--space-5\)\] {
     min-width: var(--space-5);
   }
-  .leadero-root .flex-1 {
+  .zsearch-root .flex-1 {
     flex: 1;
   }
-  .leadero-root .flex-shrink-0 {
+  .zsearch-root .flex-shrink-0 {
     flex-shrink: 0;
   }
-  .leadero-root .shrink {
+  .zsearch-root .shrink {
     flex-shrink: 1;
   }
-  .leadero-root .shrink-0 {
+  .zsearch-root .shrink-0 {
     flex-shrink: 0;
   }
-  .leadero-root .basis-\[calc\(33\.333\%-var\(--space-4\)\)\] {
+  .zsearch-root .basis-\[calc\(33\.333\%-var\(--space-4\)\)\] {
     flex-basis: calc(33.333% - var(--space-4));
   }
-  .leadero-root .caption-bottom {
+  .zsearch-root .caption-bottom {
     caption-side: bottom;
   }
-  .leadero-root .origin-\(--transform-origin\) {
+  .zsearch-root .origin-\(--transform-origin\) {
     transform-origin: var(--transform-origin);
   }
-  .leadero-root .-translate-x-1\/2 {
+  .zsearch-root .-translate-x-1\/2 {
     --tw-translate-x: calc(calc(1 / 2 * 100%) * -1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .-translate-x-px {
+  .zsearch-root .-translate-x-px {
     --tw-translate-x: -1px;
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .translate-x-\[-50\%\] {
+  .zsearch-root .translate-x-\[-50\%\] {
     --tw-translate-x: -50%;
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .translate-x-\[var\(--space-2\)\] {
+  .zsearch-root .translate-x-\[var\(--space-2\)\] {
     --tw-translate-x: var(--space-2);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .translate-x-px {
+  .zsearch-root .translate-x-px {
     --tw-translate-x: 1px;
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .-translate-y-1\/2 {
+  .zsearch-root .-translate-y-1\/2 {
     --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .translate-y-\[-50\%\] {
+  .zsearch-root .translate-y-\[-50\%\] {
     --tw-translate-y: -50%;
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .transform {
+  .zsearch-root .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,)
       var(--tw-skew-x,) var(--tw-skew-y,);
   }
-  .leadero-root .shimmer {
+  .zsearch-root .shimmer {
     --_spread: var(--shimmer-spread, calc(3ch + 40px));
     --_base: currentColor;
     --_highlight: var(
@@ -1639,7 +1639,7 @@
     );
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .shimmer {
+    .zsearch-root .shimmer {
       background-image: var(
         --shimmer-image,
         linear-gradient(
@@ -1655,7 +1655,7 @@
       );
     }
   }
-  .leadero-root .shimmer {
+  .zsearch-root .shimmer {
     background-repeat: no-repeat;
     background-size: calc(200% + var(--_spread) * 2) 100%;
     -webkit-text-fill-color: var(--shimmer-text-fill, transparent);
@@ -1665,7 +1665,7 @@
     background-clip: text;
   }
   @media (prefers-color-scheme: dark) {
-    .leadero-root .shimmer {
+    .zsearch-root .shimmer {
       --_highlight: var(
         --shimmer-color,
         oklch(from currentColor max(0.8, calc(l + 0.4)) c h / calc(alpha + 0.4))
@@ -1675,154 +1675,154 @@
   .shimmer:where([dir="rtl"], [dir="rtl"] *) {
     animation-direction: reverse;
   }
-  .leadero-root .animate-\[leadero-fade-in_0\.2s_var\(--ease-decelerate\)\] {
-    animation: leadero-fade-in 0.2s var(--ease-decelerate);
+  .zsearch-root .animate-\[zsearch-fade-in_0\.2s_var\(--ease-decelerate\)\] {
+    animation: zsearch-fade-in 0.2s var(--ease-decelerate);
   }
-  .leadero-root .animate-pulse {
+  .zsearch-root .animate-pulse {
     animation: var(--animate-pulse);
   }
-  .leadero-root .cursor-default {
+  .zsearch-root .cursor-default {
     cursor: default;
   }
-  .leadero-root .cursor-pointer {
+  .zsearch-root .cursor-pointer {
     cursor: pointer;
   }
-  .leadero-root .touch-none {
+  .zsearch-root .touch-none {
     touch-action: none;
   }
-  .leadero-root .resize {
+  .zsearch-root .resize {
     resize: both;
   }
-  .leadero-root .resize-none {
+  .zsearch-root .resize-none {
     resize: none;
   }
-  .leadero-root .resize-y {
+  .zsearch-root .resize-y {
     resize: vertical;
   }
-  .leadero-root .\[scrollbar-width\:thin\] {
+  .zsearch-root .\[scrollbar-width\:thin\] {
     scrollbar-width: thin;
   }
-  .leadero-root .list-none {
+  .zsearch-root .list-none {
     list-style-type: none;
   }
-  .leadero-root .appearance-none {
+  .zsearch-root .appearance-none {
     appearance: none;
   }
-  .leadero-root .grid-cols-3 {
+  .zsearch-root .grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .leadero-root .grid-cols-\[220px_minmax\(0\,420px\)\] {
+  .zsearch-root .grid-cols-\[220px_minmax\(0\,420px\)\] {
     grid-template-columns: 220px minmax(0, 420px);
   }
-  .leadero-root .grid-cols-\[auto_1fr\] {
+  .zsearch-root .grid-cols-\[auto_1fr\] {
     grid-template-columns: auto 1fr;
   }
-  .leadero-root .grid-rows-\[auto_minmax\(0\,1fr\)\] {
+  .zsearch-root .grid-rows-\[auto_minmax\(0\,1fr\)\] {
     grid-template-rows: auto minmax(0, 1fr);
   }
-  .leadero-root .flex-col {
+  .zsearch-root .flex-col {
     flex-direction: column;
   }
-  .leadero-root .flex-col-reverse {
+  .zsearch-root .flex-col-reverse {
     flex-direction: column-reverse;
   }
-  .leadero-root .flex-row {
+  .zsearch-root .flex-row {
     flex-direction: row;
   }
-  .leadero-root .flex-wrap {
+  .zsearch-root .flex-wrap {
     flex-wrap: wrap;
   }
-  .leadero-root .place-content-center {
+  .zsearch-root .place-content-center {
     place-content: center;
   }
-  .leadero-root .place-items-center {
+  .zsearch-root .place-items-center {
     place-items: center;
   }
-  .leadero-root .items-baseline {
+  .zsearch-root .items-baseline {
     align-items: baseline;
   }
-  .leadero-root .items-center {
+  .zsearch-root .items-center {
     align-items: center;
   }
-  .leadero-root .items-end {
+  .zsearch-root .items-end {
     align-items: flex-end;
   }
-  .leadero-root .items-start {
+  .zsearch-root .items-start {
     align-items: flex-start;
   }
-  .leadero-root .items-stretch {
+  .zsearch-root .items-stretch {
     align-items: stretch;
   }
-  .leadero-root .justify-between {
+  .zsearch-root .justify-between {
     justify-content: space-between;
   }
-  .leadero-root .justify-center {
+  .zsearch-root .justify-center {
     justify-content: center;
   }
-  .leadero-root .justify-end {
+  .zsearch-root .justify-end {
     justify-content: flex-end;
   }
-  .leadero-root .justify-start {
+  .zsearch-root .justify-start {
     justify-content: flex-start;
   }
-  .leadero-root .gap-0 {
+  .zsearch-root .gap-0 {
     gap: 0;
   }
-  .leadero-root .gap-0\.5 {
+  .zsearch-root .gap-0\.5 {
     gap: calc(var(--spacing) * 0.5);
   }
-  .leadero-root .gap-1 {
+  .zsearch-root .gap-1 {
     gap: var(--spacing);
   }
-  .leadero-root .gap-1\.5 {
+  .zsearch-root .gap-1\.5 {
     gap: calc(var(--spacing) * 1.5);
   }
-  .leadero-root .gap-2 {
+  .zsearch-root .gap-2 {
     gap: calc(var(--spacing) * 2);
   }
-  .leadero-root .gap-3 {
+  .zsearch-root .gap-3 {
     gap: calc(var(--spacing) * 3);
   }
-  .leadero-root .gap-4 {
+  .zsearch-root .gap-4 {
     gap: calc(var(--spacing) * 4);
   }
-  .leadero-root .gap-\[var\(--space-0-5\)\] {
+  .zsearch-root .gap-\[var\(--space-0-5\)\] {
     gap: var(--space-0-5);
   }
-  .leadero-root .gap-\[var\(--space-0-75\)\] {
+  .zsearch-root .gap-\[var\(--space-0-75\)\] {
     gap: var(--space-0-75);
   }
-  .leadero-root .gap-\[var\(--space-1\)\] {
+  .zsearch-root .gap-\[var\(--space-1\)\] {
     gap: var(--space-1);
   }
-  .leadero-root .gap-\[var\(--space-1-5\)\] {
+  .zsearch-root .gap-\[var\(--space-1-5\)\] {
     gap: var(--space-1-5);
   }
-  .leadero-root .gap-\[var\(--space-2\)\] {
+  .zsearch-root .gap-\[var\(--space-2\)\] {
     gap: var(--space-2);
   }
-  .leadero-root .gap-\[var\(--space-2-5\)\] {
+  .zsearch-root .gap-\[var\(--space-2-5\)\] {
     gap: var(--space-2-5);
   }
-  .leadero-root .gap-\[var\(--space-3\)\] {
+  .zsearch-root .gap-\[var\(--space-3\)\] {
     gap: var(--space-3);
   }
-  .leadero-root .gap-\[var\(--space-3-5\)\] {
+  .zsearch-root .gap-\[var\(--space-3-5\)\] {
     gap: var(--space-3-5);
   }
-  .leadero-root .gap-\[var\(--space-4\)\] {
+  .zsearch-root .gap-\[var\(--space-4\)\] {
     gap: var(--space-4);
   }
-  .leadero-root .gap-\[var\(--space-6\)\] {
+  .zsearch-root .gap-\[var\(--space-6\)\] {
     gap: var(--space-6);
   }
-  .leadero-root .gap-\[var\(--space-8\)\] {
+  .zsearch-root .gap-\[var\(--space-8\)\] {
     gap: var(--space-8);
   }
-  .leadero-root .gap-\[var\(--space-px\)\] {
+  .zsearch-root .gap-\[var\(--space-px\)\] {
     gap: var(--space-px);
   }
-  .leadero-root .gap-px {
+  .zsearch-root .gap-px {
     gap: 1px;
   }
   :where(.space-y-\[var\(--space-1\)\] > :not(:last-child)) {
@@ -1832,16 +1832,16 @@
       var(--space-1) * calc(1 - var(--tw-space-y-reverse))
     );
   }
-  .leadero-root .gap-x-\[var\(--space-2\)\] {
+  .zsearch-root .gap-x-\[var\(--space-2\)\] {
     column-gap: var(--space-2);
   }
-  .leadero-root .gap-x-\[var\(--space-3\)\] {
+  .zsearch-root .gap-x-\[var\(--space-3\)\] {
     column-gap: var(--space-3);
   }
-  .leadero-root .gap-x-\[var\(--space-4\)\] {
+  .zsearch-root .gap-x-\[var\(--space-4\)\] {
     column-gap: var(--space-4);
   }
-  .leadero-root .gap-x-\[var\(--space-6\)\] {
+  .zsearch-root .gap-x-\[var\(--space-6\)\] {
     column-gap: var(--space-6);
   }
   :where(.-space-x-2 > :not(:last-child)) {
@@ -1853,417 +1853,417 @@
       calc(var(--spacing) * -2) * calc(1 - var(--tw-space-x-reverse))
     );
   }
-  .leadero-root .gap-y-\[var\(--space-1\)\] {
+  .zsearch-root .gap-y-\[var\(--space-1\)\] {
     row-gap: var(--space-1);
   }
-  .leadero-root .gap-y-\[var\(--space-3\)\] {
+  .zsearch-root .gap-y-\[var\(--space-3\)\] {
     row-gap: var(--space-3);
   }
-  .leadero-root .self-center {
+  .zsearch-root .self-center {
     align-self: center;
   }
-  .leadero-root .self-start {
+  .zsearch-root .self-start {
     align-self: flex-start;
   }
-  .leadero-root .truncate {
+  .zsearch-root .truncate {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
   }
-  .leadero-root .overflow-auto {
+  .zsearch-root .overflow-auto {
     overflow: auto;
   }
-  .leadero-root .overflow-hidden {
+  .zsearch-root .overflow-hidden {
     overflow: hidden;
   }
-  .leadero-root .overflow-x-auto {
+  .zsearch-root .overflow-x-auto {
     overflow-x: auto;
   }
-  .leadero-root .overflow-x-hidden {
+  .zsearch-root .overflow-x-hidden {
     overflow-x: hidden;
   }
-  .leadero-root .overflow-y-auto {
+  .zsearch-root .overflow-y-auto {
     overflow-y: auto;
   }
-  .leadero-root .rounded {
+  .zsearch-root .rounded {
     border-radius: 0.25rem;
   }
-  .leadero-root .rounded-\[inherit\] {
+  .zsearch-root .rounded-\[inherit\] {
     border-radius: inherit;
   }
-  .leadero-root .rounded-\[var\(--card-radius\)\] {
+  .zsearch-root .rounded-\[var\(--card-radius\)\] {
     border-radius: var(--card-radius);
   }
-  .leadero-root .rounded-\[var\(--radius\)\] {
+  .zsearch-root .rounded-\[var\(--radius\)\] {
     border-radius: var(--radius);
   }
-  .leadero-root .rounded-\[var\(--radius-btn\)\] {
+  .zsearch-root .rounded-\[var\(--radius-btn\)\] {
     border-radius: var(--radius-btn);
   }
-  .leadero-root .rounded-\[var\(--radius-ctl\)\] {
+  .zsearch-root .rounded-\[var\(--radius-ctl\)\] {
     border-radius: var(--radius-ctl);
   }
-  .leadero-root .rounded-\[var\(--radius-md\)\] {
+  .zsearch-root .rounded-\[var\(--radius-md\)\] {
     border-radius: var(--radius-md);
   }
-  .leadero-root .rounded-\[var\(--radius-pill\)\] {
+  .zsearch-root .rounded-\[var\(--radius-pill\)\] {
     border-radius: var(--radius-pill);
   }
-  .leadero-root .rounded-\[var\(--radius-scroll\)\] {
+  .zsearch-root .rounded-\[var\(--radius-scroll\)\] {
     border-radius: var(--radius-scroll);
   }
-  .leadero-root .rounded-\[var\(--radius-sharp\)\] {
+  .zsearch-root .rounded-\[var\(--radius-sharp\)\] {
     border-radius: var(--radius-sharp);
   }
-  .leadero-root .rounded-\[var\(--radius-sm\)\] {
+  .zsearch-root .rounded-\[var\(--radius-sm\)\] {
     border-radius: var(--radius-sm);
   }
-  .leadero-root .rounded-\[var\(--radius-xl\)\] {
+  .zsearch-root .rounded-\[var\(--radius-xl\)\] {
     border-radius: var(--radius-xl);
   }
-  .leadero-root .rounded-\[var\(--radius-xs\)\] {
+  .zsearch-root .rounded-\[var\(--radius-xs\)\] {
     border-radius: var(--radius-xs);
   }
-  .leadero-root .rounded-full {
+  .zsearch-root .rounded-full {
     border-radius: 3.40282e38px;
   }
-  .leadero-root .rounded-lg {
+  .zsearch-root .rounded-lg {
     border-radius: var(--radius-lg);
   }
-  .leadero-root .rounded-md {
+  .zsearch-root .rounded-md {
     border-radius: var(--radius-md);
   }
-  .leadero-root .rounded-none {
+  .zsearch-root .rounded-none {
     border-radius: 0;
   }
-  .leadero-root .rounded-sm {
+  .zsearch-root .rounded-sm {
     border-radius: var(--radius-sm);
   }
-  .leadero-root .rounded-xs {
+  .zsearch-root .rounded-xs {
     border-radius: var(--radius-xs);
   }
-  .leadero-root .rounded-t-\[var\(--radius-md\)\],
-  .leadero-root .rounded-t-md {
+  .zsearch-root .rounded-t-\[var\(--radius-md\)\],
+  .zsearch-root .rounded-t-md {
     border-top-left-radius: var(--radius-md);
     border-top-right-radius: var(--radius-md);
   }
-  .leadero-root .rounded-b-\[var\(--radius-md\)\] {
+  .zsearch-root .rounded-b-\[var\(--radius-md\)\] {
     border-bottom-right-radius: var(--radius-md);
     border-bottom-left-radius: var(--radius-md);
   }
-  .leadero-root .border {
+  .zsearch-root .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .leadero-root .border-0 {
+  .zsearch-root .border-0 {
     border-style: var(--tw-border-style);
     border-width: 0;
   }
-  .leadero-root .border-t {
+  .zsearch-root .border-t {
     border-top-style: var(--tw-border-style);
     border-top-width: 1px;
   }
-  .leadero-root .border-r {
+  .zsearch-root .border-r {
     border-right-style: var(--tw-border-style);
     border-right-width: 1px;
   }
-  .leadero-root .border-b {
+  .zsearch-root .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
-  .leadero-root .border-l {
+  .zsearch-root .border-l {
     border-left-style: var(--tw-border-style);
     border-left-width: 1px;
   }
-  .leadero-root .border-l-2 {
+  .zsearch-root .border-l-2 {
     border-left-style: var(--tw-border-style);
     border-left-width: 2px;
   }
-  .leadero-root .border-l-4 {
+  .zsearch-root .border-l-4 {
     border-left-style: var(--tw-border-style);
     border-left-width: 4px;
   }
-  .leadero-root .border-dashed {
+  .zsearch-root .border-dashed {
     --tw-border-style: dashed;
     border-style: dashed;
   }
-  .leadero-root .border-none {
+  .zsearch-root .border-none {
     --tw-border-style: none;
     border-style: none;
   }
-  .leadero-root .border-\[color\:var\(--accent\)\] {
+  .zsearch-root .border-\[color\:var\(--accent\)\] {
     border-color: var(--accent);
   }
-  .leadero-root .border-\[color\:var\(--border\)\] {
+  .zsearch-root .border-\[color\:var\(--border\)\] {
     border-color: var(--border);
   }
-  .leadero-root .border-\[color\:var\(--border-strong\)\] {
+  .zsearch-root .border-\[color\:var\(--border-strong\)\] {
     border-color: var(--border-strong);
   }
-  .leadero-root .border-\[color\:var\(--border-subtle\)\] {
+  .zsearch-root .border-\[color\:var\(--border-subtle\)\] {
     border-color: var(--border-subtle);
   }
-  .leadero-root .border-\[color\:var\(--danger\)\] {
+  .zsearch-root .border-\[color\:var\(--danger\)\] {
     border-color: var(--danger);
   }
-  .leadero-root .border-\[color\:var\(--line-faint\)\] {
+  .zsearch-root .border-\[color\:var\(--line-faint\)\] {
     border-color: var(--line-faint);
   }
-  .leadero-root .border-\[color\:var\(--signal-yellow-text\)\] {
+  .zsearch-root .border-\[color\:var\(--signal-yellow-text\)\] {
     border-color: var(--signal-yellow-text);
   }
-  .leadero-root .border-\[var\(--accent\)\] {
+  .zsearch-root .border-\[var\(--accent\)\] {
     border-color: var(--accent);
   }
-  .leadero-root .border-\[var\(--border-strong\)\] {
+  .zsearch-root .border-\[var\(--border-strong\)\] {
     border-color: var(--border-strong);
   }
-  .leadero-root .border-\[var\(--border-subtle\)\] {
+  .zsearch-root .border-\[var\(--border-subtle\)\] {
     border-color: var(--border-subtle);
   }
-  .leadero-root .border-\[var\(--data-blue-medium\)\] {
+  .zsearch-root .border-\[var\(--data-blue-medium\)\] {
     border-color: var(--data-blue-medium);
   }
-  .leadero-root .border-\[var\(--hub-hairline\)\] {
+  .zsearch-root .border-\[var\(--hub-hairline\)\] {
     border-color: var(--hub-hairline);
   }
-  .leadero-root .border-\[var\(--hub-row-divider\)\] {
+  .zsearch-root .border-\[var\(--hub-row-divider\)\] {
     border-color: var(--hub-row-divider);
   }
-  .leadero-root .border-\[var\(--signal-red-ring\)\] {
+  .zsearch-root .border-\[var\(--signal-red-ring\)\] {
     border-color: var(--signal-red-ring);
   }
-  .leadero-root .border-\[var\(--surface-tint\)\] {
+  .zsearch-root .border-\[var\(--surface-tint\)\] {
     border-color: var(--surface-tint);
   }
-  .leadero-root .border-\[var\(--timeline-tool-border\)\] {
+  .zsearch-root .border-\[var\(--timeline-tool-border\)\] {
     border-color: var(--timeline-tool-border);
   }
-  .leadero-root .border-border {
+  .zsearch-root .border-border {
     border-color: var(--border);
   }
-  .leadero-root .border-destructive\/30 {
+  .zsearch-root .border-destructive\/30 {
     border-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .border-destructive\/30 {
+    .zsearch-root .border-destructive\/30 {
       border-color: color-mix(in oklab, var(--destructive) 30%, transparent);
     }
   }
-  .leadero-root .border-destructive\/40 {
+  .zsearch-root .border-destructive\/40 {
     border-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .border-destructive\/40 {
+    .zsearch-root .border-destructive\/40 {
       border-color: color-mix(in oklab, var(--destructive) 40%, transparent);
     }
   }
-  .leadero-root .border-info\/30 {
+  .zsearch-root .border-info\/30 {
     border-color: var(--info);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .border-info\/30 {
+    .zsearch-root .border-info\/30 {
       border-color: color-mix(in oklab, var(--info) 30%, transparent);
     }
   }
-  .leadero-root .border-input {
+  .zsearch-root .border-input {
     border-color: var(--input);
   }
-  .leadero-root .border-sidebar-border {
+  .zsearch-root .border-sidebar-border {
     border-color: var(--sidebar-border);
   }
-  .leadero-root .border-success\/30 {
+  .zsearch-root .border-success\/30 {
     border-color: var(--success);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .border-success\/30 {
+    .zsearch-root .border-success\/30 {
       border-color: color-mix(in oklab, var(--success) 30%, transparent);
     }
   }
-  .leadero-root .border-transparent {
+  .zsearch-root .border-transparent {
     border-color: #0000;
   }
-  .leadero-root .border-warning\/30 {
+  .zsearch-root .border-warning\/30 {
     border-color: var(--warning);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .border-warning\/30 {
+    .zsearch-root .border-warning\/30 {
       border-color: color-mix(in oklab, var(--warning) 30%, transparent);
     }
   }
-  .leadero-root .border-t-\[var\(--border-strong\)\] {
+  .zsearch-root .border-t-\[var\(--border-strong\)\] {
     border-top-color: var(--border-strong);
   }
-  .leadero-root .border-t-\[var\(--hub-row-divider\)\] {
+  .zsearch-root .border-t-\[var\(--hub-row-divider\)\] {
     border-top-color: var(--hub-row-divider);
   }
-  .leadero-root .border-t-\[var\(--surface-tint\)\] {
+  .zsearch-root .border-t-\[var\(--surface-tint\)\] {
     border-top-color: var(--surface-tint);
   }
-  .leadero-root .border-t-transparent {
+  .zsearch-root .border-t-transparent {
     border-top-color: #0000;
   }
-  .leadero-root .border-b-\[var\(--hub-row-divider\)\] {
+  .zsearch-root .border-b-\[var\(--hub-row-divider\)\] {
     border-bottom-color: var(--hub-row-divider);
   }
-  .leadero-root .\!border-l-\[var\(--hub-indicator-color\)\] {
+  .zsearch-root .\!border-l-\[var\(--hub-indicator-color\)\] {
     border-left-color: var(--hub-indicator-color) !important;
   }
-  .leadero-root .border-l-\[var\(--data-blue\)\] {
+  .zsearch-root .border-l-\[var\(--data-blue\)\] {
     border-left-color: var(--data-blue);
   }
-  .leadero-root .border-l-\[var\(--nested-timeline-border\)\] {
+  .zsearch-root .border-l-\[var\(--nested-timeline-border\)\] {
     border-left-color: var(--nested-timeline-border);
   }
-  .leadero-root .border-l-\[var\(--stroke-edge\)\] {
+  .zsearch-root .border-l-\[var\(--stroke-edge\)\] {
     border-left-color: var(--stroke-edge);
   }
-  .leadero-root .border-l-destructive {
+  .zsearch-root .border-l-destructive {
     border-left-color: var(--destructive);
   }
-  .leadero-root .border-l-info {
+  .zsearch-root .border-l-info {
     border-left-color: var(--info);
   }
-  .leadero-root .border-l-success {
+  .zsearch-root .border-l-success {
     border-left-color: var(--success);
   }
-  .leadero-root .border-l-transparent {
+  .zsearch-root .border-l-transparent {
     border-left-color: #0000;
   }
-  .leadero-root .border-l-warning {
+  .zsearch-root .border-l-warning {
     border-left-color: var(--warning);
   }
-  .leadero-root .bg-\[color\:var\(--accent-tint\)\] {
+  .zsearch-root .bg-\[color\:var\(--accent-tint\)\] {
     background-color: var(--accent-tint);
   }
-  .leadero-root .bg-\[color\:var\(--hub-indicator-color\)\] {
+  .zsearch-root .bg-\[color\:var\(--hub-indicator-color\)\] {
     background-color: var(--hub-indicator-color);
   }
-  .leadero-root .bg-\[color\:var\(--paper-canvas\)\] {
+  .zsearch-root .bg-\[color\:var\(--paper-canvas\)\] {
     background-color: var(--paper-canvas);
   }
-  .leadero-root .bg-\[color\:var\(--paper-raised\)\] {
+  .zsearch-root .bg-\[color\:var\(--paper-raised\)\] {
     background-color: var(--paper-raised);
   }
-  .leadero-root .bg-\[color\:var\(--paper-sunken\)\] {
+  .zsearch-root .bg-\[color\:var\(--paper-sunken\)\] {
     background-color: var(--paper-sunken);
   }
-  .leadero-root .bg-\[color\:var\(--signal-green-dark\)\] {
+  .zsearch-root .bg-\[color\:var\(--signal-green-dark\)\] {
     background-color: var(--signal-green-dark);
   }
-  .leadero-root .bg-\[color\:var\(--signal-orange\)\] {
+  .zsearch-root .bg-\[color\:var\(--signal-orange\)\] {
     background-color: var(--signal-orange);
   }
-  .leadero-root .bg-\[color\:var\(--signal-red-strong\)\] {
+  .zsearch-root .bg-\[color\:var\(--signal-red-strong\)\] {
     background-color: var(--signal-red-strong);
   }
-  .leadero-root .bg-\[color\:var\(--text-tertiary\)\] {
+  .zsearch-root .bg-\[color\:var\(--text-tertiary\)\] {
     background-color: var(--text-tertiary);
   }
-  .leadero-root .bg-\[color\:var\(--warn\)\] {
+  .zsearch-root .bg-\[color\:var\(--warn\)\] {
     background-color: var(--warn);
   }
-  .leadero-root .bg-\[var\(--accent\)\] {
+  .zsearch-root .bg-\[var\(--accent\)\] {
     background-color: var(--accent);
   }
-  .leadero-root .bg-\[var\(--border\)\] {
+  .zsearch-root .bg-\[var\(--border\)\] {
     background-color: var(--border);
   }
-  .leadero-root .bg-\[var\(--border-strong\)\] {
+  .zsearch-root .bg-\[var\(--border-strong\)\] {
     background-color: var(--border-strong);
   }
-  .leadero-root .bg-\[var\(--border-subtle\)\] {
+  .zsearch-root .bg-\[var\(--border-subtle\)\] {
     background-color: var(--border-subtle);
   }
-  .leadero-root .bg-\[var\(--card-bg\)\] {
+  .zsearch-root .bg-\[var\(--card-bg\)\] {
     background-color: var(--card-bg);
   }
-  .leadero-root .bg-\[var\(--data-blue\)\] {
+  .zsearch-root .bg-\[var\(--data-blue\)\] {
     background-color: var(--data-blue);
   }
-  .leadero-root .bg-\[var\(--data-blue-bg\)\] {
+  .zsearch-root .bg-\[var\(--data-blue-bg\)\] {
     background-color: var(--data-blue-bg);
   }
-  .leadero-root .bg-\[var\(--data-blue-faint\)\] {
+  .zsearch-root .bg-\[var\(--data-blue-faint\)\] {
     background-color: var(--data-blue-faint);
   }
-  .leadero-root .bg-\[var\(--data-blue-medium\)\] {
+  .zsearch-root .bg-\[var\(--data-blue-medium\)\] {
     background-color: var(--data-blue-medium);
   }
-  .leadero-root .bg-\[var\(--hub-bg-elev\)\] {
+  .zsearch-root .bg-\[var\(--hub-bg-elev\)\] {
     background-color: var(--hub-bg-elev);
   }
-  .leadero-root .bg-\[var\(--hub-bg-hover\)\] {
+  .zsearch-root .bg-\[var\(--hub-bg-hover\)\] {
     background-color: var(--hub-bg-hover);
   }
-  .leadero-root .bg-\[var\(--hub-row-divider\)\] {
+  .zsearch-root .bg-\[var\(--hub-row-divider\)\] {
     background-color: var(--hub-row-divider);
   }
-  .leadero-root .bg-\[var\(--overlay-bg\)\] {
+  .zsearch-root .bg-\[var\(--overlay-bg\)\] {
     background-color: var(--overlay-bg);
   }
-  .leadero-root .bg-\[var\(--signal-green-bg\)\] {
+  .zsearch-root .bg-\[var\(--signal-green-bg\)\] {
     background-color: var(--signal-green-bg);
   }
-  .leadero-root .bg-\[var\(--signal-red-bg\)\] {
+  .zsearch-root .bg-\[var\(--signal-red-bg\)\] {
     background-color: var(--signal-red-bg);
   }
-  .leadero-root .bg-\[var\(--signal-yellow\)\] {
+  .zsearch-root .bg-\[var\(--signal-yellow\)\] {
     background-color: var(--signal-yellow);
   }
-  .leadero-root .bg-\[var\(--signal-yellow-bg\)\] {
+  .zsearch-root .bg-\[var\(--signal-yellow-bg\)\] {
     background-color: var(--signal-yellow-bg);
   }
-  .leadero-root .bg-\[var\(--surface-zone\)\] {
+  .zsearch-root .bg-\[var\(--surface-zone\)\] {
     background-color: var(--surface-zone);
   }
-  .leadero-root .bg-\[var\(--text-tertiary\)\] {
+  .zsearch-root .bg-\[var\(--text-tertiary\)\] {
     background-color: var(--text-tertiary);
   }
-  .leadero-root .bg-\[var\(--timeline-tool-bg\)\] {
+  .zsearch-root .bg-\[var\(--timeline-tool-bg\)\] {
     background-color: var(--timeline-tool-bg);
   }
-  .leadero-root .bg-\[var\(--user-bubble-bg\)\] {
+  .zsearch-root .bg-\[var\(--user-bubble-bg\)\] {
     background-color: var(--user-bubble-bg);
   }
-  .leadero-root .bg-accent {
+  .zsearch-root .bg-accent {
     background-color: var(--accent);
   }
-  .leadero-root .bg-background {
+  .zsearch-root .bg-background {
     background-color: var(--background);
   }
-  .leadero-root .bg-border {
+  .zsearch-root .bg-border {
     background-color: var(--border);
   }
-  .leadero-root .bg-canvas {
+  .zsearch-root .bg-canvas {
     background-color: var(--surface-canvas);
   }
-  .leadero-root .bg-card,
-  .leadero-root .bg-card\/50 {
+  .zsearch-root .bg-card,
+  .zsearch-root .bg-card\/50 {
     background-color: var(--card);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-card\/50 {
+    .zsearch-root .bg-card\/50 {
       background-color: color-mix(in oklab, var(--card) 50%, transparent);
     }
   }
-  .leadero-root .bg-current {
+  .zsearch-root .bg-current {
     background-color: currentColor;
   }
-  .leadero-root .bg-destructive,
-  .leadero-root .bg-destructive\/6 {
+  .zsearch-root .bg-destructive,
+  .zsearch-root .bg-destructive\/6 {
     background-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-destructive\/6 {
+    .zsearch-root .bg-destructive\/6 {
       background-color: color-mix(in oklab, var(--destructive) 6%, transparent);
     }
   }
-  .leadero-root .bg-destructive\/10 {
+  .zsearch-root .bg-destructive\/10 {
     background-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-destructive\/10 {
+    .zsearch-root .bg-destructive\/10 {
       background-color: color-mix(
         in oklab,
         var(--destructive) 10%,
@@ -2271,830 +2271,830 @@
       );
     }
   }
-  .leadero-root .bg-foreground {
+  .zsearch-root .bg-foreground {
     background-color: var(--foreground);
   }
-  .leadero-root .bg-info\/6 {
+  .zsearch-root .bg-info\/6 {
     background-color: var(--info);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-info\/6 {
+    .zsearch-root .bg-info\/6 {
       background-color: color-mix(in oklab, var(--info) 6%, transparent);
     }
   }
-  .leadero-root .bg-info\/10 {
+  .zsearch-root .bg-info\/10 {
     background-color: var(--info);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-info\/10 {
+    .zsearch-root .bg-info\/10 {
       background-color: color-mix(in oklab, var(--info) 10%, transparent);
     }
   }
-  .leadero-root .bg-muted,
-  .leadero-root .bg-muted\/30 {
+  .zsearch-root .bg-muted,
+  .zsearch-root .bg-muted\/30 {
     background-color: var(--muted);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-muted\/30 {
+    .zsearch-root .bg-muted\/30 {
       background-color: color-mix(in oklab, var(--muted) 30%, transparent);
     }
   }
-  .leadero-root .bg-popover {
+  .zsearch-root .bg-popover {
     background-color: var(--popover);
   }
-  .leadero-root .bg-primary {
+  .zsearch-root .bg-primary {
     background-color: var(--primary);
   }
-  .leadero-root .bg-sidebar {
+  .zsearch-root .bg-sidebar {
     background-color: var(--sidebar);
   }
-  .leadero-root .bg-sidebar-border {
+  .zsearch-root .bg-sidebar-border {
     background-color: var(--sidebar-border);
   }
-  .leadero-root .bg-success,
-  .leadero-root .bg-success\/6 {
+  .zsearch-root .bg-success,
+  .zsearch-root .bg-success\/6 {
     background-color: var(--success);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-success\/6 {
+    .zsearch-root .bg-success\/6 {
       background-color: color-mix(in oklab, var(--success) 6%, transparent);
     }
   }
-  .leadero-root .bg-success\/10 {
+  .zsearch-root .bg-success\/10 {
     background-color: var(--success);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-success\/10 {
+    .zsearch-root .bg-success\/10 {
       background-color: color-mix(in oklab, var(--success) 10%, transparent);
     }
   }
-  .leadero-root .bg-transparent {
+  .zsearch-root .bg-transparent {
     background-color: #0000;
   }
-  .leadero-root .bg-warning\/6 {
+  .zsearch-root .bg-warning\/6 {
     background-color: var(--warning);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-warning\/6 {
+    .zsearch-root .bg-warning\/6 {
       background-color: color-mix(in oklab, var(--warning) 6%, transparent);
     }
   }
-  .leadero-root .bg-warning\/10 {
+  .zsearch-root .bg-warning\/10 {
     background-color: var(--warning);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .bg-warning\/10 {
+    .zsearch-root .bg-warning\/10 {
       background-color: color-mix(in oklab, var(--warning) 10%, transparent);
     }
   }
-  .leadero-root .bg-none {
+  .zsearch-root .bg-none {
     background-image: none;
   }
-  .leadero-root .\[stroke-width\:2\] {
+  .zsearch-root .\[stroke-width\:2\] {
     stroke-width: 2px;
   }
-  .leadero-root .p-0 {
+  .zsearch-root .p-0 {
     padding: 0;
   }
-  .leadero-root .p-1 {
+  .zsearch-root .p-1 {
     padding: var(--spacing);
   }
-  .leadero-root .p-2 {
+  .zsearch-root .p-2 {
     padding: calc(var(--spacing) * 2);
   }
-  .leadero-root .p-3 {
+  .zsearch-root .p-3 {
     padding: calc(var(--spacing) * 3);
   }
-  .leadero-root .p-4 {
+  .zsearch-root .p-4 {
     padding: calc(var(--spacing) * 4);
   }
-  .leadero-root .p-5 {
+  .zsearch-root .p-5 {
     padding: calc(var(--spacing) * 5);
   }
-  .leadero-root .p-6 {
+  .zsearch-root .p-6 {
     padding: calc(var(--spacing) * 6);
   }
-  .leadero-root .p-8 {
+  .zsearch-root .p-8 {
     padding: calc(var(--spacing) * 8);
   }
-  .leadero-root .p-\[3px\] {
+  .zsearch-root .p-\[3px\] {
     padding: 3px;
   }
-  .leadero-root .p-\[var\(--space-0-5\)\] {
+  .zsearch-root .p-\[var\(--space-0-5\)\] {
     padding: var(--space-0-5);
   }
-  .leadero-root .p-\[var\(--space-0-75\)\] {
+  .zsearch-root .p-\[var\(--space-0-75\)\] {
     padding: var(--space-0-75);
   }
-  .leadero-root .p-\[var\(--space-1\)\] {
+  .zsearch-root .p-\[var\(--space-1\)\] {
     padding: var(--space-1);
   }
-  .leadero-root .p-\[var\(--space-1-5\)\] {
+  .zsearch-root .p-\[var\(--space-1-5\)\] {
     padding: var(--space-1-5);
   }
-  .leadero-root .p-\[var\(--space-2\)\] {
+  .zsearch-root .p-\[var\(--space-2\)\] {
     padding: var(--space-2);
   }
-  .leadero-root .p-\[var\(--space-3\)\] {
+  .zsearch-root .p-\[var\(--space-3\)\] {
     padding: var(--space-3);
   }
-  .leadero-root .p-\[var\(--space-4\)\] {
+  .zsearch-root .p-\[var\(--space-4\)\] {
     padding: var(--space-4);
   }
-  .leadero-root .p-\[var\(--space-4-5\)\] {
+  .zsearch-root .p-\[var\(--space-4-5\)\] {
     padding: var(--space-4-5);
   }
-  .leadero-root .p-px {
+  .zsearch-root .p-px {
     padding: 1px;
   }
-  .leadero-root .px-0 {
+  .zsearch-root .px-0 {
     padding-inline: 0;
   }
-  .leadero-root .px-1 {
+  .zsearch-root .px-1 {
     padding-inline: var(--spacing);
   }
-  .leadero-root .px-2 {
+  .zsearch-root .px-2 {
     padding-inline: calc(var(--spacing) * 2);
   }
-  .leadero-root .px-2\.5 {
+  .zsearch-root .px-2\.5 {
     padding-inline: calc(var(--spacing) * 2.5);
   }
-  .leadero-root .px-3 {
+  .zsearch-root .px-3 {
     padding-inline: calc(var(--spacing) * 3);
   }
-  .leadero-root .px-4 {
+  .zsearch-root .px-4 {
     padding-inline: calc(var(--spacing) * 4);
   }
-  .leadero-root .px-6 {
+  .zsearch-root .px-6 {
     padding-inline: calc(var(--spacing) * 6);
   }
-  .leadero-root .px-\[var\(--page-content-padding\)\] {
+  .zsearch-root .px-\[var\(--page-content-padding\)\] {
     padding-inline: var(--page-content-padding);
   }
-  .leadero-root .px-\[var\(--page-inline-pad\)\] {
+  .zsearch-root .px-\[var\(--page-inline-pad\)\] {
     padding-inline: var(--page-inline-pad);
   }
-  .leadero-root .px-\[var\(--space-0-5\)\] {
+  .zsearch-root .px-\[var\(--space-0-5\)\] {
     padding-inline: var(--space-0-5);
   }
-  .leadero-root .px-\[var\(--space-1\)\] {
+  .zsearch-root .px-\[var\(--space-1\)\] {
     padding-inline: var(--space-1);
   }
-  .leadero-root .px-\[var\(--space-1-5\)\] {
+  .zsearch-root .px-\[var\(--space-1-5\)\] {
     padding-inline: var(--space-1-5);
   }
-  .leadero-root .px-\[var\(--space-2\)\] {
+  .zsearch-root .px-\[var\(--space-2\)\] {
     padding-inline: var(--space-2);
   }
-  .leadero-root .px-\[var\(--space-2-5\)\] {
+  .zsearch-root .px-\[var\(--space-2-5\)\] {
     padding-inline: var(--space-2-5);
   }
-  .leadero-root .px-\[var\(--space-3\)\] {
+  .zsearch-root .px-\[var\(--space-3\)\] {
     padding-inline: var(--space-3);
   }
-  .leadero-root .px-\[var\(--space-3-5\)\] {
+  .zsearch-root .px-\[var\(--space-3-5\)\] {
     padding-inline: var(--space-3-5);
   }
-  .leadero-root .px-\[var\(--space-4\)\] {
+  .zsearch-root .px-\[var\(--space-4\)\] {
     padding-inline: var(--space-4);
   }
-  .leadero-root .px-\[var\(--space-4-5\)\] {
+  .zsearch-root .px-\[var\(--space-4-5\)\] {
     padding-inline: var(--space-4-5);
   }
-  .leadero-root .px-\[var\(--space-6\)\] {
+  .zsearch-root .px-\[var\(--space-6\)\] {
     padding-inline: var(--space-6);
   }
-  .leadero-root .py-0 {
+  .zsearch-root .py-0 {
     padding-block: 0;
   }
-  .leadero-root .py-0\.5 {
+  .zsearch-root .py-0\.5 {
     padding-block: calc(var(--spacing) * 0.5);
   }
-  .leadero-root .py-1 {
+  .zsearch-root .py-1 {
     padding-block: var(--spacing);
   }
-  .leadero-root .py-1\.5 {
+  .zsearch-root .py-1\.5 {
     padding-block: calc(var(--spacing) * 1.5);
   }
-  .leadero-root .py-2 {
+  .zsearch-root .py-2 {
     padding-block: calc(var(--spacing) * 2);
   }
-  .leadero-root .py-3 {
+  .zsearch-root .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
-  .leadero-root .py-4 {
+  .zsearch-root .py-4 {
     padding-block: calc(var(--spacing) * 4);
   }
-  .leadero-root .py-6 {
+  .zsearch-root .py-6 {
     padding-block: calc(var(--spacing) * 6);
   }
-  .leadero-root .py-8 {
+  .zsearch-root .py-8 {
     padding-block: calc(var(--spacing) * 8);
   }
-  .leadero-root .py-12 {
+  .zsearch-root .py-12 {
     padding-block: calc(var(--spacing) * 12);
   }
-  .leadero-root .py-\[5px\] {
+  .zsearch-root .py-\[5px\] {
     padding-block: 5px;
   }
-  .leadero-root .py-\[9px\] {
+  .zsearch-root .py-\[9px\] {
     padding-block: 9px;
   }
-  .leadero-root .py-\[26px\] {
+  .zsearch-root .py-\[26px\] {
     padding-block: 26px;
   }
-  .leadero-root .py-\[var\(--nested-timeline-padding-block\)\] {
+  .zsearch-root .py-\[var\(--nested-timeline-padding-block\)\] {
     padding-block: var(--nested-timeline-padding-block);
   }
-  .leadero-root .py-\[var\(--space-0-5\)\] {
+  .zsearch-root .py-\[var\(--space-0-5\)\] {
     padding-block: var(--space-0-5);
   }
-  .leadero-root .py-\[var\(--space-1\)\] {
+  .zsearch-root .py-\[var\(--space-1\)\] {
     padding-block: var(--space-1);
   }
-  .leadero-root .py-\[var\(--space-1-5\)\] {
+  .zsearch-root .py-\[var\(--space-1-5\)\] {
     padding-block: var(--space-1-5);
   }
-  .leadero-root .py-\[var\(--space-2\)\] {
+  .zsearch-root .py-\[var\(--space-2\)\] {
     padding-block: var(--space-2);
   }
-  .leadero-root .py-\[var\(--space-2-5\)\] {
+  .zsearch-root .py-\[var\(--space-2-5\)\] {
     padding-block: var(--space-2-5);
   }
-  .leadero-root .py-\[var\(--space-3\)\] {
+  .zsearch-root .py-\[var\(--space-3\)\] {
     padding-block: var(--space-3);
   }
-  .leadero-root .py-\[var\(--space-4\)\] {
+  .zsearch-root .py-\[var\(--space-4\)\] {
     padding-block: var(--space-4);
   }
-  .leadero-root .py-\[var\(--space-5\)\] {
+  .zsearch-root .py-\[var\(--space-5\)\] {
     padding-block: var(--space-5);
   }
-  .leadero-root .py-\[var\(--space-6\)\] {
+  .zsearch-root .py-\[var\(--space-6\)\] {
     padding-block: var(--space-6);
   }
-  .leadero-root .py-\[var\(--space-8\)\] {
+  .zsearch-root .py-\[var\(--space-8\)\] {
     padding-block: var(--space-8);
   }
-  .leadero-root .py-\[var\(--space-px\)\] {
+  .zsearch-root .py-\[var\(--space-px\)\] {
     padding-block: var(--space-px);
   }
-  .leadero-root .py-px {
+  .zsearch-root .py-px {
     padding-block: 1px;
   }
-  .leadero-root .pt-0 {
+  .zsearch-root .pt-0 {
     padding-top: 0;
   }
-  .leadero-root .pt-\[var\(--space-0-5\)\] {
+  .zsearch-root .pt-\[var\(--space-0-5\)\] {
     padding-top: var(--space-0-5);
   }
-  .leadero-root .pt-\[var\(--space-1\)\] {
+  .zsearch-root .pt-\[var\(--space-1\)\] {
     padding-top: var(--space-1);
   }
-  .leadero-root .pt-\[var\(--space-1-5\)\] {
+  .zsearch-root .pt-\[var\(--space-1-5\)\] {
     padding-top: var(--space-1-5);
   }
-  .leadero-root .pt-\[var\(--space-2\)\] {
+  .zsearch-root .pt-\[var\(--space-2\)\] {
     padding-top: var(--space-2);
   }
-  .leadero-root .pt-\[var\(--space-3\)\] {
+  .zsearch-root .pt-\[var\(--space-3\)\] {
     padding-top: var(--space-3);
   }
-  .leadero-root .pt-\[var\(--space-4\)\] {
+  .zsearch-root .pt-\[var\(--space-4\)\] {
     padding-top: var(--space-4);
   }
-  .leadero-root .pt-\[var\(--space-5\)\] {
+  .zsearch-root .pt-\[var\(--space-5\)\] {
     padding-top: var(--space-5);
   }
-  .leadero-root .pt-\[var\(--space-6\)\] {
+  .zsearch-root .pt-\[var\(--space-6\)\] {
     padding-top: var(--space-6);
   }
-  .leadero-root .pr-0 {
+  .zsearch-root .pr-0 {
     padding-right: 0;
   }
-  .leadero-root .pr-2 {
+  .zsearch-root .pr-2 {
     padding-right: calc(var(--spacing) * 2);
   }
-  .leadero-root .pr-8 {
+  .zsearch-root .pr-8 {
     padding-right: calc(var(--spacing) * 8);
   }
-  .leadero-root .pr-12 {
+  .zsearch-root .pr-12 {
     padding-right: calc(var(--spacing) * 12);
   }
-  .leadero-root .pr-14 {
+  .zsearch-root .pr-14 {
     padding-right: calc(var(--spacing) * 14);
   }
-  .leadero-root .pr-\[var\(--space-0-5\)\] {
+  .zsearch-root .pr-\[var\(--space-0-5\)\] {
     padding-right: var(--space-0-5);
   }
-  .leadero-root .pr-\[var\(--space-2\)\] {
+  .zsearch-root .pr-\[var\(--space-2\)\] {
     padding-right: var(--space-2);
   }
-  .leadero-root .pr-\[var\(--space-2-5\)\] {
+  .zsearch-root .pr-\[var\(--space-2-5\)\] {
     padding-right: var(--space-2-5);
   }
-  .leadero-root .pr-\[var\(--space-3\)\] {
+  .zsearch-root .pr-\[var\(--space-3\)\] {
     padding-right: var(--space-3);
   }
-  .leadero-root .pb-1\.5 {
+  .zsearch-root .pb-1\.5 {
     padding-bottom: calc(var(--spacing) * 1.5);
   }
-  .leadero-root .pb-2 {
+  .zsearch-root .pb-2 {
     padding-bottom: calc(var(--spacing) * 2);
   }
-  .leadero-root .pb-\[var\(--space-1\)\] {
+  .zsearch-root .pb-\[var\(--space-1\)\] {
     padding-bottom: var(--space-1);
   }
-  .leadero-root .pb-\[var\(--space-1-5\)\] {
+  .zsearch-root .pb-\[var\(--space-1-5\)\] {
     padding-bottom: var(--space-1-5);
   }
-  .leadero-root .pb-\[var\(--space-2\)\] {
+  .zsearch-root .pb-\[var\(--space-2\)\] {
     padding-bottom: var(--space-2);
   }
-  .leadero-root .pb-\[var\(--space-3\)\] {
+  .zsearch-root .pb-\[var\(--space-3\)\] {
     padding-bottom: var(--space-3);
   }
-  .leadero-root .pb-\[var\(--space-4\)\] {
+  .zsearch-root .pb-\[var\(--space-4\)\] {
     padding-bottom: var(--space-4);
   }
-  .leadero-root .pb-\[var\(--space-5\)\] {
+  .zsearch-root .pb-\[var\(--space-5\)\] {
     padding-bottom: var(--space-5);
   }
-  .leadero-root .pb-\[var\(--space-8\)\] {
+  .zsearch-root .pb-\[var\(--space-8\)\] {
     padding-bottom: var(--space-8);
   }
-  .leadero-root .pb-\[var\(--space-12\)\] {
+  .zsearch-root .pb-\[var\(--space-12\)\] {
     padding-bottom: var(--space-12);
   }
-  .leadero-root .\!pl-\[var\(--space-8\)\] {
+  .zsearch-root .\!pl-\[var\(--space-8\)\] {
     padding-left: var(--space-8) !important;
   }
-  .leadero-root .pl-0 {
+  .zsearch-root .pl-0 {
     padding-left: 0;
   }
-  .leadero-root .pl-2 {
+  .zsearch-root .pl-2 {
     padding-left: calc(var(--spacing) * 2);
   }
-  .leadero-root .pl-8 {
+  .zsearch-root .pl-8 {
     padding-left: calc(var(--spacing) * 8);
   }
-  .leadero-root .pl-\[calc\(var\(--space-5\)\+var\(--space-1-5\)\)\] {
+  .zsearch-root .pl-\[calc\(var\(--space-5\)\+var\(--space-1-5\)\)\] {
     padding-left: calc(var(--space-5) + var(--space-1-5));
   }
-  .leadero-root .pl-\[var\(--indent-tool-icon\)\] {
+  .zsearch-root .pl-\[var\(--indent-tool-icon\)\] {
     padding-left: var(--indent-tool-icon);
   }
-  .leadero-root .pl-\[var\(--nested-timeline-indent\)\] {
+  .zsearch-root .pl-\[var\(--nested-timeline-indent\)\] {
     padding-left: var(--nested-timeline-indent);
   }
-  .leadero-root .pl-\[var\(--space-0-5\)\] {
+  .zsearch-root .pl-\[var\(--space-0-5\)\] {
     padding-left: var(--space-0-5);
   }
-  .leadero-root .pl-\[var\(--space-1\)\] {
+  .zsearch-root .pl-\[var\(--space-1\)\] {
     padding-left: var(--space-1);
   }
-  .leadero-root .pl-\[var\(--space-1-5\)\] {
+  .zsearch-root .pl-\[var\(--space-1-5\)\] {
     padding-left: var(--space-1-5);
   }
-  .leadero-root .pl-\[var\(--space-2\)\] {
+  .zsearch-root .pl-\[var\(--space-2\)\] {
     padding-left: var(--space-2);
   }
-  .leadero-root .pl-\[var\(--space-3\)\] {
+  .zsearch-root .pl-\[var\(--space-3\)\] {
     padding-left: var(--space-3);
   }
-  .leadero-root .pl-\[var\(--space-4-5\)\] {
+  .zsearch-root .pl-\[var\(--space-4-5\)\] {
     padding-left: var(--space-4-5);
   }
-  .leadero-root .pl-\[var\(--space-6\)\] {
+  .zsearch-root .pl-\[var\(--space-6\)\] {
     padding-left: var(--space-6);
   }
-  .leadero-root .text-center {
+  .zsearch-root .text-center {
     text-align: center;
   }
-  .leadero-root .text-left {
+  .zsearch-root .text-left {
     text-align: left;
   }
-  .leadero-root .text-right {
+  .zsearch-root .text-right {
     text-align: right;
   }
-  .leadero-root .align-middle {
+  .zsearch-root .align-middle {
     vertical-align: middle;
   }
-  .leadero-root .\[font-family\:var\(--font-sans\)\] {
+  .zsearch-root .\[font-family\:var\(--font-sans\)\] {
     font-family: var(--font-sans);
   }
-  .leadero-root .\[font-family\:var\(--font-serif\)\] {
+  .zsearch-root .\[font-family\:var\(--font-serif\)\] {
     font-family: var(--font-serif);
   }
-  .leadero-root .font-\[family-name\:var\(--font-mono\)\] {
+  .zsearch-root .font-\[family-name\:var\(--font-mono\)\] {
     font-family: var(--font-mono);
   }
-  .leadero-root .font-\[family-name\:var\(--font-serif\)\] {
+  .zsearch-root .font-\[family-name\:var\(--font-serif\)\] {
     font-family: var(--font-serif);
   }
-  .leadero-root .font-\[family-name\:var\(--ui-family-display\)\] {
+  .zsearch-root .font-\[family-name\:var\(--ui-family-display\)\] {
     font-family: var(--ui-family-display);
   }
-  .leadero-root .font-mono {
+  .zsearch-root .font-mono {
     font-family: var(--font-mono);
   }
-  .leadero-root .text-2xl {
+  .zsearch-root .text-2xl {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
   }
-  .leadero-root .text-base {
+  .zsearch-root .text-base {
     font-size: var(--text-base);
     line-height: var(--tw-leading, var(--text-base--line-height));
   }
-  .leadero-root .text-lg {
+  .zsearch-root .text-lg {
     font-size: var(--text-lg);
     line-height: var(--tw-leading, var(--text-lg--line-height));
   }
-  .leadero-root .text-sm {
+  .zsearch-root .text-sm {
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
   }
-  .leadero-root .text-xs {
+  .zsearch-root .text-xs {
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
-  .leadero-root .\[font-size\:var\(--text-xs\)\] {
+  .zsearch-root .\[font-size\:var\(--text-xs\)\] {
     font-size: var(--text-xs);
   }
-  .leadero-root .text-\[10\.5px\] {
+  .zsearch-root .text-\[10\.5px\] {
     font-size: 10.5px;
   }
-  .leadero-root .text-\[12\.5px\] {
+  .zsearch-root .text-\[12\.5px\] {
     font-size: 12.5px;
   }
-  .leadero-root .text-\[12px\] {
+  .zsearch-root .text-\[12px\] {
     font-size: 12px;
   }
-  .leadero-root .text-\[length\:var\(--text-2xs\)\] {
+  .zsearch-root .text-\[length\:var\(--text-2xs\)\] {
     font-size: var(--text-2xs);
   }
-  .leadero-root .text-\[length\:var\(--text-3xs\)\] {
+  .zsearch-root .text-\[length\:var\(--text-3xs\)\] {
     font-size: var(--text-3xs);
   }
-  .leadero-root .text-\[length\:var\(--text-base\)\] {
+  .zsearch-root .text-\[length\:var\(--text-base\)\] {
     font-size: var(--text-base);
   }
-  .leadero-root .text-\[length\:var\(--text-control\)\] {
+  .zsearch-root .text-\[length\:var\(--text-control\)\] {
     font-size: var(--text-control);
   }
-  .leadero-root .text-\[length\:var\(--text-lg\)\] {
+  .zsearch-root .text-\[length\:var\(--text-lg\)\] {
     font-size: var(--text-lg);
   }
-  .leadero-root .text-\[length\:var\(--text-md\)\] {
+  .zsearch-root .text-\[length\:var\(--text-md\)\] {
     font-size: var(--text-md);
   }
-  .leadero-root .text-\[length\:var\(--text-prose\)\] {
+  .zsearch-root .text-\[length\:var\(--text-prose\)\] {
     font-size: var(--text-prose);
   }
-  .leadero-root .text-\[length\:var\(--text-sm\)\] {
+  .zsearch-root .text-\[length\:var\(--text-sm\)\] {
     font-size: var(--text-sm);
   }
-  .leadero-root .text-\[length\:var\(--text-xl\)\] {
+  .zsearch-root .text-\[length\:var\(--text-xl\)\] {
     font-size: var(--text-xl);
   }
-  .leadero-root .text-\[length\:var\(--text-xs\)\] {
+  .zsearch-root .text-\[length\:var\(--text-xs\)\] {
     font-size: var(--text-xs);
   }
-  .leadero-root .text-\[length\:var\(--timestamp-font-size\)\] {
+  .zsearch-root .text-\[length\:var\(--timestamp-font-size\)\] {
     font-size: var(--timestamp-font-size);
   }
-  .leadero-root .leading-\[1\.4\] {
+  .zsearch-root .leading-\[1\.4\] {
     --tw-leading: 1.4;
     line-height: 1.4;
   }
-  .leadero-root .leading-\[var\(--leading-code\)\] {
+  .zsearch-root .leading-\[var\(--leading-code\)\] {
     --tw-leading: var(--leading-code);
     line-height: var(--leading-code);
   }
-  .leadero-root .leading-\[var\(--leading-none\)\] {
+  .zsearch-root .leading-\[var\(--leading-none\)\] {
     --tw-leading: var(--leading-none);
     line-height: var(--leading-none);
   }
-  .leadero-root .leading-\[var\(--leading-normal\)\] {
+  .zsearch-root .leading-\[var\(--leading-normal\)\] {
     --tw-leading: var(--leading-normal);
     line-height: var(--leading-normal);
   }
-  .leadero-root .leading-\[var\(--leading-prose\)\] {
+  .zsearch-root .leading-\[var\(--leading-prose\)\] {
     --tw-leading: var(--leading-prose);
     line-height: var(--leading-prose);
   }
-  .leadero-root .leading-\[var\(--leading-tight\)\] {
+  .zsearch-root .leading-\[var\(--leading-tight\)\] {
     --tw-leading: var(--leading-tight);
     line-height: var(--leading-tight);
   }
-  .leadero-root .leading-none {
+  .zsearch-root .leading-none {
     --tw-leading: 1;
     line-height: 1;
   }
-  .leadero-root .leading-relaxed {
+  .zsearch-root .leading-relaxed {
     --tw-leading: var(--leading-relaxed);
     line-height: var(--leading-relaxed);
   }
-  .leadero-root .leading-snug {
+  .zsearch-root .leading-snug {
     --tw-leading: var(--leading-snug);
     line-height: var(--leading-snug);
   }
-  .leadero-root .leading-tight {
+  .zsearch-root .leading-tight {
     --tw-leading: var(--leading-tight);
     line-height: var(--leading-tight);
   }
-  .leadero-root .font-\[var\(--font-mono\)\] {
+  .zsearch-root .font-\[var\(--font-mono\)\] {
     --tw-font-weight: var(--font-mono);
     font-weight: var(--font-mono);
   }
-  .leadero-root .font-\[var\(--font-sans\)\] {
+  .zsearch-root .font-\[var\(--font-sans\)\] {
     --tw-font-weight: var(--font-sans);
     font-weight: var(--font-sans);
   }
-  .leadero-root .font-\[var\(--font-serif\)\] {
+  .zsearch-root .font-\[var\(--font-serif\)\] {
     --tw-font-weight: var(--font-serif);
     font-weight: var(--font-serif);
   }
-  .leadero-root .font-\[var\(--font-weight-medium\)\] {
+  .zsearch-root .font-\[var\(--font-weight-medium\)\] {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .leadero-root .font-\[var\(--font-weight-normal\)\] {
+  .zsearch-root .font-\[var\(--font-weight-normal\)\] {
     --tw-font-weight: var(--font-weight-normal);
     font-weight: var(--font-weight-normal);
   }
-  .leadero-root .font-\[var\(--font-weight-semibold\)\] {
+  .zsearch-root .font-\[var\(--font-weight-semibold\)\] {
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
   }
-  .leadero-root .font-\[var\(--fw-semibold\)\] {
+  .zsearch-root .font-\[var\(--fw-semibold\)\] {
     --tw-font-weight: var(--fw-semibold);
     font-weight: var(--fw-semibold);
   }
-  .leadero-root .font-bold {
+  .zsearch-root .font-bold {
     --tw-font-weight: var(--font-weight-bold);
     font-weight: var(--font-weight-bold);
   }
-  .leadero-root .font-medium {
+  .zsearch-root .font-medium {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .leadero-root .font-normal {
+  .zsearch-root .font-normal {
     --tw-font-weight: var(--font-weight-normal);
     font-weight: var(--font-weight-normal);
   }
-  .leadero-root .font-semibold {
+  .zsearch-root .font-semibold {
     --tw-font-weight: var(--font-weight-semibold);
     font-weight: var(--font-weight-semibold);
   }
-  .leadero-root .tracking-\[0\.06em\] {
+  .zsearch-root .tracking-\[0\.06em\] {
     --tw-tracking: 0.06em;
     letter-spacing: 0.06em;
   }
-  .leadero-root .tracking-\[var\(--tracking-tight\)\] {
+  .zsearch-root .tracking-\[var\(--tracking-tight\)\] {
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
-  .leadero-root .tracking-\[var\(--tracking-wide\)\] {
+  .zsearch-root .tracking-\[var\(--tracking-wide\)\] {
     --tw-tracking: var(--tracking-wide);
     letter-spacing: var(--tracking-wide);
   }
-  .leadero-root .tracking-\[var\(--tracking-wider\)\] {
+  .zsearch-root .tracking-\[var\(--tracking-wider\)\] {
     --tw-tracking: var(--tracking-wider);
     letter-spacing: var(--tracking-wider);
   }
-  .leadero-root .text-balance {
+  .zsearch-root .text-balance {
     text-wrap: balance;
   }
-  .leadero-root .\[overflow-wrap\:anywhere\] {
+  .zsearch-root .\[overflow-wrap\:anywhere\] {
     overflow-wrap: anywhere;
   }
-  .leadero-root .break-words {
+  .zsearch-root .break-words {
     overflow-wrap: break-word;
   }
-  .leadero-root .break-all {
+  .zsearch-root .break-all {
     word-break: break-all;
   }
-  .leadero-root .text-ellipsis {
+  .zsearch-root .text-ellipsis {
     text-overflow: ellipsis;
   }
-  .leadero-root .whitespace-nowrap {
+  .zsearch-root .whitespace-nowrap {
     white-space: nowrap;
   }
-  .leadero-root .whitespace-pre-wrap {
+  .zsearch-root .whitespace-pre-wrap {
     white-space: pre-wrap;
   }
-  .leadero-root .\[color\:var\(--signal-green-dark\)\] {
+  .zsearch-root .\[color\:var\(--signal-green-dark\)\] {
     color: var(--signal-green-dark);
   }
-  .leadero-root .text-\[color\:var\(--accent\)\] {
+  .zsearch-root .text-\[color\:var\(--accent\)\] {
     color: var(--accent);
   }
-  .leadero-root .text-\[color\:var\(--action-primary\)\] {
+  .zsearch-root .text-\[color\:var\(--action-primary\)\] {
     color: var(--action-primary);
   }
-  .leadero-root .text-\[color\:var\(--color-error\)\] {
+  .zsearch-root .text-\[color\:var\(--color-error\)\] {
     color: var(--color-error);
   }
-  .leadero-root .text-\[color\:var\(--danger\)\] {
+  .zsearch-root .text-\[color\:var\(--danger\)\] {
     color: var(--danger);
   }
-  .leadero-root .text-\[color\:var\(--data-blue-dark\)\] {
+  .zsearch-root .text-\[color\:var\(--data-blue-dark\)\] {
     color: var(--data-blue-dark);
   }
-  .leadero-root .text-\[color\:var\(--foreground\)\] {
+  .zsearch-root .text-\[color\:var\(--foreground\)\] {
     color: var(--foreground);
   }
-  .leadero-root .text-\[color\:var\(--ink-clear\)\] {
+  .zsearch-root .text-\[color\:var\(--ink-clear\)\] {
     color: var(--ink-clear);
   }
-  .leadero-root .text-\[color\:var\(--ink-heavy\)\] {
+  .zsearch-root .text-\[color\:var\(--ink-heavy\)\] {
     color: var(--ink-heavy);
   }
-  .leadero-root .text-\[color\:var\(--ink-moss\)\] {
+  .zsearch-root .text-\[color\:var\(--ink-moss\)\] {
     color: var(--ink-moss);
   }
-  .leadero-root .text-\[color\:var\(--ink-scorch\)\] {
+  .zsearch-root .text-\[color\:var\(--ink-scorch\)\] {
     color: var(--ink-scorch);
   }
-  .leadero-root .text-\[color\:var\(--ok\)\] {
+  .zsearch-root .text-\[color\:var\(--ok\)\] {
     color: var(--ok);
   }
-  .leadero-root .text-\[color\:var\(--signal-green-dark\)\] {
+  .zsearch-root .text-\[color\:var\(--signal-green-dark\)\] {
     color: var(--signal-green-dark);
   }
-  .leadero-root .text-\[color\:var\(--signal-red-strong\)\] {
+  .zsearch-root .text-\[color\:var\(--signal-red-strong\)\] {
     color: var(--signal-red-strong);
   }
-  .leadero-root .text-\[color\:var\(--signal-yellow-text\)\] {
+  .zsearch-root .text-\[color\:var\(--signal-yellow-text\)\] {
     color: var(--signal-yellow-text);
   }
-  .leadero-root .text-\[color\:var\(--text-on-accent\)\] {
+  .zsearch-root .text-\[color\:var\(--text-on-accent\)\] {
     color: var(--text-on-accent);
   }
-  .leadero-root .text-\[color\:var\(--text-primary\)\] {
+  .zsearch-root .text-\[color\:var\(--text-primary\)\] {
     color: var(--text-primary);
   }
-  .leadero-root .text-\[color\:var\(--text-secondary\)\] {
+  .zsearch-root .text-\[color\:var\(--text-secondary\)\] {
     color: var(--text-secondary);
   }
-  .leadero-root .text-\[color\:var\(--text-tertiary\)\] {
+  .zsearch-root .text-\[color\:var\(--text-tertiary\)\] {
     color: var(--text-tertiary);
   }
-  .leadero-root .text-\[color\:var\(--timestamp-color\)\] {
+  .zsearch-root .text-\[color\:var\(--timestamp-color\)\] {
     color: var(--timestamp-color);
   }
-  .leadero-root .text-\[color\:var\(--user-bubble-text\)\] {
+  .zsearch-root .text-\[color\:var\(--user-bubble-text\)\] {
     color: var(--user-bubble-text);
   }
-  .leadero-root .text-\[color\:var\(--warn\)\] {
+  .zsearch-root .text-\[color\:var\(--warn\)\] {
     color: var(--warn);
   }
-  .leadero-root .text-\[var\(--signal-yellow-text\)\] {
+  .zsearch-root .text-\[var\(--signal-yellow-text\)\] {
     color: var(--signal-yellow-text);
   }
-  .leadero-root .text-\[var\(--text-secondary\)\] {
+  .zsearch-root .text-\[var\(--text-secondary\)\] {
     color: var(--text-secondary);
   }
-  .leadero-root .text-\[var\(--text-tertiary\)\] {
+  .zsearch-root .text-\[var\(--text-tertiary\)\] {
     color: var(--text-tertiary);
   }
-  .leadero-root .text-background {
+  .zsearch-root .text-background {
     color: var(--background);
   }
-  .leadero-root .text-card-foreground {
+  .zsearch-root .text-card-foreground {
     color: var(--card-foreground);
   }
-  .leadero-root .text-current,
-  .leadero-root .text-current\/60 {
+  .zsearch-root .text-current,
+  .zsearch-root .text-current\/60 {
     color: currentColor;
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .text-current\/60 {
+    .zsearch-root .text-current\/60 {
       color: color-mix(in oklab, currentcolor 60%, transparent);
     }
   }
-  .leadero-root .text-destructive {
+  .zsearch-root .text-destructive {
     color: var(--destructive);
   }
-  .leadero-root .text-foreground,
-  .leadero-root .text-foreground\/60 {
+  .zsearch-root .text-foreground,
+  .zsearch-root .text-foreground\/60 {
     color: var(--foreground);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .text-foreground\/60 {
+    .zsearch-root .text-foreground\/60 {
       color: color-mix(in oklab, var(--foreground) 60%, transparent);
     }
   }
-  .leadero-root .text-info {
+  .zsearch-root .text-info {
     color: var(--info);
   }
-  .leadero-root .text-muted-foreground {
+  .zsearch-root .text-muted-foreground {
     color: var(--muted-foreground);
   }
-  .leadero-root .text-popover-foreground {
+  .zsearch-root .text-popover-foreground {
     color: var(--popover-foreground);
   }
-  .leadero-root .text-primary {
+  .zsearch-root .text-primary {
     color: var(--primary);
   }
-  .leadero-root .text-primary-foreground {
+  .zsearch-root .text-primary-foreground {
     color: var(--primary-foreground);
   }
-  .leadero-root .text-sidebar-foreground,
-  .leadero-root .text-sidebar-foreground\/70 {
+  .zsearch-root .text-sidebar-foreground,
+  .zsearch-root .text-sidebar-foreground\/70 {
     color: var(--sidebar-foreground);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .text-sidebar-foreground\/70 {
+    .zsearch-root .text-sidebar-foreground\/70 {
       color: color-mix(in oklab, var(--sidebar-foreground) 70%, transparent);
     }
   }
-  .leadero-root .text-success {
+  .zsearch-root .text-success {
     color: var(--success);
   }
-  .leadero-root .text-success-foreground {
+  .zsearch-root .text-success-foreground {
     color: var(--success-foreground);
   }
-  .leadero-root .text-white {
+  .zsearch-root .text-white {
     color: var(--color-white);
   }
-  .leadero-root .lowercase {
+  .zsearch-root .lowercase {
     text-transform: lowercase;
   }
-  .leadero-root .uppercase {
+  .zsearch-root .uppercase {
     text-transform: uppercase;
   }
-  .leadero-root .italic {
+  .zsearch-root .italic {
     font-style: italic;
   }
-  .leadero-root .tabular-nums {
+  .zsearch-root .tabular-nums {
     --tw-numeric-spacing: tabular-nums;
     font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,)
       var(--tw-numeric-figure,) var(--tw-numeric-spacing,)
       var(--tw-numeric-fraction,);
   }
-  .leadero-root .\[font-variant-numeric\:tabular-nums\] {
+  .zsearch-root .\[font-variant-numeric\:tabular-nums\] {
     font-variant-numeric: tabular-nums;
   }
-  .leadero-root .no-underline {
+  .zsearch-root .no-underline {
     text-decoration-line: none;
   }
-  .leadero-root .overline {
+  .zsearch-root .overline {
     text-decoration-line: overline;
   }
-  .leadero-root .underline {
+  .zsearch-root .underline {
     text-decoration-line: underline;
   }
-  .leadero-root .underline-offset-0 {
+  .zsearch-root .underline-offset-0 {
     text-underline-offset: 0px;
   }
-  .leadero-root .underline-offset-2 {
+  .zsearch-root .underline-offset-2 {
     text-underline-offset: 2px;
   }
-  .leadero-root .underline-offset-4 {
+  .zsearch-root .underline-offset-4 {
     text-underline-offset: 4px;
   }
-  .leadero-root .\[accent-color\:var\(--accent\)\] {
+  .zsearch-root .\[accent-color\:var\(--accent\)\] {
     accent-color: var(--accent);
   }
-  .leadero-root .accent-\[var\(--primary\)\] {
+  .zsearch-root .accent-\[var\(--primary\)\] {
     accent-color: var(--primary);
   }
-  .leadero-root .opacity-0 {
+  .zsearch-root .opacity-0 {
     opacity: 0;
   }
-  .leadero-root .opacity-40 {
+  .zsearch-root .opacity-40 {
     opacity: 0.4;
   }
-  .leadero-root .opacity-50 {
+  .zsearch-root .opacity-50 {
     opacity: 0.5;
   }
-  .leadero-root .opacity-60 {
+  .zsearch-root .opacity-60 {
     opacity: 0.6;
   }
-  .leadero-root .opacity-70 {
+  .zsearch-root .opacity-70 {
     opacity: 0.7;
   }
-  .leadero-root .opacity-75 {
+  .zsearch-root .opacity-75 {
     opacity: 0.75;
   }
-  .leadero-root .opacity-80 {
+  .zsearch-root .opacity-80 {
     opacity: 0.8;
   }
-  .leadero-root .opacity-85 {
+  .zsearch-root .opacity-85 {
     opacity: 0.85;
   }
-  .leadero-root .opacity-90 {
+  .zsearch-root .opacity-90 {
     opacity: 0.9;
   }
-  .leadero-root .opacity-100 {
+  .zsearch-root .opacity-100 {
     opacity: 1;
   }
-  .leadero-root .opacity-\[var\(--opacity-secondary\)\] {
+  .zsearch-root .opacity-\[var\(--opacity-secondary\)\] {
     opacity: var(--opacity-secondary);
   }
-  .leadero-root .shadow {
+  .zsearch-root .shadow {
     --tw-shadow:
       0 1px 3px 0 var(--tw-shadow-color, #0000001a),
       0 1px 2px -1px var(--tw-shadow-color, #0000001a);
@@ -3102,130 +3102,130 @@
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[0_0_0_1px_var\(--sidebar-border\)\] {
+  .zsearch-root .shadow-\[0_0_0_1px_var\(--sidebar-border\)\] {
     --tw-shadow: 0 0 0 1px var(--tw-shadow-color, var(--sidebar-border));
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[inset_0_0_0_1px_var\(--hub-hairline\)\] {
+  .zsearch-root .shadow-\[inset_0_0_0_1px_var\(--hub-hairline\)\] {
     --tw-shadow: inset 0 0 0 1px var(--tw-shadow-color, var(--hub-hairline));
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[var\(--focus-ring-accent\)\] {
+  .zsearch-root .shadow-\[var\(--focus-ring-accent\)\] {
     --tw-shadow: var(--focus-ring-accent);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[var\(--shadow-md\)\] {
+  .zsearch-root .shadow-\[var\(--shadow-md\)\] {
     --tw-shadow: var(--shadow-md);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[var\(--shadow-overlay\)\] {
+  .zsearch-root .shadow-\[var\(--shadow-overlay\)\] {
     --tw-shadow: var(--shadow-overlay);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-\[var\(--shadow-pop\)\] {
+  .zsearch-root .shadow-\[var\(--shadow-pop\)\] {
     --tw-shadow: var(--shadow-pop);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-md {
+  .zsearch-root .shadow-md {
     --tw-shadow: var(--shadow-md);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-none {
+  .zsearch-root .shadow-none {
     --tw-shadow: 0 0 #0000;
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .shadow-sm {
+  .zsearch-root .shadow-sm {
     --tw-shadow: var(--shadow-sm);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring {
+  .zsearch-root .ring {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring-0 {
+  .zsearch-root .ring-0 {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring-1 {
+  .zsearch-root .ring-1 {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring-2 {
+  .zsearch-root .ring-2 {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring-\[3px\] {
+  .zsearch-root .ring-\[3px\] {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .ring-background {
+  .zsearch-root .ring-background {
     --tw-ring-color: var(--background);
   }
-  .leadero-root .ring-ring {
+  .zsearch-root .ring-ring {
     --tw-ring-color: var(--ring);
   }
-  .leadero-root .ring-sidebar-ring {
+  .zsearch-root .ring-sidebar-ring {
     --tw-ring-color: var(--sidebar-ring);
   }
-  .leadero-root .outline-hidden {
+  .zsearch-root .outline-hidden {
     --tw-outline-style: none;
     outline-style: none;
   }
   @media (forced-colors: active) {
-    .leadero-root .outline-hidden {
+    .zsearch-root .outline-hidden {
       outline-offset: 2px;
       outline: 2px solid #0000;
     }
   }
-  .leadero-root .outline {
+  .zsearch-root .outline {
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
   }
-  .leadero-root .blur {
+  .zsearch-root .blur {
     --tw-blur: blur(8px);
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,)
       var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,)
       var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
-  .leadero-root .filter {
+  .zsearch-root .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,)
       var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,)
       var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
-  .leadero-root .transition {
+  .zsearch-root .transition {
     transition-property:
       color,
       background-color,
@@ -3256,7 +3256,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[background-color\,color\,border-color\] {
+  .zsearch-root .transition-\[background-color\,color\,border-color\] {
     transition-property: background-color, color, border-color;
     transition-timing-function: var(
       --tw-ease,
@@ -3264,7 +3264,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[background-color\,color\] {
+  .zsearch-root .transition-\[background-color\,color\] {
     transition-property: background-color, color;
     transition-timing-function: var(
       --tw-ease,
@@ -3272,7 +3272,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[color\,box-shadow\] {
+  .zsearch-root .transition-\[color\,box-shadow\] {
     transition-property: color, box-shadow;
     transition-timing-function: var(
       --tw-ease,
@@ -3280,7 +3280,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[left\,right\,width\] {
+  .zsearch-root .transition-\[left\,right\,width\] {
     transition-property: left, right, width;
     transition-timing-function: var(
       --tw-ease,
@@ -3288,7 +3288,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[margin\,opacity\] {
+  .zsearch-root .transition-\[margin\,opacity\] {
     transition-property: margin, opacity;
     transition-timing-function: var(
       --tw-ease,
@@ -3296,7 +3296,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[max-height\] {
+  .zsearch-root .transition-\[max-height\] {
     transition-property: max-height;
     transition-timing-function: var(
       --tw-ease,
@@ -3304,7 +3304,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[opacity\,transform\] {
+  .zsearch-root .transition-\[opacity\,transform\] {
     transition-property: opacity, transform;
     transition-timing-function: var(
       --tw-ease,
@@ -3312,7 +3312,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[transform\,opacity\] {
+  .zsearch-root .transition-\[transform\,opacity\] {
     transition-property: transform, opacity;
     transition-timing-function: var(
       --tw-ease,
@@ -3320,7 +3320,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[width\,height\,padding\] {
+  .zsearch-root .transition-\[width\,height\,padding\] {
     transition-property: width, height, padding;
     transition-timing-function: var(
       --tw-ease,
@@ -3328,7 +3328,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-\[width\] {
+  .zsearch-root .transition-\[width\] {
     transition-property: width;
     transition-timing-function: var(
       --tw-ease,
@@ -3336,7 +3336,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-all {
+  .zsearch-root .transition-all {
     transition-property: all;
     transition-timing-function: var(
       --tw-ease,
@@ -3344,7 +3344,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-colors {
+  .zsearch-root .transition-colors {
     transition-property:
       color, background-color, border-color, outline-color,
       text-decoration-color, fill, stroke, --tw-gradient-from,
@@ -3355,7 +3355,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-opacity {
+  .zsearch-root .transition-opacity {
     transition-property: opacity;
     transition-timing-function: var(
       --tw-ease,
@@ -3363,7 +3363,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-shadow {
+  .zsearch-root .transition-shadow {
     transition-property: box-shadow;
     transition-timing-function: var(
       --tw-ease,
@@ -3371,7 +3371,7 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-transform {
+  .zsearch-root .transition-transform {
     transition-property: transform, translate, scale, rotate;
     transition-timing-function: var(
       --tw-ease,
@@ -3379,94 +3379,94 @@
     );
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .leadero-root .transition-none {
+  .zsearch-root .transition-none {
     transition-property: none;
   }
-  .leadero-root .duration-150 {
+  .zsearch-root .duration-150 {
     --tw-duration: 0.15s;
     transition-duration: 0.15s;
   }
-  .leadero-root .duration-200,
-  .leadero-root .duration-\[0\.2s\] {
+  .zsearch-root .duration-200,
+  .zsearch-root .duration-\[0\.2s\] {
     --tw-duration: 0.2s;
     transition-duration: 0.2s;
   }
-  .leadero-root .duration-\[0\.12s\] {
+  .zsearch-root .duration-\[0\.12s\] {
     --tw-duration: 0.12s;
     transition-duration: 0.12s;
   }
-  .leadero-root .duration-\[var\(--transition-fast\)\] {
+  .zsearch-root .duration-\[var\(--transition-fast\)\] {
     --tw-duration: var(--transition-fast);
     transition-duration: var(--transition-fast);
   }
-  .leadero-root .ease-\[var\(--ease-decelerate\)\] {
+  .zsearch-root .ease-\[var\(--ease-decelerate\)\] {
     --tw-ease: var(--ease-decelerate);
     transition-timing-function: var(--ease-decelerate);
   }
-  .leadero-root .ease-in-out {
+  .zsearch-root .ease-in-out {
     --tw-ease: var(--ease-in-out);
     transition-timing-function: var(--ease-in-out);
   }
-  .leadero-root .ease-linear {
+  .zsearch-root .ease-linear {
     --tw-ease: linear;
     transition-timing-function: linear;
   }
-  .leadero-root .outline-none {
+  .zsearch-root .outline-none {
     --tw-outline-style: none;
     outline-style: none;
   }
-  .leadero-root .select-none {
+  .zsearch-root .select-none {
     -webkit-user-select: none;
     user-select: none;
   }
-  .leadero-root .select-text {
+  .zsearch-root .select-text {
     -webkit-user-select: text;
     user-select: text;
   }
-  .leadero-root .\!running {
+  .zsearch-root .\!running {
     animation-play-state: running !important;
   }
-  .leadero-root .\[-webkit-box-orient\:vertical\] {
+  .zsearch-root .\[-webkit-box-orient\:vertical\] {
     -webkit-box-orient: vertical;
   }
-  .leadero-root .\[-webkit-line-clamp\:2\] {
+  .zsearch-root .\[-webkit-line-clamp\:2\] {
     -webkit-line-clamp: 2;
   }
-  .leadero-root .\[font\:var\(--ui-font-caption\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-caption\)\] {
     font: var(--ui-font-caption);
   }
-  .leadero-root .\[font\:var\(--ui-font-display\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-display\)\] {
     font: var(--ui-font-display);
   }
-  .leadero-root .\[font\:var\(--ui-font-heading\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-heading\)\] {
     font: var(--ui-font-heading);
   }
-  .leadero-root .\[font\:var\(--ui-font-meta\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-meta\)\] {
     font: var(--ui-font-meta);
   }
-  .leadero-root .\[font\:var\(--ui-font-overline\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-overline\)\] {
     font: var(--ui-font-overline);
   }
-  .leadero-root .\[font\:var\(--ui-font-title\)\] {
+  .zsearch-root .\[font\:var\(--ui-font-title\)\] {
     font: var(--ui-font-title);
   }
-  .leadero-root .fade-in {
+  .zsearch-root .fade-in {
     --tw-enter-opacity: 0;
   }
-  .leadero-root .fade-out {
+  .zsearch-root .fade-out {
     --tw-exit-opacity: 0;
   }
-  .leadero-root .paused {
+  .zsearch-root .paused {
     animation-play-state: paused;
   }
-  .leadero-root .running {
+  .zsearch-root .running {
     animation-play-state: running;
   }
-  .leadero-root .not-first\:border-t:not(:first-child) {
+  .zsearch-root .not-first\:border-t:not(:first-child) {
     border-top-style: var(--tw-border-style);
     border-top-width: 1px;
   }
-  .leadero-root
+  .zsearch-root
     .not-first\:border-\[var\(--hub-row-divider\)\]:not(:first-child) {
     border-color: var(--hub-row-divider);
   }
@@ -3672,90 +3672,90 @@
   ) {
     color: var(--sidebar-accent-foreground);
   }
-  .leadero-root .selection\:bg-primary ::selection {
+  .zsearch-root .selection\:bg-primary ::selection {
     background-color: var(--primary);
   }
-  .leadero-root .selection\:bg-primary::selection {
+  .zsearch-root .selection\:bg-primary::selection {
     background-color: var(--primary);
   }
-  .leadero-root .selection\:text-primary-foreground ::selection {
+  .zsearch-root .selection\:text-primary-foreground ::selection {
     color: var(--primary-foreground);
   }
-  .leadero-root .selection\:text-primary-foreground::selection {
+  .zsearch-root .selection\:text-primary-foreground::selection {
     color: var(--primary-foreground);
   }
-  .leadero-root .file\:inline-flex::file-selector-button {
+  .zsearch-root .file\:inline-flex::file-selector-button {
     display: inline-flex;
   }
-  .leadero-root .file\:h-7::file-selector-button {
+  .zsearch-root .file\:h-7::file-selector-button {
     height: calc(var(--spacing) * 7);
   }
-  .leadero-root .file\:border-0::file-selector-button {
+  .zsearch-root .file\:border-0::file-selector-button {
     border-style: var(--tw-border-style);
     border-width: 0;
   }
-  .leadero-root .file\:bg-transparent::file-selector-button {
+  .zsearch-root .file\:bg-transparent::file-selector-button {
     background-color: #0000;
   }
-  .leadero-root .file\:text-sm::file-selector-button {
+  .zsearch-root .file\:text-sm::file-selector-button {
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
   }
-  .leadero-root .file\:font-medium::file-selector-button {
+  .zsearch-root .file\:font-medium::file-selector-button {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .leadero-root .file\:text-foreground::file-selector-button {
+  .zsearch-root .file\:text-foreground::file-selector-button {
     color: var(--foreground);
   }
-  .leadero-root
+  .zsearch-root
     .placeholder\:text-\[color\:var\(--text-tertiary\)\]::placeholder {
     color: var(--text-tertiary);
   }
-  .leadero-root .placeholder\:text-muted-foreground::placeholder {
+  .zsearch-root .placeholder\:text-muted-foreground::placeholder {
     color: var(--muted-foreground);
   }
-  .leadero-root .after\:absolute:after {
+  .zsearch-root .after\:absolute:after {
     content: var(--tw-content);
     position: absolute;
   }
-  .leadero-root .after\:-inset-2:after {
+  .zsearch-root .after\:-inset-2:after {
     content: var(--tw-content);
     inset: calc(var(--spacing) * -2);
   }
-  .leadero-root .after\:inset-x-0:after {
+  .zsearch-root .after\:inset-x-0:after {
     content: var(--tw-content);
     inset-inline: 0;
   }
-  .leadero-root .after\:inset-y-0:after {
+  .zsearch-root .after\:inset-y-0:after {
     content: var(--tw-content);
     inset-block: 0;
   }
-  .leadero-root .after\:bottom-\[-1px\]:after {
+  .zsearch-root .after\:bottom-\[-1px\]:after {
     content: var(--tw-content);
     bottom: -1px;
   }
-  .leadero-root .after\:left-1\/2:after {
+  .zsearch-root .after\:left-1\/2:after {
     content: var(--tw-content);
     left: 50%;
   }
-  .leadero-root .after\:h-0\.5:after {
+  .zsearch-root .after\:h-0\.5:after {
     content: var(--tw-content);
     height: calc(var(--spacing) * 0.5);
   }
-  .leadero-root .after\:w-\[2px\]:after {
+  .zsearch-root .after\:w-\[2px\]:after {
     content: var(--tw-content);
     width: 2px;
   }
-  .leadero-root .after\:bg-foreground:after {
+  .zsearch-root .after\:bg-foreground:after {
     content: var(--tw-content);
     background-color: var(--foreground);
   }
-  .leadero-root .after\:opacity-0:after {
+  .zsearch-root .after\:opacity-0:after {
     content: var(--tw-content);
     opacity: 0;
   }
-  .leadero-root .after\:transition-opacity:after {
+  .zsearch-root .after\:transition-opacity:after {
     content: var(--tw-content);
     transition-property: opacity;
     transition-timing-function: var(
@@ -3770,25 +3770,25 @@
     content: var(--tw-content);
     left: 100%;
   }
-  .leadero-root .first\:border-t-0:first-child {
+  .zsearch-root .first\:border-t-0:first-child {
     border-top-style: var(--tw-border-style);
     border-top-width: 0;
   }
-  .leadero-root .last\:border-b-0:last-child {
+  .zsearch-root .last\:border-b-0:last-child {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 0;
   }
-  .leadero-root .focus-within\:border-\[color\:var\(--accent\)\]:focus-within {
+  .zsearch-root .focus-within\:border-\[color\:var\(--accent\)\]:focus-within {
     border-color: var(--accent);
   }
-  .leadero-root
+  .zsearch-root
     .focus-within\:border-\[color\:var\(--text-primary\)\]:focus-within {
     border-color: var(--text-primary);
   }
-  .leadero-root .focus-within\:opacity-100:focus-within {
+  .zsearch-root .focus-within\:opacity-100:focus-within {
     opacity: 1;
   }
-  .leadero-root
+  .zsearch-root
     .focus-within\:shadow-\[var\(--focus-ring-accent\)\]:focus-within {
     --tw-shadow: var(--focus-ring-accent);
     box-shadow:
@@ -3796,38 +3796,38 @@
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   @media (hover: hover) {
-    .leadero-root .hover\:border-\[var\(--border-strong\)\]:hover {
+    .zsearch-root .hover\:border-\[var\(--border-strong\)\]:hover {
       border-color: var(--border-strong);
     }
-    .leadero-root .hover\:bg-\[color\:var\(--hub-bg-hover\)\]:hover {
+    .zsearch-root .hover\:bg-\[color\:var\(--hub-bg-hover\)\]:hover {
       background-color: var(--hub-bg-hover);
     }
-    .leadero-root .hover\:bg-\[var\(--accent\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--accent\)\]:hover {
       background-color: var(--accent);
     }
-    .leadero-root .hover\:bg-\[var\(--border-subtle\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--border-subtle\)\]:hover {
       background-color: var(--border-subtle);
     }
-    .leadero-root .hover\:bg-\[var\(--data-blue-bg\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--data-blue-bg\)\]:hover {
       background-color: var(--data-blue-bg);
     }
-    .leadero-root .hover\:bg-\[var\(--hub-bg-hover\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--hub-bg-hover\)\]:hover {
       background-color: var(--hub-bg-hover);
     }
-    .leadero-root .hover\:bg-\[var\(--surface-subtle\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--surface-subtle\)\]:hover {
       background-color: var(--surface-subtle);
     }
-    .leadero-root .hover\:bg-\[var\(--surface-tint\)\]:hover {
+    .zsearch-root .hover\:bg-\[var\(--surface-tint\)\]:hover {
       background-color: var(--surface-tint);
     }
-    .leadero-root .hover\:bg-accent:hover {
+    .zsearch-root .hover\:bg-accent:hover {
       background-color: var(--accent);
     }
-    .leadero-root .hover\:bg-destructive\/90:hover {
+    .zsearch-root .hover\:bg-destructive\/90:hover {
       background-color: var(--destructive);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .hover\:bg-destructive\/90:hover {
+      .zsearch-root .hover\:bg-destructive\/90:hover {
         background-color: color-mix(
           in oklab,
           var(--destructive) 90%,
@@ -3835,76 +3835,76 @@
         );
       }
     }
-    .leadero-root .hover\:bg-primary\/10:hover {
+    .zsearch-root .hover\:bg-primary\/10:hover {
       background-color: var(--primary);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .hover\:bg-primary\/10:hover {
+      .zsearch-root .hover\:bg-primary\/10:hover {
         background-color: color-mix(in oklab, var(--primary) 10%, transparent);
       }
     }
-    .leadero-root .hover\:bg-primary\/90:hover {
+    .zsearch-root .hover\:bg-primary\/90:hover {
       background-color: var(--primary);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .hover\:bg-primary\/90:hover {
+      .zsearch-root .hover\:bg-primary\/90:hover {
         background-color: color-mix(in oklab, var(--primary) 90%, transparent);
       }
     }
-    .leadero-root .hover\:bg-sidebar-accent:hover {
+    .zsearch-root .hover\:bg-sidebar-accent:hover {
       background-color: var(--sidebar-accent);
     }
-    .leadero-root .hover\:bg-success\/90:hover {
+    .zsearch-root .hover\:bg-success\/90:hover {
       background-color: var(--success);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .hover\:bg-success\/90:hover {
+      .zsearch-root .hover\:bg-success\/90:hover {
         background-color: color-mix(in oklab, var(--success) 90%, transparent);
       }
     }
-    .leadero-root .hover\:bg-transparent:hover {
+    .zsearch-root .hover\:bg-transparent:hover {
       background-color: #0000;
     }
-    .leadero-root .hover\:text-\[color\:var\(--data-blue-dark\)\]:hover {
+    .zsearch-root .hover\:text-\[color\:var\(--data-blue-dark\)\]:hover {
       color: var(--data-blue-dark);
     }
-    .leadero-root .hover\:text-\[color\:var\(--text-primary\)\]:hover {
+    .zsearch-root .hover\:text-\[color\:var\(--text-primary\)\]:hover {
       color: var(--text-primary);
     }
-    .leadero-root .hover\:text-\[color\:var\(--text-secondary\)\]:hover {
+    .zsearch-root .hover\:text-\[color\:var\(--text-secondary\)\]:hover {
       color: var(--text-secondary);
     }
-    .leadero-root .hover\:text-accent-foreground:hover {
+    .zsearch-root .hover\:text-accent-foreground:hover {
       color: var(--accent-foreground);
     }
-    .leadero-root .hover\:text-current:hover {
+    .zsearch-root .hover\:text-current:hover {
       color: currentColor;
     }
-    .leadero-root .hover\:text-foreground:hover {
+    .zsearch-root .hover\:text-foreground:hover {
       color: var(--foreground);
     }
-    .leadero-root .hover\:text-primary:hover {
+    .zsearch-root .hover\:text-primary:hover {
       color: var(--primary);
     }
-    .leadero-root .hover\:text-sidebar-accent-foreground:hover {
+    .zsearch-root .hover\:text-sidebar-accent-foreground:hover {
       color: var(--sidebar-accent-foreground);
     }
-    .leadero-root .hover\:text-sidebar-foreground:hover {
+    .zsearch-root .hover\:text-sidebar-foreground:hover {
       color: var(--sidebar-foreground);
     }
-    .leadero-root .hover\:no-underline:hover {
+    .zsearch-root .hover\:no-underline:hover {
       text-decoration-line: none;
     }
-    .leadero-root .hover\:underline:hover {
+    .zsearch-root .hover\:underline:hover {
       text-decoration-line: underline;
     }
-    .leadero-root .hover\:opacity-85:hover {
+    .zsearch-root .hover\:opacity-85:hover {
       opacity: 0.85;
     }
-    .leadero-root .hover\:opacity-100:hover {
+    .zsearch-root .hover\:opacity-100:hover {
       opacity: 1;
     }
-    .leadero-root .hover\:shadow-\[0_0_0_1px_var\(--sidebar-accent\)\]:hover {
+    .zsearch-root .hover\:shadow-\[0_0_0_1px_var\(--sidebar-accent\)\]:hover {
       --tw-shadow: 0 0 0 1px var(--tw-shadow-color, var(--sidebar-accent));
       box-shadow:
         var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
@@ -3915,137 +3915,137 @@
       ) {
       background-color: var(--sidebar);
     }
-    .leadero-root .hover\:after\:bg-sidebar-border:hover:after {
+    .zsearch-root .hover\:after\:bg-sidebar-border:hover:after {
       content: var(--tw-content);
       background-color: var(--sidebar-border);
     }
   }
-  .leadero-root .focus\:border-\[var\(--data-blue\)\]:focus {
+  .zsearch-root .focus\:border-\[var\(--data-blue\)\]:focus {
     border-color: var(--data-blue);
   }
-  .leadero-root .focus\:shadow-\[var\(--focus-ring-subtle\)\]:focus {
+  .zsearch-root .focus\:shadow-\[var\(--focus-ring-subtle\)\]:focus {
     --tw-shadow: var(--focus-ring-subtle);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .focus-visible\:border-none:focus-visible {
+  .zsearch-root .focus-visible\:border-none:focus-visible {
     --tw-border-style: none;
     border-style: none;
   }
-  .leadero-root
+  .zsearch-root
     .focus-visible\:border-\[color\:var\(--accent\)\]:focus-visible {
     border-color: var(--accent);
   }
-  .leadero-root .focus-visible\:border-ring:focus-visible {
+  .zsearch-root .focus-visible\:border-ring:focus-visible {
     border-color: var(--ring);
   }
-  .leadero-root .focus-visible\:bg-\[var\(--hub-bg-hover\)\]:focus-visible {
+  .zsearch-root .focus-visible\:bg-\[var\(--hub-bg-hover\)\]:focus-visible {
     background-color: var(--hub-bg-hover);
   }
-  .leadero-root .focus-visible\:opacity-100:focus-visible {
+  .zsearch-root .focus-visible\:opacity-100:focus-visible {
     opacity: 1;
   }
-  .leadero-root
+  .zsearch-root
     .focus-visible\:shadow-\[var\(--focus-ring-accent\)\]:focus-visible {
     --tw-shadow: var(--focus-ring-accent);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .focus-visible\:ring-0:focus-visible {
+  .zsearch-root .focus-visible\:ring-0:focus-visible {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .focus-visible\:ring-\[3px\]:focus-visible {
+  .zsearch-root .focus-visible\:ring-\[3px\]:focus-visible {
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
       calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow:
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
-  .leadero-root .focus-visible\:ring-destructive\/20:focus-visible {
+  .zsearch-root .focus-visible\:ring-destructive\/20:focus-visible {
     --tw-ring-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .focus-visible\:ring-destructive\/20:focus-visible {
+    .zsearch-root .focus-visible\:ring-destructive\/20:focus-visible {
       --tw-ring-color: color-mix(in oklab, var(--destructive) 20%, transparent);
     }
   }
-  .leadero-root .focus-visible\:ring-ring:focus-visible {
+  .zsearch-root .focus-visible\:ring-ring:focus-visible {
     --tw-ring-color: var(--ring);
   }
-  .leadero-root .focus-visible\:outline-hidden:focus-visible {
+  .zsearch-root .focus-visible\:outline-hidden:focus-visible {
     --tw-outline-style: none;
     outline-style: none;
   }
   @media (forced-colors: active) {
-    .leadero-root .focus-visible\:outline-hidden:focus-visible {
+    .zsearch-root .focus-visible\:outline-hidden:focus-visible {
       outline-offset: 2px;
       outline: 2px solid #0000;
     }
   }
-  .leadero-root .focus-visible\:outline:focus-visible,
-  .leadero-root .focus-visible\:outline-1:focus-visible {
+  .zsearch-root .focus-visible\:outline:focus-visible,
+  .zsearch-root .focus-visible\:outline-1:focus-visible {
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
   }
-  .leadero-root .focus-visible\:outline-offset-1:focus-visible {
+  .zsearch-root .focus-visible\:outline-offset-1:focus-visible {
     outline-offset: 1px;
   }
-  .leadero-root
+  .zsearch-root
     .focus-visible\:outline-\[color\:var\(--accent\)\]:focus-visible {
     outline-color: var(--accent);
   }
-  .leadero-root .focus-visible\:outline-ring:focus-visible {
+  .zsearch-root .focus-visible\:outline-ring:focus-visible {
     outline-color: var(--ring);
   }
-  .leadero-root .focus-visible\:outline-none:focus-visible {
+  .zsearch-root .focus-visible\:outline-none:focus-visible {
     --tw-outline-style: none;
     outline-style: none;
   }
-  .leadero-root .active\:bg-\[var\(--border-strong\)\]:active {
+  .zsearch-root .active\:bg-\[var\(--border-strong\)\]:active {
     background-color: var(--border-strong);
   }
-  .leadero-root .active\:bg-\[var\(--hub-bg-hover\)\]:active {
+  .zsearch-root .active\:bg-\[var\(--hub-bg-hover\)\]:active {
     background-color: var(--hub-bg-hover);
   }
-  .leadero-root .active\:bg-sidebar-accent:active {
+  .zsearch-root .active\:bg-sidebar-accent:active {
     background-color: var(--sidebar-accent);
   }
-  .leadero-root .active\:text-sidebar-accent-foreground:active {
+  .zsearch-root .active\:text-sidebar-accent-foreground:active {
     color: var(--sidebar-accent-foreground);
   }
-  .leadero-root .active\:text-sidebar-foreground:active {
+  .zsearch-root .active\:text-sidebar-foreground:active {
     color: var(--sidebar-foreground);
   }
   @media (hover: hover) {
-    .leadero-root .hover\:enabled\:bg-\[var\(--border-subtle\)\]:hover:enabled {
+    .zsearch-root .hover\:enabled\:bg-\[var\(--border-subtle\)\]:hover:enabled {
       background-color: var(--border-subtle);
     }
-    .leadero-root .hover\:enabled\:text-foreground:hover:enabled {
+    .zsearch-root .hover\:enabled\:text-foreground:hover:enabled {
       color: var(--foreground);
     }
   }
-  .leadero-root .disabled\:pointer-events-none:disabled {
+  .zsearch-root .disabled\:pointer-events-none:disabled {
     pointer-events: none;
   }
-  .leadero-root .disabled\:cursor-default:disabled {
+  .zsearch-root .disabled\:cursor-default:disabled {
     cursor: default;
   }
-  .leadero-root .disabled\:cursor-not-allowed:disabled {
+  .zsearch-root .disabled\:cursor-not-allowed:disabled {
     cursor: not-allowed;
   }
-  .leadero-root .disabled\:opacity-30:disabled {
+  .zsearch-root .disabled\:opacity-30:disabled {
     opacity: 0.3;
   }
-  .leadero-root .disabled\:opacity-50:disabled {
+  .zsearch-root .disabled\:opacity-50:disabled {
     opacity: 0.5;
   }
-  .leadero-root .disabled\:opacity-60:disabled {
+  .zsearch-root .disabled\:opacity-60:disabled {
     opacity: 0.6;
   }
   :where([data-side="left"]) .in-data-\[side\=left\]\:cursor-w-resize {
@@ -4054,122 +4054,122 @@
   :where([data-side="right"]) .in-data-\[side\=right\]\:cursor-e-resize {
     cursor: e-resize;
   }
-  .leadero-root
+  .zsearch-root
     .has-data-\[variant\=inset\]\:bg-sidebar:has([data-variant="inset"]) {
     background-color: var(--sidebar);
   }
-  .leadero-root .has-\[\>svg\]\:px-1\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-1\.5:has(> svg) {
     padding-inline: calc(var(--spacing) * 1.5);
   }
-  .leadero-root .has-\[\>svg\]\:px-2:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-2:has(> svg) {
     padding-inline: calc(var(--spacing) * 2);
   }
-  .leadero-root .has-\[\>svg\]\:px-2\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-2\.5:has(> svg) {
     padding-inline: calc(var(--spacing) * 2.5);
   }
-  .leadero-root .has-\[\>svg\]\:px-3\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-3\.5:has(> svg) {
     padding-inline: calc(var(--spacing) * 3.5);
   }
-  .leadero-root .aria-disabled\:pointer-events-none[aria-disabled="true"] {
+  .zsearch-root .aria-disabled\:pointer-events-none[aria-disabled="true"] {
     pointer-events: none;
   }
-  .leadero-root .aria-disabled\:opacity-50[aria-disabled="true"] {
+  .zsearch-root .aria-disabled\:opacity-50[aria-disabled="true"] {
     opacity: 0.5;
   }
-  .leadero-root .aria-expanded\:opacity-100[aria-expanded="true"] {
+  .zsearch-root .aria-expanded\:opacity-100[aria-expanded="true"] {
     opacity: 1;
   }
   @media (hover: hover) {
-    .leadero-root
+    .zsearch-root
       .aria-expanded\:hover\:bg-\[var\(--hub-bg-hover\)\][aria-expanded="true"]:hover {
       background-color: var(--hub-bg-hover);
     }
-    .leadero-root
+    .zsearch-root
       .aria-expanded\:hover\:bg-sidebar-accent[aria-expanded="true"]:hover {
       background-color: var(--sidebar-accent);
     }
-    .leadero-root
+    .zsearch-root
       .aria-expanded\:hover\:text-sidebar-accent-foreground[aria-expanded="true"]:hover {
       color: var(--sidebar-accent-foreground);
     }
   }
-  .leadero-root .aria-invalid\:border-destructive[aria-invalid="true"] {
+  .zsearch-root .aria-invalid\:border-destructive[aria-invalid="true"] {
     border-color: var(--destructive);
   }
-  .leadero-root .aria-invalid\:ring-destructive\/20[aria-invalid="true"] {
+  .zsearch-root .aria-invalid\:ring-destructive\/20[aria-invalid="true"] {
     --tw-ring-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .aria-invalid\:ring-destructive\/20[aria-invalid="true"] {
+    .zsearch-root .aria-invalid\:ring-destructive\/20[aria-invalid="true"] {
       --tw-ring-color: color-mix(in oklab, var(--destructive) 20%, transparent);
     }
   }
-  .leadero-root .data-pressed\:border-\[var\(--border-strong\)\][data-pressed] {
+  .zsearch-root .data-pressed\:border-\[var\(--border-strong\)\][data-pressed] {
     border-color: var(--border-strong);
   }
-  .leadero-root .data-pressed\:bg-background[data-pressed] {
+  .zsearch-root .data-pressed\:bg-background[data-pressed] {
     background-color: var(--background);
   }
-  .leadero-root .data-pressed\:font-medium[data-pressed] {
+  .zsearch-root .data-pressed\:font-medium[data-pressed] {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .leadero-root .data-pressed\:text-foreground[data-pressed] {
+  .zsearch-root .data-pressed\:text-foreground[data-pressed] {
     color: var(--foreground);
   }
-  .leadero-root .data-\[active\]\:border-input[data-active] {
+  .zsearch-root .data-\[active\]\:border-input[data-active] {
     border-color: var(--input);
   }
-  .leadero-root .data-\[active\]\:bg-\[var\(--border-subtle\)\][data-active] {
+  .zsearch-root .data-\[active\]\:bg-\[var\(--border-subtle\)\][data-active] {
     background-color: var(--border-subtle);
   }
-  .leadero-root .data-\[active\]\:bg-background[data-active] {
+  .zsearch-root .data-\[active\]\:bg-background[data-active] {
     background-color: var(--background);
   }
-  .leadero-root .data-\[active\]\:bg-primary[data-active] {
+  .zsearch-root .data-\[active\]\:bg-primary[data-active] {
     background-color: var(--primary);
   }
-  .leadero-root .data-\[active\]\:bg-transparent[data-active] {
+  .zsearch-root .data-\[active\]\:bg-transparent[data-active] {
     background-color: #0000;
   }
-  .leadero-root .data-\[active\]\:text-foreground[data-active] {
+  .zsearch-root .data-\[active\]\:text-foreground[data-active] {
     color: var(--foreground);
   }
-  .leadero-root .data-\[active\]\:text-primary-foreground[data-active] {
+  .zsearch-root .data-\[active\]\:text-primary-foreground[data-active] {
     color: var(--primary-foreground);
   }
-  .leadero-root .data-\[active\]\:after\:opacity-100[data-active]:after {
+  .zsearch-root .data-\[active\]\:after\:opacity-100[data-active]:after {
     content: var(--tw-content);
     opacity: 1;
   }
-  .leadero-root .data-\[disabled\]\:pointer-events-none[data-disabled] {
+  .zsearch-root .data-\[disabled\]\:pointer-events-none[data-disabled] {
     pointer-events: none;
   }
-  .leadero-root .data-\[disabled\]\:opacity-50[data-disabled] {
+  .zsearch-root .data-\[disabled\]\:opacity-50[data-disabled] {
     opacity: 0.5;
   }
-  .leadero-root .data-\[ending-style\]\:translate-y-2[data-ending-style] {
+  .zsearch-root .data-\[ending-style\]\:translate-y-2[data-ending-style] {
     --tw-translate-y: calc(var(--spacing) * 2);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .data-\[ending-style\]\:scale-95[data-ending-style] {
+  .zsearch-root .data-\[ending-style\]\:scale-95[data-ending-style] {
     --tw-scale-x: 95%;
     --tw-scale-y: 95%;
     --tw-scale-z: 95%;
     scale: var(--tw-scale-x) var(--tw-scale-y);
   }
-  .leadero-root .data-\[ending-style\]\:opacity-0[data-ending-style] {
+  .zsearch-root .data-\[ending-style\]\:opacity-0[data-ending-style] {
     opacity: 0;
   }
-  .leadero-root
+  .zsearch-root
     .data-\[highlighted\]\:bg-\[var\(--hub-bg-hover\)\][data-highlighted] {
     background-color: var(--hub-bg-hover);
   }
-  .leadero-root .data-\[highlighted\]\:bg-destructive\/10[data-highlighted] {
+  .zsearch-root .data-\[highlighted\]\:bg-destructive\/10[data-highlighted] {
     background-color: var(--destructive);
   }
   @supports (color: color-mix(in lab, red, red)) {
-    .leadero-root .data-\[highlighted\]\:bg-destructive\/10[data-highlighted] {
+    .zsearch-root .data-\[highlighted\]\:bg-destructive\/10[data-highlighted] {
       background-color: color-mix(
         in oklab,
         var(--destructive) 10%,
@@ -4177,58 +4177,58 @@
       );
     }
   }
-  .leadero-root .data-\[highlighted\]\:text-destructive[data-highlighted] {
+  .zsearch-root .data-\[highlighted\]\:text-destructive[data-highlighted] {
     color: var(--destructive);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[orientation\=horizontal\]\:h-px[data-orientation="horizontal"] {
     height: 1px;
   }
-  .leadero-root
+  .zsearch-root
     .data-\[orientation\=horizontal\]\:w-full[data-orientation="horizontal"] {
     width: 100%;
   }
-  .leadero-root
+  .zsearch-root
     .data-\[orientation\=vertical\]\:h-full[data-orientation="vertical"] {
     height: 100%;
   }
-  .leadero-root
+  .zsearch-root
     .data-\[orientation\=vertical\]\:w-px[data-orientation="vertical"] {
     width: 1px;
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'\'\]\:text-\[color\:var\(--text-secondary\)\][data-quartile=""] {
     color: var(--text-secondary);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'1\'\]\:text-\[color\:var\(--accent\)\][data-quartile="1"] {
     color: var(--accent);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'1\'\]\:text-\[color\:var\(--signal-green-dark\)\][data-quartile="1"] {
     color: var(--signal-green-dark);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'2\'\]\:text-\[color\:var\(--signal-teal\)\][data-quartile="2"] {
     color: var(--signal-teal);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'3\'\]\:text-\[color\:var\(--signal-yellow-text\)\][data-quartile="3"] {
     color: var(--signal-yellow-text);
   }
-  .leadero-root
+  .zsearch-root
     .data-\[quartile\=\'4\'\]\:text-\[color\:var\(--signal-orange\)\][data-quartile="4"] {
     color: var(--signal-orange);
   }
-  .leadero-root .data-\[selected\]\:font-medium[data-selected] {
+  .zsearch-root .data-\[selected\]\:font-medium[data-selected] {
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
   }
-  .leadero-root .data-\[size\=lg\]\:size-10[data-size="lg"] {
+  .zsearch-root .data-\[size\=lg\]\:size-10[data-size="lg"] {
     width: calc(var(--spacing) * 10);
     height: calc(var(--spacing) * 10);
   }
-  .leadero-root .data-\[size\=sm\]\:size-5[data-size="sm"] {
+  .zsearch-root .data-\[size\=sm\]\:size-5[data-size="sm"] {
     width: calc(var(--spacing) * 5);
     height: calc(var(--spacing) * 5);
   }
@@ -4261,78 +4261,78 @@
   :is(.\*\:data-\[slot\=select-value\]\:gap-2 > *)[data-slot="select-value"] {
     gap: calc(var(--spacing) * 2);
   }
-  .leadero-root .data-\[starting-style\]\:translate-y-2[data-starting-style] {
+  .zsearch-root .data-\[starting-style\]\:translate-y-2[data-starting-style] {
     --tw-translate-y: calc(var(--spacing) * 2);
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
-  .leadero-root .data-\[starting-style\]\:scale-95[data-starting-style] {
+  .zsearch-root .data-\[starting-style\]\:scale-95[data-starting-style] {
     --tw-scale-x: 95%;
     --tw-scale-y: 95%;
     --tw-scale-z: 95%;
     scale: var(--tw-scale-x) var(--tw-scale-y);
   }
-  .leadero-root .data-\[starting-style\]\:opacity-0[data-starting-style] {
+  .zsearch-root .data-\[starting-style\]\:opacity-0[data-starting-style] {
     opacity: 0;
   }
-  .leadero-root .data-\[state\=selected\]\:bg-muted[data-state="selected"] {
+  .zsearch-root .data-\[state\=selected\]\:bg-muted[data-state="selected"] {
     background-color: var(--muted);
   }
   @media (prefers-reduced-motion: reduce) {
-    .leadero-root .motion-reduce\:transform-none {
+    .zsearch-root .motion-reduce\:transform-none {
       transform: none;
     }
-    .leadero-root .motion-reduce\:animate-none {
+    .zsearch-root .motion-reduce\:animate-none {
       animation: none;
     }
-    .leadero-root .motion-reduce\:transition-none {
+    .zsearch-root .motion-reduce\:transition-none {
       transition-property: none;
     }
   }
   @media not all and (min-width: 480px) {
-    .leadero-root .max-\[480px\]\:grid {
+    .zsearch-root .max-\[480px\]\:grid {
       display: grid;
     }
-    .leadero-root .max-\[480px\]\:grid-cols-\[repeat\(2\,1fr\)\] {
+    .zsearch-root .max-\[480px\]\:grid-cols-\[repeat\(2\,1fr\)\] {
       grid-template-columns: repeat(2, 1fr);
     }
   }
   @media not all and (min-width: 40rem) {
-    .leadero-root .max-sm\:hidden {
+    .zsearch-root .max-sm\:hidden {
       display: none;
     }
-    .leadero-root .max-sm\:gap-x-\[var\(--space-1\)\] {
+    .zsearch-root .max-sm\:gap-x-\[var\(--space-1\)\] {
       column-gap: var(--space-1);
     }
   }
   @media (min-width: 40rem) {
-    .leadero-root .sm\:flex {
+    .zsearch-root .sm\:flex {
       display: flex;
     }
-    .leadero-root .sm\:max-w-\[344px\] {
+    .zsearch-root .sm\:max-w-\[344px\] {
       max-width: 344px;
     }
-    .leadero-root .sm\:max-w-\[var\(--form-dialog-width\)\] {
+    .zsearch-root .sm\:max-w-\[var\(--form-dialog-width\)\] {
       max-width: var(--form-dialog-width);
     }
-    .leadero-root .sm\:flex-row {
+    .zsearch-root .sm\:flex-row {
       flex-direction: row;
     }
-    .leadero-root .sm\:justify-between {
+    .zsearch-root .sm\:justify-between {
       justify-content: space-between;
     }
-    .leadero-root .sm\:justify-end {
+    .zsearch-root .sm\:justify-end {
       justify-content: flex-end;
     }
-    .leadero-root .sm\:text-left {
+    .zsearch-root .sm\:text-left {
       text-align: left;
     }
   }
   @media (min-width: 48rem) {
-    .leadero-root .md\:text-sm {
+    .zsearch-root .md\:text-sm {
       font-size: var(--text-sm);
       line-height: var(--tw-leading, var(--text-sm--line-height));
     }
-    .leadero-root .md\:opacity-0 {
+    .zsearch-root .md\:opacity-0 {
       opacity: 0;
     }
     .md\:peer-data-\[variant\=inset\]\:m-2:is(
@@ -4355,23 +4355,23 @@
       ):is(:where(.peer)[data-state="collapsed"] ~ *) {
       margin-left: calc(var(--spacing) * 2);
     }
-    .leadero-root .md\:after\:hidden:after {
+    .zsearch-root .md\:after\:hidden:after {
       content: var(--tw-content);
       display: none;
     }
   }
   @media (prefers-color-scheme: dark) {
-    .leadero-root .dark\:border-\[color\:var\(--danger\)\] {
+    .zsearch-root .dark\:border-\[color\:var\(--danger\)\] {
       border-color: var(--danger);
     }
-    .leadero-root .dark\:border-input {
+    .zsearch-root .dark\:border-input {
       border-color: var(--input);
     }
-    .leadero-root .dark\:bg-destructive\/60 {
+    .zsearch-root .dark\:bg-destructive\/60 {
       background-color: var(--destructive);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .dark\:bg-destructive\/60 {
+      .zsearch-root .dark\:bg-destructive\/60 {
         background-color: color-mix(
           in oklab,
           var(--destructive) 60%,
@@ -4379,35 +4379,35 @@
         );
       }
     }
-    .leadero-root .dark\:bg-input\/30 {
+    .zsearch-root .dark\:bg-input\/30 {
       background-color: var(--input);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .dark\:bg-input\/30 {
+      .zsearch-root .dark\:bg-input\/30 {
         background-color: color-mix(in oklab, var(--input) 30%, transparent);
       }
     }
-    .leadero-root .dark\:text-muted-foreground {
+    .zsearch-root .dark\:text-muted-foreground {
       color: var(--muted-foreground);
     }
     @media (hover: hover) {
-      .leadero-root .dark\:hover\:bg-input\/50:hover {
+      .zsearch-root .dark\:hover\:bg-input\/50:hover {
         background-color: var(--input);
       }
       @supports (color: color-mix(in lab, red, red)) {
-        .leadero-root .dark\:hover\:bg-input\/50:hover {
+        .zsearch-root .dark\:hover\:bg-input\/50:hover {
           background-color: color-mix(in oklab, var(--input) 50%, transparent);
         }
       }
-      .leadero-root .dark\:hover\:text-foreground:hover {
+      .zsearch-root .dark\:hover\:text-foreground:hover {
         color: var(--foreground);
       }
     }
-    .leadero-root .dark\:focus-visible\:ring-destructive\/40:focus-visible {
+    .zsearch-root .dark\:focus-visible\:ring-destructive\/40:focus-visible {
       --tw-ring-color: var(--destructive);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .dark\:focus-visible\:ring-destructive\/40:focus-visible {
+      .zsearch-root .dark\:focus-visible\:ring-destructive\/40:focus-visible {
         --tw-ring-color: color-mix(
           in oklab,
           var(--destructive) 40%,
@@ -4415,12 +4415,12 @@
         );
       }
     }
-    .leadero-root
+    .zsearch-root
       .dark\:aria-invalid\:ring-destructive\/40[aria-invalid="true"] {
       --tw-ring-color: var(--destructive);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root
+      .zsearch-root
         .dark\:aria-invalid\:ring-destructive\/40[aria-invalid="true"] {
         --tw-ring-color: color-mix(
           in oklab,
@@ -4429,11 +4429,11 @@
         );
       }
     }
-    .leadero-root .dark\:data-\[active\]\:bg-input\/30[data-active] {
+    .zsearch-root .dark\:data-\[active\]\:bg-input\/30[data-active] {
       background-color: var(--input);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .leadero-root .dark\:data-\[active\]\:bg-input\/30[data-active] {
+      .zsearch-root .dark\:data-\[active\]\:bg-input\/30[data-active] {
         background-color: color-mix(in oklab, var(--input) 30%, transparent);
       }
     }
@@ -4577,101 +4577,101 @@
   .data-active\:opacity-100:where([data-active]:not([data-active="false"])) {
     opacity: 1;
   }
-  .leadero-root .\[\&_code\]\:border-none code {
+  .zsearch-root .\[\&_code\]\:border-none code {
     --tw-border-style: none;
     border-style: none;
   }
-  .leadero-root .\[\&_code\]\:bg-none code {
+  .zsearch-root .\[\&_code\]\:bg-none code {
     background-image: none;
   }
-  .leadero-root .\[\&_code\]\:p-0 code {
+  .zsearch-root .\[\&_code\]\:p-0 code {
     padding: 0;
   }
-  .leadero-root .\[\&_code\]\:text-\[length\:inherit\] code {
+  .zsearch-root .\[\&_code\]\:text-\[length\:inherit\] code {
     font-size: inherit;
   }
-  .leadero-root .\[\&_kbd\]\:rounded-\[var\(--radius\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:rounded-\[var\(--radius\)\] kbd {
     border-radius: var(--radius);
   }
-  .leadero-root .\[\&_kbd\]\:border kbd {
+  .zsearch-root .\[\&_kbd\]\:border kbd {
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .leadero-root .\[\&_kbd\]\:border-\[var\(--border-strong\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:border-\[var\(--border-strong\)\] kbd {
     border-color: var(--border-strong);
   }
-  .leadero-root .\[\&_kbd\]\:bg-\[var\(--surface-subtle\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:bg-\[var\(--surface-subtle\)\] kbd {
     background-color: var(--surface-subtle);
   }
-  .leadero-root .\[\&_kbd\]\:px-\[var\(--space-1-5\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:px-\[var\(--space-1-5\)\] kbd {
     padding-inline: var(--space-1-5);
   }
-  .leadero-root .\[\&_kbd\]\:py-px kbd {
+  .zsearch-root .\[\&_kbd\]\:py-px kbd {
     padding-block: 1px;
   }
-  .leadero-root .\[\&_kbd\]\:font-sans kbd {
+  .zsearch-root .\[\&_kbd\]\:font-sans kbd {
     font-family: var(--font-sans);
   }
-  .leadero-root .\[\&_kbd\]\:text-\[length\:var\(--text-2xs\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:text-\[length\:var\(--text-2xs\)\] kbd {
     font-size: var(--text-2xs);
   }
-  .leadero-root .\[\&_kbd\]\:leading-\[1\.4\] kbd {
+  .zsearch-root .\[\&_kbd\]\:leading-\[1\.4\] kbd {
     --tw-leading: 1.4;
     line-height: 1.4;
   }
-  .leadero-root .\[\&_kbd\]\:text-\[color\:var\(--text-secondary\)\] kbd {
+  .zsearch-root .\[\&_kbd\]\:text-\[color\:var\(--text-secondary\)\] kbd {
     color: var(--text-secondary);
   }
-  .leadero-root .\[\&_pre\]\:m-0 pre {
+  .zsearch-root .\[\&_pre\]\:m-0 pre {
     margin: 0;
   }
-  .leadero-root .\[\&_pre\]\:break-words pre {
+  .zsearch-root .\[\&_pre\]\:break-words pre {
     overflow-wrap: break-word;
   }
-  .leadero-root .\[\&_pre\]\:whitespace-pre-wrap pre {
+  .zsearch-root .\[\&_pre\]\:whitespace-pre-wrap pre {
     white-space: pre-wrap;
   }
-  .leadero-root .\[\&_pre\]\:\[font\:var\(--ui-font-meta\)\] pre {
+  .zsearch-root .\[\&_pre\]\:\[font\:var\(--ui-font-meta\)\] pre {
     font: var(--ui-font-meta);
   }
-  .leadero-root .\[\&_svg\]\:pointer-events-none svg {
+  .zsearch-root .\[\&_svg\]\:pointer-events-none svg {
     pointer-events: none;
   }
-  .leadero-root .\[\&_svg\]\:h-\[var\(--icon-base\)\] svg {
+  .zsearch-root .\[\&_svg\]\:h-\[var\(--icon-base\)\] svg {
     height: var(--icon-base);
   }
-  .leadero-root .\[\&_svg\]\:w-\[var\(--icon-base\)\] svg {
+  .zsearch-root .\[\&_svg\]\:w-\[var\(--icon-base\)\] svg {
     width: var(--icon-base);
   }
-  .leadero-root .\[\&_svg\]\:shrink-0 svg {
+  .zsearch-root .\[\&_svg\]\:shrink-0 svg {
     flex-shrink: 0;
   }
-  .leadero-root
+  .zsearch-root
     .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-3
     svg:not([class*="size-"]) {
     width: calc(var(--spacing) * 3);
     height: calc(var(--spacing) * 3);
   }
-  .leadero-root
+  .zsearch-root
     .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-4
     svg:not([class*="size-"]) {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
   }
-  .leadero-root
+  .zsearch-root
     .\[\&_svg\:not\(\[class\*\=\'text-\'\]\)\]\:text-muted-foreground
     svg:not([class*="text-"]) {
     color: var(--muted-foreground);
   }
-  .leadero-root .\[\&_tr\]\:border-b tr {
+  .zsearch-root .\[\&_tr\]\:border-b tr {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
-  .leadero-root .\[\&_tr\:last-child\]\:border-0 tr:last-child {
+  .zsearch-root .\[\&_tr\:last-child\]\:border-0 tr:last-child {
     border-style: var(--tw-border-style);
     border-width: 0;
   }
-  .leadero-root
+  .zsearch-root
     .\[\&\:has\(\[role\=checkbox\]\)\]\:pr-0:has([role="checkbox"]) {
     padding-right: 0;
   }
@@ -4684,37 +4684,37 @@
   :is(.\*\:\[span\]\:last\:gap-2 > *):is(span):last-child {
     gap: calc(var(--spacing) * 2);
   }
-  .leadero-root
+  .zsearch-root
     .\[\&\>\[data-slot\=tab\]\:first-child\]\:pl-0
     > [data-slot="tab"]:first-child {
     padding-left: 0;
   }
-  .leadero-root
+  .zsearch-root
     .\[\&\>\[data-slot\=tab\]\:last-child\]\:pr-0
     > [data-slot="tab"]:last-child {
     padding-right: 0;
   }
-  .leadero-root .\[\&\>span\:last-child\]\:truncate > span:last-child {
+  .zsearch-root .\[\&\>span\:last-child\]\:truncate > span:last-child {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
   }
-  .leadero-root .\[\&\>svg\]\:size-4 > svg {
+  .zsearch-root .\[\&\>svg\]\:size-4 > svg {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
   }
-  .leadero-root .\[\&\>svg\]\:size-7 > svg {
+  .zsearch-root .\[\&\>svg\]\:size-7 > svg {
     width: calc(var(--spacing) * 7);
     height: calc(var(--spacing) * 7);
   }
-  .leadero-root .\[\&\>svg\]\:size-\[15px\] > svg {
+  .zsearch-root .\[\&\>svg\]\:size-\[15px\] > svg {
     width: 15px;
     height: 15px;
   }
-  .leadero-root .\[\&\>svg\]\:shrink-0 > svg {
+  .zsearch-root .\[\&\>svg\]\:shrink-0 > svg {
     flex-shrink: 0;
   }
-  .leadero-root .\[\&\>svg\]\:text-sidebar-accent-foreground > svg {
+  .zsearch-root .\[\&\>svg\]\:text-sidebar-accent-foreground > svg {
     color: var(--sidebar-accent-foreground);
   }
   .group-data-\[size\=default\]\/avatar\:\[\&\>svg\]\:size-2:is(
@@ -4849,7 +4849,7 @@
   inherits: false;
 }
 @media (prefers-reduced-motion: reduce) {
-  .leadero-root .shimmer {
+  .zsearch-root .shimmer {
     -webkit-text-fill-color: currentColor;
     background-image: none;
     animation: none;

@@ -1,5 +1,5 @@
 /*
- * leadero-tokens.css — 砚法值层（Inkstone value layer）
+ * zsearch-tokens.css — 砚法值层（Inkstone value layer）
  * Single source of truth: docs/inkstone-legislation-2026-09-19.md §5（v1.46）。
  * B1 令牌批（2026-09-20，§15-70~81）：值层整体换血 Stone/Radix → 墨分五色，
  * 旧令牌名全部保留为消费 API（§15-76 旧类名换值），同名令牌取砚法值
@@ -17,7 +17,7 @@
  * 亮暗切换：prefers-color-scheme 跟随 Zotero（browser.theme.toolbar-theme）。
  */
 
-.leadero-root {
+.zsearch-root {
   /* ═══════════════════════════════════════════════════════════════
      LAYER 1: PRIMITIVES — 砚法原始值（§5.1 墨分五色 / §5.3 语义六色）
      ═══════════════════════════════════════════════════════════════ */
@@ -306,8 +306,8 @@
   --color-green-9: var(--ok);
   --color-amber-9: var(--warn);
   --color-brand: var(--brand-seal); /* 仅 logo 资产（§5.3 豁免） */
-  --leadero-brand: var(--brand-seal);
-  --leadero-brand-text: var(
+  --zsearch-brand: var(--brand-seal);
+  --zsearch-brand-text: var(
     --accent
   ); /* UI 指示/强调一律交互蓝（砚法唯一选中语义色） */
   --accent-tint: rgba(
@@ -316,7 +316,7 @@
     218,
     0.08
   ); /* §5.3/Q4 加固别名：选中态淡蓝底（显式语义名） */
-  --leadero-brand-bg: rgba(9, 105, 218, 0.08);
+  --zsearch-brand-bg: rgba(9, 105, 218, 0.08);
   --accent-primary: var(--accent);
   --tag-red-primary: var(--danger);
 
@@ -555,14 +555,14 @@
 
 /* ==================== Window Sizing ==================== */
 /* 13px = 衡域基准（§6.2）。rem 布局基准仍由宿主注入同步。 */
-#leadero-chat-window {
+#zsearch-chat-window {
   font-size: 13px !important;
 }
 
 /* ==================== Dark mode（夜纸） ==================== */
 /* 亮暗同名对偶（§5.1）：切换即整组生效。 */
 @media (prefers-color-scheme: dark) {
-  .leadero-root {
+  .zsearch-root {
     /* ── 纸/墨/线/苔（夜纸）── */
     --paper-canvas: #1e1c18; /* 墨底 */
     --paper-raised: #262420; /* 浮墨 */
@@ -609,7 +609,7 @@
     --signal-yellow-bg: rgba(210, 153, 34, 0.12);
     --signal-purple-bg: rgba(143, 160, 143, 0.1);
     --accent-tint: rgba(110, 168, 255, 0.1);
-    --leadero-brand-bg: rgba(110, 168, 255, 0.1);
+    --zsearch-brand-bg: rgba(110, 168, 255, 0.1);
 
     /* ── 图谱结构（暗）── */
     --graph-shade-mix: var(--ink-scorch); /* 暗色向反白混=浅色高置信 */

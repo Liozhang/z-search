@@ -7,7 +7,7 @@
  * plugin actually renders.
  *
  * 2026-09-23 大清理的历史：本插件只实现搜索中心，4541 个键里 4099 个是从
- * leadero  wholesale 抄来的死词（chat/agent/audit/brain 等未落地功能），
+ * 上游项目 wholesale 抄来的死词（chat/agent/audit/brain 等未落地功能），
  * 已删至 442 个活键。本用例守住这条线，也守住三语键集与
  * generated catalog / typings 的三方一致。
  *

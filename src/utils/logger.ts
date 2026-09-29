@@ -14,7 +14,7 @@
 function debugPrefEnabled(): boolean {
   try {
     return !!Zotero.Prefs.get(
-      "extensions.zotero.leadero.advanced.debugLog",
+      "extensions.zotero.zsearch.advanced.debugLog",
       true,
     );
   } catch (e) {
@@ -108,7 +108,7 @@ export function error(
   emit("error", event, fields, traceId);
   // Mark as error severity for Zotero's debug output filtering.
   rawDebug(
-    `[Leadero ERROR] event=${event}` + (traceId ? ` trace=${traceId}` : ""),
+    `[z-search ERROR] event=${event}` + (traceId ? ` trace=${traceId}` : ""),
     2,
   );
 }
@@ -132,7 +132,7 @@ export function log(...args: any[]) {
 }
 
 export function logError(...args: any[]) {
-  rawDebug(`[Leadero ERROR] ${args.map(String).join(" ")}`, 2);
+  rawDebug(`[z-search ERROR] ${args.map(String).join(" ")}`, 2);
 }
 
 /** Iframe/standalone-safe debug logger. Unlike the legacy direct `Zotero.debug(...)`

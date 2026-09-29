@@ -1,4 +1,4 @@
-/* leadero-hub-controls.css — Hub 样式分区（原 leadero-hub.css 1775-1947 行：ToggleGroup filter variant（分段控件 / 多选筛选按钮组））。
+/* zsearch-hub-controls.css — Hub 样式分区（原 zsearch-hub.css 1775-1947 行：ToggleGroup filter variant（分段控件 / 多选筛选按钮组））。
  * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
  * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
 /* ═══ ToggleGroup filter variant（分段控件 / 多选筛选按钮组）══════════
@@ -11,7 +11,7 @@
  * 由以下无层规则凭级联覆盖（无层 author CSS 恒胜 tw.css @layer utilities），
  * 无需 !important；item 的默认 selected/hover 类同理。
  */
-.leadero-root [data-slot="toggle-group"][data-variant="filter"] {
+.zsearch-root [data-slot="toggle-group"][data-variant="filter"] {
   /* v1.45 组件批（§23 融合）：组容器去边框去灰底——筛选组不装盒；
      选中态黑底白字（单色制，原品牌红实底退役）。
      v1.54 用户裁决「裸 chip 不合理」：chip 本体加描边可供性（组容器仍无盒）。
@@ -34,7 +34,7 @@
   color: var(--text-secondary);
   gap: var(--space-1);
 }
-.leadero-root
+.zsearch-root
   [data-slot="toggle-group"][data-variant="filter"]
   [data-slot="toggle-group-item"] {
   /* §19.3 v1.46b 控件族：按钮式 chip 圆角 = --radius-btn（2026-08-22 审计批 S9 落法）。
@@ -53,13 +53,13 @@
      --chip-max-w，溢出走 ellipsis（wrapper 的 truncate span）+ hover title */
   max-width: var(--chip-max-w);
 }
-.leadero-root
+.zsearch-root
   [data-slot="toggle-group"][data-variant="filter"]
   [data-slot="toggle-group-item"]:hover {
   background: var(--hub-bg-hover);
   color: inherit;
 }
-.leadero-root
+.zsearch-root
   [data-slot="toggle-group"][data-variant="filter"]
   [data-slot="toggle-group-item"][aria-pressed="true"] {
   background: var(--text-primary);
@@ -68,7 +68,7 @@
   box-shadow: none;
 }
 /* dot 指示器（知识类型/层级等） */
-.leadero-root
+.zsearch-root
   [data-slot="toggle-group"][data-variant="filter"]
   [data-dot-color] {
   width: var(--space-1-5);
@@ -78,12 +78,12 @@
 }
 
 /* 分节 */
-.leadero-root .hub-graph-filter-section {
+.zsearch-root .hub-graph-filter-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-1-5);
 }
-.leadero-root .hub-graph-filter-section-title {
+.zsearch-root .hub-graph-filter-section-title {
   /* v1.52 S4：caption 方言 → overline 制式（组标签/节标题两级统一） */
   font: var(--ui-font-overline);
   text-transform: uppercase;
@@ -96,7 +96,7 @@
    激活值强制展开（TSX FoldSection 保证）。宿主为 ghost Button（ui-adoption
    守卫要求 Base UI 封装），此处压平其盒模型只留 overline 标题 + 旋转 chevron；
    hover 灯罩保留——折叠头的可点击暗示。 */
-.leadero-root .hub-graph-filter-section-toggle {
+.zsearch-root .hub-graph-filter-section-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,25 +110,25 @@
   cursor: pointer;
   text-align: left;
 }
-.leadero-root .hub-graph-filter-fold-chevron {
+.zsearch-root .hub-graph-filter-fold-chevron {
   color: var(--text-tertiary);
   flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
-.leadero-root
+.zsearch-root
   .hub-graph-filter-section-toggle.is-open
   .hub-graph-filter-fold-chevron {
   transform: rotate(180deg);
 }
 
 /* 置信度 slider（PR-4 新增维度） */
-.leadero-root .hub-graph-filter-slider {
+.zsearch-root .hub-graph-filter-slider {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-.leadero-root .hub-graph-filter-slider-value {
+.zsearch-root .hub-graph-filter-slider-value {
   font-size: var(--text-xs);
   color: var(--text-secondary);
   min-width: 3em;
@@ -137,7 +137,7 @@
 }
 
 /* 标注开关（Switch） */
-.leadero-root .hub-graph-filter-switch {
+.zsearch-root .hub-graph-filter-switch {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
@@ -145,32 +145,32 @@
   color: var(--text-secondary);
   cursor: pointer;
 }
-.leadero-root .hub-graph-filter-switch [data-slot="switch"] {
+.zsearch-root .hub-graph-filter-switch [data-slot="switch"] {
   cursor: pointer;
 }
 
 /* keyword 输入框：padding/border/border-radius/outline/focus 由 shadcn Input 内置 */
-.leadero-root .hub-graph-filter-keyword {
+.zsearch-root .hub-graph-filter-keyword {
   width: 100%;
   box-sizing: border-box;
 }
 
 /* 出版年份：起止 NumberField 行 + 分隔符。替代旧双拇指原生 range slider。 */
-.leadero-root .hub-graph-filter-year-row {
+.zsearch-root .hub-graph-filter-year-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
-.leadero-root .hub-graph-filter-year-field {
+.zsearch-root .hub-graph-filter-year-field {
   width: var(--hub-graph-year-field-width);
 }
-.leadero-root .hub-graph-filter-year-sep {
+.zsearch-root .hub-graph-filter-year-sep {
   color: var(--text-tertiary);
   font-size: var(--text-sm);
 }
 
 /* footer：Reset + 计数 */
-.leadero-root .hub-graph-filter-footer {
+.zsearch-root .hub-graph-filter-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -178,7 +178,7 @@
   border-top: 1px solid var(--hub-hairline); /* v1.52 S12 */
   flex-shrink: 0;
 }
-.leadero-root .hub-graph-filter-count {
+.zsearch-root .hub-graph-filter-count {
   font-variant-numeric: tabular-nums; /* v1.52 S11 */
   font-size: var(--text-xs);
   color: var(--text-tertiary);

@@ -34,17 +34,17 @@ import { PortalScopeRoot } from "./components/ui/portal-scope";
 /* Bundle CSS as raw strings via webpack asset/source.
    Inject as <style> tags at runtime — works in chrome:// iframes
    where <link rel="stylesheet"> fails to load. */
-import leaderoTokensCss from "../../addon/content/chat/react/leadero-tokens.css";
-import leaderoThemeCss from "../../addon/content/chat/react/leadero-theme.css";
-import leaderoLayoutCss from "../../addon/content/chat/react/leadero-layout.css";
-import leaderoComponentsCss from "../../addon/content/chat/react/leadero-components.css";
-import leaderoMarkdownCss from "../../addon/content/chat/react/leadero-markdown.css";
-// Hub 样式（按原 leadero-hub.css 的段序 import——CSS 级联由此序决定）
-import leaderoHubBaseCss from "../../addon/content/chat/react/leadero-hub-base.css";
-import leaderoHubSearchCss from "../../addon/content/chat/react/leadero-hub-search.css";
-import leaderoHubControlsCss from "../../addon/content/chat/react/leadero-hub-controls.css";
-import leaderoHubOverridesCss from "../../addon/content/chat/react/leadero-hub-overrides.css";
-import leaderoHubResponsiveCss from "../../addon/content/chat/react/leadero-hub-responsive.css";
+import zsearchTokensCss from "../../addon/content/chat/react/zsearch-tokens.css";
+import zsearchThemeCss from "../../addon/content/chat/react/zsearch-theme.css";
+import zsearchLayoutCss from "../../addon/content/chat/react/zsearch-layout.css";
+import zsearchComponentsCss from "../../addon/content/chat/react/zsearch-components.css";
+import zsearchMarkdownCss from "../../addon/content/chat/react/zsearch-markdown.css";
+// Hub 样式（按原 zsearch-hub.css 的段序 import——CSS 级联由此序决定）
+import zsearchHubBaseCss from "../../addon/content/chat/react/zsearch-hub-base.css";
+import zsearchHubSearchCss from "../../addon/content/chat/react/zsearch-hub-search.css";
+import zsearchHubControlsCss from "../../addon/content/chat/react/zsearch-hub-controls.css";
+import zsearchHubOverridesCss from "../../addon/content/chat/react/zsearch-hub-overrides.css";
+import zsearchHubResponsiveCss from "../../addon/content/chat/react/zsearch-hub-responsive.css";
 import shadcnUtilsCss from "../../addon/content/chat/react/shadcn-utils.css";
 import twCss from "../../addon/content/chat/react/tw.css";
 import { safeDebug } from "../utils/logger";
@@ -70,16 +70,16 @@ function injectStyles(...sheets: string[]) {
 }
 try {
   injectStyles(
-    leaderoTokensCss,
-    leaderoThemeCss,
-    leaderoLayoutCss,
-    leaderoComponentsCss,
-    leaderoMarkdownCss,
-    leaderoHubBaseCss,
-    leaderoHubSearchCss,
-    leaderoHubControlsCss,
-    leaderoHubOverridesCss,
-    leaderoHubResponsiveCss,
+    zsearchTokensCss,
+    zsearchThemeCss,
+    zsearchLayoutCss,
+    zsearchComponentsCss,
+    zsearchMarkdownCss,
+    zsearchHubBaseCss,
+    zsearchHubSearchCss,
+    zsearchHubControlsCss,
+    zsearchHubOverridesCss,
+    zsearchHubResponsiveCss,
     shadcnUtilsCss,
     twCss,
   );
@@ -167,7 +167,7 @@ if (
 ) {
   const container = document.getElementById("root");
   if (container) {
-    container.classList.add("leadero-root", "flex-col");
+    container.classList.add("zsearch-root", "flex-col");
     const store = getStore();
     const root = createRoot(container);
     roots.set(container, root);
@@ -176,7 +176,7 @@ if (
     root.render(
       <Provider store={store}>
         <div
-          className="leadero-chat-root bg-sidepane h-full display-flex flex-col"
+          className="zsearch-chat-root bg-sidepane h-full display-flex flex-col"
           data-window=""
         >
           <div
@@ -228,7 +228,7 @@ if (
       root.render(
         <Provider store={store}>
           <div
-            className="leadero-chat-root bg-sidepane h-full display-flex flex-col"
+            className="zsearch-chat-root bg-sidepane h-full display-flex flex-col"
             data-window=""
             style={{
               color: "var(--signal-red)",

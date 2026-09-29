@@ -1,5 +1,5 @@
 /**
- * Shared external-database connections for leadero's own sqlite files
+ * Shared external-database connections for the plugin's own sqlite files
  * (zsearch_tasks.sqlite / zsearch_task_contexts.sqlite).
  *
  * Why this exists: `Zotero.DB.queryAsync(sql, params, { db: path })` was used
@@ -61,7 +61,7 @@ export async function migrateTableFromMainDb(
     );
   } catch (e: any) {
     Zotero.logError?.(
-      `[leadero] migrateTableFromMainDb(${table}) read failed: ${e}`,
+      `[z-search] migrateTableFromMainDb(${table}) read failed: ${e}`,
     );
     return;
   }
@@ -81,7 +81,7 @@ export async function migrateTableFromMainDb(
     await dropMainTable(table);
   } catch (e: any) {
     Zotero.logError?.(
-      `[leadero] migrateTableFromMainDb(${table}) write failed: ${e}`,
+      `[z-search] migrateTableFromMainDb(${table}) write failed: ${e}`,
     );
   }
 }
@@ -92,7 +92,7 @@ async function dropMainTable(table: string): Promise<void> {
     await Zotero.DB.queryAsync(`DROP TABLE IF EXISTS ${table}`);
   } catch (e: any) {
     Zotero.logError?.(
-      `[leadero] migrateTableFromMainDb(${table}) drop failed: ${e}`,
+      `[z-search] migrateTableFromMainDb(${table}) drop failed: ${e}`,
     );
   }
 }

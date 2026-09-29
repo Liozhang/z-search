@@ -876,7 +876,7 @@ export function LiteratureSearchPage({
               )}
               <ScrollArea
                 reserveGutter
-                className={`leadero-scroll flex flex-col gap-[var(--space-2)] flex-1 ${isSearching ? " opacity-50 pointer-events-none" : ""}`}
+                className={`zsearch-scroll flex flex-col gap-[var(--space-2)] flex-1 ${isSearching ? " opacity-50 pointer-events-none" : ""}`}
               >
                 {list.slice(0, visibleCount).map((entry) => {
                   if (entry.kind === "library") {

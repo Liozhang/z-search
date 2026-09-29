@@ -1,5 +1,5 @@
 /**
- * OpenDataLoaderJsonAdapter — Map OpenDataLoader JSON output to Leadero PdfIR.
+ * OpenDataLoaderJsonAdapter — Map OpenDataLoader JSON output to z-search's PdfIR.
  *
  * OpenDataLoader's `--format json` emits a schema described by `schema.json`:
  *   - top-level: file name, number of pages, author, title, creation date,
@@ -10,7 +10,7 @@
  *     plus type-specific fields (font/fontSize/textColor/content for text,
  *     rows/cells for tables, etc.)
  *
- * This adapter converts that shape into Leadero's PdfIR types so the
+ * This adapter converts that shape into z-search's PdfIR types so the
  * PdfAnalyzerPipeline / tool handlers can consume OpenDataLoader as the
  * single PDF analysis backend.
  */
@@ -335,7 +335,7 @@ function isChart(el: ODLContentElement): el is ODLChart {
 // ---------------------------------------------------------------------------
 
 /**
- * Convert an OpenDataLoader JSON document root into Leadero's PdfDocumentAnalysis.
+ * Convert an OpenDataLoader JSON document root into z-search's PdfDocumentAnalysis.
  *
  * The conversion is intentionally lossy where OpenDataLoader does not provide
  * the same signal as the pdf.js pipeline:

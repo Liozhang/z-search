@@ -472,7 +472,7 @@ async function extractZipBytes(zipBytes: Uint8Array): Promise<ExtractedZip> {
   // Write bytes to a temp file for nsIZipReader to open.
   const tmpDir = PathUtils.join(
     (Zotero as any).DataDirectory?.dir ?? PathUtils.tempDir,
-    "leadero-mineru",
+    "zsearch-mineru",
   );
   // H-2: IOUtils is a fully async API — mkdir/write MUST be awaited. The old
   // fire-and-forget calls raced the synchronous zipReader.open() below, which

@@ -101,7 +101,7 @@ class EmbedFrameHostImpl {
         : parentDoc.createElementNS("http://www.w3.org/1999/xhtml", "iframe")
     ) as HTMLIFrameElement;
     iframe.setAttribute("src", "about:blank");
-    iframe.setAttribute("id", "leadero-embed-frame");
+    iframe.setAttribute("id", "zsearch-embed-frame");
     iframe.style.cssText =
       "position:absolute;top:-9999px;left:-9999px;width:900px;height:600px;border:none;";
 

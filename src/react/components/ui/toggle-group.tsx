@@ -14,7 +14,7 @@
  * 期刊三段，2026-09-28 起接替退役的图标对钮；同页期刊仪表盘检索模式 seg、
  * 文献页结果头排序 seg 同制式）；画廊另有陈列。
  * filter variant：用于 GraphFilterDialog 等筛选场景，去盒描边 chip + 选中黑底白字
- * （§5.4 唯一法定筛选形态）。CSS 规则在 leadero-hub.css [data-variant="filter"]。
+ * （§5.4 唯一法定筛选形态）。CSS 规则在 zsearch-hub.css [data-variant="filter"]。
  *
  * @module react/components/ui/toggle-group
  */

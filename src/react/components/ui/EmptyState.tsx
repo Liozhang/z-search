@@ -1,7 +1,7 @@
 /**
  * EmptyState.tsx — Tailwind 化的空/加载状态组件。
  *
- * 由原 leadero-empty-* CSS 类迁移为 Tailwind 工具类（hub-redesign 形态：虚线框卡）。
+ * 由原 zsearch-empty-* CSS 类迁移为 Tailwind 工具类（hub-redesign 形态：虚线框卡）。
  * 对外 API 完全不变
  * （icon/title/desc/className/children/busy），30 个消费端零改动。
  *

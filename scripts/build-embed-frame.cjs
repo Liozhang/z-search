@@ -4,7 +4,7 @@
  *
  * Creates addon/content/scripts/embed-standalone.js. The bundle carries
  * @huggingface/transformers (web build) and exposes
- * `leaderoEmbedFrame.{embed,dispose}` plus a `leaderoEmbedFrameReady` init
+ * `zsearchEmbedFrame.{embed,dispose}` plus a `zsearchEmbedFrameReady` init
  * promise on the frame window — ORT's wasm backend dynamically imports its
  * factory mjs at runtime, which only works inside a window context (the
  * bootstrap subscript sandbox has no script loader; see embed-frame.ts).

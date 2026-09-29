@@ -3,7 +3,7 @@
  *
  * Replaces the previous pattern of importing large data arrays directly from
  * `src/core/data/*-data.ts` modules (which esbuild bundled into the main
- * leadero.js). Those four data sets (~8.6 MB of TS literals → ~5.2 MB of
+ * zsearch.js). Those four data sets (~8.6 MB of TS literals → ~5.2 MB of
  * JSON) now ship as `addon/data/*.json` and are read on first import only.
  *
  * Path resolution: `rootURI` is the bootstrap-provided addon root. It is a

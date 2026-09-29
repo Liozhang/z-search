@@ -3,7 +3,7 @@
  *
  * When the user's machine has no Java 11+, this downloads an Eclipse Temurin
  * **portable JRE** (not an installer — a .zip on Windows, .tar.gz on
- * macOS/Linux) from Adoptium, extracts it under {DataDir}/leadero/java-runtime/,
+ * macOS/Linux) from Adoptium, extracts it under {DataDir}/zsearch/java-runtime/,
  * and exposes the absolute path to its `java` executable. Because it's a
  * portable package extracted into the user's own data directory, it needs no
  * administrator privileges, no UAC elevation, and no system PATH modification —
@@ -95,7 +95,7 @@ function pathJoin(...parts: string[]): string {
     .replace(/[/\\]+/g, (_m) => (isWindows() ? "\\" : "/"));
 }
 
-/** Managed JRE root: {DataDir}/leadero/java-runtime/ */
+/** Managed JRE root: {DataDir}/zsearch/java-runtime/ */
 export function getJavaRuntimeDir(): string {
   return pathJoin(getDataDir(), "zsearch", "java-runtime");
 }
@@ -192,9 +192,9 @@ async function execCommand(
   const tmpDir = (Zotero as any).getTempDirectory();
   const ts = Date.now();
   const stdoutFile = tmpDir.clone();
-  stdoutFile.append(`leadero-jre-${ts}-out.txt`);
+  stdoutFile.append(`zsearch-jre-${ts}-out.txt`);
   const stderrFile = tmpDir.clone();
-  stderrFile.append(`leadero-jre-${ts}-err.txt`);
+  stderrFile.append(`zsearch-jre-${ts}-err.txt`);
 
   let wrapperExe: string;
   let wrapperArgs: string[];
@@ -205,7 +205,7 @@ async function execCommand(
       `> "${stdoutFile.path}" 2> "${stderrFile.path}"`,
     ].join(" ");
     const batFile = tmpDir.clone();
-    batFile.append(`leadero-jre-${ts}.bat`);
+    batFile.append(`zsearch-jre-${ts}.bat`);
     await IOUtils.writeUTF8(batFile.path, batLines);
     wrapperExe = batFile.path;
     wrapperArgs = [];

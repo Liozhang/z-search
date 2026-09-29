@@ -1,7 +1,7 @@
 /**
  * MODEL_REGISTRY — declarative fallback for model metadata not present in user config.
  *
- * Leadero's `AIModel.maxContextTokens` is the preferred source of truth.
+ * The plugin's `AIModel.maxContextTokens` is the preferred source of truth.
  * This registry only fills gaps for known models whose config omits the field,
  * replacing the previous hard-coded `lookupContextWindow()` switch in
  * `AIProviderRegistry.ts` and the dead-code copy in `UnifiedAIProvider.ts`.

@@ -6,9 +6,6 @@
 /** Default soul ID for global (non-entity-specific) conversations */
 export const GLOBAL_SOUL_ID = "__global__";
 
-/** Zotero preference prefix for this add-on */
-export const PREF_PREFIX = "extensions.zotero.leadero";
-
 /**
  * Safe batch size for SQLite IN-clauses.
  * SQLite's SQLITE_MAX_VARIABLE_NUMBER defaults to 999;
@@ -32,4 +29,4 @@ export const DEFAULT_AI_WEIGHT = 0.7;
  * note-creation paths can read it without importing `src/modules/**` (C-7);
  * `modules/noteTemplate` re-exports it for its existing consumers.
  */
-export const LEADERO_AI_TAG = "leadero-ai-generated";
+export const ZSEARCH_AI_TAG = "zsearch-ai-generated";

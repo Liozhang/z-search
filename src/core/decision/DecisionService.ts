@@ -41,7 +41,7 @@ const OPENROUTER_DECISIONS_ENDPOINT =
   "https://openrouter.ai/api/alpha/decisions";
 const OPENROUTER_PROVIDER_ID = "openrouter";
 const REQUEST_TIMEOUT_MS = 30000;
-/** Local CPU inference of a 421M checkpoint runs 10s+ per call and Leadero's
+/** Local CPU inference of a 421M checkpoint runs 10s+ per call and the plugin's
  *  concurrency-3 queues behind the shim's serialized forward passes — 30s
  *  would time out healthy local calls and trip the breaker. */
 const LOCAL_REQUEST_TIMEOUT_MS = 90000;

@@ -279,7 +279,7 @@ export function JournalSearchDashboard(): React.ReactElement {
           域 tab 同款白片轨道，同屏同形；单选清空 no-op 防御与 SearchPane 同款。 */}
       <ToggleGroup
         multiple={false}
-        className="self-start" /* 2026-09-02 值级批：self-center→self-start，用户拍板左对齐；同屏 pane 级 seg 已立法左置 leadero-hub-search.css:23-33 */
+        className="self-start" /* 2026-09-02 值级批：self-center→self-start，用户拍板左对齐；同屏 pane 级 seg 已立法左置 zsearch-hub-search.css:23-33 */
         value={[mode]}
         onValueChange={(v) => {
           if (v.length) onModeChange(v[0] as JournalSearchMode);
@@ -339,7 +339,7 @@ export function JournalSearchDashboard(): React.ReactElement {
 
       {/* Results header——2026-09-01：容器死类（semantic-results-header）换显式
           utilities（对齐文献页结果头配方）；排序 Select→filter chip（用户裁决，
-          与文献页排序同职能同形；semantic-sort-select/leadero-form-select 死类随之退役）。 */}
+          与文献页排序同职能同形；semantic-sort-select/zsearch-form-select 死类随之退役）。 */}
       {hasSearched && !isMetricMode && list.length > 0 && (
         <div className="flex flex-wrap justify-between items-center gap-[var(--space-2)] py-[var(--space-1)]">
           <span>
@@ -392,9 +392,9 @@ export function JournalSearchDashboard(): React.ReactElement {
             aria-hidden="true"
           >
             {/* 2026-09-21 复审 P2：Tailwind 内建脉冲循环退役 → 法定骨架
-                呼吸（leadero-pbar-fill，单次后静置；reduced-motion 由
+                呼吸（zsearch-pbar-fill，单次后静置；reduced-motion 由
                 components.css 覆盖） */}
-            <div className="leadero-pbar-fill h-full w-1/2 rounded-full bg-[var(--accent)]" />
+            <div className="zsearch-pbar-fill h-full w-1/2 rounded-full bg-[var(--accent)]" />
           </div>
         </EmptyState>
       ) : error ? (

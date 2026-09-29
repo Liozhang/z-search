@@ -1,7 +1,7 @@
 /**
- * Badge.tsx — Tailwind 化的 leadero Badge（保留 tone/size/spinner/pulse API）。
+ * Badge.tsx — Tailwind 化的上游 Badge（保留 tone/size/spinner/pulse API）。
  *
- * 由原 CSS 类实现迁移：leadero-badge--* CSS 类 → Tailwind 工具类。
+ * 由原 CSS 类实现迁移：zsearch-badge--* CSS 类 → Tailwind 工具类。
  * 对外 API 完全不变（tone/size/spinner/pulse/title/className），
  * 19 个消费端零改动。
  *
@@ -32,7 +32,7 @@ interface BadgeProps {
   children: React.ReactNode;
 }
 
-// tone → Tailwind 颜色映射（bg-X/10 + text-X 柔和色调，与原 leadero-badge 视觉一致）
+// tone → Tailwind 颜色映射（bg-X/10 + text-X 柔和色调，与原 zsearch-badge 视觉一致）
 const TONE_CLASS: Record<BadgeTone, string> = {
   neutral: "bg-muted text-muted-foreground",
   info: "bg-info/10 text-info",

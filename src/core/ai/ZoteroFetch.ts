@@ -9,7 +9,7 @@ export class ZoteroFetch {
     const method = options.method || "GET";
     let headers = (options.headers as Record<string, string>) || {};
 
-    // Inject Leadero plugin identity headers for server-side tracking
+    // Inject z-search plugin identity headers for server-side tracking
     headers = {
       ...headers,
       ...ZSEARCH_HTTP_HEADERS,

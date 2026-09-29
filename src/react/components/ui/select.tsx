@@ -1,14 +1,14 @@
 /**
- * select.tsx — shadcn/ui Select 官方形态（Base UI 底座，保留 leadero
+ * select.tsx — shadcn/ui Select 官方形态（Base UI 底座，保留上游
  * options/value/onChange 受控 API）。
  *
  * 类串对齐 v4.shadcn.com 注册表（trigger bg-background/shadow-xs + focus
  * ring-[3px]——v1.72 前为 bg-transparent，灰底白卡批改 raised 白；content
  * bg-popover/rounded-md/shadow-md；item rounded-sm +
  * 绝对定位 right-2 勾选指示）。官方 data-[state]/focus: 状态翻译为 Base UI
- * 的 data-[highlighted] 等。Portal 经 useReuiPortal 注入 `.leadero-root` 作用域。
+ * 的 data-[highlighted] 等。Portal 经 useReuiPortal 注入 `.zsearch-root` 作用域。
  *
- * leadero 偏离（登记 spec §17）：
+ * 插件偏离（登记 spec §17）：
  *   - 保留受控 options/value/onChange(string) API（消费点冻结）
  *   - 触发器高度 h-7=28 单档（v1.70 用户裁决 2026-08-26 照原型 .sel=28；
  *     原 32/28 双档分界退役；size prop 保留但不再影响高度）

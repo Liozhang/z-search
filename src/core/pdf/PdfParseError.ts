@@ -1,7 +1,7 @@
 /**
  * PdfParseError — Explicit error type for the OpenDataLoader-only PDF pipeline.
  *
- * OpenDataLoader is the single PDF parsing backend in Leadero. There is no
+ * OpenDataLoader is the single PDF parsing backend in z-search. There is no
  * silent fallback: when parsing fails, a PdfParseError propagates to the
  * caller with an actionable reason so the UI can surface it to the user.
  */
@@ -29,13 +29,13 @@ function userHint(reason: PdfParseErrorReason, detail?: string): string {
   const suffix = detail ? ` (${detail})` : "";
   switch (reason) {
     case "disabled":
-      return "PDF parsing is disabled. Enable it in Leadero preferences.";
+      return "PDF parsing is disabled. Enable it in z-search preferences.";
     case "no-attachment":
       return "No PDF attachment found for this item.";
     case "java-missing":
       return "Java runtime not found. OpenDataLoader requires Java 11+. Install Java, make sure `java` is on PATH, then retry.";
     case "jar-missing":
-      return "OpenDataLoader JAR is missing. Reinstall Leadero to restore opendataloader-pdf-cli.jar.";
+      return "OpenDataLoader JAR is missing. Reinstall z-search to restore opendataloader-pdf-cli.jar.";
     case "timeout":
       return `OpenDataLoader parsing timed out${suffix}.`;
     case "parse-failed":

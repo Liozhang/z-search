@@ -265,7 +265,7 @@ class MetadataExtractor {
     // Zotero Translate doesn't support PMID directly; use NCBI E-utilities API
     try {
       const apiKey = getPrefDynamic("apis.pubmed.apiKey") as string;
-      let url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json&tool=leadero`;
+      let url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json&tool=zsearch`;
       if (apiKey) url += `&api_key=${encodeURIComponent(apiKey)}`;
 
       await ncbiThrottle();

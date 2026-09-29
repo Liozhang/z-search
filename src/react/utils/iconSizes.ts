@@ -1,5 +1,5 @@
 /**
- * Design tokens — JS mirror of CSS variables in leadero-tokens.css.
+ * Design tokens — JS mirror of CSS variables in zsearch-tokens.css.
  *
  * Use these constants for inline props (icon size, etc.) where CSS variables
  * cannot be applied directly. For CSS properties, prefer the CSS tokens.

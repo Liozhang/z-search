@@ -85,7 +85,7 @@ export function clearPrefDynamic(key: string): void {
 }
 
 /**
- * 清除一个**根级**（无 `extensions.zotero.leadero.` 前缀）的 pref。
+ * 清除一个**根级**（无 `extensions.zotero.zsearch.` 前缀）的 pref。
  *
  * 只为清扫一种特定残留存在：退役的远程执行子系统当年把 `remote.daemonPort` /
  * `remote.timeout` / `security.remoteExec.enabled` 写到了**根分支**（未加前缀），

@@ -192,7 +192,7 @@ class PdfChunkStoreClass {
     // Fast path: try the binary cache if it exists and matches the DB row count.
     const cachePath = PathUtils.join(
       Zotero.DataDirectory.dir,
-      `leadero-vector-${this.sanitizeModelName(model)}.bin`,
+      `zsearch-vector-${this.sanitizeModelName(model)}.bin`,
     );
     const liveCount = await this.countChunksForModel(model);
     if (liveCount === 0) return;
@@ -380,7 +380,7 @@ class PdfChunkStoreClass {
   }
 
   /**
-   * BM25 keyword search over chunk texts (FTS5 in the external leadero DB).
+   * BM25 keyword search over chunk texts (FTS5 in the external plugin DB).
    * Degrades to [] when FTS5 is unavailable, the index is stale beyond
    * repair, or nothing matches — callers treat [] as "no hits".
    */

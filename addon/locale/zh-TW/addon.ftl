@@ -73,7 +73,7 @@ translation-error-pdf-translate-failed = zotero-pdf-translate 翻譯失敗
 translation-error-bing-not-configured = Bing 翻譯未配置 API Key
 translation-error-deepl-not-configured = DeepL 翻譯未配置 API Key
 translation-error-custom-url-missing = 自訂翻譯 API 網址未配置
-translation-error-ai-not-configured = 翻譯未配置（請在 Leadero 設定中為 AI 模型設定翻譯功能）
+translation-error-ai-not-configured = 翻譯未配置（請在 z-search 設定中為 AI 模型設定翻譯功能）
 translation-error-google-fallback-failed = Google 翻譯失敗（{ $googleError }），Bing 備援亦失敗（{ $bingError }）
 translation-error-unknown = 未知錯誤
 translation-error-bing-token-unavailable = 無法取得 Bing 翻譯權杖（頁面結構可能已變更）
@@ -261,7 +261,7 @@ chat-error-unavailable = AI 服務暫時無法使用，請稍後重試。
 chat-error-token-limit = 請求過長，請嘗試縮短訊息或開始新對話。
 chat-error-network = 網路錯誤，請檢查網路連線。
 chat-error-cancelled = 請求已取消。
-chat-error-no-provider = 尚未為該功能設定 AI 模型。請開啟 Leadero 設定 → AI 模型，為對應功能指派模型（聊天與智慧代理需分別指派）。
+chat-error-no-provider = 尚未為該功能設定 AI 模型。請開啟 z-search 設定 → AI 模型，為對應功能指派模型（聊天與智慧代理需分別指派）。
 chat-error-with-detail = 錯誤：{ $error }
 
 # Toolbar
@@ -269,7 +269,7 @@ chat-error-with-detail = 錯誤：{ $error }
 # Tool keys
 # Slash Menu Commands — keep in sync with src/react/components/Input/slashCommands.ts
 # ── Soul / Agent 名稱 ──
-soul-name-default = Leadero 助手
+soul-name-default = z-search 助手
 soul-name-reader-copilot = 閱讀副駕駛
 soul-name-synthesis-agent = 跨論文分析師
 soul-name-digest-agent = 批註合成器
@@ -288,7 +288,7 @@ soul-name-discussion-facilitator = 討論主持人
 # ── Grill / Alignment ──
 # ── Research Dashboard UI ──
 # R-6（2026-09-15 部署包評審）：必填星號由 NewResearchForm 的
-# <span class="leadero-form-required"> 渲染（紅色、有樣式），本值內不再自帶
+# <span class="zsearch-form-required"> 渲染（紅色、有樣式），本值內不再自帶
 # 字面量星號——否則真機渲染成「研究問題 * *」兩個星號。
 # 統一 gap 入口（2026-09-21）：空白卡預覽
 research-warnings-title = { $count } 個警告

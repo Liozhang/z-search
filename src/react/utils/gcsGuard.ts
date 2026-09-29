@@ -37,7 +37,7 @@ if (GUARD_GLOBAL && typeof Zotero === "undefined") {
     getActiveZoteroPane: () => null,
     Items: { get: () => null },
     Clipboard: null,
-    __leaderoJotaiStore: null,
+    __zsearchJotaiStore: null,
   };
 
   class ProgressWindowStub {

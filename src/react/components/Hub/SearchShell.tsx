@@ -3,9 +3,9 @@
  *
  * 2026-09-22 布局修正（用户裁决「搜索页只需要有一页，不需要侧边栏」）：原
  * 「外壳页头 + 胶囊切换行 + 240px 侧栏」三件套全部退役——页头与 SearchPane
- * 页头重复、顶层切换抢占据内容区。回归 leadero 基线：本壳只承载唯一一页
+ * 页头重复、顶层切换抢占据内容区。回归上游基线：本壳只承载唯一一页
  * SearchPane（文献/期刊双视图 keep-alive），页头/视图对钮/内容全部由
- * SearchPane 自持（leadero SearchPane 同结构）。
+ * SearchPane 自持（上游 SearchPane 同结构）。
  *
  * 深链：宿主 openHub(tab) 经 hub.setActiveTab notify 落位；本壳仅一页，
  * 收到即回执（界面无需切换，杜绝 acks 静默超时）。
@@ -74,7 +74,7 @@ export function SearchShell(): React.ReactElement {
 
   return (
     <ErrorBoundary fallbackMessage={getString("error-hub-render")}>
-      <div className="leadero-root hub-shell flex flex-col h-full bg-surface">
+      <div className="zsearch-root hub-shell flex flex-col h-full bg-surface">
         <SearchPane isActive />
       </div>
     </ErrorBoundary>

@@ -1,5 +1,5 @@
 /**
- * number-field.tsx — shadcn Base UI NumberField（保留 leadero 受控 API）。
+ * number-field.tsx — shadcn Base UI NumberField（保留上游受控 API）。
  *
  * 基于 @base-ui/react/number-field，对外提供受控 API
  * （value: number | null / onChange: (v: number | undefined) => void），
@@ -12,7 +12,7 @@
  *
  * 视觉：Input 类串对齐官方 v4 input.tsx（h-8 与 Input 等高，圆角统一
  * var(--radius-btn)，登记 spec §17）。
- * 消费端既有 className（如 .leadero-form-input / .hub-settings-form-input）
+ * 消费端既有 className（如 .zsearch-form-input / .hub-settings-form-input）
  * 直接透传到 Input，命中既有 CSS 选择器，视觉零变化。
  *
  * @module react/components/ui/number-field

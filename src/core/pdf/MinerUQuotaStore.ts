@@ -6,8 +6,8 @@
  * were mutable counters registered as user prefs — editable via about:config
  * and semantically wrong (a counter is not a setting).
  *
- * Storage: {Zotero.DataDirectory.dir}/leadero/state/mineru-quota.json
- * (same leadero/ subtree convention as ModelDownloadManager's models/).
+ * Storage: {Zotero.DataDirectory.dir}/zsearch/state/mineru-quota.json
+ * (same zsearch/ subtree convention as ModelDownloadManager's models/).
  *
  * Sync/async contract: the getter is synchronous (returns the in-memory
  * cache; 0 until the async hydration completes — an informational counter

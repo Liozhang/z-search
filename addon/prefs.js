@@ -1,5 +1,5 @@
 // z-search — search-only preference defaults.
-// Trimmed from leadero: keeps only keys read by the copied search modules
+// Trimmed from the upstream project: keeps only keys read by the copied search modules
 // (core/search, core/sources, core/ai, core/embedding, core/decision, core/pdf).
 
 // Unified model/provider config (JSON, managed by ConfigManager)

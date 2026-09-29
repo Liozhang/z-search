@@ -7,7 +7,7 @@
  * {rootURI}content/ort/（见 LocalEmbeddingProvider.ts ortBaseUri）——这组
  * 文件缺失时 ORT wasm 后端动态 import 失败，本地 ONNX 嵌入逐条目报错
  * （实机测试 2026-09-26：buildIndex errors=N、metadataCount 恒 0）。
- * 本脚本曾在 leadero 期存在、移植时被误删，此处按同设计重建。
+ * 本脚本曾存在于上游项目、移植时被误删，此处按同设计重建。
  *
  * 资产生成而非入库（.gitignore：addon/content/ort/）——wasm 28MB，随
  * postinstall / build / test:zotero 自动就位。

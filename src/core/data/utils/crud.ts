@@ -1,5 +1,5 @@
 /**
- * Generic CRUD utilities for Leadero datasource tables.
+ * Generic CRUD utilities for z-search datasource tables.
  *
  * All functions accept an optional `tx` (Zotero transaction) — when passed,
  * the operation participates in the caller's transaction; when omitted,

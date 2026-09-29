@@ -1,7 +1,7 @@
 /**
  * HubLiteratureHandler — literature.* + journal.* RPC handlers（z-search 精简版）。
  *
- * 从 leadero 复制时移除 translate（依赖整体翻译 API）与 chat.open
+ * 从上游复制时移除 translate（依赖整体翻译 API）与 chat.open
  * （聊天窗不属于本插件）。
  */
 

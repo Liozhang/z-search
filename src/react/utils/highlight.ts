@@ -22,7 +22,7 @@ export function highlightText(text: string, query: string): string {
   const escaped = escapeRegex(query);
   return text.replace(
     new RegExp(`(${escaped})`, "gi"),
-    '<mark class="leadero-search-highlight">$1</mark>',
+    '<mark class="zsearch-search-highlight">$1</mark>',
   );
 }
 

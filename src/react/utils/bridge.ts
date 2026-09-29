@@ -59,7 +59,7 @@ export function sendToBackend(type: string, payload?: any): void {
   } else {
     // Fallback: direct CustomEvent
     window.dispatchEvent(
-      new CustomEvent(`leadero:${type}`, { detail: payload }),
+      new CustomEvent(`zsearch:${type}`, { detail: payload }),
     );
   }
 }
@@ -80,8 +80,8 @@ export function onBackendEvent(
   const eventHandler = (e: Event) => {
     handler((e as CustomEvent).detail);
   };
-  window.addEventListener(`leadero:${type}`, eventHandler);
-  return () => window.removeEventListener(`leadero:${type}`, eventHandler);
+  window.addEventListener(`zsearch:${type}`, eventHandler);
+  return () => window.removeEventListener(`zsearch:${type}`, eventHandler);
 }
 
 /**

@@ -23,7 +23,7 @@ import { Semaphore } from "../../utils/Semaphore";
 // `log` 是 verboseEnabled() 门后的调试通道（dev 构建或 debug pref 开启才输出）；
 // 原先这 14 处诊断走 console.error —— 它们既不在任何 verbose 门后，生产构建里
 // 又会被 fix-console.js 的失效正则漏掉、原样打进 Zotero 错误控制台，
-// 每次 PDF 解析刷十几行 "[Leadero ODL]"（2026-09-10 审计 G-03）。
+// 每次 PDF 解析刷十几行 "[z-search ODL]"（2026-09-10 审计 G-03）。
 import { log, safeDebug } from "../../utils/logger";
 import { toErrorMessage } from "../../utils/error";
 import { getString } from "../../utils/locale";
@@ -127,7 +127,7 @@ export async function checkHealth(): Promise<HealthResult> {
     /* best-effort: fall through to system detection */
   }
   const javaExe = resolveJavaExecutable();
-  log(`[Leadero ODL] checkHealth: javaExe="${javaExe}"`);
+  log(`[z-search ODL] checkHealth: javaExe="${javaExe}"`);
   if (!javaExe) {
     return {
       healthy: false,
@@ -141,7 +141,7 @@ export async function checkHealth(): Promise<HealthResult> {
   // opendataloader-pdf CLI and cause a non-zero exit.
   const result = await runProcess(javaExe, ["-version"], 10000);
   log(
-    `[Leadero ODL] checkHealth: java -version exitCode=${result.exitCode} timedOut=${result.timedOut}`,
+    `[z-search ODL] checkHealth: java -version exitCode=${result.exitCode} timedOut=${result.timedOut}`,
   );
   if (result.exitCode !== 0) {
     return { healthy: false, error: result.stderr || "java -version failed" };
@@ -333,7 +333,7 @@ async function getJarPath(): Promise<string> {
     null;
 
   // M-22e-2: getInstallPath() on Zotero 9 may return a nsIURI whose .path is
-  // empty (e.g. resource://leadero@leadero.dev/) or a "jar:..." string. Both
+  // empty (e.g. resource://zsearch@z-search.dev/) or a "jar:..." string. Both
   // look truthy but carry no usable filesystem path. Discard them so the
   // profile-scan fallback below actually runs.
   if (rawDir) {
@@ -370,7 +370,7 @@ async function getJarPath(): Promise<string> {
     //    nsIFileURL to the addon directory.
     try {
       const uriStr = typeof rootURI !== "undefined" ? rootURI : "";
-      log(`[Leadero ODL] getJarPath: rootURI="${uriStr}"`);
+      log(`[z-search ODL] getJarPath: rootURI="${uriStr}"`);
       if (uriStr.startsWith("file:")) {
         const uriFile = (
           (globalThis as any).Services.io
@@ -398,7 +398,7 @@ async function getJarPath(): Promise<string> {
         ) as nsIFile;
         const extDir = profileFile.clone();
         extDir.append("extensions");
-        log(`[Leadero ODL] getJarPath: extDir="${extDir.path}"`);
+        log(`[z-search ODL] getJarPath: extDir="${extDir.path}"`);
         if (extDir.exists() && extDir.isDirectory()) {
           const entries = extDir.directoryEntries;
           while (entries.hasMoreElements()) {
@@ -425,7 +425,7 @@ async function getJarPath(): Promise<string> {
   const baseDir = rawDir ? String(rawDir.path ?? rawDir) : "";
 
   log(
-    `[Leadero ODL] getJarPath: baseDir="${baseDir}" PathUtils.join=${!!join}`,
+    `[z-search ODL] getJarPath: baseDir="${baseDir}" PathUtils.join=${!!join}`,
   );
 
   const relative = ["core", "pdf", "lib", "opendataloader-pdf-cli.jar"];
@@ -452,8 +452,8 @@ async function getJarPath(): Promise<string> {
 
   // Absolute fallbacks for development / test environments where the addon
   // directory API is unavailable or returns empty.
-  // L-22: the developer-machine path ("D:\github_code\leadero\...") was
-  // removed — only scaffold-relative fallbacks remain.
+  // L-22: the old developer-machine path (a repo-local absolute path from
+  // before the rename) was removed — only scaffold-relative fallbacks remain.
   const candidates: string[] = [];
   if (baseDir) {
     // M-22c: in dev installs getAddonDirectory may return the project root
@@ -475,12 +475,12 @@ async function getJarPath(): Promise<string> {
         exists = await Zotero.File.exists(candidate);
       }
       log(
-        `[Leadero ODL] getJarPath candidate: ${candidate} → ${exists ? "FOUND" : "not found"}`,
+        `[z-search ODL] getJarPath candidate: ${candidate} → ${exists ? "FOUND" : "not found"}`,
       );
       if (exists) return candidate;
     } catch (e) {
       safeDebug("[z-search] OpenDataLoaderPdfClient: " + e);
-      log(`[Leadero ODL] getJarPath candidate: ${candidate} → ERROR`);
+      log(`[z-search ODL] getJarPath candidate: ${candidate} → ERROR`);
       // ignore and try next candidate
     }
   }
@@ -492,7 +492,7 @@ async function getJarPath(): Promise<string> {
       ? `${baseDir}/${relative.join("/")}`
       : `./core/pdf/lib/opendataloader-pdf-cli.jar`,
   );
-  log(`[Leadero ODL] getJarPath fallback: ${fallback}`);
+  log(`[z-search ODL] getJarPath fallback: ${fallback}`);
   return fallback;
 }
 
@@ -562,7 +562,7 @@ function runProcess(
       const ts = Date.now();
       const makeFile = (suffix: string) => {
         const f = tmpDir.clone();
-        f.append(`leadero-odl-${ts}-${suffix}.txt`);
+        f.append(`zsearch-odl-${ts}-${suffix}.txt`);
         return f.path;
       };
 
@@ -860,7 +860,7 @@ function writeTempFile(content: string, ext: string): string {
       .get("TmpD", Ci.nsIFile);
 
   const file = tmpDir.clone();
-  file.append(`leadero-odl-${Date.now()}.${ext}`);
+  file.append(`zsearch-odl-${Date.now()}.${ext}`);
 
   const stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(
     Ci.nsIFileOutputStream,
@@ -886,7 +886,7 @@ function createTempDir(): string {
       .get("TmpD", Ci.nsIFile);
 
   const dir = tmpDir.clone();
-  dir.append(`leadero-odl-${Date.now()}`);
+  dir.append(`zsearch-odl-${Date.now()}`);
   dir.createUnique(Ci.nsIFile.DIRECTORY_TYPE, 0o700);
   return dir.path;
 }
@@ -991,7 +991,7 @@ async function runOpenDataLoader(
   options?: OpenDataLoaderPdfParseOptions,
 ): Promise<{ success: true; raw: string } | { success: false; error: string }> {
   const jarPath = await getJarPath();
-  log(`[Leadero ODL] runOpenDataLoader: jarPath="${jarPath}"`);
+  log(`[z-search ODL] runOpenDataLoader: jarPath="${jarPath}"`);
   const Cc = (Components as any).classes;
   const Ci = (Components as any).interfaces;
   const jarFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
@@ -1006,7 +1006,7 @@ async function runOpenDataLoader(
     };
   }
   const exists = jarFile.exists();
-  log(`[Leadero ODL] runOpenDataLoader: jarFile.exists() = ${exists}`);
+  log(`[z-search ODL] runOpenDataLoader: jarFile.exists() = ${exists}`);
   if (!exists) {
     return {
       success: false,
@@ -1062,19 +1062,19 @@ async function runOpenDataLoader(
     args.push(filePath);
 
     safeDebug(
-      `[Leadero ODL] spawning JVM: java -jar "${jarPath}" ${args.map((a) => JSON.stringify(a)).join(" ")}`,
+      `[z-search ODL] spawning JVM: java -jar "${jarPath}" ${args.map((a) => JSON.stringify(a)).join(" ")}`,
     );
 
     const result = await execJava(args, config.timeout * 1000, options?.signal); // M-20
 
     safeDebug(
-      `[Leadero ODL] JVM exited: code=${result.exitCode} timedOut=${result.timedOut} aborted=${result.aborted || false}`,
+      `[z-search ODL] JVM exited: code=${result.exitCode} timedOut=${result.timedOut} aborted=${result.aborted || false}`,
     );
     if (result.stderr) {
-      log(`[Leadero ODL] JVM stderr: ${result.stderr.slice(0, 2000)}`);
+      log(`[z-search ODL] JVM stderr: ${result.stderr.slice(0, 2000)}`);
     }
     if (result.stdout) {
-      log(`[Leadero ODL] JVM stdout: ${result.stdout.slice(0, 2000)}`);
+      log(`[z-search ODL] JVM stdout: ${result.stdout.slice(0, 2000)}`);
     }
 
     if (options?.signal?.aborted) {
@@ -1130,14 +1130,14 @@ async function runOpenDataLoader(
           allFiles.push(entry.leafName);
         }
         safeDebug(
-          `[Leadero ODL] no ${ext} in ${outputDir}; files: ${allFiles.join(", ") || "(empty)"}`,
+          `[z-search ODL] no ${ext} in ${outputDir}; files: ${allFiles.join(", ") || "(empty)"}`,
         );
         return {
           success: false,
           error: `No ${ext} output found in ${outputDir}`,
         };
       }
-      log(`[Leadero ODL] using alternate output: ${found}`);
+      log(`[z-search ODL] using alternate output: ${found}`);
       raw = await readFile(found);
     }
 
@@ -1145,7 +1145,7 @@ async function runOpenDataLoader(
       return { success: false, error: `Conversion produced no ${ext} output` };
     }
 
-    log(`[Leadero ODL] parse succeeded: ${raw.length} chars`);
+    log(`[z-search ODL] parse succeeded: ${raw.length} chars`);
 
     return { success: true, raw };
   } finally {

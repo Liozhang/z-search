@@ -1,5 +1,5 @@
 /**
- * switch.tsx — shadcn/ui Switch（官方 v4 形态，Base UI 底座，leadero Toggle API）。
+ * switch.tsx — shadcn/ui Switch（官方 v4 形态，Base UI 底座，上游 Toggle API）。
  *
  * 类串对齐 v4.shadcn.com 注册表；官方 data-[state=checked/unchecked] 翻译为
  * Base UI 的 data-checked / data-unchecked。对外 Toggle API

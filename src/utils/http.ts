@@ -34,7 +34,7 @@ export type HttpGetResult =
   | { ok: false; status: number; error: string; body?: string };
 
 /**
- * Perform a GET request with standard Leadero HTTP settings.
+ * Perform a GET request with standard z-search HTTP settings.
  *
  * @param url       Target URL (already query-string-encoded by caller).
  * @param headers   Extra headers merged on top of `{ Accept: "application/json", ...ZSEARCH_HTTP_HEADERS }`.

@@ -1,10 +1,10 @@
-/* leadero-hub-overrides.css — Hub 样式分区（原 leadero-hub.css 3356-3371 行：末尾微观覆盖（Home 手感 / Settings Select 28px））。
+/* zsearch-hub-overrides.css — Hub 样式分区（原 zsearch-hub.css 3356-3371 行：末尾微观覆盖（Home 手感 / Settings Select 28px））。
  * 2026-08-28 D3 拆分：级联顺序由 src/react/index.tsx 的 import 序决定，
  * 与拆分前的单文件顺序逐段等价。文件内规则相对顺序未动。 */
 /* ==================== Home 组件微观手感（原型对齐批 1.2⑥） ====================
  * 原型无过渡是静态稿属性，不等于真机要零过渡；压到 80ms 消除「库拼感」的
  * 拖沓同时保留即时反馈（2026-08-25 评审定案，不照抄方案的 transition: none）。 */
-.leadero-root .hub-home-body button[data-variant="ghost"] {
+.zsearch-root .hub-home-body button[data-variant="ghost"] {
   transition-duration: 80ms;
 }
 

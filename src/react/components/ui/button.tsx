@@ -1,13 +1,13 @@
 /**
- * button.tsx — shadcn/ui Button（官方 v4 形态，Base UI 底座）+ leadero 扩展 props。
+ * button.tsx — shadcn/ui Button（官方 v4 形态，Base UI 底座）+ 插件扩展 props。
  *
  * cva 类串逐字对齐 v4.shadcn.com 注册表（含 xs / icon-xs / icon-sm / icon-lg
  * 官方尺寸与 data-variant / data-size 标记）。
  *
- * leadero 扩展（消费点 API 冻结，见 ui/README.md）：
+ * 插件扩展（消费点 API 冻结，见 ui/README.md）：
  *   - icon / loading / loadingText / tooltip / ariaLabel / render
  *   - render ≈ 官方 asChild（Base UI 的多态模式）
- *   - data-slot="button" 必须保留：leadero-layout.css 的 XUL reset 以
+ *   - data-slot="button" 必须保留：zsearch-layout.css 的 XUL reset 以
  *     button:not([data-slot]) 剥掉 padding/border/background。
  *
  * @module react/components/ui/button

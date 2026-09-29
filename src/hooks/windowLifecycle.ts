@@ -16,6 +16,7 @@ import {
   unregisterMetricsColumn,
 } from "../modules/itemTreeMetricsColumn";
 import { safeRegister } from "../utils/safeRegister";
+import { migrateLegacyRealm } from "../utils/secretStore";
 
 async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   win.MozXULElement.insertFTLIfNeeded(
@@ -32,6 +33,10 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
   // 条目树期刊徽章列（P1-1）：ItemTreeManager 全局一列，逐窗引用计数——
   // 最后一个主窗卸载才反注册
   await safeRegister("MetricsColumn", () => registerMetricsColumn(win));
+  // 密钥存储域更名迁移（幂等；每个主窗都会尝试，第二次起为空操作）
+  await safeRegister("SecretRealmMigration", async () => {
+    await migrateLegacyRealm();
+  });
 }
 
 async function onMainWindowUnload(win: Window): Promise<void> {

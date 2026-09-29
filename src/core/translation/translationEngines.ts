@@ -4,7 +4,7 @@
  * Supports six engine types:
  *   - "google"  → Google Translate HTTP API (default; free endpoint or Cloud
  *                 Translation; falls back to keyless Bing web on failure)
- *   - "ai"      → Leadero's configured AI model (preserves formula tokens)
+ *   - "ai"      → the configured AI model (preserves formula tokens)
  *   - "bing"    → Azure Cognitive Services Translator (needs a key + region)
  *   - "bing-web" → keyless Bing web translator. Selectable since 2026-09-28:
  *                 it is the only keyless engine reachable in mainland China,
@@ -12,7 +12,7 @@
  *   - "deepl"   → DeepL API
  *   - "custom"  → OpenAI-compatible chat completions endpoint
  *
- * All engines return the same signature as LeaderoAPI.translate.translateText:
+ * All engines return the same result shape:
  *   { success: true, translatedText: string } or { success: false, error: string }
  *
  * Formula placeholder preservation ({v0}, {v1}, …) is guaranteed ONLY for the AI

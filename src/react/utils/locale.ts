@@ -3,7 +3,7 @@
  * Falls back to the key itself if API is not available.
  *
  * In iframe mode: uses a pre-populated locale cache (sync read).
- * In legacy mode: delegates to window.leaderoAPI.locale (sync).
+ * In legacy mode: delegates to window.zsearchAPI.locale (sync).
  */
 
 import { runningInIframe } from "./bridge";
@@ -24,18 +24,18 @@ let _localeTag: string | null = null;
 
 /**
  * Resolve the current locale tag for Intl formatters.
- * Order: iframe bridge cache → leaderoAPI.getLocale → Zotero.global → null.
+ * Order: iframe bridge cache → zsearchAPI.getLocale → Zotero.global → null.
  */
 export function getLocaleTag(): string | null {
   if (_localeTag) return _localeTag;
   try {
-    const api = (window as any).leaderoAPI;
+    const api = (window as any).zsearchAPI;
     if (api?.locale?.getLocale) {
       _localeTag = api.locale.getLocale();
       if (_localeTag) return _localeTag;
     }
   } catch (e) {
-    safeDebug("[z-search] locale: leaderoAPI.getLocale failed: " + e);
+    safeDebug("[z-search] locale: zsearchAPI.getLocale failed: " + e);
     // fall through
   }
   try {
@@ -137,7 +137,7 @@ export function getString(key: string, args?: Record<string, unknown>): string {
     if (runningInIframe()) {
       return getFromCache(key, args);
     }
-    const api = (window as any).leaderoAPI;
+    const api = (window as any).zsearchAPI;
     if (api?.locale?.getString) {
       return api.locale.getString(key, args);
     }
@@ -168,7 +168,7 @@ export function formatRelativeTime(timestamp: number): string {
       // formatDate 形成「2026/9/8 vs 2026-09-04」两种格式；统一到 leaf 模块。
       return formatDate(timestamp);
     }
-    const api = (window as any).leaderoAPI;
+    const api = (window as any).zsearchAPI;
     if (api?.locale?.formatRelativeTime) {
       return api.locale.formatRelativeTime(timestamp);
     }
@@ -190,10 +190,10 @@ export function getSoulName(soulId: string, fallback: string): string {
   const localized = getString(`soul-name-${soulId}`);
   // getString 在 key 缺失时返回 key 本身，但形态因运行环境而异：
   //   - iframe（react getFromCache）：返回无前缀 'soul-name-<id>'
-  //   - XUL sidebar（主进程 _getString）：返回带 addon 前缀 'leadero-soul-name-<id>'
+  //   - XUL sidebar（主进程 _getString）：返回带 addon 前缀 'zsearch-soul-name-<id>'
   // 两种 miss 形态都要识别，否则会把裸 key 当成名字渲染。
   const key = `soul-name-${soulId}`;
-  return localized === key || localized === `leadero-${key}`
+  return localized === key || localized === `zsearch-${key}`
     ? fallback
     : localized;
 }

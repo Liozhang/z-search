@@ -273,7 +273,7 @@ export class UnifiedAIProvider implements IAIProvider {
         // provider for third-party gateways.
         if (resolved.useOpenAICompatible) {
           const gatewayProvider = createOpenAICompatible({
-            name: "leadero-gateway",
+            name: "zsearch-gateway",
             apiKey: this.apiKey,
             baseURL: this.baseUrl,
             fetch: fetchFn,
@@ -453,7 +453,7 @@ export class UnifiedAIProvider implements IAIProvider {
 
     if (!this.apiKey && this.currentAuthMode === "api_key") {
       const e = new Error(
-        `${this.name} API key not configured. Please add an API key in Zotero Preferences → Leadero → AI Models.`,
+        `${this.name} API key not configured. Please add an API key in Zotero Preferences → z-search → AI Models.`,
       );
       (e as any).code = "API_KEY_MISSING";
       throw e;
@@ -798,7 +798,7 @@ export class UnifiedAIProvider implements IAIProvider {
     }
     if (!this.apiKey && this.currentAuthMode === "api_key") {
       const e = new Error(
-        `${this.name} API key not configured. Please add an API key in Zotero Preferences → Leadero → AI Models.`,
+        `${this.name} API key not configured. Please add an API key in Zotero Preferences → z-search → AI Models.`,
       );
       (e as any).code = "API_KEY_MISSING";
       throw e;
@@ -1084,7 +1084,7 @@ export class UnifiedAIProvider implements IAIProvider {
 
     if (!this.apiKey && this.currentAuthMode === "api_key") {
       const e = new Error(
-        `${this.name} API key not configured. Please add an API key in Zotero Preferences → Leadero → AI Models.`,
+        `${this.name} API key not configured. Please add an API key in Zotero Preferences → z-search → AI Models.`,
       );
       (e as any).code = "API_KEY_MISSING";
       throw e;
