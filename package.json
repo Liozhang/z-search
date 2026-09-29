@@ -1,7 +1,7 @@
 {
   "name": "z-search",
   "type": "module",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "sideEffects": [
     "*.css",
     "*.css.min",
