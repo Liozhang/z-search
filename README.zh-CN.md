@@ -45,7 +45,7 @@ z-search 是一个独立的 Zotero 插件，把图书馆内外的全部检索能
 顶刊标记，命中国际预警名单或 Beall's 掠夺性期刊名单时以警示徽章标出；
 检索词高亮、全文按需拉取、单条/批量导入都在同一张卡上完成。
 
-![学术检索结果卡：引用数、影响因子、JCR/中科院分区、OA 标记](docs/screenshots/search-results-en.png)
+![学术检索结果卡：引用数、影响因子、JCR/中科院分区、OA 标记](docs/screenshots/search-results-zh.png)
 
 ## 功能
 
@@ -86,7 +86,7 @@ h 指数 / i10 指数 / 2 年篇均被引 / 发文量、收稿领域与创刊信
 风险标记区直接给出国际预警与掠夺性名单命中——投稿前查刊、引用前排雷
 都在同一处完成。另有「按领域发现」模式按研究方向检索期刊。
 
-![期刊指标卡：本地命中 Beall's 名单的掠夺性标记](docs/screenshots/journal-metrics-en.png)
+![期刊指标卡：本地命中 Beall's 名单的掠夺性标记](docs/screenshots/journal-metrics-zh.png)
 
 可选的中文核心期刊徽章（北大核心 / CSCD / CSSCI / 科技核心）在填入免费的
 easyScholar API key 后点亮。
@@ -95,7 +95,7 @@ easyScholar API key 后点亮。
 发文量与内联的 JCR/中科院分区徽章、顶刊星标——可按相关度、JIF、发文量、
 h5 指数排序；点击任意行即钻取到该刊的完整指标卡。
 
-![期刊发现模式：按领域关键字的行式列表，带分区徽章与排序 chips](docs/screenshots/journal-discover-en.png)
+![期刊发现模式：按领域关键字的行式列表，带分区徽章与排序 chips](docs/screenshots/journal-discover-zh.png)
 
 ### 3. 网络搜索
 
