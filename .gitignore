@@ -1,5 +1,7 @@
-# dot files
+# OS files
 .DS_Store
+Thumbs.db
+Desktop.ini
 .vscode/
 
 # Node.js
@@ -16,8 +18,11 @@ src/**/*.d.ts
 # Scaffold
 .env
 .scaffold
-build
-logs
+/build/
+/logs/
+
+# Logs
+*.log
 
 # Coverage / test artifacts
 coverage/
