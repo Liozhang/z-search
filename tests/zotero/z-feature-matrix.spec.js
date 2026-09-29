@@ -1136,7 +1136,8 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
       errWin?.addEventListener("error", (e) => {
         pageErrors.push(String(e?.message || e));
       });
-      const webTab = findVisibleBtn("网络搜索");
+      // 2026-09-29 P3-c：tab 文案更名「学术检索」后同步此处的文案耦合
+      const webTab = findVisibleBtn("学术检索");
       expect(webTab, "web tab present").to.be.ok;
       if (webTab.getAttribute("aria-pressed") !== "true") {
         webTab.click();

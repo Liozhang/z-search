@@ -453,9 +453,11 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       // 期刊仪表盘的 metric 查证是纯本地命中（JCR/CASS/预警/Beall's 内置
       // 库）——确定性渲染掠夺性徽章。文献结果卡的徽章渲染由同一配方覆盖。
       // 2026-09-28 域 tab 三段化：期刊入口 = tab 行文字钮（页头图标对钮退役）。
+      // 本套件强制 en-US，tab 渲染 "Journal"——双语文案匹配，勿用精确「期刊」
+      // （2026-09-29 巡检：三段化后此处只在中文界面成立，en-US 必失败）。
       const journalTab = Array.from(
         hubDoc()?.querySelectorAll("button") || [],
-      ).find((b) => (b.textContent || "").trim() === "期刊");
+      ).find((b) => /^(Journal|期刊)$/.test((b.textContent || "").trim()));
       if (!journalTab) {
         reportError("hub-visual-bealls", { message: "journal tab missing" });
       }

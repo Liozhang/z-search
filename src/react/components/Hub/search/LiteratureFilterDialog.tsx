@@ -10,9 +10,13 @@
  * 复用 GraphFilterDialog 三段式骨架与 hub-graph-filter-* 类族——该类族是
  * Hub 筛选弹窗的通用语言（图谱/文献两处单源），非图谱私有。
  *
- * 生效契约（2026-08-25 用户裁决）：无「应用」钮、改动即时上抛，但到下次
- * 搜索才生效——外部 API 有请求成本，弹窗不触发重查；footer 右置已启用
- * 计数，不做图谱式的实时结果计数。
+ * 生效契约（2026-08-25 用户裁决）：改动即时上抛，但到下次搜索才生效——
+ * 外部 API 有请求成本，弹窗不触发重查；footer 右置已启用计数，不做图谱式
+ * 的实时结果计数。
+ * 「确认」钮（2026-09-29 巡检 P3-a）：仅关窗，改动已即时生效。此前保留
+ * 改动的唯一关闭路径是右上角 ×，footer 只有「取消」（还原快照并关窗）
+ * 与「全部重置」，想保留改动只能点 ×，语义容易含混。「取消」的还原语义
+ * 不变。
  *
  * 年份：起止 NumberField 对 + 快捷预设（锚点=当前年；图谱版锚点=数据派生
  * fullRange）。桥接层 year 契约只认「单年份」或「lo-hi 闭区间」
@@ -504,6 +508,15 @@ export function LiteratureFilterDialog({
 
         <Toolbar.Root className="hub-graph-filter-footer">
           <Toolbar.Group>
+            {/* 确认＝保留改动并关窗（改动本就即时上抛，见文件头契约） */}
+            <Button
+              type="button"
+              variant="default"
+              size="default"
+              onClick={onClose}
+            >
+              {getString("common-confirm")}
+            </Button>
             <Button
               type="button"
               variant="ghost"

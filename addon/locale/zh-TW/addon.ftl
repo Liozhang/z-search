@@ -224,6 +224,9 @@ journal-is-top-label = 頂刊
 journal-minor-categories-label = 小類
 journal-warning-label = 國際預警
 journal-predatory-label = 掠奪性
+# 名單類別（2026-09-29 巡檢 P3-b：內部類別值不再原樣上屏）
+journal-predatory-cat-standalone = 獨立期刊
+journal-predatory-cat-hijacked = 劫持期刊
 journal-works-count-label = 發文量
 journal-h5-index-label = h5 指數
 journal-library-count-label = 庫內篇數
@@ -305,11 +308,13 @@ brain-export = 匯出 { $count ->
 }
 
 # Search
-# 雙 tab（2026-09-23）：網路=外部資料庫，本地=文庫。tab 即範圍，
+# 雙 tab（2026-09-23）：學術=外部資料庫，本地=文庫。tab 即範圍，
 # 原來全域並聯混清單與 includeLibrary 開關隨之退役。
 hub-search-tab-label = 搜尋範圍
-hub-search-tab-web = 網路搜尋
+hub-search-tab-web = 學術檢索
 hub-search-tab-local = 本地搜尋
+# 本地 tab 無索引時搜尋鈕的禁用提示（2026-09-29 巡檢 P2-a）
+hub-search-local-unavailable-tip = 建立全文索引後才能檢索館內內容
 # 兩個 tab 各自的輸入框佔位符
 hub-search-placeholder-web = 輸入研究問題、關鍵詞或 DOI… 例：multi-agent literature review
 hub-search-placeholder-local = 輸入關鍵詞，檢索文庫標題、摘要與全文…

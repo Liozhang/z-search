@@ -185,7 +185,13 @@ export function LiteratureSearchPage({
   // ── 当前 tab 的查询/检索/清除 ────────────────────────────────────────────
   const query = scope === "web" ? lit.query : sem.searchQuery;
   const isSearching = scope === "web" ? lit.isSearching : sem.isSearching;
+  // 本地 tab 无索引闸（2026-09-29 巡检 P2-a）：索引态已载入且库内什么索引
+  // 都没有时，检索注定空手——按钮禁用 + 提示语，键盘回车由 runSearch 内
+  // 同款守卫兜住。indexStatus 为 null（尚未载入）不拦，避免加载闪禁。
+  const localSearchBlocked =
+    scope === "local" && !!sem.indexStatus && !hasIndex;
   const runSearch = () => {
+    if (localSearchBlocked) return;
     if (scope === "web") void lit.handleSearch();
     else void sem.handleSearch(query);
   };
@@ -463,13 +469,23 @@ export function LiteratureSearchPage({
               {getString("btn-cancel")}
             </Button>
           ) : (
-            <Button
-              variant="default"
-              disabled={!query.trim()}
-              onClick={runSearch}
+            /* 禁用原因用外层 span title 承载——禁用钮自身不冒悬停事件
+               （与找相似/查重锚点钮同款做法） */
+            <span
+              title={
+                localSearchBlocked
+                  ? getString("hub-search-local-unavailable-tip")
+                  : undefined
+              }
             >
-              {getString("common-search")}
-            </Button>
+              <Button
+                variant="default"
+                disabled={!query.trim() || localSearchBlocked}
+                onClick={runSearch}
+              >
+                {getString("common-search")}
+              </Button>
+            </span>
           )}
         </div>
 

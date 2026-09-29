@@ -214,6 +214,9 @@ journal-minor-categories-label = 小类
 journal-warning-label = 国际预警
 journal-predatory-label = 掠夺性
 journal-predatory-data-year = Beall's 列表截止：2017 年 1 月
+# 名单类别（2026-09-29 巡检 P3-b：内部类别值不再原样上屏）
+journal-predatory-cat-standalone = 独立期刊
+journal-predatory-cat-hijacked = 劫持期刊
 journal-works-count-label = 发文量
 journal-h5-index-label = h5 指数
 journal-library-count-label = 库内篇数
@@ -320,11 +323,13 @@ window-init-failed-retry = 请尝试关闭并重新打开窗口。
 tracker-state-n-unread = { $count } 条未读变化
 
 # Search
-# 双 tab（2026-09-23）：网络=外部数据库，本地=文库。tab 即范围，
+# 双 tab（2026-09-23）：学术=外部数据库，本地=文库。tab 即范围，
 # 原来的全域并联混列表与 includeLibrary 开关随之退役。
 hub-search-tab-label = 搜索范围
-hub-search-tab-web = 网络搜索
+hub-search-tab-web = 学术检索
 hub-search-tab-local = 本地搜索
+# 本地 tab 无索引时搜索钮的禁用提示（2026-09-29 巡检 P2-a）
+hub-search-local-unavailable-tip = 构建全文索引后才能检索库内内容
 # 两个 tab 各自的输入框占位符
 hub-search-placeholder-web = 输入研究问题、关键词或 DOI… 例：multi-agent literature review
 hub-search-placeholder-local = 输入关键词，检索文库标题、摘要与全文…

@@ -26,6 +26,13 @@ function isZhUi(): boolean {
   return (getLocaleTag() || "").toLowerCase().startsWith("zh");
 }
 
+/** Beall's 名单类别 → 本地化键（2026-09-29 巡检 P3-b：内部类别值不再原样
+    上屏）。未收录的新类别回落为原始值展示，不吞信息。 */
+const PREDATORY_CATEGORY_KEYS: Record<string, string> = {
+  standalone: "journal-predatory-cat-standalone",
+  hijacked: "journal-predatory-cat-hijacked",
+};
+
 /* 分区色阶退役（砚法 §5.3 语义外色相违法；Q3/Q4 撞色不可辨）：Q1 保留
    --accent 单强调档，Q2-Q4 统一 text-primary——分区语义由 Q1-Q4 文字承载，
    颜色非唯一通道（§10.5）。未知分区（data-quartile=''）维持淡档。
@@ -334,8 +341,16 @@ export function JournalMetricCard({
                 title={getString("journal-predatory-data-year")}
               >
                 {getString("journal-predatory-label")}
+                {/* 名单类别本地化后再上屏（2026-09-29 巡检 P3-b）：
+                    已收录类别走文案键，未收录的新类别仍原样展示 */}
                 {metric.predatoryCategory
-                  ? ` (${metric.predatoryCategory})`
+                  ? ` (${
+                      PREDATORY_CATEGORY_KEYS[metric.predatoryCategory]
+                        ? getString(
+                            PREDATORY_CATEGORY_KEYS[metric.predatoryCategory],
+                          )
+                        : metric.predatoryCategory
+                    })`
                   : ""}
               </span>
             </div>

@@ -218,6 +218,9 @@ journal-minor-categories-label = Minor Categories
 journal-warning-label = Warning List
 journal-predatory-label = Predatory
 journal-predatory-data-year = Beall's list cutoff: Jan 2017
+# List category (ui audit P3-b: internal category values no longer surface raw)
+journal-predatory-cat-standalone = standalone journal
+journal-predatory-cat-hijacked = hijacked journal
 journal-works-count-label = Works
 journal-h5-index-label = h5-index
 journal-library-count-label = Papers
@@ -336,8 +339,10 @@ tracker-state-n-unread = { $count ->
 # IS the scope; the old always-on fan-out merged list and includeLibrary switch
 # retired with it.
 hub-search-tab-label = Search scope
-hub-search-tab-web = Web Search
+hub-search-tab-web = Academic Search
 hub-search-tab-local = Local Search
+# Disabled search-button tooltip when the local tab has no index (ui audit P2-a)
+hub-search-local-unavailable-tip = Build the full-text index to search your library
 # Per-tab input placeholders
 hub-search-placeholder-web = Enter a research question, keywords, or DOI… e.g. multi-agent literature review
 hub-search-placeholder-local = Search your library by title, abstract, and full text…

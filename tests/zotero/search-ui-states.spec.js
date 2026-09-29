@@ -2,13 +2,13 @@
  * search-ui-states 集成冒烟（真实 Zotero 内运行）——双 tab 化（2026-09-23）后
  * 的回归守卫。
  *
- *   T1 tab 行：网络/本地两枚，默认网络搜索，点击切换 aria-pressed；
- *   T2 网络 tab：状态条只读外部腿（无「库内」）、工具只有 筛选/清除
+ *   T1 tab 行：学术/本地两枚，默认学术检索，点击切换 aria-pressed；
+ *   T2 学术 tab：状态条只读外部腿（无「库内」）、工具只有 筛选/清除
  *      （查找相似不露面）、初始空态讲外部数据库；
  *   T3 本地 tab：状态条读库内腿、工具含 查找相似/重复检测、无索引时空态
  *      给出实心「构建全文索引」主按钮（用户裁决：按钮住空态，不平铺横幅）；
  *   T4 清除按需渲染：输入后出现、点了真清空；
- *   T5 筛选弹窗按 tab 分流：网络弹出现源 chips 组，本地弹不出；
+ *   T5 筛选弹窗按 tab 分流：学术弹出源 chips 组，本地弹不出；
  *   T6 域 tab 行三段（2026-09-28 三段化）：期刊 tab 切到期刊仪表盘并能
  *      切回网络（页头「文献/期刊」图标对钮已退役）。
  *
@@ -86,7 +86,7 @@ describe("z-search search page UI states (real Zotero integration)", function ()
   });
 
   it("T1: tab row offers web/local with web as the default scope", function () {
-    const web = findBtn("网络搜索");
+    const web = findBtn("学术检索");
     const local = findBtn("本地搜索");
     expect(web, "web tab present").to.be.ok;
     expect(local, "local tab present").to.be.ok;
@@ -98,8 +98,8 @@ describe("z-search search page UI states (real Zotero integration)", function ()
 
   it("T2: web tab shows only the external leg and the import-oriented tools", async function () {
     // 默认已在网络 tab；保险起见显式切回（前序用例可能切过 tab）。
-    if (findBtn("网络搜索").getAttribute("aria-pressed") !== "true") {
-      await switchTab("网络搜索");
+    if (findBtn("学术检索").getAttribute("aria-pressed") !== "true") {
+      await switchTab("学术检索");
     }
     const strip = doc.querySelector(".hub-search-engine-strip");
     expect(strip, "engine strip present").to.be.ok;
@@ -159,7 +159,7 @@ describe("z-search search page UI states (real Zotero integration)", function ()
   });
 
   it("T4: clear appears with a query, empties it, then hides", async function () {
-    await switchTab("网络搜索");
+    await switchTab("学术检索");
     // 初始态（空查询、未检索）不渲染清除
     expect(findBtn("清除"), "clear hidden when nothing to clear").to.be.null;
     const input = doc.querySelector("input");
@@ -232,10 +232,10 @@ describe("z-search search page UI states (real Zotero integration)", function ()
       (g) => g.getAttribute("aria-label") === "检索模式",
     );
     expect(modeGroup, "journal dashboard mode toggle rendered").to.be.ok;
-    findBtn("网络搜索").click();
+    findBtn("学术检索").click();
     await sleep(1200);
     expect(
-      findBtn("网络搜索").getAttribute("aria-pressed"),
+      findBtn("学术检索").getAttribute("aria-pressed"),
       "back to the web tab",
     ).to.equal("true");
   });
