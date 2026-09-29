@@ -193,13 +193,6 @@ metrics, warning lists, predatory lists, and a discover mode).
   shortcut, or Tools menu ▸ "Open Search Center" opens the search window
 - Item context menu ▸ "Find Similar Items" (enabled when exactly one regular
   item is selected) jumps straight to find-similar
-- Deep link: `hubWindowManager.openHub("search")`
-
-## Development
-
-Architecture notes, the upstream leadero porting changes, and the
-build/test/deploy/release workflows live in
-[docs/development.md](docs/development.md).
 
 ## License
 
