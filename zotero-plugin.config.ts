@@ -127,6 +127,9 @@ if (typeof Buffer === "undefined") {
   },
 
   release: {
+    // 发布说明取 CHANGELOG.md 中当前版本的小节（脚本按 package.json 的
+    // version 定位，bump 先行故能对上），不再产出「No significant changes」。
+    changelog: "node scripts/extract-changelog.cjs",
     bumpp: {
       // bump 后本地执行生产构建：`npm run build` 是 --dev 变体（不压缩、
       // 保留 console），不能作为发布产物。
