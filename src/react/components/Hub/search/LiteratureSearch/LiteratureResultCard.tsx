@@ -67,6 +67,7 @@ export interface LiteratureResultCardProps {
   translation?: {
     status: "loading" | "success" | "error";
     translatedText?: string;
+    truncated?: boolean;
     error?: string;
   };
   onToggleSelect: (key: string) => void;
@@ -330,6 +331,11 @@ export function LiteratureResultCard({
               </div>
               {translation?.status === "success" && (
                 <div className="lit-translation mt-[var(--space-3)] pt-[var(--space-2)]">
+                  {translation.truncated && (
+                    <div className="lit-translation-truncated mb-[var(--space-1)] text-[length:var(--text-2xs)] text-[color:var(--signal-yellow-text)]">
+                      {getString("lit-translate-truncated")}
+                    </div>
+                  )}
                   <div className="lit-translation-text text-[length:var(--text-sm)] text-[color:var(--text-secondary)] leading-[var(--leading-normal)] whitespace-pre-wrap break-words">
                     {translation.translatedText}
                   </div>

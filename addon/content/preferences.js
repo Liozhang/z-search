@@ -265,6 +265,54 @@ var ZSearchPrefs = {
         var ml = doc.getElementById("zsearch-translate-bingregion");
         api.setPrefDynamic("translate.bing.region", ml.value.trim());
       });
+
+    // ── 持久缓存与截断上限（2026-09-30 优化批）──
+    doc
+      .getElementById("zsearch-translate-cache-enabled")
+      .setAttribute("label", this.t("prefs-translate-cache-enabled"));
+    doc.getElementById("zsearch-translate-cache-desc").textContent = this.t(
+      "prefs-translate-cache-desc",
+    );
+    doc
+      .getElementById("zsearch-translate-maxchars-label")
+      .setAttribute("value", this.t("prefs-translate-maxchars-label"));
+    doc
+      .getElementById("zsearch-translate-cache-maxmb-label")
+      .setAttribute("value", this.t("prefs-translate-cache-maxmb-label"));
+
+    var cacheCb = doc.getElementById("zsearch-translate-cache-enabled");
+    var cacheOn = api.getPrefDynamic("translate.cache.enabled");
+    if (cacheOn === undefined || cacheOn === null) cacheOn = true;
+    cacheCb.setAttribute("checked", cacheOn ? "true" : "false");
+    cacheCb.addEventListener("command", function () {
+      var on = cacheCb.getAttribute("checked") === "true";
+      api.setPrefDynamic("translate.cache.enabled", on);
+    });
+
+    var bindNum = function (inputId, prefKey, dflt, min) {
+      var input = doc.getElementById(inputId);
+      var cur = Number(api.getPrefDynamic(prefKey));
+      if (!Number.isFinite(cur)) cur = dflt;
+      input.value = String(cur);
+      input.addEventListener("change", function () {
+        var n = parseInt(input.value, 10);
+        if (!Number.isFinite(n) || n < min) {
+          input.value = String(cur); // 非法输入回退原值
+          return;
+        }
+        cur = n;
+        api.setPrefDynamic(prefKey, n);
+      });
+    };
+    // 截断上限：0 = 不限长（handler 只在 maxChars > 0 时截断）
+    bindNum("zsearch-translate-maxchars", "translate.maxChars", 10000, 0);
+    // 缓存容量：必须 ≥ 1——想关缓存请用上面的开关，别把容量清零
+    bindNum(
+      "zsearch-translate-cache-maxmb",
+      "translate.cache.maxSizeMB",
+      200,
+      1,
+    );
   },
 
   // ── 数据 ────────────────────────────────────────────────────────────────

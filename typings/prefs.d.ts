@@ -95,6 +95,8 @@ declare namespace _ZoteroTypes {
       "translate.custom.apiUrl": string;
       "translate.custom.apiKey": string;
       "translate.custom.model": string;
+      "translate.cache.enabled": boolean;
+      "translate.cache.maxSizeMB": number;
       "discovery.blacklist": string;
       "discovery.whitelist": string;
       "pdfIndexer.lastFullTextVersion": number;

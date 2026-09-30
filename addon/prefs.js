@@ -124,6 +124,9 @@ pref("translate.deepl.useFree", false);
 pref("translate.custom.apiUrl", "");
 pref("translate.custom.apiKey", "");
 pref("translate.custom.model", "");
+// 持久翻译缓存（translationCache.ts）：启动按 maxSizeMB 修剪，enabled=false 整体停用。
+pref("translate.cache.enabled", true);
+pref("translate.cache.maxSizeMB", 200);
 
 // ── Discovery 过滤器（黑/白名单，JSON）────────────────────────────
 pref("discovery.blacklist", "{}");

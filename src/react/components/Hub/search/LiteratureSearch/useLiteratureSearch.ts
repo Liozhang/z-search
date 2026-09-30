@@ -120,6 +120,7 @@ export function useLiteratureSearch() {
       {
         status: "loading" | "success" | "error";
         translatedText?: string;
+        truncated?: boolean;
         error?: string;
       }
     >
@@ -435,6 +436,7 @@ export function useLiteratureSearch() {
         const data = await semanticRequest<{
           success: boolean;
           translatedText?: string;
+          truncated?: boolean;
           error?: string;
         }>("literature.translate", { text }, 60000);
         if (data?.success && data.translatedText) {
@@ -443,6 +445,7 @@ export function useLiteratureSearch() {
             next.set(key, {
               status: "success",
               translatedText: data.translatedText,
+              truncated: data.truncated,
             });
             return next;
           });

@@ -33,6 +33,25 @@ import { DEFAULT_TRANSLATE_ENGINE_TYPE } from "../../utils/defaults";
 import { toErrorMessage } from "../../utils/error";
 import { getString } from "../../utils/locale";
 
+/**
+ * Floor for the model-backed engines' output budget. Reasoning-style models
+ * spend completion tokens on hidden thinking before any visible text, so a
+ * purely length-derived cap empties the budget mid-reasoning and returns no
+ * content at all (observed on StepFun step-3.7-flash by z-transplit, 2026-09:
+ * a 37-char selection with the length-derived cap came back
+ * finish_reason=length, content=""). 4096 leaves comfortable headroom for
+ * reasoning plus the answer even on longer selections.
+ * （自 z-transplit 搬入，见 docs/optimization-from-siblings-2026-09-30.md 第 2 项）
+ */
+const MODEL_OUTPUT_FLOOR_TOKENS = 4096;
+
+/**
+ * Cap for the single-passage request budget (before the floor applies). The
+ * floor dominates for anything under ~4k chars; this only bounds very long
+ * single passages so a pathological paste can't request an unbounded budget.
+ */
+const SINGLE_OUTPUT_MAX_TOKENS = 8192;
+
 export type TranslationEngineType =
   | "ai"
   | "google"
@@ -98,6 +117,30 @@ function toDeepLTargetLang(code: string): string {
  */
 const KEYLESS_ENDPOINT_TIMEOUT_MS = 10000;
 
+/**
+ * Timeout signal for the keyless endpoints. The bootstrap sandbox（Zotero 10
+ * 实机验证 2026-09-30）不暴露 AbortSignal 全局——裸调 AbortSignal.timeout 会
+ * 抛 ReferenceError，让 Google 与 Bing web 兜底在毫秒级双双失败。优先用宿主
+ * AbortSignal.timeout，退回 AbortController + setTimeout，两者皆缺时放弃
+ * 超时（signal 传 undefined）——宁可没有超时，也不能让请求直接炸掉。
+ */
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  const G = globalThis as any;
+  try {
+    if (typeof G.AbortSignal?.timeout === "function") {
+      return G.AbortSignal.timeout(ms);
+    }
+    if (typeof G.AbortController === "function") {
+      const ctl = new G.AbortController();
+      setTimeout(() => ctl.abort(), ms);
+      return ctl.signal;
+    }
+  } catch {
+    /* fall through */
+  }
+  return undefined;
+}
+
 async function httpPost(
   url: string,
   headers: Record<string, string>,
@@ -111,7 +154,7 @@ async function httpPost(
       ...headers,
     },
     body,
-    signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
+    signal: timeoutMs ? timeoutSignal(timeoutMs) : undefined,
   });
   if (!resp.ok) {
     const text = await resp.text().catch(() => "");
@@ -133,7 +176,7 @@ async function httpPostForm(
       ...headers,
     },
     body: body.toString(),
-    signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
+    signal: timeoutMs ? timeoutSignal(timeoutMs) : undefined,
   });
   if (!resp.ok) {
     const text = await resp.text().catch(() => "");
@@ -144,7 +187,7 @@ async function httpPostForm(
 
 async function httpGet(url: string, timeoutMs?: number): Promise<Response> {
   const resp = await fetch(url, {
-    signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
+    signal: timeoutMs ? timeoutSignal(timeoutMs) : undefined,
   });
   if (!resp.ok) {
     const text = await resp.text().catch(() => "");
@@ -301,7 +344,12 @@ export function resetBingWebSession(): void {
 
 /** Map Zotero locale codes to Bing web language ids (zh-CN → zh-Hans etc.). */
 function toBingWebLang(code: string): string {
-  if (!code || code === "auto") return "auto";
+  // 线上 ttranslatev3 端点拒绝 fromLang=auto（{"statusCode":400}，z-transplit
+  // 2026-09-24 实机验证）；显式传 auto 时必须请求 auto-detect。本仓库的
+  // translateWithBingWeb 已用 detectBingSourceLang 覆盖未传/传 auto 的主入口，
+  // 此映射兜底其余直接调用方（自 z-transplit 搬入，见
+  // docs/optimization-from-siblings-2026-09-30.md 第 8 项）。
+  if (!code || code === "auto") return "auto-detect";
   if (code === "zh-CN") return "zh-Hans";
   if (code === "zh-TW" || code === "zh-HK") return "zh-Hant";
   return code.split("-")[0];
@@ -375,7 +423,7 @@ async function postBingWebTranslate(
         Referer: `${session.origin}/translator`,
       },
       body: body.toString(),
-      signal: AbortSignal.timeout(KEYLESS_ENDPOINT_TIMEOUT_MS),
+      signal: timeoutSignal(KEYLESS_ENDPOINT_TIMEOUT_MS),
     });
     if (!resp.ok) {
       return {
@@ -539,7 +587,10 @@ async function translateWithCustom(
         { role: "user", content: text },
       ],
       temperature: 0.3,
-      max_tokens: Math.min(text.length * 2, 4000),
+      max_tokens: Math.max(
+        MODEL_OUTPUT_FLOOR_TOKENS,
+        Math.min(text.length * 2, SINGLE_OUTPUT_MAX_TOKENS),
+      ),
     });
 
     // Ensure URL doesn't end with /v1/chat/completions already
@@ -642,13 +693,48 @@ export function getEngineConfig(): EngineConfig {
   };
 }
 
+/**
+ * Stable fingerprint of the engine configuration for the persistent
+ * translation cache (translationCache.ts). Two runs with the same identity
+ * are assumed to produce interchangeable translations, so cached results are
+ * reused. Credentials only enter as a short suffix (never the full secret).
+ * （自 z-transplit 搬入，见 docs/optimization-from-siblings-2026-09-30.md 第 5 项）
+ *
+ * The "ai" engine additionally fingerprints its resolved model id: the model
+ * *is* the engine's behaviour, so switching models must not serve the previous
+ * model's cached translations. (This repo's AI engine has no user-editable
+ * prompt template, so z-transplit 的 prompt 指纹在此不需要。)
+ */
+export async function engineCacheIdentity(): Promise<string> {
+  const cfg = getEngineConfig();
+  const parts: string[] = [cfg.engineType];
+  if (cfg.engineType === "ai") {
+    const { default: modelRouter } = await import("../ai/ModelRouter");
+    parts.push(modelRouter.resolveModelId?.("translate.reader") || "");
+  } else if (cfg.engineType === "custom") {
+    parts.push(
+      cfg.customModel || "",
+      cfg.customApiUrl || "",
+      (cfg.customApiKey || "").slice(-6),
+    );
+  } else if (cfg.engineType === "google") {
+    parts.push(cfg.googleApiKey ? "keyed" : "keyless");
+  } else if (cfg.engineType === "bing") {
+    parts.push((cfg.bingApiKey || "").slice(-6), cfg.bingRegion || "global");
+  } else if (cfg.engineType === "deepl") {
+    parts.push(
+      cfg.deeplUseFree ? "free" : "pro",
+      (cfg.deeplApiKey || "").slice(-6),
+    );
+  }
+  return parts.join("|");
+}
+
 /** In-memory LRU cache for translation results.
  *  Eliminates repeat API calls for the same text + language + engine combo.
  *  Session-scoped (not persisted) — translations are cheap to redo on restart. */
 const TRANSLATION_CACHE = new Map<string, string>();
-const TRANSLATION_CACHE_MAX = 500;
-
-/** Clear the translation cache (e.g. when engine settings change). */
+const TRANSLATION_CACHE_MAX = 500; /** Clear the translation cache (e.g. when engine settings change). */
 export function clearTranslationCache(): void {
   TRANSLATION_CACHE.clear();
 }
@@ -899,7 +985,10 @@ function createAITranslator(
         { role: "user", content: text },
       ],
       model,
-      maxTokens: Math.min(text.length * 2, 4000),
+      maxTokens: Math.max(
+        MODEL_OUTPUT_FLOOR_TOKENS,
+        Math.min(text.length * 2, SINGLE_OUTPUT_MAX_TOKENS),
+      ),
     });
 
     if (!result || !result.content) {
@@ -1288,7 +1377,10 @@ export async function createAIBatchTranslator(
               { role: "user", content: texts[i] },
             ],
             model,
-            maxTokens: Math.min(texts[i].length * 2, 4000),
+            maxTokens: Math.max(
+              MODEL_OUTPUT_FLOOR_TOKENS,
+              Math.min(texts[i].length * 2, SINGLE_OUTPUT_MAX_TOKENS),
+            ),
             temperature: 0.1,
             feature: "translation",
             onStream: () => {},

@@ -7,6 +7,8 @@
 
 import type { HubWindowBridge } from "./HubWindowBridge";
 import { toErrorMessage } from "../../utils/error";
+import { getPrefDynamic } from "../../utils/prefs";
+import { truncate } from "../../utils/truncate";
 import type { ImportResult } from "../../types/literatureSearch";
 import academicSearch from "../../core/tool/builtin/handlers/academic-search/index";
 import { safeDebug } from "../../utils/logger";
@@ -721,29 +723,102 @@ export async function handleLiteratureRequest(
           break;
         }
         try {
-          const { createTranslator } =
+          const { createTranslator, engineCacheIdentity } =
             await import("../../core/translation/translationEngines");
+          const translationCache =
+            await import("../../core/translation/translationCache");
           // 目标语言缺省跟随 Zotero 界面语言，兜底 en-US——不再硬编码
           // zh-CN（那对非中文用户会把英文摘要译成中文）。引擎可达性由
           // translate.engineType / utils/region 管。
           const targetLanguage =
             payload.targetLanguage || (Zotero as any).locale || "en-US";
+
+          // 长度截断保护（自 leadero 搬入，见
+          // docs/optimization-from-siblings-2026-09-30.md 第 4 项）：
+          // 超长摘要按原文全量发送既浪费有额度引擎的配额，也可能被网关
+          // 直接拒包。translate.maxChars ≤ 0 视为不限长。
+          const maxChars =
+            (getPrefDynamic("translate.maxChars") as number) ?? 10000;
+          let truncated = false;
+          let processingText = payload.text;
+          if (maxChars > 0 && payload.text.length > maxChars) {
+            processingText = truncate(payload.text, maxChars);
+            truncated = true;
+          }
+
+          // 持久翻译缓存（自 z-transplit 搬入，见同文档第 5 项）：键含
+          // 引擎身份与语言对，重复检索同一批文献时直接命中，不再消耗
+          // 有额度限制引擎（AI、DeepL）的调用。读失败按未命中处理。
+          let cacheIdentity = "";
+          if (translationCache.cacheAvailable()) {
+            try {
+              cacheIdentity = await engineCacheIdentity();
+              const key = await translationCache.cacheKey(
+                cacheIdentity,
+                payload.sourceLanguage || "auto",
+                targetLanguage,
+                processingText,
+              );
+              const hits = await translationCache.getCachedTranslations([key]);
+              const hit = key ? hits.get(key) : undefined;
+              if (hit !== undefined) {
+                result = { success: true, translatedText: hit, truncated };
+                break;
+              }
+            } catch (e) {
+              safeDebug(
+                `[z-search] literature.translate cache lookup failed (non-fatal): ${e}`,
+              );
+            }
+          }
+
           const translate = createTranslator(
             targetLanguage,
             payload.sourceLanguage,
           );
           const translatedText = await translate(
-            payload.text,
+            processingText,
             targetLanguage,
             payload.sourceLanguage,
           );
           if (translatedText) {
-            result = { success: true, translatedText };
+            result = { success: true, translatedText, truncated };
+            // 写缓存 fire-and-forget：不阻塞回执，失败不影响本次结果。
+            if (cacheIdentity) {
+              void translationCache
+                .putCachedTranslation(
+                  cacheIdentity,
+                  payload.sourceLanguage || "auto",
+                  targetLanguage,
+                  processingText,
+                  translatedText,
+                )
+                .catch(() => {});
+            }
           } else {
             result = { success: false, error: "Translation returned empty" };
           }
         } catch (e: any) {
-          result = { success: false, error: toErrorMessage(e) };
+          const msg = toErrorMessage(e);
+          // 错误分类（自 leadero 搬入）：MT 引擎失败自带引擎名开头，
+          // 原样透传——别让 Google/Bing 的「quota」响应体被误判成 AI
+          // 配额问题；其余配额/限流/计费类归类为可操作错误码。
+          if (/^(Google|Bing|DeepL|Custom API|自定义 API)/.test(msg)) {
+            result = { success: false, error: msg };
+          } else if (
+            msg.includes("quota") ||
+            msg.includes("rate limit") ||
+            msg.includes("billing")
+          ) {
+            result = { success: false, error: "ai-quota-exceeded" };
+          } else if (
+            msg.includes("not configured") ||
+            msg.includes("api key")
+          ) {
+            result = { success: false, error: "ai-not-configured" };
+          } else {
+            result = { success: false, error: msg };
+          }
         }
         break;
       }
