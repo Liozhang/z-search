@@ -17,7 +17,7 @@
 Hi everyone!
 
 I'd like to share a plugin I've been working on: **z-search**, an open-source
-(MIT) search hub that puts most of the searching you do around your library
+(AGPL-3.0) search hub that puts most of the searching you do around your library
 into a single window — https://github.com/Liozhang/z-search
 
 **What it does**
@@ -82,7 +82,7 @@ helps others find it too.
 
 **正文：**
 
-大家好，分享一个我开发的 Zotero 检索插件 **z-search**（开源，MIT 协议）：
+大家好，分享一个我开发的 Zotero 检索插件 **z-search**（开源，AGPL-3.0 协议）：
 把围绕文献库的大部分检索收进一个窗口。
 
 **核心功能**

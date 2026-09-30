@@ -22,7 +22,7 @@
   },
   "author": "Liozhang",
   "homepage": "https://github.com/Liozhang/z-search#readme",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "postinstall": "patch-package && node scripts/build-ort-assets.cjs",
     "dev": "zotero-plugin serve",

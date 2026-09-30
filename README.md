@@ -19,7 +19,7 @@
 
 [![Release](https://img.shields.io/github/v/release/Liozhang/z-search?color=blue&logo=github)](https://github.com/Liozhang/z-search/releases)
 [![CI](https://github.com/Liozhang/z-search/actions/workflows/ci.yml/badge.svg)](https://github.com/Liozhang/z-search/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/Liozhang/z-search/total?color=orange)](https://github.com/Liozhang/z-search/releases)
 [![Zotero 9 ~ 10](https://img.shields.io/badge/Zotero-9%20~%2010-CC6633.svg)](https://www.zotero.org/)
 
@@ -196,4 +196,4 @@ metrics, warning lists, predatory lists, and a discover mode).
 
 ## License
 
-MIT
+AGPL-3.0
