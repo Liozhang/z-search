@@ -16,7 +16,6 @@ common-no-selection = Please select an item first
 common-searching = Searching...
 common-search = Search
 common-results = Results
-progress-saving = Saving...
 error-boundary-message = Something went wrong
 error-bridge-timeout = Request timed out: { $method } got no response. Please retry; if it keeps happening, check your network, index, or model configuration.
 # Relative time
@@ -427,6 +426,7 @@ lit-abstract-label = Abstract
 lit-translate-btn = Translate
 lit-translating = Translating...
 lit-translate-error = Translation failed
+lit-translate-truncated = Abstract too long, translation truncated
 
 # Full text (PMC open-access JATS XML first, OA web page fallback)
 lit-fulltext-title = Full text
@@ -495,19 +495,6 @@ hub-graph-filter-reset = Reset All
 hub-graph-filter-count = { $shown } / { $total } nodes shown
 error-hub-render = Failed to render Hub
 # PaperGraph standalone window (PaperGraphWindow/DetailPanel/RelatedPanel)
-# === Hub Settings (Phase 1) ===
-# Section titles in SettingsPane. Field-level labels reuse pref-* keys from preferences.ftl.
-hub-settings-bad-ascii = Value contains non-ASCII characters which will cause HTTP errors.
-# === Hub Settings redesign (R1+) ===
-hub-settings-saved = Saved
-hub-settings-save-failed = Save failed
-
-hub-settings-key-mask-placeholder = Add key…
-hub-settings-key-empty = Not configured
-hub-settings-key-show = Show
-hub-settings-key-hide = Hide
-hub-settings-key-copy = Copy
-# === Hub Settings Part A bug fixes ===
 # === Hub Settings Part B1: section titles ===
 hub-settings-section-research = Research
 hub-settings-section-item-columns = Item List Columns
@@ -616,6 +603,11 @@ prefs-translate-engine-custom = Custom OpenAI-compatible endpoint
 prefs-translate-engine-zotero-pdf-translate = zotero-pdf-translate (if installed)
 prefs-translate-bingregion-label = Azure region
 prefs-translate-note = The Azure region applies to the Azure Translator engine only. Engine API keys are not surfaced in this pane yet - set them under extensions.zotero.zsearch.translate.* in the Config Editor.
+prefs-translate-cache-enabled = Persistent abstract-translation cache
+prefs-translate-cache-desc =
+    Translations are stored on disk and reused: re-running a search on the same papers no longer spends quota-limited engine calls (AI, DeepL). Cached files live in the zsearch/translation-cache/ folder inside the Zotero data directory.
+prefs-translate-maxchars-label = Abstract truncation limit (chars, 0 = no limit)
+prefs-translate-cache-maxmb-label = Cache size cap (MB)
 soul-name-datasource-manager-soul = Data Source Manager
 # ── 进程超时对话框 / OAuth 落地页 / 聊天与进度兜底文案（2026-09-17 清理批六）
 

@@ -16,7 +16,6 @@ common-no-selection = 请先选择一个条目
 common-searching = 搜索中...
 common-search = 搜索
 common-results = 结果
-progress-saving = 保存中...
 # ============================================================
 # Auto-generated i18n entries for tools and prompts
 # DO NOT EDIT manually - use consistent naming: tool-{id}-{field}
@@ -414,6 +413,7 @@ lit-abstract-label = 摘要
 lit-translate-btn = 翻译
 lit-translating = 翻译中...
 lit-translate-error = 翻译失败
+lit-translate-truncated = 摘要过长，已截断翻译
 
 # Full text（PMC 开放获取 JATS XML 优先，开放获取网页兜底）
 lit-fulltext-title = 全文
@@ -483,19 +483,6 @@ hub-graph-filter-reset = 全部重置
 hub-graph-filter-count = 显示 { $shown } / { $total } 个节点
 error-hub-render = Hub 渲染失败
 # PaperGraph 独立窗口（PaperGraphWindow/DetailPanel/RelatedPanel）
-# === Hub 设置（Phase 1） ===
-# SettingsPane 的区段标题。字段级标签复用 preferences.ftl 里的 pref-* 键。
-hub-settings-bad-ascii = 值含非 ASCII 字符，会导致 HTTP 错误。
-# === Hub 设置重设计（R1+） ===
-hub-settings-saved = 已保存
-hub-settings-save-failed = 保存失败
-
-hub-settings-key-mask-placeholder = 添加密钥…
-hub-settings-key-empty = 未配置
-hub-settings-key-show = 显示
-hub-settings-key-hide = 隐藏
-hub-settings-key-copy = 复制
-# === Hub Settings Part A bug 修复 ===
 # === Hub Settings Part B1: section 标题 ===
 hub-settings-section-research = 研究
 hub-settings-section-item-columns = 条目列表列
@@ -604,6 +591,11 @@ prefs-translate-engine-custom = 自定义 OpenAI 兼容端点
 prefs-translate-engine-zotero-pdf-translate = zotero-pdf-translate（若已安装）
 prefs-translate-bingregion-label = Azure 订阅区
 prefs-translate-note = Azure 订阅区仅对 Azure Translator 引擎生效。各引擎的 API key 尚未在本面板露出——请在配置编辑器里改 extensions.zotero.zsearch.translate.*。
+prefs-translate-cache-enabled = 摘要翻译持久缓存
+prefs-translate-cache-desc =
+    翻译结果存盘复用：重复检索同一批文献时不再消耗有额度限制引擎（AI、DeepL）的调用。缓存存于 Zotero 数据目录的 zsearch/translation-cache/ 文件夹。
+prefs-translate-maxchars-label = 摘要截断上限（字符，0 为不限）
+prefs-translate-cache-maxmb-label = 缓存容量上限（MB）
 soul-name-datasource-manager-soul = 文献质量数据源管理专家
 # ── 进程超时对话框 / OAuth 落地页 / 聊天与进度兜底文案（2026-09-17 清理批六）
 

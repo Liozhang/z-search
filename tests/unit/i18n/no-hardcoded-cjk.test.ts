@@ -49,8 +49,6 @@ const ALLOWLIST: Readonly<Record<string, string>> = {
     "internal assertParamBudget message (developer-facing)",
   "src/utils/zoteroSql.ts":
     "SQL shape diagnostics with fix instructions (developer-facing console text)",
-  "src/react/components/Hub/settings/models/ApiKeyInput.tsx":
-    "dead component from the removed React settings pane",
 };
 
 /** 构建产物：扫描源码即可，打包后的 bundle 不再过一遍。 */
