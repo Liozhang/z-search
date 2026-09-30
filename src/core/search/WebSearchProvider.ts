@@ -10,6 +10,11 @@ import { getPrefDynamic } from "../../utils/prefs";
 import { resolveWikiHost } from "../../utils/region";
 import providerHealthChecker from "./ProviderHealthChecker";
 import { ZSEARCH_HTTP_HEADERS } from "../../utils/httpHeaders";
+import {
+  parseRetryAfterSec,
+  rateLimitDelayMs,
+  rateLimitErrorText,
+} from "../../utils/rateLimit";
 import { getString } from "../../utils/locale";
 import { safeDebug } from "../../utils/logger";
 
@@ -122,6 +127,56 @@ class WebSearchProvider {
     }
   }
 
+  /**
+   * 429 统一退避重试（自 leadero 搬入——此前密钥源为裸 Zotero.HTTP.request，
+   * 429 直接冒泡成工具失败）。覆盖 Zotero.HTTP 的两种 429 形态：reject（异常
+   * 带 status/responseHeaders）与 resolve-but-non-2xx（resp.status 检查路径）。
+   * 单次重试：Retry-After 头优先（>120s 直接终态——不把长等待塞进工具层总闸），
+   * 无头 5s 退避±jitter；仍 429 用限流专门文案（可预期状态不冒充普通失败）。
+   * 非 429 异常原样上抛（调用方既有语义不变）。
+   */
+  private async requestWithRateLimit(
+    source: string,
+    doRequest: () => Promise<any>,
+  ): Promise<{ resp?: any; error?: string }> {
+    const attempt = async (): Promise<{
+      resp?: any;
+      rateLimited?: boolean;
+      headers?: string;
+    }> => {
+      try {
+        const resp = await doRequest();
+        if (resp?.status === 429) {
+          return { rateLimited: true, headers: resp?.responseHeaders };
+        }
+        return { resp };
+      } catch (e: any) {
+        if ((e as any)?.status === 429) {
+          return { rateLimited: true, headers: (e as any)?.responseHeaders };
+        }
+        throw e;
+      }
+    };
+    const first = await attempt();
+    if (!first.rateLimited) return { resp: first.resp };
+    const retryAfterSec = parseRetryAfterSec({ headers: first.headers });
+    const delayMs = rateLimitDelayMs(retryAfterSec, 1, {
+      maxRetryAfterSec: 120,
+    });
+    if (delayMs == null) {
+      return { error: rateLimitErrorText(source, 1, retryAfterSec) };
+    }
+    safeDebug(
+      `[z-search] WebSearchProvider.${source}: 429 — retry in ${Math.round(delayMs / 1000)}s`,
+    );
+    await new Promise((r) => setTimeout(r, delayMs));
+    const second = await attempt();
+    if (second.rateLimited) {
+      return { error: rateLimitErrorText(source, 2, retryAfterSec) };
+    }
+    return { resp: second.resp };
+  }
+
   // --- SerpAPI (Google results) ---
   private async searchSerpAPI(query: string, maxResults: number) {
     const apiKey = getPrefDynamic("search.web.serpapi.apiKey") as string;
@@ -136,13 +191,25 @@ class WebSearchProvider {
 
     const url = `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}&api_key=${encodeURIComponent(apiKey)}&num=${maxResults}`;
 
-    const resp = await Zotero.HTTP.request("GET", url, {
-      headers: {
-        Accept: "application/json",
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "serpapi",
+      () =>
+        Zotero.HTTP.request("GET", url, {
+          headers: {
+            Accept: "application/json",
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `SerpAPI error`,
+        returned: 0,
+        source: "serpapi",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -183,14 +250,26 @@ class WebSearchProvider {
 
     const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${maxResults}`;
 
-    const resp = await Zotero.HTTP.request("GET", url, {
-      headers: {
-        Accept: "application/json",
-        "X-Subscription-Token": apiKey,
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "brave",
+      () =>
+        Zotero.HTTP.request("GET", url, {
+          headers: {
+            Accept: "application/json",
+            "X-Subscription-Token": apiKey,
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Brave Search error`,
+        returned: 0,
+        source: "brave",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -236,14 +315,26 @@ class WebSearchProvider {
       max_results: maxResults,
     });
 
-    const resp = await Zotero.HTTP.request("POST", url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      body,
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "tavily",
+      () =>
+        Zotero.HTTP.request("POST", url, {
+          headers: {
+            "Content-Type": "application/json",
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          body,
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Tavily error`,
+        returned: 0,
+        source: "tavily",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -286,13 +377,25 @@ class WebSearchProvider {
 
     const url = `https://www.googleapis.com/customsearch/v1?key=${encodeURIComponent(apiKey)}&cx=${encodeURIComponent(cx)}&q=${encodeURIComponent(query)}&num=${maxResults}`;
 
-    const resp = await Zotero.HTTP.request("GET", url, {
-      headers: {
-        Accept: "application/json",
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "google",
+      () =>
+        Zotero.HTTP.request("GET", url, {
+          headers: {
+            Accept: "application/json",
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Google Custom Search error`,
+        returned: 0,
+        source: "google",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -339,15 +442,27 @@ class WebSearchProvider {
       num: maxResults,
     });
 
-    const resp = await Zotero.HTTP.request("POST", url, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": apiKey,
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      body,
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "serper",
+      () =>
+        Zotero.HTTP.request("POST", url, {
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-KEY": apiKey,
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          body,
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? "Serper.dev error",
+        returned: 0,
+        source: "serper",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       // 解析 body，让 credits/quota 耗尽这类可操作错误明确告诉用户
@@ -411,15 +526,27 @@ class WebSearchProvider {
       search_context_size: "medium",
     });
 
-    const resp = await Zotero.HTTP.request("POST", url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      body,
-      timeout: 30000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "perplexity",
+      () =>
+        Zotero.HTTP.request("POST", url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          body,
+          timeout: 30000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Perplexity error`,
+        returned: 0,
+        source: "perplexity",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -483,15 +610,27 @@ class WebSearchProvider {
       contents: { text: true, maxCharacters: 500 },
     });
 
-    const resp = await Zotero.HTTP.request("POST", url, {
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      body,
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "exa",
+      () =>
+        Zotero.HTTP.request("POST", url, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          body,
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Exa.ai error`,
+        returned: 0,
+        source: "exa",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
@@ -535,14 +674,26 @@ class WebSearchProvider {
 
     const url = `https://api.bing.microsoft.com/v7.0/search?q=${encodeURIComponent(query)}&count=${maxResults}`;
 
-    const resp = await Zotero.HTTP.request("GET", url, {
-      headers: {
-        Accept: "application/json",
-        "Ocp-Apim-Subscription-Key": apiKey,
-        ...ZSEARCH_HTTP_HEADERS,
-      },
-      timeout: 15000,
-    } as any);
+    const { resp, error: rlError } = await this.requestWithRateLimit(
+      "bing",
+      () =>
+        Zotero.HTTP.request("GET", url, {
+          headers: {
+            Accept: "application/json",
+            "Ocp-Apim-Subscription-Key": apiKey,
+            ...ZSEARCH_HTTP_HEADERS,
+          },
+          timeout: 15000,
+        } as any),
+    );
+    if (rlError || !resp) {
+      return {
+        error: rlError ?? `Bing Search error`,
+        returned: 0,
+        source: "bing",
+        results: [] as WebSearchResult[],
+      };
+    }
 
     if (resp.status >= 400) {
       return {
