@@ -71,6 +71,28 @@ function codeCorpus(): string {
   return out.join("\n");
 }
 
+/**
+ * 死键判定的纯函数本体：真实守卫与正控自测共用同一个函数对象——
+ * 「无正控的校验器不能证明自己能抓问题」（自 z-transplit 的
+ * structure-check-selftest 思想搬入，见
+ * docs/optimization-from-siblings-2026-09-30.md 第 7 项）。若有人改坏
+ * 键匹配或引用匹配的正则，正控用例会与真实守卫一起失败，而不是守卫
+ * 静默放行。
+ */
+function computeDeadKeys(
+  keys: Iterable<string>,
+  corpus: string,
+  dynamicPrefixes: readonly string[] = DYNAMIC_KEY_PREFIXES,
+): string[] {
+  return [...keys].filter(
+    (k) =>
+      !dynamicPrefixes.some((p) => k.startsWith(p)) &&
+      !new RegExp(
+        `["'\`]${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'\`]`,
+      ).test(corpus),
+  );
+}
+
 describe("locale dictionary hygiene", () => {
   it("defines no dead keys (every message is referenced by code)", () => {
     const union = new Set<string>();
@@ -81,13 +103,7 @@ describe("locale dictionary hygiene", () => {
     }
     expect(union.size).toBeGreaterThan(0);
     const corpus = codeCorpus();
-    const dead = [...union].filter(
-      (k) =>
-        !DYNAMIC_KEY_PREFIXES.some((p) => k.startsWith(p)) &&
-        !new RegExp(
-          `["'\`]${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'\`]`,
-        ).test(corpus),
-    );
+    const dead = computeDeadKeys(union, corpus);
     expect(dead, `dead locale keys: ${dead.slice(0, 40).join(", ")}`).toEqual(
       [],
     );
@@ -126,5 +142,23 @@ describe("locale dictionary hygiene", () => {
         ?.map((l) => l.trim().replace(/^\| '|';?$/g, "")) ?? [];
     expect(new Set(catalog), "catalog vs FTL union").toEqual(union);
     expect(new Set(typings), "typings vs FTL union").toEqual(union);
+  });
+
+  it("positive control: the dead-key detector catches injected defects", () => {
+    // 对照组①（该抓未抓即守卫失效）：无引用的键必须被判死。
+    const injected = "zz-selftest-dead-key";
+    expect(computeDeadKeys([injected], "")).toEqual([injected]);
+    // 对照组②：被代码引用（单引号/双引号/反引号任一）的键必须判活。
+    expect(computeDeadKeys([injected], `getString("${injected}")`)).toEqual([]);
+    expect(computeDeadKeys([injected], `getString('${injected}')`)).toEqual([]);
+    expect(computeDeadKeys([injected], "`" + injected + "`")).toEqual([]);
+    // 对照组③：动态键前缀豁免必须生效（该豁免的不能误报为死）。
+    expect(computeDeadKeys(["lit-quartile-cass-1", "soul-name-x"], "")).toEqual(
+      [],
+    );
+    // 对照组④：含正则元字符的键不因转义缺失而漏检或误报。
+    const tricky = "zz.selftest(key)";
+    expect(computeDeadKeys([tricky], "")).toEqual([tricky]);
+    expect(computeDeadKeys([tricky], `"${tricky}"`)).toEqual([]);
   });
 });
