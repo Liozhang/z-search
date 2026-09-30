@@ -237,7 +237,7 @@ export function LiteratureFilterDialog({
         ariaLabel={getString(titleKey)}
         showCloseButton={false}
       >
-        <Toolbar.Root className="hub-graph-filter-header py-[var(--space-3)] px-[var(--space-4-5)] flex justify-between items-center">
+        <Toolbar.Root className="py-[var(--space-3)] px-[var(--space-4-5)] flex justify-between items-center border-b border-b-[var(--hub-hairline)]">
           <span className="[font:var(--ui-font-heading)] text-[color:var(--text-primary)] m-0">
             {getString(titleKey)}
           </span>

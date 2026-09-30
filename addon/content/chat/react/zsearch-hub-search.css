@@ -116,3 +116,55 @@
   line-height: var(--leading-none);
   padding-block: var(--space-0-5);
 }
+
+/* ---- 期刊检索页公共件（2026-09-30 死类清缴批补齐） ---- */
+/* 节标题 overline 制式（§23.6）：JournalMetricCard 的 MetricSection 此前
+   引用本类却无定义，四个节标题以正文形态渲染、层级塌平。配方与
+   hub-graph-filter-section-title 同制（v1.52 S4 两级统一）。 */
+.zsearch-root .hub-overline {
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+/* 检索失败行（CX-5 批1 的常驻错误行）：此前 hub-empty-slim 系从未有过
+   定义，失败裸排。配方=文献卡导入错误条同款信号红染色条，slim=单行
+   横幅不做大空态；标题截断防长报错撑爆行。 */
+.zsearch-root .hub-empty-slim {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--signal-red-bg);
+  color: var(--signal-red-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+.zsearch-root .hub-empty-slim-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 页面级警示条（data-tone 配色）：模型过期警告等。此前 .hub-status 从未
+   有过定义、data-tone="warn" 钩子落空，警示以正文形态渲染。配方=信号族
+   染色底；tone 缺省为中性（次墨）。 */
+.zsearch-root .hub-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.zsearch-root .hub-status[data-tone="warn"] {
+  background: var(--signal-yellow-bg);
+  color: var(--signal-yellow-text);
+}
+.zsearch-root .hub-status[data-tone="danger"] {
+  background: var(--signal-red-bg);
+  color: var(--signal-red-strong);
+}

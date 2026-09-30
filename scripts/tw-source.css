@@ -1,0 +1,125 @@
+/*
+ * tw-source.css — Tailwind v4 编译输入（tw.css 的唯一来源）。
+ *
+ * 历史教训（2026-09-30 死类清缴批）：本输入文件曾长期不入库，tw.css 成了
+ * 无源的编译产物——九条源码在用的任意值工具类（decoration-[var(--border)]
+ * 等）静默失效，且无人能再生成。现将输入入库、生成命令固化为
+ * `npm run build:tw`（scripts/build-tw.cjs：CLI 编译 + .zsearch-root 作用域
+ * 前缀）。规则：
+ *   1. 新用 Tailwind 工具类（尤其任意值语法）后必须重跑 build:tw；
+ *   2. tests/unit/ui/no-dead-classes.test.ts 会拦截未编译类，CI 兜底；
+ *   3. @theme inline 只映射 tokens.css 的既有语义别名，勿在此铸新值；
+ *   4. source(none) 关闭自动探测，扫描范围仅限本文件 @source 显式声明——
+ *      addon/ 下的编译产物（reactBundle.js 等）绝不可进扫描范围，否则
+ *      历史死类永生。
+ */
+@import "tailwindcss/theme.css" layer(theme) source(none);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+
+@theme inline {
+  /* shadcn 桥接槽位（值源 = zsearch-tokens.css LAYER 2，同名直连） */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-info-status: var(--info-status);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface: var(--surface-canvas);
+  /* 字号/圆角/阴影 → tokens 谱系（text-md 等退役别名同源） */
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-md: var(--text-md);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+/* 层叠族工具类：直连 tokens 的 --z-* 七层谱系（z-dropdown 等，v4 无此
+   命名空间，以 @utility 单独立法） */
+@utility z-base {
+  z-index: var(--z-base);
+}
+@utility z-toolbar {
+  z-index: var(--z-toolbar);
+}
+@utility z-force-toolbar {
+  z-index: var(--z-force-toolbar);
+}
+@utility z-input {
+  z-index: var(--z-input);
+}
+@utility z-layout {
+  z-index: var(--z-layout);
+}
+@utility z-search {
+  z-index: var(--z-search);
+}
+@utility z-search-dropdown {
+  z-index: var(--z-search-dropdown);
+}
+@utility z-setup {
+  z-index: var(--z-setup);
+}
+@utility z-dropdown {
+  z-index: var(--z-dropdown);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-tooltip {
+  z-index: var(--z-tooltip);
+}
+@utility z-topmost {
+  z-index: var(--z-topmost);
+}
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-header {
+  z-index: var(--z-header);
+}
+@utility z-sub {
+  z-index: var(--z-sub);
+}
+@utility z-side {
+  z-index: var(--z-side);
+}
+@utility z-edge-tab {
+  z-index: var(--z-edge-tab);
+}
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+
+/* React 组件源码是类名的唯一产地 */
+@source "../src/**/*.{ts,tsx}";

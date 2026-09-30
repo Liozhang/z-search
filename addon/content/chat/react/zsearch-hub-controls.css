@@ -91,6 +91,21 @@
   color: var(--text-tertiary);
   margin: 0;
 }
+/* 区容器（FilterZone，文献筛选对话框顶层分组）：此前 hub-graph-filter-group
+   系只有 TSX 引用、无样式定义，区标签裸排（2026-09-30 死类清缴补齐）。
+   配方与 -section 同制，区标签沿用两级统一的 overline 制式。 */
+.zsearch-root .hub-graph-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+.zsearch-root .hub-graph-filter-group-label {
+  font: var(--ui-font-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+  margin: 0;
+}
 
 /* 可折叠节头（2026-08-25 图谱筛选密度裁决）：低频精筛维度默认收起，
    激活值强制展开（TSX FoldSection 保证）。宿主为 ghost Button（ui-adoption

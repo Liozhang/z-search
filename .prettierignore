@@ -3,6 +3,7 @@
 addon/content/reactBundle.js*
 addon/content/*.reactBundle.js*
 addon/content/scripts/*.js
+addon/content/chat/react/tw.css
 
 # Dependencies
 node_modules/

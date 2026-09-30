@@ -44,9 +44,21 @@ npm install          # 安装依赖
 npm run build        # 构建 embed-frame + reactBundle + xpi 产物（.scaffold/build）
 npm run build:prod   # 生产构建（压缩、去 console、产 xpi 与 update.json）
 npm run build:react  # 只构建 React iframe bundle
+npm run build:tw     # 只再生成 Tailwind 产物 tw.css
 npm run check:types  # tsc 双配置类型检查
 npm test             # vitest：纯逻辑单测 + 宿主 bundle 冒烟
 ```
+
+### 样式链（tw.css）
+
+`addon/content/chat/react/tw.css` 是编译产物，来源 = `scripts/tw-source.css`
+（Tailwind v4 输入，入库）。组件里新用 Tailwind 工具类——尤其任意值语法
+（`decoration-[var(--border)]` 这类）——之后必须 `npm run build:tw`，否则
+运行时无样式。`build` / `build:prod` / `update` 已自动串联。产物只加
+`.zsearch-root` 作用域前缀，不做其他改写。类名引用完整性由
+`tests/unit/ui/no-dead-classes.test.ts` 守卫：组件引用的每个类名必须能
+解析到入口实际加载的样式文件，否则 CI 失败（有意无样式的标记类在测试
+头部登记豁免）。
 
 ## 部署到本地 Zotero
 
