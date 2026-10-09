@@ -5,6 +5,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.5.1] - 2026-10-09
+
+### Changed
+
+- **The supported Zotero range is now Zotero 10 only**: `strict_min_version`
+  moves from 9.0 to 10.0 and the README badges drop the "9 ~" range. Zotero
+  7/8 were already excluded by the previous floor, and 9 never had a
+  real-machine test environment — every local end-to-end run exercises
+  Zotero 10 only — so declaring 9 as installable promised more than the
+  plugin had verified. `strict_max_version` stays at `10.*` until a future
+  Zotero release is actually validated.
+
 ## [1.5.0] - 2026-10-09
 
 ### Changed

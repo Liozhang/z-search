@@ -21,7 +21,7 @@
 [![CI](https://github.com/Liozhang/z-search/actions/workflows/ci.yml/badge.svg)](https://github.com/Liozhang/z-search/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/Liozhang/z-search/total?color=orange)](https://github.com/Liozhang/z-search/releases)
-[![Zotero 9 ~ 10](https://img.shields.io/badge/Zotero-9%20~%2010-CC6633.svg)](https://www.zotero.org/)
+[![Zotero 10](https://img.shields.io/badge/Zotero-10-CC6633.svg)](https://www.zotero.org/)
 
 **学术搜索 · 网络搜索 · 仓库搜索 · 向量搜索 — 一站式 Zotero 搜索插件。**
 
