@@ -10,10 +10,13 @@
  * back structured and are re-thrown with the historic message texts so
  * callers and tests see unchanged errors.
  *
- * Error texts are contract (tests assert both):
- * - load kind   → "Failed to load local embedding model '<model>'. Ensure the
- *                 model is downloaded (Settings -> Semantic & Vision -> Download
- *                 Model). Original error: <frame message>"
+ * Error texts (de-facto contract — no test asserts them, keep prefixes stable
+ * for log grepping):
+ * - prepare     → "Failed to prepare local embedding model '<model>': <detail>"
+ *                 (ModelDownloadManager could not fetch the model files)
+ * - load kind   → "Failed to load local embedding model '<model>'. The model
+ *                 files were not found locally and the automatic download did
+ *                 not complete. Original error: <frame message>"
  * - inference   → "Local embedding inference failed for model '<model>': <msg>"
  *
  * @module core/embedding/LocalEmbeddingProvider
@@ -58,6 +61,22 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
 
   async embed(text: string, mode: EmbedMode = "passage"): Promise<number[]> {
     const modelName = this.name;
+    // First-use channel: the model is not shipped with the plugin — make sure
+    // the files are under {DataDir}/zsearch/models before the frame reads them
+    // (auto-downloads on first use; no-op when already present). Failure here
+    // is actionable (network / mirror), NOT a frame-host problem.
+    try {
+      const { ensureModelDownloaded } = await import("./ModelDownloadManager");
+      await ensureModelDownloaded(modelName);
+    } catch (e: any) {
+      throw new Error(
+        "Failed to prepare local embedding model '" +
+          modelName +
+          "': " +
+          (e?.message || String(e)),
+        { cause: e },
+      );
+    }
     // Model files live under {DataDir}/zsearch/models (ModelDownloadManager's
     // layout); the frame resolves them via file:// URIs — a bare Windows path
     // fails fetch() with NetworkError (verified on real machine).
@@ -92,7 +111,8 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
           "Failed to load local embedding model '" +
             modelName +
             "'. " +
-            "Ensure the model is downloaded (Settings -> Semantic & Vision -> Download Model). " +
+            "The model files were not found locally and the automatic download did not complete — " +
+            "check the network or set a mirror in z-search settings (region-scoped endpoints). " +
             "Original error: " +
             msg.slice("load: ".length),
           { cause: e },

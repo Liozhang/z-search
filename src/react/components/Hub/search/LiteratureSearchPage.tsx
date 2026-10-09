@@ -73,6 +73,7 @@ import {
 } from "./mergeResults";
 import { SubPageHeader } from "../SubPageHeader";
 import { isIMEComposing } from "../../../../utils/ime";
+import { useSearchHistory } from "../../../hooks/useSearchHistory";
 import {
   LiteratureFilterDialog,
   countActiveLiteratureFilters,
@@ -190,8 +191,26 @@ export function LiteratureSearchPage({
   // 同款守卫兜住。indexStatus 为 null（尚未载入）不拦，避免加载闪禁。
   const localSearchBlocked =
     scope === "local" && !!sem.indexStatus && !hasIndex;
+  // 搜索历史（动态 pref 持久化，按域过滤）：检索成功发起即记录，空查询时
+  // 在输入行下方以 chip 行展示，点击即复用该词重查。
+  const history = useSearchHistory(scope);
+  const historyChips = history.recent.slice(0, 8);
+  const showHistory = historyChips.length > 0 && !query.trim() && !isSearching;
+  const runHistoryTerm = (term: string) => {
+    if (scope === "local" && localSearchBlocked) return;
+    history.record(term);
+    if (scope === "web") {
+      lit.setQuery(term);
+      void lit.handleSearch(term);
+    } else {
+      sem.setSearchQuery(term);
+      void sem.handleSearch(term);
+    }
+  };
   const runSearch = () => {
     if (localSearchBlocked) return;
+    const term = query.trim();
+    if (term) history.record(term);
     if (scope === "web") void lit.handleSearch();
     else void sem.handleSearch(query);
   };
@@ -335,6 +354,19 @@ export function LiteratureSearchPage({
     [sem.searchResults, displaySort],
   );
   const list = scope === "web" ? webList : localList;
+  // 复制清单/导出 CSV 的取数序（2026-10-09）：跟随用户当前看到的排序（结果头
+  // 排序 seg 决定 webList/localList 的顺序），不再回落网络到达序——粘贴出来
+  // 的清单顺序与上屏一致。有勾选时仍只输出选中集（hook 侧按原文位置键过滤）。
+  const displayArticles = useMemo(
+    () =>
+      list
+        .filter(
+          (e): e is Extract<(typeof list)[number], { kind: "article" }> =>
+            e.kind === "article",
+        )
+        .map((e) => e.article),
+    [list],
+  );
   const visibleCount = scope === "web" ? webVisible : localVisible;
   const loadMore = () => {
     if (scope === "web") setWebVisible((v) => v + VISIBLE_STEP);
@@ -384,26 +416,18 @@ export function LiteratureSearchPage({
     }
   };
 
-  // ── 引文钻取（P0-2）：种子 + 方向即弹窗；行内导入复用 handleImport 链路 ──
+  // ── 引文钻取（P0-2）：种子 + 初始方向即弹窗；行内导入复用 handleImport 链路。
+  // 方向切换/层级钻取/行内导入 busy 态由弹窗自持（2026-10-09 重做）——页面只
+  // 交出种子与导入通道，导入回执经 lit.importResults 映射回显「已导入」。
   const [citationSeed, setCitationSeed] = useState<ArticleResult | null>(null);
   const [citationDirection, setCitationDirection] =
     useState<CitationDirection>("cited-by");
-  const [citingTitles, setCitingTitles] = useState<Set<string>>(new Set());
   const openCitations = (article: ArticleResult, dir: CitationDirection) => {
     setCitationDirection(dir);
     setCitationSeed(article);
   };
-  const importFromCitations = (article: ArticleResult) => {
-    const k = getArticleKey(article, -1);
-    setCitingTitles((prev) => new Set(prev).add(article.title));
-    void Promise.resolve(lit.handleImport(article, k)).finally(() => {
-      setCitingTitles((prev) => {
-        const next = new Set(prev);
-        next.delete(article.title);
-        return next;
-      });
-    });
-  };
+  const importFromCitations = (article: ArticleResult) =>
+    lit.handleImport(article, getArticleKey(article, -1));
 
   // ── anchor tools（仅本地 tab：作用于 Zotero 主窗口选中条目） ──────────────
   const runFindSimilar = () => {
@@ -437,16 +461,15 @@ export function LiteratureSearchPage({
     <div className="hub-lit-page flex flex-col h-full pt-[var(--space-4)] pb-[var(--space-12)] gap-[var(--space-4)] overflow-hidden">
       {/* ═══ 工具行：输入即页面（v2 §4.5 批6）═══
           搜索页 95% 的会话以输入框为起点，它是本页唯一「主动作」——查询输入
-          升为一级控件（lg 档 40px，body 字号）。锚点工具（筛选/找相似/查重/
-          清除）是修正性动作，降为输入框下缘的小钮行，并按 tab 分流：
-          网络 tab 只留 筛选/清除；找相似/查重是纯库内操作，只在本地 tab。
-          2026-09-23 节奏统一：输入行→工具行 8px→16px，与页面其他层叠同距
-          （原先贴输入框下缘过挤，比工具行→状态条明显密一档）。 */}
-      <div className="flex flex-col gap-[var(--space-4)]">
-        <div className="flex gap-[var(--space-2)] items-center">
+          升为一级控件（lg 档 40px，body 字号）。2026-10-09 压缩固定区（用户
+          反馈「默认窗高下配置区与结果区几乎对半分」）：锚点工具（筛选/找相似/
+          查重/清除）从独立工具行并入输入行右缘，省一整行 + 16px 节距——固定
+          上区只剩 输入行(+历史行) 与状态条两层。 */}
+      <div className="flex flex-col gap-[var(--space-2)]">
+        <div className="flex flex-wrap gap-[var(--space-2)] items-center">
           <SearchInput
             size="lg"
-            className="flex-1 min-w-0"
+            className="flex-1 min-w-[200px]"
             placeholder={getString(
               scope === "web"
                 ? "hub-search-placeholder-web"
@@ -487,10 +510,9 @@ export function LiteratureSearchPage({
               </Button>
             </span>
           )}
-        </div>
-
-        {/* 锚点工具行（2026-09-23 起：ghost 有框图标小钮 + 按 tab 分流） */}
-        <div className="flex flex-wrap items-center gap-[var(--space-2)]">
+          {/* 锚点工具（2026-09-23 起 ghost 图标小钮；2026-10-09 并入输入行）。
+              筛选弹窗是页面唯一的配置入口；找相似/查重均纯向量操作，仅本地
+              tab 露面，无索引或向量缺口态禁用（原因由空态 CTA 承担）。 */}
           <Button
             variant="ghost"
             size="sm"
@@ -505,9 +527,6 @@ export function LiteratureSearchPage({
               <span className="hub-tool-count">{activeFilterCount}</span>
             ) : null}
           </Button>
-          {/* 找相似/查重均纯向量操作，仅本地 tab 露面；无索引或向量缺口态禁用
-              （原因由空态 CTA 承担）。检索进行中改走 loading 旋钮：反馈
-              「在跑」，不是「坏了」。 */}
           {scope === "local" && (
             <>
               <span title={getString("hub-search-anchor-scope-hint")}>
@@ -549,6 +568,35 @@ export function LiteratureSearchPage({
             </Button>
           )}
         </div>
+
+        {/* 搜索历史行（2026-10-09）：空查询时展示本域最近用词，点击即查。
+            只在「无查询词 + 非搜索中」露面——出结果后查询词非空，行自动让位，
+            不挤占结果区。 */}
+        {showHistory && (
+          <div className="flex flex-wrap items-center gap-[var(--space-1-5)]">
+            <span className="[font:var(--ui-font-meta)] text-[color:var(--text-tertiary)]">
+              {getString("hub-search-history-label")}
+            </span>
+            {historyChips.map((h) => (
+              <button
+                key={`${h.ts}-${h.q}`}
+                type="button"
+                title={getString("hub-search-history-reuse-tip")}
+                className="inline-flex items-center max-w-[260px] h-6 px-[var(--space-2)] rounded-[var(--radius-full)] border border-[var(--border)] bg-transparent text-[length:var(--text-xs)] text-[color:var(--text-secondary)] cursor-pointer transition-colors duration-[var(--transition-fast)] hover:bg-[var(--hub-bg-hover)] hover:text-[color:var(--text-primary)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+                onClick={() => runHistoryTerm(h.q)}
+              >
+                <span className="truncate">{h.q}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="bg-transparent border-none p-0 text-[length:var(--text-xs)] text-[color:var(--text-tertiary)] cursor-pointer hover:text-[color:var(--text-primary)] hover:underline focus-visible:outline-none"
+              onClick={history.clear}
+            >
+              {getString("hub-search-history-clear")}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ═══ 状态区：当前 tab 的单腿读数（恒定）+（本地）索引生命周期 ═══ */}
@@ -786,14 +834,14 @@ export function LiteratureSearchPage({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={lit.handleCopyList}
+                        onClick={() => void lit.handleCopyList(displayArticles)}
                       >
                         {getString("ux3-lit-copy-list")}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={lit.handleExportCsv}
+                        onClick={() => lit.handleExportCsv(displayArticles)}
                       >
                         {getString("ux3-lit-export-csv")}
                       </Button>
@@ -967,10 +1015,9 @@ export function LiteratureSearchPage({
       {/* ═══ 引文钻取弹窗（P0-2）：OpenAlex cited-by / references ═══ */}
       <CitationExplorerDialog
         seed={citationSeed}
-        direction={citationDirection}
+        initialDirection={citationDirection}
         onClose={() => setCitationSeed(null)}
         onImport={importFromCitations}
-        importingTitles={citingTitles}
         importResults={lit.importResults}
       />
 

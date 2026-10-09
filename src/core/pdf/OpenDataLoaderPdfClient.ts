@@ -17,7 +17,7 @@
  *  - the .json / .md file is read from the output directory after the JVM exits
  */
 
-import { getPref } from "../../utils/prefs";
+import { getPref, getPrefDynamic } from "../../utils/prefs";
 import { getCachedManagedJavaExe } from "./JavaRuntimeManager";
 import { Semaphore } from "../../utils/Semaphore";
 // `log` 是 verboseEnabled() 门后的调试通道（dev 构建或 debug pref 开启才输出）；
@@ -279,7 +279,15 @@ async function execJava(
     safeDebug("[z-search] OpenDataLoaderPdfClient.execJava: " + e);
     /* best-effort: fall through to system detection */
   }
-  const javaExe = resolveJavaExecutable();
+  const jarPath = await getJarPath();
+  let javaExe = resolveJavaExecutable();
+  if (!javaExe && (await jarExists(jarPath))) {
+    // jar 在场而 Java 缺失：用户已手动启用 ODL 后端（jar 不随包分发，见
+    // zotero-plugin.config.ts）——此时自动装一份便携 JRE（Temurin 17，解压
+    // 到数据目录，无需管理员权限/重启）。没有 jar 就从不下载，40-50MB 的
+    // 流量只花在明确启用过此后端的机器上。
+    javaExe = await autoInstallManagedJre();
+  }
   if (!javaExe) {
     return {
       exitCode: -1,
@@ -289,7 +297,6 @@ async function execJava(
     };
   }
 
-  const jarPath = await getJarPath();
   const commandArgs = [
     "-Djava.awt.headless=true",
     "-Dapple.awt.UIElement=true",
@@ -306,6 +313,64 @@ async function execJava(
   } finally {
     release();
   }
+}
+
+async function jarExists(jarPath: string): Promise<boolean> {
+  try {
+    return await (globalThis as any).IOUtils.exists(jarPath);
+  } catch (e) {
+    safeDebug("[z-search] OpenDataLoaderPdfClient.jarExists: " + e);
+    return false;
+  }
+}
+
+/** 并发解析共享同一次 JRE 安装（downloadJRE 本身幂等，这里再省重复窗口）。 */
+let jreInstallPromise: Promise<string | null> | null = null;
+
+/**
+ * 自动安装便携 JRE（pdfParser.opendataloader.autoJre 门控，默认开）。
+ * 失败只留日志与进度窗提示——返回 null 让调用方走「java executable not
+ * found」，解析链再落到 Zotero 内建抽取，整体不受阻。
+ */
+function autoInstallManagedJre(): Promise<string | null> {
+  jreInstallPromise ??= (async () => {
+    const { default: progressWindowManager } =
+      await import("../progress/ProgressWindowManager");
+    let windowId = 0;
+    try {
+      if (getPrefDynamic("pdfParser.opendataloader.autoJre") === false)
+        return null;
+      const { downloadJRE } = await import("./JavaRuntimeManager");
+      windowId = progressWindowManager.create({ title: "OpenDataLoader" });
+      let lastLine = "";
+      const javaExe = await downloadJRE(17, (p) => {
+        const line = p.message || p.phase;
+        if (windowId && line && line !== lastLine) {
+          lastLine = line;
+          progressWindowManager.addLines(windowId, [line]);
+        }
+      });
+      if (windowId) {
+        setTimeout(() => progressWindowManager.close(windowId), 4000);
+        windowId = 0; // 关闭已排程，错误路径不再重复操作这个窗口
+      }
+      return javaExe;
+    } catch (e: any) {
+      safeDebug(
+        "[z-search] OpenDataLoaderPdfClient: managed JRE auto-install failed: " +
+          (e?.message || e),
+      );
+      if (windowId) {
+        progressWindowManager.addLines(windowId, [
+          String(e?.message || e).slice(0, 200),
+        ]);
+      }
+      return null;
+    } finally {
+      jreInstallPromise = null;
+    }
+  })();
+  return jreInstallPromise;
 }
 
 async function getJarPath(): Promise<string> {

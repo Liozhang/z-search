@@ -474,6 +474,9 @@ hub-search-engine-done = { $count } results
 hub-search-engine-error = error
 hub-search-empty-index = no index
 hub-search-searching-title = Searching { $count } sources…
+hub-search-history-label = Search history
+hub-search-history-clear = Clear
+hub-search-history-reuse-tip = Click to search this term
 # Sources skipped for a missing key, and sources that failed, are named
 # (2026-09-23): the loading title only reports how many legs were attempted
 hub-search-sources-nokey = { $count } sources not enabled (no API Key): { $sources } — add keys in Zotero Settings · Academic Search API Keys
@@ -512,6 +515,9 @@ hub-settings-section-tools = Tools
 # A2A (Agent2Agent)
 # 方案四（2026-09-21）：QuickStartWizard 个性化播种屏
 embedding-not-configured-error = Semantic index is not configured: assign a model under Settings → AI Models → Embedding (API mode), or switch to local mode.
+embedding-model-window-title = z-search embedding model
+embedding-model-download-done = Embedding model is ready
+embedding-model-download-failed = Embedding model download failed: { $detail }. Check your network, or set a mirror under z-search settings → region-scoped endpoints.
 decision-not-configured-error = Decision model is not enabled: turn it on under Settings → AI Models → Decision and make sure an OpenRouter API key is configured.
 decision-unavailable-error = Decision service is temporarily unavailable — the call was skipped and the regular path was used.
 # ===== UX fixes round 3 (2026-08-14) =====
@@ -589,6 +595,8 @@ pref-endpoint-wikipedia-placeholder = Built-in: follows the Zotero interface lan
 
 pref-endpoint-jre-mirror = Java runtime (JRE) download mirror
 pref-endpoint-jre-mirror-placeholder = Built-in: https://api.adoptium.net/v3 (used only when the PDF backend needs a bundled Java)
+pref-endpoint-embedding-mirror = Embedding model download mirror
+pref-endpoint-embedding-mirror-placeholder = Blank = automatic: hf-mirror.com for mainland China, otherwise huggingface.co
 pref-endpoint-invalid = Not a valid endpoint - use a full http(s) URL, or a bare host name such as zh.wikipedia.org.
 prefs-translate-title = Translation
 prefs-translate-desc =
@@ -719,6 +727,9 @@ lit-cited-by-tip = Show papers citing this work (OpenAlex)
 lit-citations-loading = Fetching citations…
 lit-citations-count = { $count } shown of { $total }
 lit-citations-empty = No citation data found
+lit-citations-tab-cited-by = Cited by
+lit-citations-tab-references = References
+lit-citations-back = Back
 
 # ── Item-tree journal metrics column (P1-1) ──
 itemtree-metrics-column = Journal Metrics

@@ -462,6 +462,10 @@ hub-search-engine-done = { $count } 条
 hub-search-engine-error = 出错
 hub-search-empty-index = 未建索引
 hub-search-searching-title = 正在检索 { $count } 个来源…
+# 搜索历史行（2026-10-09）：空查询时展示最近用词，点击即复用
+hub-search-history-label = 搜索历史
+hub-search-history-clear = 清空
+hub-search-history-reuse-tip = 点击用该词搜索
 # 缺 Key 的源不发请求，跑失败的源记名（2026-09-23）：加载标题只报「发起几路」，这两行补上实际哪几路没跑
 hub-search-sources-nokey = { $count } 个源未启用（未填 API Key）：{ $sources }——可在 Zotero 设置 · 学术检索 API Keys 填写
 hub-search-sources-failed = { $count } 个源未返回结果：{ $sources }
@@ -500,6 +504,9 @@ hub-settings-section-tools = 工具
 # A2A (Agent2Agent)
 # 方案四（2026-09-21）：QuickStartWizard 个性化播种屏
 embedding-not-configured-error = 语义索引未配置：请到 设置 → AI 模型 → 嵌入 指派模型（API 模式），或切换本地模式。
+embedding-model-window-title = z-search 嵌入模型
+embedding-model-download-done = 嵌入模型已就绪
+embedding-model-download-failed = 嵌入模型下载失败：{ $detail }。请检查网络，或在 z-search 设置 ▸ 区域限定端点里配置镜像。
 decision-not-configured-error = 决策模型未启用：请到 设置 → AI 模型 → 决策模型 开启，并确认已配置 OpenRouter API 密钥。
 decision-unavailable-error = 决策服务暂时不可用——本次调用已跳过，走常规路径。
 # ===== UX fixes round 3 (2026-08-14) =====
@@ -577,6 +584,8 @@ pref-endpoint-wikipedia-placeholder = 内置：跟随 Zotero 界面语言（如 
 
 pref-endpoint-jre-mirror = Java 运行时（JRE）下载镜像
 pref-endpoint-jre-mirror-placeholder = 内置：https://api.adoptium.net/v3（仅在 PDF 解析后端需要自带 Java 时下载）
+pref-endpoint-embedding-mirror = 嵌入模型下载镜像
+pref-endpoint-embedding-mirror-placeholder = 留空自动：中国大陆用 hf-mirror.com，其他地区用 huggingface.co
 pref-endpoint-invalid = 不是合法端点——需完整的 http(s) URL，或 zh.wikipedia.org 这样的裸主机名。
 prefs-translate-title = 翻译
 prefs-translate-desc =
@@ -705,6 +714,9 @@ lit-cited-by-tip = 查看引用本文的文献（OpenAlex）
 lit-citations-loading = 正在获取引文…
 lit-citations-count = 已载 { $count } 条 / 共 { $total } 条
 lit-citations-empty = 未找到引文数据
+lit-citations-tab-cited-by = 施引文献
+lit-citations-tab-references = 参考文献
+lit-citations-back = 返回上一级
 
 # ── 条目树期刊徽章列（P1-1）──
 itemtree-metrics-column = 期刊指标

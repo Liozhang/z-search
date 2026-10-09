@@ -28,11 +28,12 @@ export type MixedResult =
   | { kind: "library"; result: SearchResult }
   | { kind: "article"; article: ArticleResult; sourceIndex: number };
 
-/** Display sort modes for the merged list. */
-export type MixedSortBy = "relevance" | "date" | "title";
+/** Display sort modes for the merged list. `citations` is client-side only
+ *  (no source supports it uniformly server-side; 0 counts sort last). */
+export type MixedSortBy = "relevance" | "date" | "title" | "citations";
 
 /** Typed option list for the display-sort control（消费点免 cast，§5.4 单选）。
- *  标签键复用 semantic-sort-*：相关度/日期/标题。 */
+ *  标签键复用 semantic-sort-*（相关/日期/标题）与 lit-sort-cited（引用最多）。 */
 export const DISPLAY_SORT_OPTIONS: ReadonlyArray<{
   value: MixedSortBy;
   labelKey: string;
@@ -40,6 +41,7 @@ export const DISPLAY_SORT_OPTIONS: ReadonlyArray<{
   { value: "relevance", labelKey: "semantic-sort-relevance" },
   { value: "date", labelKey: "semantic-sort-date" },
   { value: "title", labelKey: "semantic-sort-title" },
+  { value: "citations", labelKey: "lit-sort-cited" },
 ];
 
 /** Normalize a DOI string for comparison: trim, lowercase, strip doi.org URL
@@ -166,10 +168,16 @@ function resultTitle(entry: MixedResult): string {
   );
 }
 
+function resultCitations(entry: MixedResult): number {
+  if (entry.kind !== "article") return 0;
+  return Number(entry.article.citationCount) || 0;
+}
+
 /** Sort the merged list for display. `relevance` (default) keeps the merge
  *  order: library hits (similarity desc, as returned by the backend) first,
- *  then external articles in response order. `date` / `title` sort the whole
- *  list client-side (date desc / title asc). */
+ *  then external articles in response order. `date` / `title` / `citations`
+ *  sort the whole list client-side (date desc / title asc / citations desc,
+ *  ties keep the previous order — Array.sort is stable per spec). */
 export function sortMixedResults(
   merged: MixedResult[],
   sortBy: MixedSortBy,
@@ -178,6 +186,8 @@ export function sortMixedResults(
   const arr = [...merged];
   if (sortBy === "date") {
     arr.sort((a, b) => resultYear(b).localeCompare(resultYear(a)));
+  } else if (sortBy === "citations") {
+    arr.sort((a, b) => resultCitations(b) - resultCitations(a));
   } else {
     arr.sort((a, b) => resultTitle(a).localeCompare(resultTitle(b)));
   }

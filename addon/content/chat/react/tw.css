@@ -1,16 +1,12 @@
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme {
-  :root,
-  :host {
-    --font-sans:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-      "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-      "Segoe UI Symbol", "Noto Color Emoji";
-    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-    --font-mono:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace;
+  :root, :host {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
     --color-white: #fff;
     --spacing: 0.25rem;
     --container-xs: 20rem;
@@ -163,8 +159,8 @@
   .zsearch-root .m-0 {
     margin: 0px;
   }
-  .zsearch-root .m-\[var\(--space-2\)\] {
-    margin: var(--space-2);
+  .zsearch-root .my-\[var\(--space-2\)\] {
+    margin-block: var(--space-2);
   }
   .zsearch-root .mt-\[var\(--space-0-5\)\] {
     margin-top: var(--space-0-5);
@@ -385,6 +381,12 @@
   .zsearch-root .max-w-\[220px\] {
     max-width: 220px;
   }
+  .zsearch-root .max-w-\[260px\] {
+    max-width: 260px;
+  }
+  .zsearch-root .max-w-\[420px\] {
+    max-width: 420px;
+  }
   .zsearch-root .max-w-\[calc\(100\%-2rem\)\] {
     max-width: calc(100% - 2rem);
   }
@@ -402,6 +404,9 @@
   }
   .zsearch-root .min-w-\[180px\] {
     min-width: 180px;
+  }
+  .zsearch-root .min-w-\[200px\] {
+    min-width: 200px;
   }
   .zsearch-root .flex-1 {
     flex: 1;
@@ -431,8 +436,7 @@
     translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .zsearch-root .transform {
-    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,)
-      var(--tw-skew-x,) var(--tw-skew-y,);
+    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
   }
   .zsearch-root .animate-pulse {
     animation: var(--animate-pulse);
@@ -558,6 +562,9 @@
   }
   .zsearch-root .rounded-\[var\(--radius-btn\)\] {
     border-radius: var(--radius-btn);
+  }
+  .zsearch-root .rounded-\[var\(--radius-full\)\] {
+    border-radius: var(--radius-full);
   }
   .zsearch-root .rounded-\[var\(--radius-md\)\] {
     border-radius: var(--radius-md);
@@ -766,11 +773,7 @@
   .zsearch-root .bg-destructive\/10 {
     background-color: var(--destructive);
     @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(
-        in oklab,
-        var(--destructive) 10%,
-        transparent
-      );
+      background-color: color-mix(in oklab, var(--destructive) 10%, transparent);
     }
   }
   .zsearch-root .bg-foreground {
@@ -926,6 +929,9 @@
   .zsearch-root .pt-\[var\(--space-2\)\] {
     padding-top: var(--space-2);
   }
+  .zsearch-root .pt-\[var\(--space-2-5\)\] {
+    padding-top: var(--space-2-5);
+  }
   .zsearch-root .pt-\[var\(--space-3\)\] {
     padding-top: var(--space-3);
   }
@@ -949,6 +955,9 @@
   }
   .zsearch-root .pr-\[var\(--space-2-5\)\] {
     padding-right: var(--space-2-5);
+  }
+  .zsearch-root .pb-\[var\(--space-2\)\] {
+    padding-bottom: var(--space-2);
   }
   .zsearch-root .pb-\[var\(--space-3\)\] {
     padding-bottom: var(--space-3);
@@ -1213,9 +1222,7 @@
   }
   .zsearch-root .tabular-nums {
     --tw-numeric-spacing: tabular-nums;
-    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,)
-      var(--tw-numeric-figure,) var(--tw-numeric-spacing,)
-      var(--tw-numeric-fraction,);
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
   }
   .zsearch-root .\[font-variant-numeric\:tabular-nums\] {
     font-variant-numeric: tabular-nums;
@@ -1260,45 +1267,28 @@
     opacity: var(--opacity-secondary);
   }
   .zsearch-root .shadow {
-    --tw-shadow:
-      0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
-      0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .shadow-\[var\(--shadow-md\)\] {
     --tw-shadow: var(--shadow-md);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .shadow-\[var\(--shadow-pop\)\] {
     --tw-shadow: var(--shadow-pop);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .ring {
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
-      calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .ring-0 {
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
-      calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .ring-\[3px\] {
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
-      calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .outline-hidden {
     --tw-outline-style: none;
@@ -1314,80 +1304,49 @@
   }
   .zsearch-root .blur {
     --tw-blur: blur(8px);
-    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,)
-      var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,)
-      var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .zsearch-root .filter {
-    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,)
-      var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,)
-      var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .zsearch-root .transition-\[color\,box-shadow\] {
-    transition-property: color, box-shadow;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-property: color,box-shadow;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-\[opacity\,transform\] {
-    transition-property: opacity, transform;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-property: opacity,transform;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-\[transform\,opacity\] {
-    transition-property: transform, opacity;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-property: transform,opacity;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-all {
     transition-property: all;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-colors {
-    transition-property:
-      color, background-color, border-color, outline-color,
-      text-decoration-color, fill, stroke, --tw-gradient-from,
-      --tw-gradient-via, --tw-gradient-to;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-opacity {
     transition-property: opacity;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-shadow {
     transition-property: box-shadow;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-transform {
     transition-property: transform, translate, scale, rotate;
-    transition-timing-function: var(
-      --tw-ease,
-      var(--default-transition-timing-function)
-    );
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .zsearch-root .transition-none {
@@ -1485,11 +1444,7 @@
     }
     @supports (color: color-mix(in lab, red, red)) {
       .zsearch-root .hover\:bg-destructive\/90:hover {
-        background-color: color-mix(
-          in oklab,
-          var(--destructive) 90%,
-          transparent
-        );
+        background-color: color-mix(in oklab, var(--destructive) 90%, transparent);
       }
     }
     .zsearch-root .hover\:bg-primary\/90:hover {
@@ -1534,11 +1489,8 @@
     border-color: var(--ring);
   }
   .zsearch-root .focus-visible\:ring-\[3px\]:focus-visible {
-    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0
-      calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
-    box-shadow:
-      var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
-      var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(3px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
   .zsearch-root .focus-visible\:ring-destructive\/20:focus-visible {
     --tw-ring-color: var(--destructive);
@@ -1568,8 +1520,7 @@
   .zsearch-root .focus-visible\:outline-offset-1:focus-visible {
     outline-offset: 1px;
   }
-  .zsearch-root
-    .focus-visible\:outline-\[color\:var\(--accent\)\]:focus-visible {
+  .zsearch-root .focus-visible\:outline-\[color\:var\(--accent\)\]:focus-visible {
     outline-color: var(--accent);
   }
   .zsearch-root .focus-visible\:outline-none:focus-visible {
@@ -1585,16 +1536,16 @@
   .zsearch-root .disabled\:opacity-50:disabled {
     opacity: 50%;
   }
-  .zsearch-root .has-\[\>svg\]\:px-1\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-1\.5:has( > svg) {
     padding-inline: calc(var(--spacing) * 1.5);
   }
-  .zsearch-root .has-\[\>svg\]\:px-2:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-2:has( > svg) {
     padding-inline: calc(var(--spacing) * 2);
   }
-  .zsearch-root .has-\[\>svg\]\:px-2\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-2\.5:has( > svg) {
     padding-inline: calc(var(--spacing) * 2.5);
   }
-  .zsearch-root .has-\[\>svg\]\:px-3\.5:has(> svg) {
+  .zsearch-root .has-\[\>svg\]\:px-3\.5:has( > svg) {
     padding-inline: calc(var(--spacing) * 3.5);
   }
   .zsearch-root .aria-invalid\:border-destructive[aria-invalid="true"] {
@@ -1670,21 +1621,16 @@
   .zsearch-root .data-\[ending-style\]\:opacity-0[data-ending-style] {
     opacity: 0%;
   }
-  .zsearch-root
-    .data-\[highlighted\]\:bg-\[var\(--hub-bg-hover\)\][data-highlighted] {
+  .zsearch-root .data-\[highlighted\]\:bg-\[var\(--hub-bg-hover\)\][data-highlighted] {
     background-color: var(--hub-bg-hover);
   }
-  .zsearch-root
-    .data-\[quartile\=\'\'\]\:text-\[color\:var\(--text-secondary\)\][data-quartile=""] {
+  .zsearch-root .data-\[quartile\=\'\'\]\:text-\[color\:var\(--text-secondary\)\][data-quartile=''] {
     color: var(--text-secondary);
   }
-  .zsearch-root
-    .data-\[quartile\=\'1\'\]\:text-\[color\:var\(--accent\)\][data-quartile="1"] {
+  .zsearch-root .data-\[quartile\=\'1\'\]\:text-\[color\:var\(--accent\)\][data-quartile='1'] {
     color: var(--accent);
   }
-  :is(
-    .\*\:data-\[slot\=select-value\]\:line-clamp-1 > *
-  )[data-slot="select-value"] {
+  :is(.\*\:data-\[slot\=select-value\]\:line-clamp-1 > *)[data-slot="select-value"] {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -1693,9 +1639,7 @@
   :is(.\*\:data-\[slot\=select-value\]\:flex > *)[data-slot="select-value"] {
     display: flex;
   }
-  :is(
-    .\*\:data-\[slot\=select-value\]\:items-center > *
-  )[data-slot="select-value"] {
+  :is(.\*\:data-\[slot\=select-value\]\:items-center > *)[data-slot="select-value"] {
     align-items: center;
   }
   :is(.\*\:data-\[slot\=select-value\]\:gap-2 > *)[data-slot="select-value"] {
@@ -1754,11 +1698,7 @@
     }
     @supports (color: color-mix(in lab, red, red)) {
       .zsearch-root .dark\:bg-destructive\/60 {
-        background-color: color-mix(
-          in oklab,
-          var(--destructive) 60%,
-          transparent
-        );
+        background-color: color-mix(in oklab, var(--destructive) 60%, transparent);
       }
     }
     .zsearch-root .dark\:bg-input\/30 {
@@ -1782,22 +1722,13 @@
     .zsearch-root .dark\:focus-visible\:ring-destructive\/40:focus-visible {
       --tw-ring-color: var(--destructive);
       @supports (color: color-mix(in lab, red, red)) {
-        --tw-ring-color: color-mix(
-          in oklab,
-          var(--destructive) 40%,
-          transparent
-        );
+        --tw-ring-color: color-mix(in oklab, var(--destructive) 40%, transparent);
       }
     }
-    .zsearch-root
-      .dark\:aria-invalid\:ring-destructive\/40[aria-invalid="true"] {
+    .zsearch-root .dark\:aria-invalid\:ring-destructive\/40[aria-invalid="true"] {
       --tw-ring-color: var(--destructive);
       @supports (color: color-mix(in lab, red, red)) {
-        --tw-ring-color: color-mix(
-          in oklab,
-          var(--destructive) 40%,
-          transparent
-        );
+        --tw-ring-color: color-mix(in oklab, var(--destructive) 40%, transparent);
       }
     }
     .zsearch-root .dark\:data-checked\:bg-primary[data-checked] {
@@ -1840,21 +1771,15 @@
   .zsearch-root .\[\&_svg\]\:shrink-0 svg {
     flex-shrink: 0;
   }
-  .zsearch-root
-    .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-3
-    svg:not([class*="size-"]) {
+  .zsearch-root .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-3 svg:not([class*='size-']) {
     width: calc(var(--spacing) * 3);
     height: calc(var(--spacing) * 3);
   }
-  .zsearch-root
-    .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-4
-    svg:not([class*="size-"]) {
+  .zsearch-root .\[\&_svg\:not\(\[class\*\=\'size-\'\]\)\]\:size-4 svg:not([class*='size-']) {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
   }
-  .zsearch-root
-    .\[\&_svg\:not\(\[class\*\=\'text-\'\]\)\]\:text-muted-foreground
-    svg:not([class*="text-"]) {
+  .zsearch-root .\[\&_svg\:not\(\[class\*\=\'text-\'\]\)\]\:text-muted-foreground svg:not([class*='text-']) {
     color: var(--muted-foreground);
   }
   :is(.\*\:\[span\]\:last\:flex > *):is(span):last-child {
@@ -2091,12 +2016,8 @@
   }
 }
 @layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or
-    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-    *,
-    ::before,
-    ::after,
-    ::backdrop {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
       --tw-translate-x: 0;
       --tw-translate-y: 0;
       --tw-translate-z: 0;

@@ -55,6 +55,17 @@ export const ENDPOINT_FIELDS: EndpointField[] = [
     builtin: "https://api.adoptium.net/v3",
   },
   {
+    fieldId: "endpoint-embedding-mirror",
+    prefKey: "embedding.local.mirror",
+    labelKey: "pref-endpoint-embedding-mirror",
+    placeholderKey: "pref-endpoint-embedding-mirror-placeholder",
+    kind: "url",
+    // 内置值按区域动态求值（cn → hf-mirror.com，其余 → huggingface.co，
+    // 见 ModelDownloadManager.resolveModelEndpoint），此处留空由 placeholder
+    // 文案说明「留空自动」。
+    builtin: "",
+  },
+  {
     fieldId: "endpoint-wikipedia-host",
     prefKey: "search.web.wikipedia.host",
     labelKey: "pref-endpoint-wikipedia",

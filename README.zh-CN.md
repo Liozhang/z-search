@@ -136,13 +136,15 @@ h5 指数排序；点击任意行即钻取到该刊的完整指标卡。
 - 全文关键词通道（BM25 + FTS）在向量不可用时自动降级，降级态在 UI 显式可见
 - 找相似（find similar）、查重（duplicate scan）锚点工具，作用于 Zotero 主窗
   选中条目
-- 嵌入后端双模：本地 ONNX（默认，Xenova/multilingual-e5-small，零配置）
-  或 API 模式（接入 AI provider 的 embedding 模型）；模型切换自动标记 stale
-  分块并可一键重建
+- 嵌入后端双模：本地 ONNX（默认，Xenova/multilingual-e5-small）或 API 模式
+  （接入 AI provider 的 embedding 模型）；本地模型首次使用自动下载（约
+  120 MB，走 huggingface.co——声明中国大陆区域时默认走 hf-mirror.com 镜像，
+  设置里可覆盖）；模型切换自动标记 stale 分块并可一键重建
 - 索引构建带进度通知、跳过原因聚合、取消与看门狗
-- 可选本地深度解析后端（opendataloader，需 Java 11+）：jar 不随包分发，
-  手动放入插件安装目录 `core/pdf/lib/` 即启用；未配置时自动走基础文本
-  抽取或 MinerU 远程 API
+- 可选本地深度解析后端（opendataloader）：jar 不随包分发，手动放入插件
+  安装目录 `core/pdf/lib/` 即启用（jar 在场而机器缺 Java 时自动下载便携
+  JRE，免管理员权限）；未配置 jar 时自动回落 Zotero 内建文本抽取或已配置
+  的 MinerU 远程 API，全文索引总能产出文本
 
 ### 统一搜索页
 

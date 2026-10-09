@@ -137,6 +137,21 @@ describe("sortMixedResults", () => {
     expect(titles).toEqual(["Apple", "Banana", "Cherry"]);
   });
 
+  it("citations sorts desc client-side (library rows count 0, sort last)", () => {
+    const merged = mergeResults(
+      [lib({ itemID: 1, title: "LibRow" })],
+      [
+        art({ title: "Low", citationCount: 3 }),
+        art({ title: "High", citationCount: 90 }),
+        art({ title: "None" }),
+      ],
+    );
+    const titles = sortMixedResults(merged, "citations").map((e) =>
+      e.kind === "library" ? e.result.title : e.article.title,
+    );
+    expect(titles).toEqual(["High", "Low", "LibRow", "None"]);
+  });
+
   it("does not mutate the input array", () => {
     const before = [...merged];
     sortMixedResults(merged, "date");

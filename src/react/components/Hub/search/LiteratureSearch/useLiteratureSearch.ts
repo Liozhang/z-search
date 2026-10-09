@@ -156,185 +156,192 @@ export function useLiteratureSearch() {
   const activeSources =
     selectedSources.length > 0 ? selectedSources : undefined;
 
-  const handleSearch = useCallback(async () => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
+  const handleSearch = useCallback(
+    async (queryOverride?: string) => {
+      // queryOverride：搜索历史行点击即查时，setQuery 尚未刷进本闭包——
+      // 与 sem.handleSearch 同款入参直采（语义腿先例）。
+      const trimmed = (
+        typeof queryOverride === "string" ? queryOverride : query
+      ).trim();
+      if (!trimmed) return;
 
-    const myId = ++requestId.current;
-    setIsSearching(true);
-    setSearchError(null);
-    setSearchPerformed(true);
-    setSearchGen((g) => g + 1);
-    setSourcesDone(0);
-    setSkippedNoKey([]);
-    setFailedSources([]);
+      const myId = ++requestId.current;
+      setIsSearching(true);
+      setSearchError(null);
+      setSearchPerformed(true);
+      setSearchGen((g) => g + 1);
+      setSourcesDone(0);
+      setSkippedNoKey([]);
+      setFailedSources([]);
 
-    // UX-M25（渐进变体）：旧结果保留（灰显于刷新条之后）直到第一批新结果
-    // 落地——首个落地源替换列表，其后各源追加；选择/展开/导入/全文状态
-    // 只在替换那一刻重置，追加阶段保持可用。
-    let firstLanded = false;
-    const merge = (incoming: ArticleResult[]) => {
-      if (myId !== requestId.current) return;
-      const replacing = !firstLanded;
-      firstLanded = true;
-      // 不在累积时切片（审计 P1-3）：逐源落地即 slice 会让先到源占满
-      // maxResults 坑位，晚到的高相关/高被引结果整源被截。累积保留全量
-      // 合并集，展示侧（webList / visibleCount）负责排序与窗口。
-      if (replacing) {
-        setSelectedIds(new Set());
-        setImportResults(new Map());
-        setExpandedKeys(new Set());
-        setTranslationResults(new Map());
-        setFulltextKeys(new Set());
-        setFulltextOpenKeys(new Set());
-        setFulltextResults(new Map());
-        setResults(mergeExternalArticles([], incoming));
-      } else {
-        setResults((prev) => mergeExternalArticles(prev, incoming));
-      }
-    };
-
-    // 目标树懒加载 + pref 恢复（只跑一次；失败静默——选择器显示「跟随主窗」）
-    const ensureCollections = async () => {
-      if (collectionsLoaded) return;
-      let libs: typeof collectionsTree | null = null;
-      try {
-        const data = await semanticRequest<{
-          libraries: typeof collectionsTree;
-        }>("literature.collections", {}, 15000);
-        if (Array.isArray(data?.libraries)) {
-          libs = data.libraries;
-          setCollectionsTree(libs);
-        }
-      } catch {
-        /* 树不可用：选择器保持跟随主窗 */
-      }
-      setCollectionsLoaded(true);
-      try {
-        const saved = await prefsGetDynamic("search.importTarget");
-        // 写侧只存 JSON 串（chooseImportTarget）；空串/其他类型 = 未设置。
-        const parsed =
-          typeof saved === "string" && saved ? JSON.parse(saved) : null;
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          Number.isInteger(parsed.libraryID)
-        ) {
-          // 目标失效自复位：分类/文库已删时回落「跟随主窗」，避免选择器
-          // 回显裸编码值 t:<libID>:<collectionID>。
-          const lib = libs?.find(
-            (l) => l.libraryID === Number(parsed.libraryID),
-          );
-          const colOk =
-            parsed.collectionID == null ||
-            (lib?.collections.some(
-              (c) => c.id === Number(parsed.collectionID),
-            ) ??
-              false);
-          if (lib && colOk) {
-            setImportTarget({
-              libraryID: Number(parsed.libraryID),
-              collectionID: Number.isInteger(parsed.collectionID)
-                ? Number(parsed.collectionID)
-                : null,
-            });
-          }
-        }
-      } catch {
-        /* pref 读取失败保持 null */
-      }
-    };
-    void ensureCollections();
-
-    const requestedSources =
-      activeSources ?? AVAILABLE_SOURCES.map((s) => s.value);
-    setSearchSourceCount(requestedSources.length);
-
-    // 渐进扇出（2026-09-23）：一次大 RPC 拆成 N 个并行单源 RPC——谁先回来
-    // 谁先上屏，慢源（如 30s 级 API）不再拖累其余源；取消走既有
-    // literature.searchCancel（遍历 abort 信号 Map 全部置位，天然覆盖并行批）。
-    // 跨源去重上移到前端（mergeExternalArticles：DOI 归一优先，标题退化）。
-    let landedAny = false;
-    let failedCount = 0;
-
-    const perSource = async (src: string) => {
-      try {
-        const data = await semanticRequest<{
-          articles: ArticleResult[];
-          skippedNoKey?: string[];
-          failedSources?: string[];
-        }>(
-          "literature.search",
-          {
-            query: trimmed,
-            year: yearRange || undefined,
-            sources: [src],
-            maxResults,
-            sort: sortBy,
-            author: authorFilter || undefined,
-            journal: journalFilter || undefined,
-            openAccessOnly: openAccessOnly || undefined,
-          },
-          60000,
-        );
+      // UX-M25（渐进变体）：旧结果保留（灰显于刷新条之后）直到第一批新结果
+      // 落地——首个落地源替换列表，其后各源追加；选择/展开/导入/全文状态
+      // 只在替换那一刻重置，追加阶段保持可用。
+      let firstLanded = false;
+      const merge = (incoming: ArticleResult[]) => {
         if (myId !== requestId.current) return;
-        // 缺 Key / 源内失败由回执名单带出（并发 handler 不再以抛错上报）
-        if (data?.skippedNoKey?.length) {
-          setSkippedNoKey((prev) => [...prev, src]);
+        const replacing = !firstLanded;
+        firstLanded = true;
+        // 不在累积时切片（审计 P1-3）：逐源落地即 slice 会让先到源占满
+        // maxResults 坑位，晚到的高相关/高被引结果整源被截。累积保留全量
+        // 合并集，展示侧（webList / visibleCount）负责排序与窗口。
+        if (replacing) {
+          setSelectedIds(new Set());
+          setImportResults(new Map());
+          setExpandedKeys(new Set());
+          setTranslationResults(new Map());
+          setFulltextKeys(new Set());
+          setFulltextOpenKeys(new Set());
+          setFulltextResults(new Map());
+          setResults(mergeExternalArticles([], incoming));
+        } else {
+          setResults((prev) => mergeExternalArticles(prev, incoming));
         }
-        if (data?.failedSources?.length) {
+      };
+
+      // 目标树懒加载 + pref 恢复（只跑一次；失败静默——选择器显示「跟随主窗」）
+      const ensureCollections = async () => {
+        if (collectionsLoaded) return;
+        let libs: typeof collectionsTree | null = null;
+        try {
+          const data = await semanticRequest<{
+            libraries: typeof collectionsTree;
+          }>("literature.collections", {}, 15000);
+          if (Array.isArray(data?.libraries)) {
+            libs = data.libraries;
+            setCollectionsTree(libs);
+          }
+        } catch {
+          /* 树不可用：选择器保持跟随主窗 */
+        }
+        setCollectionsLoaded(true);
+        try {
+          const saved = await prefsGetDynamic("search.importTarget");
+          // 写侧只存 JSON 串（chooseImportTarget）；空串/其他类型 = 未设置。
+          const parsed =
+            typeof saved === "string" && saved ? JSON.parse(saved) : null;
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            Number.isInteger(parsed.libraryID)
+          ) {
+            // 目标失效自复位：分类/文库已删时回落「跟随主窗」，避免选择器
+            // 回显裸编码值 t:<libID>:<collectionID>。
+            const lib = libs?.find(
+              (l) => l.libraryID === Number(parsed.libraryID),
+            );
+            const colOk =
+              parsed.collectionID == null ||
+              (lib?.collections.some(
+                (c) => c.id === Number(parsed.collectionID),
+              ) ??
+                false);
+            if (lib && colOk) {
+              setImportTarget({
+                libraryID: Number(parsed.libraryID),
+                collectionID: Number.isInteger(parsed.collectionID)
+                  ? Number(parsed.collectionID)
+                  : null,
+              });
+            }
+          }
+        } catch {
+          /* pref 读取失败保持 null */
+        }
+      };
+      void ensureCollections();
+
+      const requestedSources =
+        activeSources ?? AVAILABLE_SOURCES.map((s) => s.value);
+      setSearchSourceCount(requestedSources.length);
+
+      // 渐进扇出（2026-09-23）：一次大 RPC 拆成 N 个并行单源 RPC——谁先回来
+      // 谁先上屏，慢源（如 30s 级 API）不再拖累其余源；取消走既有
+      // literature.searchCancel（遍历 abort 信号 Map 全部置位，天然覆盖并行批）。
+      // 跨源去重上移到前端（mergeExternalArticles：DOI 归一优先，标题退化）。
+      let landedAny = false;
+      let failedCount = 0;
+
+      const perSource = async (src: string) => {
+        try {
+          const data = await semanticRequest<{
+            articles: ArticleResult[];
+            skippedNoKey?: string[];
+            failedSources?: string[];
+          }>(
+            "literature.search",
+            {
+              query: trimmed,
+              year: yearRange || undefined,
+              sources: [src],
+              maxResults,
+              sort: sortBy,
+              author: authorFilter || undefined,
+              journal: journalFilter || undefined,
+              openAccessOnly: openAccessOnly || undefined,
+            },
+            60000,
+          );
+          if (myId !== requestId.current) return;
+          // 缺 Key / 源内失败由回执名单带出（并发 handler 不再以抛错上报）
+          if (data?.skippedNoKey?.length) {
+            setSkippedNoKey((prev) => [...prev, src]);
+          }
+          if (data?.failedSources?.length) {
+            failedCount++;
+            setFailedSources((prev) => [...prev, src]);
+          }
+          // aborted:true 等非良构回执 = 已取消，丢弃即可
+          if (Array.isArray(data?.articles) && data.articles.length > 0) {
+            landedAny = true;
+            merge(data.articles);
+          }
+        } catch {
+          if (myId !== requestId.current) return;
           failedCount++;
           setFailedSources((prev) => [...prev, src]);
+        } finally {
+          if (myId === requestId.current) setSourcesDone((d) => d + 1);
         }
-        // aborted:true 等非良构回执 = 已取消，丢弃即可
-        if (Array.isArray(data?.articles) && data.articles.length > 0) {
-          landedAny = true;
-          merge(data.articles);
-        }
-      } catch {
-        if (myId !== requestId.current) return;
-        failedCount++;
-        setFailedSources((prev) => [...prev, src]);
-      } finally {
-        if (myId === requestId.current) setSourcesDone((d) => d + 1);
-      }
-    };
+      };
 
-    try {
-      await Promise.allSettled(requestedSources.map(perSource));
-      if (myId !== requestId.current) return;
-      // 全军覆没 ≠ 「0 条结果」——显式 error 态（SE-1 同款立法：失败不说谎）
-      if (!landedAny && failedCount >= requestedSources.length) {
-        setSearchError(getString("lit-all-sources-failed"));
-      } else if (!landedAny) {
-        // 本次零命中：清掉上一轮结果——否则旧列表继续显示并谎报为本次
-        // 「完成 N 条」（审计 P1-6）
-        setResults([]);
-        setSelectedIds(new Set());
-        setImportResults(new Map());
-        setExpandedKeys(new Set());
-        setTranslationResults(new Map());
-        setFulltextKeys(new Set());
-        setFulltextOpenKeys(new Set());
-        setFulltextResults(new Map());
+      try {
+        await Promise.allSettled(requestedSources.map(perSource));
+        if (myId !== requestId.current) return;
+        // 全军覆没 ≠ 「0 条结果」——显式 error 态（SE-1 同款立法：失败不说谎）
+        if (!landedAny && failedCount >= requestedSources.length) {
+          setSearchError(getString("lit-all-sources-failed"));
+        } else if (!landedAny) {
+          // 本次零命中：清掉上一轮结果——否则旧列表继续显示并谎报为本次
+          // 「完成 N 条」（审计 P1-6）
+          setResults([]);
+          setSelectedIds(new Set());
+          setImportResults(new Map());
+          setExpandedKeys(new Set());
+          setTranslationResults(new Map());
+          setFulltextKeys(new Set());
+          setFulltextOpenKeys(new Set());
+          setFulltextResults(new Map());
+        }
+      } catch (e: unknown) {
+        if (myId !== requestId.current) return;
+        setSearchError(friendlyErrorMessage(toErrorMessage(e)));
+      } finally {
+        if (myId === requestId.current) setIsSearching(false);
       }
-    } catch (e: unknown) {
-      if (myId !== requestId.current) return;
-      setSearchError(friendlyErrorMessage(toErrorMessage(e)));
-    } finally {
-      if (myId === requestId.current) setIsSearching(false);
-    }
-  }, [
-    query,
-    yearRange,
-    activeSources,
-    maxResults,
-    sortBy,
-    authorFilter,
-    openAccessOnly,
-    journalFilter,
-    collectionsLoaded,
-  ]);
+    },
+    [
+      query,
+      yearRange,
+      activeSources,
+      maxResults,
+      sortBy,
+      authorFilter,
+      openAccessOnly,
+      journalFilter,
+      collectionsLoaded,
+    ],
+  );
 
   const handleClear = useCallback(() => {
     const wasSearching = isSearching;
@@ -738,76 +745,99 @@ export function useLiteratureSearch() {
   const clipboard = useClipboard();
 
   /** 导出/复制清单的数据集（审计 P2-8）：有勾选时作用于选中集（与同行
-   *  「导入选中 (N)」的语义对齐），无勾选时作用于全部结果。 */
+   *  「导入选中 (N)」的语义对齐），无勾选时作用于全部结果。
+   *  `ordered` 传入结果页当前展示顺序的列表（用户看到的排序），复制/导出
+   *  即按该顺序输出——此前恒按 lit.results 原始（网络到达）序输出，与上屏
+   *  排序脱节，粘贴出来顺序凌乱。选择键经原文数组预建的 article→key 映射
+   *  兑现（idx-N 位置回退键只对原位置成立）。 */
   const exportTarget = useCallback(
-    () =>
-      selectedIds.size > 0
-        ? results.filter((_, i) =>
-            selectedIds.has(getArticleKey(results[i], i)),
-          )
-        : results,
+    (ordered?: ArticleResult[]) => {
+      const base = ordered ?? results;
+      if (selectedIds.size === 0) return base;
+      const keyOf = new Map(
+        results.map((a, i) => [a, getArticleKey(a, i)] as const),
+      );
+      return base.filter((a) => {
+        const k = keyOf.get(a);
+        return k != null && selectedIds.has(k);
+      });
+    },
     [results, selectedIds],
   );
 
-  const handleCopyList = useCallback(async () => {
-    const lines = exportTarget().map((r, i) => {
-      const byline = [r.authors || "—"];
-      if (r.year) byline.push(`(${r.year})`);
-      const block = [`${i + 1}. ${r.title || "—"}`, `    ${byline.join(" ")}`];
-      if (r.doi) block.push(`    DOI: ${r.doi}`);
-      return block.join("\n");
-    });
-    const ok = await clipboard.copy(lines.join("\n"));
-    if (ok) toast.success(getString("copy-success"));
-    else toast.error(getString("copy-failed"));
-  }, [exportTarget, clipboard, toast]);
+  const handleCopyList = useCallback(
+    async (ordered?: ArticleResult[]) => {
+      const blocks = exportTarget(ordered).map((r, i) => {
+        // 粘贴友好的编号条目：标题行 + 元数据行（作者 年份 期刊）+ DOI 行，
+        // 条目间空行分隔；缺失字段整段省略，不留「—」占位噪音。
+        const lines = [`${i + 1}. ${r.title || "—"}`];
+        const meta = [
+          r.authors || "",
+          r.year ? `(${r.year})` : "",
+          r.journal || "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        if (meta) lines.push(`   ${meta}`);
+        if (r.doi) lines.push(`   DOI: ${r.doi}`);
+        return lines.join("\n");
+      });
+      const ok = await clipboard.copy(blocks.join("\n\n"));
+      if (ok) toast.success(getString("copy-success"));
+      else toast.error(getString("copy-failed"));
+    },
+    [exportTarget, clipboard, toast],
+  );
 
-  const handleExportCsv = useCallback(() => {
-    const target = exportTarget();
-    if (target.length === 0) return;
-    try {
-      const header = [
-        getString("csv-header-title"),
-        getString("csv-header-authors"),
-        getString("csv-header-year"),
-        getString("csv-header-journal"),
-        getString("csv-header-doi"),
-        getString("csv-header-citations"),
-        getString("csv-header-source"),
-        getString("csv-header-pdf-url"),
-      ];
-      const rows = target.map((r) => [
-        r.title,
-        r.authors,
-        r.year,
-        r.journal,
-        r.doi,
-        r.citationCount,
-        r.source,
-        r.pdfUrl,
-      ]);
-      // BOM keeps Excel from mangling CJK titles.
-      const csv =
-        "\uFEFF" +
-        [header, ...rows]
-          .map((row) => row.map(csvEscape).join(","))
-          .join("\r\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `literature-search-${Date.now()}.csv`;
-      // Firefox 系（Zotero 内核同源）要求 <a> 在 DOM 中 click 才触发下载；
-      // 游离元素可能静默失败（2026-08-25 审计批 D 残余项）。
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      safeDebug("[z-search] " + e);
-      toast.error(getString("ux3-lit-export-failed"));
-    }
-  }, [exportTarget, toast]);
+  const handleExportCsv = useCallback(
+    (ordered?: ArticleResult[]) => {
+      const target = exportTarget(ordered);
+      if (target.length === 0) return;
+      try {
+        const header = [
+          getString("csv-header-title"),
+          getString("csv-header-authors"),
+          getString("csv-header-year"),
+          getString("csv-header-journal"),
+          getString("csv-header-doi"),
+          getString("csv-header-citations"),
+          getString("csv-header-source"),
+          getString("csv-header-pdf-url"),
+        ];
+        const rows = target.map((r) => [
+          r.title,
+          r.authors,
+          r.year,
+          r.journal,
+          r.doi,
+          r.citationCount,
+          r.source,
+          r.pdfUrl,
+        ]);
+        // BOM keeps Excel from mangling CJK titles.
+        const csv =
+          "\uFEFF" +
+          [header, ...rows]
+            .map((row) => row.map(csvEscape).join(","))
+            .join("\r\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `literature-search-${Date.now()}.csv`;
+        // Firefox 系（Zotero 内核同源）要求 <a> 在 DOM 中 click 才触发下载；
+        // 游离元素可能静默失败（2026-08-25 审计批 D 残余项）。
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        safeDebug("[z-search] " + e);
+        toast.error(getString("ux3-lit-export-failed"));
+      }
+    },
+    [exportTarget, toast],
+  );
 
   return {
     // query

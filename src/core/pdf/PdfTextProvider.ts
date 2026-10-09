@@ -1,14 +1,16 @@
 /**
- * PdfTextProvider — Full-text extraction via OpenDataLoader, with per-item cache.
+ * PdfTextProvider — Full-text extraction via the analyzer fallback chain, cached per item.
  *
- * OpenDataLoader is the single extraction backend. Results are cached in AICache
- * (per item, 24h TTL) so repeated calls (per-message page injection, search
- * snippets) don't re-spawn the JVM. Cache is a read-through optimization of the
- * same data source — NOT a fallback.
+ * Extraction runs through PdfAnalyzerPipeline: ODL (structured, when jar+Java
+ * are present) → MinerU cloud (opt-in) → Zotero built-in fulltext (always
+ * available). Results are cached in AICache (per item, 24h TTL) so repeated
+ * calls (per-message page injection, search snippets) don't re-spawn the JVM.
+ * Cache is a read-through optimization of the same data source — NOT a fallback.
  *
- * Page boundaries come from the ODL JSON structure (one PdfPageAnalysis per page).
+ * Page boundaries come from the ODL JSON structure (one PdfPageAnalysis per page);
+ * the Zotero-fulltext tier yields a single pseudo-page (page spans unavailable).
  *
- * Throws PdfParseError on failure — no silent degradation.
+ * Throws PdfParseError when every tier fails — no silent degradation.
  */
 
 import { analyzePdf } from "./PdfAnalyzerPipeline";
@@ -27,9 +29,12 @@ export interface PageText {
   charCount: number;
 }
 
+export type PdfTextSource =
+  "opendataloader-pdf" | "mineru-api" | "zotero-fulltext";
+
 export interface PdfTextResult {
   text: string;
-  source: "opendataloader-pdf";
+  source: PdfTextSource;
   totalPages: number;
   extractedPages: number;
   pages: PageText[];
@@ -45,7 +50,15 @@ interface CachedFulltext {
   totalPages: number;
   pages: PageText[];
   pageSpans: Array<{ pageNumber: number; start: number; end: number }>;
+  /** 产出该缓存的后端（旧条目缺失 = opendataloader-pdf 时代）。 */
+  source?: PdfTextSource;
 }
+
+const TIER_TO_SOURCE: Record<string, PdfTextSource> = {
+  "tier2-opendataloader-pdf": "opendataloader-pdf",
+  "tier2-mineru-api": "mineru-api",
+  "tier2-zotero-fulltext": "zotero-fulltext",
+};
 
 /**
  * Get full text of a PDF attachment via OpenDataLoader (cached per item).
@@ -76,6 +89,7 @@ export async function getPdfFullText(
       pages: cached.pages,
       // 旧缓存条目无页界记账 — 按不可得降级，不伪造。
       pageSpans: cached.pageSpans ?? [],
+      source: cached.source ?? "opendataloader-pdf",
     };
   } else {
     // M-24: cache miss — reuse an in-flight analysis for this item, or
@@ -103,6 +117,7 @@ export async function getPdfFullText(
       totalPages: analysis.totalPages,
       pages,
       pageSpans: analysis.filteredPageSpans ?? [],
+      source: TIER_TO_SOURCE[analysis.source] ?? "opendataloader-pdf",
     };
     if (full.text.trim().length > 0) {
       await cache.set(CacheKeys.fulltext(parentId), full);
@@ -120,7 +135,7 @@ export async function getPdfFullText(
 
   return {
     text: limit ? pages.map((p) => p.text).join("\n\n") : full.text,
-    source: "opendataloader-pdf",
+    source: full.source ?? "opendataloader-pdf",
     totalPages: full.totalPages,
     extractedPages: pages.length,
     pages,

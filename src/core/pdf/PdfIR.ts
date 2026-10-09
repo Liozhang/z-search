@@ -144,7 +144,8 @@ export interface PdfPageAnalysis {
 }
 
 export interface PdfDocumentAnalysis {
-  source: "tier2-opendataloader-pdf" | "tier2-mineru-api";
+  source:
+    "tier2-opendataloader-pdf" | "tier2-mineru-api" | "tier2-zotero-fulltext";
   totalPages: number;
   pages: PdfPageAnalysis[];
 
@@ -176,10 +177,10 @@ export interface AnalyzeOptions {
   /** Abort signal for cancellation */
   signal?: AbortSignal;
   /**
-   * Restrict parsing to the local OpenDataLoader backend and disable the
-   * cross-backend fallback to MinerU (a remote VLM service). Used by
-   * background auto-actions that must stay local / non-AI; infra failures
-   * throw PdfParseError instead of reaching for the network.
+   * Restrict parsing to local backends and disable the cross-backend fallback
+   * to MinerU (a remote VLM service). Used by background auto-actions that
+   * must stay local / non-AI: chain = ODL → Zotero built-in fulltext (also
+   * local) — the chain never reaches the network.
    */
   localOnly?: boolean;
 }

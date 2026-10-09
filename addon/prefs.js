@@ -82,14 +82,20 @@ pref("apis.pqai.token", "");
 pref("apis.jpo.apiKey", "");
 pref("apis.kipris.apiKey", "");
 
-// ── Embedding (local ONNX by default — zero-config; API is opt-in) ──
+// ── Embedding (local ONNX by default — model auto-downloads on first use) ──
 pref("embedding.mode", "local");
 pref("embedding.local.model", "Xenova/multilingual-e5-small");
+// 模型下载镜像覆盖（空 = 自动：中国大陆 hf-mirror.com，其余 huggingface.co）。
+// 区域限定端点之一（endpointSchema.ts），设置面板「区域限定端点」组可改。
+pref("embedding.local.mirror", "");
 
 // ── PDF parsing (PdfTextProvider — full-text indexing for vector search) ──
 pref("pdfParser.backend", "opendataloader"); // "opendataloader" | "mineru"
 pref("pdfParser.backendFallback", true); // auto-switch on infra errors
 pref("pdfParser.opendataloader.enabled", true);
+// jar 在场而机器无 Java 时自动下载 Temurin 便携 JRE（约 40-50MB，数据目录
+// 解压，免管理员权限）。没有 jar 就从不触发——不会为未启用的后端花流量。
+pref("pdfParser.opendataloader.autoJre", true);
 pref("pdfParser.opendataloader.tableEnable", "default");
 pref("pdfParser.opendataloader.returnImages", false);
 pref("pdfParser.opendataloader.timeout", 300);

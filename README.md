@@ -169,15 +169,18 @@ clicking a row drills into that journal's full metrics card.
 - Find-similar and duplicate-scan anchor tools operate on the items selected in
   the main Zotero window
 - Dual embedding backends: local ONNX by default
-  (Xenova/multilingual-e5-small, zero configuration) or API mode (embedding
-  models from your AI provider); switching models auto-marks stale chunks with
-  one-click rebuild
+  (Xenova/multilingual-e5-small) or API mode (embedding
+  models from your AI provider); the local model auto-downloads on first use
+  (~120 MB, via huggingface.co — mainland-China deployments default to the
+  hf-mirror.com mirror, overridable in settings); switching models auto-marks
+  stale chunks with one-click rebuild
 - Index building ships with progress notifications, aggregated skip reasons,
   cancellation, and a watchdog
-- Optional local deep-parsing backend (opendataloader, requires Java 11+):
-  the jar is not bundled — drop it into `core/pdf/lib/` under the plugin's
-  install directory to enable; otherwise basic text extraction or the MinerU
-  remote API is used automatically
+- Optional local deep-parsing backend (opendataloader): the jar is not
+  bundled — drop it into `core/pdf/lib/` under the plugin's install directory
+  to enable (a portable JRE auto-installs when the jar is present but Java is
+  missing); until then, extraction falls back to Zotero's built-in full-text
+  layer or the MinerU remote API, so indexing always yields text
 
 ### Unified Search Page
 

@@ -43,18 +43,45 @@ const NotifyEnvelopeSchema = z.object({
   payload: z.any(),
 });
 
-export function replaceUndefined(obj: any): any {
+/** Cycle marker: cyclic references cannot be expanded during traversal, but
+ *  structured clone itself supports cycles — replacing with an independent
+ *  marker object (no back-pointers) keeps the payload cloneable, avoiding
+ *  the unguarded recursive walker blowing the stack on cyclic objects
+ *  (SpiderMonkey: "too much recursion", 2026-10-09 button click chain). */
+const CYCLE_SENTINEL = { __zsearch_cycle__: true };
+
+/** Walk depth cap: an unbounded recursive walker blows the stack on absurdly
+ *  deep (even acyclic) payloads; beyond the cap the subtree is replaced with a
+ *  marker — a degraded payload is better than a stack overflow. */
+const WALK_DEPTH_LIMIT = 64;
+
+export function replaceUndefined(
+  obj: any,
+  seen: WeakSet<object> = new WeakSet(),
+  depth = 0,
+): any {
   if (obj === undefined) return UNDEFINED_SENTINEL;
   if (obj === null || typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map(replaceUndefined);
-  const out: any = {};
-  for (const k of Object.keys(obj)) {
-    out[k] = replaceUndefined(obj[k]);
+  if (seen.has(obj)) return CYCLE_SENTINEL;
+  if (depth >= WALK_DEPTH_LIMIT) return CYCLE_SENTINEL;
+  seen.add(obj);
+  const out: any = Array.isArray(obj)
+    ? obj.map((v) => replaceUndefined(v, seen, depth + 1))
+    : {};
+  if (!Array.isArray(out)) {
+    for (const k of Object.keys(obj)) {
+      out[k] = replaceUndefined(obj[k], seen, depth + 1);
+    }
   }
+  seen.delete(obj);
   return out;
 }
 
-export function restoreUndefined(obj: any): any {
+export function restoreUndefined(
+  obj: any,
+  seen: WeakSet<object> = new WeakSet(),
+  depth = 0,
+): any {
   if (
     obj &&
     typeof obj === "object" &&
@@ -63,11 +90,17 @@ export function restoreUndefined(obj: any): any {
   )
     return undefined;
   if (obj === null || typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map(restoreUndefined);
-  const out: any = {};
-  for (const k of Object.keys(obj)) {
-    out[k] = restoreUndefined(obj[k]);
+  if (seen.has(obj) || depth >= WALK_DEPTH_LIMIT) return CYCLE_SENTINEL;
+  seen.add(obj);
+  const out: any = Array.isArray(obj)
+    ? obj.map((v) => restoreUndefined(v, seen, depth + 1))
+    : {};
+  if (!Array.isArray(out)) {
+    for (const k of Object.keys(obj)) {
+      out[k] = restoreUndefined(obj[k], seen, depth + 1);
+    }
   }
+  seen.delete(obj);
   return out;
 }
 

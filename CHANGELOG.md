@@ -1,208 +1,307 @@
 # Changelog
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
-版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
-`npm run release` 会收集自上个 tag 以来的 conventional commits 生成
-对应版本的更新说明。
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+Release notes published with a version are taken verbatim from that version's
+section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
 ## [Unreleased]
 
 ## [1.3.0] - 2026-09-30
 
-### 新增
+### Added
 
-- **摘要翻译跨会话持久缓存**：译文按内容寻址键（引擎指纹 + 语言对 +
-  归一化原文）分片落盘，重复翻译同一文献不再重复消耗有额度限制的引擎
-  ——真机实测首次 11843ms（主引擎超时后兜底成功）、二次命中 3ms 且逐字
-  一致。默认 200MB 启动自动修剪，设置面板新增开关、容量上限与截断上限
-  三个控件（默认开 / 200MB / 10000 字符）。
-- **密钥源 429 退避重试**：serpapi、brave、tavily、google、serper、
-  perplexity、exa、bing 八个密钥源统一接入限流包装——兼容两种 429
-  返回形态，优先读取响应头重试间隔（超长间隔直接终态不空等），无头时
-  5 秒退避加抖动，单次重试，限流有专门文案。
-- **摘要翻译截断保护与配额错误分类**：超长摘要默认按 10000 字符截断
-  （可调，0 不限长），截断时译文带黄色提示条；配额/限流/计费类错误统一
-  分类为可操作错误码（`ai-quota-exceeded`），未配置为 `ai-not-configured`，
-  机器翻译引擎名原样透传——配额错误不再被误判成 AI 配额问题。
+- **Persistent cross-session cache for summary translation**: translations are
+  sharded on disk under content-addressed keys (engine fingerprint + language
+  pair + normalized source text), so re-translating the same item no longer
+  repeatedly consumes quota-limited engines — measured on a real machine:
+  11843 ms on the first run (fallback engine succeeded after the primary timed
+  out), 3 ms on the second run with byte-identical output. Enabled by default
+  with a 200 MB cap, pruned automatically at startup; the settings panel gains
+  three controls — toggle, size cap, and truncation cap (defaults: on /
+  200 MB / 10000 characters).
+- **Backoff retry on HTTP 429 for key-based sources**: the eight key-based
+  sources — serpapi, brave, tavily, google, serper, perplexity, exa, bing —
+  are uniformly wrapped with rate-limit handling: both 429 response shapes are
+  recognized, the retry interval from response headers takes priority
+  (abnormally long intervals terminate immediately instead of idling), and a
+  5-second jittered backoff with a single retry is used when no header is
+  present. Rate limiting has its own dedicated message.
+- **Truncation guard for summary translation and quota-error classification**:
+  overlong summaries are truncated at 10000 characters by default (adjustable,
+  0 disables the limit); when truncated, the translation carries a yellow
+  notice bar. Quota / rate-limit / billing errors are uniformly classified
+  into the actionable error code (`ai-quota-exceeded`), a missing
+  configuration becomes `ai-not-configured`, and the machine-translation
+  engine name is passed through as-is — quota errors are no longer misreported
+  as AI quota issues.
 
-### 修复
+### Fixed
 
-- **样式死类清缴（六处引用缺失）**：期刊指标卡四个节标题此前引用了
-  全仓不存在的 `hub-overline` 类，层级塌平成正文；检索失败横幅、模型
-  过期警示条、文献筛选对话框区标签同样裸排。现全部按设计规范补齐样式，
-  并新增「类名引用完整性」守卫测试防止复发。九条源码在用而编译产物缺失
-  的工具类（引文卡片边框、警示描边等）一并恢复。
-- **思考型模型返回空译文**：输出配额按文本长度推导时被内部推理耗尽，
-  `finish_reason=length` 且内容为空——输出下限提至 4096 token、单次
-  上限 8192。
-- **Zotero 10 引导沙箱缺 `AbortSignal` 全局**：全部免密翻译端点
-  （Google 及其 Bing 兜底）在毫秒级直接抛 ReferenceError——加三级
-  垫片（宿主信号 → AbortController 回退 → 无信号降级）。
-- **Bing 网页端显式 `auto` 源语言**：线上接口拒绝 `auto`，映射为
-  `auto-detect`。
+- **Purge of dead style classes (six missing references)**: the four section
+  headings on the journal-metrics card referenced `hub-overline`, a class that
+  existed nowhere in the repository, flattening the hierarchy into body text;
+  the search-failure banner, the model-expired warning bar, and the item-filter
+  dialog region label were likewise left unstyled. All of them now follow the
+  design spec, and a new class-reference-integrity guard test prevents
+  recurrence. Nine utility classes used in source but missing from the
+  compiled bundle (citation-card borders, warning outlines, etc.) are restored
+  as well.
+- **Reasoning models returning empty translations**: the output budget was
+  derived from text length and got consumed by internal reasoning, yielding
+  `finish_reason=length` with empty content — the output floor is raised to
+  4096 tokens with a per-request cap of 8192.
+- **Missing `AbortSignal` global in the Zotero 10 bootstrap sandbox**: every
+  keyless translation endpoint (Google and its Bing fallback) threw a
+  ReferenceError within milliseconds — fixed with a three-tier shim (host
+  signal → AbortController fallback → proceed without a signal).
+- **Explicit `auto` source language on the Bing web endpoint**: the live
+  endpoint rejects `auto`; it is now mapped to `auto-detect`.
 
-### 变更
+### Changed
 
-- **PDF 分块向量外置独立数据库**：向量真身移入
-  `zsearch_pdf_vectors.sqlite`，主库不再承载大二进制；存量内联向量
-  惰性迁移（读旧列 → 写外置 → 字节校验 → 清空旧列），写失败补偿删除。
-- **tw.css 再生成链路入库**：Tailwind 编译输入（`scripts/tw-source.css`）
-  与再生成脚本入库并接入构建，编译产物不再是「无源产物」；产物瘦身
-  5103 → 约 1900 行（清掉扫描自旧代码库的历史死类）。
-- **设置页遗产清理**：删除已被原生偏好设置窗取代的 React 设置组件与
-  2118 行未加载样式文件，九个孤儿文案键三语同步移除。
-- **死键守卫正控自测**：死键判定抽为纯函数，真实守卫与自测共用同一
-  函数对象——无正控的校验器不能证明自己能抓问题。
+- **PDF chunk vectors moved to a separate database**: the vectors now live in
+  `zsearch_pdf_vectors.sqlite` so the main database no longer carries large
+  binary blobs; existing inline vectors migrate lazily (read old column →
+  write external → verify bytes → clear old column), with compensating
+  deletion when the write fails.
+- **tw.css regeneration pipeline checked in**: the Tailwind compile input
+  (`scripts/tw-source.css`) and the regeneration script are now in the
+  repository and wired into the build, so the compiled artifact is no longer
+  source-less; the artifact shrank from 5103 to about 1900 lines (historical
+  dead classes scanned from the old codebase removed).
+- **Legacy settings-page cleanup**: the React settings components superseded
+  by the native preferences window and an unloaded 2118-line stylesheet were
+  deleted, along with nine orphaned locale keys removed in all three
+  languages.
+- **Positive-control self-test for the dead-key guard**: dead-key detection is
+  extracted into a pure function shared by the real guard and its self-test —
+  a validator without a positive control cannot prove that it catches
+  problems.
 
 ## [1.2.3] - 2026-09-29
 
-### 修复
+### Fixed
 
-- **本地搜索：索引未建时不再发起注定空手的检索**：库内什么索引都没有时
-  搜索按钮禁用（悬停提示「构建全文索引后才能检索库内内容」），键盘回车
-  同样被拦——此前输入关键词点搜索毫无反馈，页面停在索引引导，用户无从
-  判断检索是否真的执行过。
-- **文献筛选弹窗补「确认」钮**：改动即时上抛、下次搜索生效的契约不变，
-  但此前保留改动的唯一关闭路径是右上角 ×，「取消」实际承担「还原并关
-  窗」，想保留改动只能点 ×，语义含混。现在「确认＝保留并关窗」「取消＝
-  还原并关窗」分明，「全部重置」不关窗不变。
-- **掠夺性徽章不再外泄内部类别值**：期刊指标卡曾显示「掠夺性
-  (standalone)」——名单数据的原始枚举直出上屏；现按界面语言本地化为
-  「掠夺性 (独立期刊)」（劫持期刊同法），未收录的新类别仍原样展示以不
-  丢信息。
-- **搜索页首 tab 更名「学术检索」**：该 tab 实为外部学术数据库检索，
-  旧称「网络搜索」与设置里的网页搜索源管理互相打架；与 README 的「学术
-  检索」称谓统一。英文 Web Search → Academic Search，繁体同步。
-- **实机测试同步**：README 六张界面截图（中英各三）按新界面重拍；
-  search-ui-states / feature-matrix 两套件的 tab 文案耦合断言同步更名；
-  修复 hub-visual-search 的既有缺陷——套件强制英文界面却按「期刊」精确
-  匹配域 tab，三段化（2026-09-28）后两用例必失败，改双语正则。新增
-  yyy-ui-audit 界面巡检截图套件（主窗口/本地搜索/设置面板）。
+- **Local search: no more doomed queries when no index exists**: the search
+  button is disabled (tooltip: "Build the full-text index before searching
+  local content") when the library contains no index at all, and pressing
+  Enter is blocked the same way — previously, typing keywords and clicking
+  Search gave no feedback while the page stayed on the index onboarding, so
+  there was no way to tell whether the search had actually run.
+- **Item-filter dialog gains a "Confirm" button**: the contract is unchanged —
+  changes apply immediately and take effect on the next search — but the only
+  way to keep changes used to be closing via the top-right ×, while "Cancel"
+  actually meant "revert and close"; keeping changes therefore required the ×,
+  which was semantically confusing. Now "Confirm = keep and close" and
+  "Cancel = revert and close" are clearly distinct, and "Reset all" keeps the
+  dialog open, as before.
+- **Predatory badge no longer leaks the internal category value**: the
+  journal-metrics card used to show "(standalone)" — the raw enum from the
+  list data went straight to the screen without localization; it is now
+  localized per interface language ("Predatory (standalone journal)" in
+  English, with hijacked journals treated the same way), while newly added
+  categories without a translation still render as-is so no information is
+  lost.
+- **First tab on the search page renamed "Academic Search"**: the tab actually
+  searches external academic databases, and the old name "Web Search" clashed
+  with the web-search source management in the settings; the README already
+  called it "Academic Search", so the naming is now unified. English
+  "Web Search" → "Academic Search"; Traditional Chinese updated in sync.
+- **On-device test suite sync**: the six README screenshots (three per
+  language) were re-shot against the new UI; the tab-label-coupled assertions
+  in the search-ui-states and feature-matrix suites were renamed accordingly;
+  fixed a pre-existing defect in hub-visual-search — the suite forces an
+  English UI yet matched the domain tab against the exact Chinese label for
+  "Journals", so both cases had failed since the three-segment redesign
+  (2026-09-28); they now use a bilingual regex. Added the yyy-ui-audit
+  screenshot-inspection suite (main window / local search / settings panel).
 
 ## [1.2.2] - 2026-09-29
 
-### 变更
+### Changed
 
-- **清除 Leadero 品牌残留（更名收尾）**：语言文件界面文案（「Leadero
-  设置」「Leadero 助手」等）改为 z-search；12 个 `leadero-*.css` 更名
-  `zsearch-*.css`；AI 生成笔记的标签值由 `leadero-ai-generated` 改为
-  `zsearch-ai-generated`（既有笔记保留旧标签，仅新笔记用新值）；删除无
-  引用的 `PREF_PREFIX` 死代码，注释中的旧品牌措辞一并清理。
-- **密钥存储域更名迁移**：登录管理器中的密钥域由「Leadero AI Secrets」
-  改为「z-search AI Secrets」。启动时执行一次性幂等迁移：新域已有的凭据
-  跳过，旧域副本无论成败都会清除；迁移完成前旧域保持可读兜底——用户已
-  存的 API 密钥在更名后不丢。
+- **Removal of Leadero brand leftovers (rename wrap-up)**: UI strings in the
+  locale files ("Leadero Settings", "Leadero Assistant", etc.) became
+  z-search; the 12 `leadero-*.css` files were renamed to `zsearch-*.css`; the
+  tag value of AI-generated notes changed from `leadero-ai-generated` to
+  `zsearch-ai-generated` (existing notes keep the old tag; only new notes use
+  the new value); the unreferenced `PREF_PREFIX` dead code was deleted, and
+  stale brand wording in comments was cleaned up.
+- **Secret-store realm renamed and migrated**: the secrets realm in the login
+  manager changed from "Leadero AI Secrets" to "z-search AI Secrets". A
+  one-time idempotent migration runs at startup: credentials already present
+  under the new realm are skipped, and old-realm copies are cleared regardless
+  of the migration outcome; the old realm stays readable as a fallback until
+  the migration completes — API keys stored by users survive the rename.
 
 ## [1.2.1] - 2026-09-29
 
-### 修复
+### Fixed
 
-- **品牌标手柄改接镜框**：旧柄起点恰好压在白 Z 底横划右端头上，红帽与白笔
-  同宽、把白圆头整个盖住——两横心线等长、可见长度却 38 对 30，Z 读起来
-  上下不对称；且盘内红段对墨底对比不足（约 2.9:1），16px 下不可见，「柄
-  接 Z 角」的设计意图只在制造咬白的大尺寸上存在。柄起点外移到圆周
-  (60.5,59)，红色自镜框边缘长出，白 Z 完整等长；可见柄长 38.2→29.0（径比
-  0.52，仍在经典 0.5~0.8 区间）。icon-dark.svg 同步，三张栅格图（48/96、
-  深色 48）重渲，造型三要素与配色不变。
+- **Logo handle re-attached to the lens rim**: the old handle start point sat
+  exactly on the right tip of the white Z's bottom stroke, and the red cap
+  matched the white stroke in width, covering the round cap entirely — the two
+  strokes were center-aligned and equal in length yet visibly 38 vs 30, so the
+  Z read as vertically asymmetric; moreover, the red segment's contrast
+  against the ink disc was insufficient (about 2.9:1), making it invisible at
+  16 px, so the "handle meets the Z corner" design intent existed only at
+  larger sizes that bit into the white. The handle start point moved outward
+  to the circle edge (60.5, 59), the red now grows from the lens rim, and the
+  white Z remains fully visible and equal-length; visible handle length
+  38.2 → 29.0 (radius ratio 0.52, still within the classic 0.5–0.8 range).
+  icon-dark.svg was updated in sync and the three raster images re-rendered
+  (48/96, dark 48); the three shape elements and the palette are unchanged.
 
 ## [1.2.0] - 2026-09-28
 
-### 变更
+### Changed
 
-- **品牌标比例微调**：工具栏/偏好窗图标观感失衡的根源是三者比例打架——
-  白 Z 在圆内右偏 5（右端笔帽与圆边界相切、左侧却空 10），手柄心线长
-  21.9 仅占圆直径 0.32（经典放大镜为 0.5~0.8）像个红楔子，而直径 68 的圆
-  盘几乎占满整个 96 画布。新版圆盘缩为直径 56 并让位左上，Z 缩小且与圆心
-  精确同心（左右余量各 9），手柄加长到 38.2（径比 0.68）整段伸出圆外；
-  造型三要素（墨圆 / 白 Z / 绯红柄）与配色不变。
-- **搜索页域切换并入左上 tab 行**：页头右缘「文献/期刊」图标对钮退役
-  （列表/网格图标被误读为列表/卡片陈列切换），「网络搜索 | 本地搜索 |
-  期刊」三段 tab 上移为 pane 级唯一域切换器；去期刊再回来保留网络/本地
-  停驻，右键菜单「查找相似文献」深链仍直达本地找相似。
-- **通知链路瘦身**：退役 hubBridge / usePref / BackendEventNotifier /
-  broadcastPrefChanged 四个无引用桥接模块；进度窗管理削掉虚构 API
-  （canClose/「X 钮关闭探测」均非 Zotero 真实 API），iframe 侧通知统一经
-  bridge notify 上行、宿主代发——搜索页回执不再走错 RPC 通道触发重发风暴。
-- **addonName 更名 Z-Search**：插件显示名大小写归位，Hub 窗回退名弃用
-  Leadero 历史残留。
+- **Logo proportion tuning**: the toolbar/preferences icons looked unbalanced
+  because three proportions fought each other — the white Z sat 5 units right
+  of center inside the circle (the right stroke tip touched the circle
+  boundary while 10 units of space remained on the left), the 21.9-unit handle
+  centerline was only 0.32 of the diameter (classics run 0.5–0.8) and read as
+  a red wedge, and the 68-diameter disc nearly filled the whole 96 canvas. The
+  new version shrinks the disc to a diameter of 56 and shifts it up and left,
+  shrinks the Z and centers it exactly on the disc (9 units of margin on each
+  side), and lengthens the handle to 38.2 (radius ratio 0.68) so that it
+  extends beyond the disc; the three shape elements (ink disc / white Z /
+  crimson handle) and the palette are unchanged.
+- **Search-page domain switching folded into the top-left tab row**: the
+  "items/journals" icon-pair button at the right edge of the header retired
+  (its list/grid icons were misread as a list/card layout toggle); the
+  three-segment "Web Search | Local Search | Journals" tab row moved up to
+  become the pane-level domain switcher; leaving Journals and coming back
+  keeps the web/local state, and the context-menu "Find Similar Items" deep
+  link still goes straight to local similar-item search.
+- **Notification pipeline slim-down**: retired the four unreferenced bridge
+  modules hubBridge / usePref / BackendEventNotifier / broadcastPrefChanged;
+  progress-window management lost its fictional API (canClose and "close
+  button probing" are not real Zotero APIs), and iframe-side notifications now
+  uniformly travel up through the bridge's notify with the host sending them —
+  search-page receipts no longer take the wrong RPC channel and trigger resend
+  storms.
+- **addonName renamed to Z-Search**: the add-on display name's casing is fixed,
+  and the Hub window's fallback name dropped the Leadero historical leftover.
 
-### 新增
+### Added
 
-- **网络区域选择**：设置面板新增「网络区域」组（自动 / 国际 / 中国大陆）。
-  插件此前把可达性差异全藏在隐式兜底链里（Google 不通就等 10 秒超时再落
-  Bing），用户无从声明自己身处哪片互联网。声明区域后只改**仍是出厂默认**
-  的四项（默认网页搜索源、翻译引擎、Azure Translator 订阅区、中科院分区
-  显隐）——自己改过的设置永不被推翻；「套用推荐默认值」按钮可随时重套
-  （force）。
-- **中科院分区随区域显隐**：中科院分区（CASS）是中国科研评价体系的数据，
-  现按区域限定显隐——网络区域声明为「中国大陆」时展示，声明为「国际」时
-  从期刊检索、文献结果徽章、学术评分与主窗条目树徽章中整体退场（评分退化为
-  纯 JCR 口径，全球用户的排序不再被中国区先验影响）；区域未声明沿用历史
-  行为（本地离线数据默认展示）。设置面板「网络区域」组新增独立下拉（自动/
-  显示/隐藏，`region.cassPartition`）——全球用户同样可能在研究中国期刊，
-  故只做默认显隐、绝不硬性剥夺。
-- **区域限定端点可覆盖**：easyScholar / MinerU 云 / Adoptium JRE 下载 /
-  维基百科域名四个只在其所属区域运营（或分语言站）的端点，设置面板「区域
-  限定端点」组可填镜像或自建代理，留空即用内置值；非法值（缺协议、非裸
-  主机名）不落盘并当场报错。
-- **翻译引擎可选**：`translate.engineType` 进入设置面板，含新增的免 key
-  「Bing 网页版」引擎（中国大陆唯一可达的免 key 选项，此前只是 Google 的
-  隐式兜底）；Azure Translator 订阅区（`translate.bing.region`，pref 早已
-  存在却无入口）有了可编辑下拉——国内 Azure key 不必再手改 prefs.js。
-- **导入目标选择器**：检索结果工具栏新增「导入到」下拉——默认跟随主窗
-  选择的分类；可显式指定文库（含群组库）与分类，单条/批量导入统一生效，
-  选择持久化（`search.importTarget`）。经 `Zotero.Translate` 原生
-  `libraryID/collections` 选项落库，目标失效（分类被删）静默回落主窗选择。
+- **Network region selection**: the settings panel gains a "Network Region"
+  group (Auto / International / Mainland China). The add-on previously hid all
+  reachability differences inside implicit fallback chains (when Google was
+  unreachable, wait 10 seconds for the timeout, then fall back to Bing),
+  leaving users no way to declare which part of the internet they live in.
+  Declaring a region changes only the four settings still at factory defaults
+  (default web-search source, translation engine, Azure Translator
+  subscription region, CASS partition visibility) — user-modified settings are
+  never overridden; the "Apply recommended defaults" button can re-apply them
+  (force) at any time.
+- **CASS partition visibility follows the region**: the CAS partition (CASS)
+  is data from China's research-evaluation system, so its visibility is now
+  region-gated — shown when the network region is "Mainland China", and fully
+  withdrawn from journal search, item-result badges, academic scoring, and the
+  main-window item-tree badges when set to "International" (scoring degrades
+  to pure JCR, so global users' rankings are no longer influenced by
+  China-specific priors); with the region undeclared, historical behavior
+  applies (offline local data shown by default). The "Network Region" group
+  gains an independent dropdown (Auto / Show / Hide, `region.cassPartition`) —
+  global users may well study Chinese journals, so this only changes default
+  visibility and never removes access outright.
+- **Region-restricted endpoints overridable**: four endpoints that operate
+  only in their home region (or run language-specific sites) — easyScholar,
+  MinerU cloud, the Adoptium JRE download, and the Wikipedia domain — can be
+  pointed at a mirror or a self-hosted proxy in the settings panel's
+  "Region-Restricted Endpoints" group; leave blank to use the built-ins.
+  Invalid values (missing protocol, not a bare hostname) are rejected on the
+  spot and never persisted.
+- **Selectable translation engine**: `translate.engineType` enters the
+  settings panel, including the new keyless "Bing Web" engine (the only
+  reachable keyless option in mainland China; previously it was just an
+  implicit fallback of Google); the Azure Translator subscription region
+  (`translate.bing.region`, a pref that existed without any UI) gets an
+  editable dropdown — a domestic Azure key no longer requires hand-editing
+  prefs.js.
+- **Import target selector**: the search-results toolbar gains an "Import to"
+  dropdown — by default it follows the collection selected in the main window;
+  a library (including group libraries) and a collection can be set
+  explicitly, effective for both single and batch imports, with the choice
+  persisted (`search.importTarget`). Items land via the native
+  `libraryID/collections` options of `Zotero.Translate`; a stale target
+  (collection deleted) silently falls back to the main-window selection.
 
-### 修复
+### Fixed
 
-- **DOI 批量导入幂等防重**：导入前按归一化 DOI 预检，命中即回执既有条目，
-  不再重复建条（超时重试 / 引文弹窗重复点击 / 批量混入在库条目均覆盖），
-  幂等命中不重复挂 OA 附件；显式指定文库（library-only）目标不再回退主窗
-  当前分类，防跨库误挂；引文导入成功后按钮置灰禁点。
-- **期刊检索错误分流**：OpenAlex 服务侧错误上抛并显示失败态，不再谎报
-  「未找到该期刊」；JIF 徽章悬停显示完整「影响因子 Qx」。
-- **多主窗隔离**：菜单/工具栏/快捷键/期刊徽章列改逐窗登记、逐窗反注册——
-  此前关掉一个主窗会把其余窗的入口一并拆掉；期刊徽章列改引用计数，
-  最后一个主窗卸载才拆列。
-- **设置面板 ApiKeyInput**：Escape 回滚不再被失焦误提交为编辑值；进入
-  编辑态自动聚焦输入框。
-- **语义检索错误文案本地化**：无活动窗格 / 未选中条目 / 条目缺失不再吐
-  英文裸串。
+- **Idempotent DOI batch import**: a normalized-DOI precheck before import
+  returns the existing item on a hit instead of creating a duplicate (covers
+  retry timeouts, repeated clicks on the citation dialog, and batches that mix
+  in owned items); idempotent hits do not re-attach OA files; explicitly
+  library-only targets no longer fall back to the main window's current
+  collection, preventing cross-library misattachment; the citation-import
+  button is disabled after success.
+- **Journal search error triage**: OpenAlex server-side errors now surface
+  with a failure state instead of falsely reporting "journal not found"; the
+  JIF badge tooltip shows the full "Impact Factor Qx".
+- **Multiple main-window isolation**: menus, toolbars, shortcuts, and the
+  journal-badge column now register and unregister per window — previously,
+  closing one main window tore down the entries of all remaining windows; the
+  journal-badge column is reference-counted and removed only when the last
+  main window unloads.
+- **Settings-panel ApiKeyInput**: Escape rollback is no longer mis-committed
+  as an edit on blur; entering edit mode focuses the input automatically.
+- **Semantic-search error message localization**: no active pane / no selected
+  items / missing item no longer produce raw English strings.
 
 ## [1.1.0] - 2026-09-27
 
-用户调研驱动的功能批（P0×4 + P1×2 + 索引扩展）：
+Feature batch driven by user research (P0×4 + P1×2 + index expansion):
 
-### 新增
+### Added
 
-- **条目树「期刊指标」列**：文库列表内联显示 IF / JCR 分区 / 中科院分区 /
-  顶刊 / 预警 / 掠夺性徽章（离线数据刊名匹配，免 key 零网络）
-- **引文钻取**：结果卡被引计数可点（施引文献），新增「参考文献」入口；
-  OpenAlex 双向钻取，子列表内可直接导入
-- **导入自动挂 OA PDF**：卡片直链提示优先，OpenAlex `best_oa_location`
-  兜底；失败静默降级纯元数据，设置可关
-- **「已在库」标记**：DOI 与本地文库比对，防重复导入（批量导入同样生效）
-- **OA 筛选**：只看开放获取（宿主侧过滤，上限作用于过滤后集合）
-- **工具栏放大镜按钮 + Ctrl/Cmd+Shift+K 快捷键**（按钮设置可隐藏，切换即时生效）
-- **中文核心期刊徽章**（北大核心/CSCD/CSSCI/科技核心）：填入免费
-  easyScholar API key 后启用；防御式解析，未配置零请求
-- **库内索引纳入 PDF 注释**：高亮文本与批注可被语义检索命中（对齐
-  All Search 覆盖面）
+- **Journal-metrics column in the item tree**: IF / JCR quartile / CAS
+  partition / top-journal / warning / predatory badges shown inline in the
+  library list (offline data with journal-name matching; keyless, zero
+  network)
+- **Citation drilling**: the citation count on a result card is clickable
+  (citing works), with a new "References" entry; OpenAlex drills in both
+  directions, and sub-lists support direct import
+- **Automatic OA PDF attachment on import**: direct-link hints on cards take
+  priority with the OpenAlex `best_oa_location` as fallback; failures silently
+  degrade to metadata only, and this can be turned off in settings
+- **"In library" marker**: DOIs are compared against the local library to
+  prevent duplicate imports (batch imports included)
+- **OA filter**: open-access-only view (host-side filtering; caps apply to the
+  filtered set)
+- **Toolbar magnifier button + Ctrl/Cmd+Shift+K shortcut** (the button can be
+  hidden in settings; toggling takes effect immediately)
+- **Chinese core-journal badges** (PKU Core / CSCD / CSSCI / S&T Core):
+  activated by filling in the free easyScholar API key; defensive parsing, and
+  zero requests when unconfigured
+- **PDF annotations included in the library index**: highlighted text and
+  comments are now reachable by semantic search (coverage aligned with
+  All Search)
 
-### 修复与工程
+### Fixed & engineering
 
-- 插件沙箱实测记录：无 `Cc/Services` 全局（XPCOM 走 `Components.classes`）；
-  运行时动态 `import()` 解析出第二模块实例（api 必须静态引用）；插件 pref
-  真实地址在 `extensions.zotero.zsearch.*` 分支下
-- 实机套件 28 用例（新增工具栏注册/显隐、easyScholar 解析 5 用例等）；
-  OpenAlex 每日配额 429 时 discover 视觉用例为已知环境红（注释在案）
+- Plugin-sandbox field notes: no `Cc/Services` global (XPCOM goes through
+  `Components.classes`); a runtime dynamic `import()` resolves to a second
+  module instance (the api module must be referenced statically); the add-on's
+  prefs actually live under the `extensions.zotero.zsearch.*` branch
+- On-device suite at 28 cases (new toolbar registration/visibility, five
+  easyScholar parsing cases, etc.); the discover visual case is a known
+  environmental red when OpenAlex hits its daily-quota 429 (commented in the
+  suite)
 
 ## [0.1.0] - 2026-09-24
 
-首个内部版本：学术搜索 / 网络搜索 / 仓库搜索 / 向量搜索四合一 Zotero 插件。
+First internal build: a four-in-one Zotero add-on — academic search / web
+search / repository search / vector search.
 
-[unreleased]: https://github.com/Liozhang/z-search/compare/v1.2.0...HEAD
+[unreleased]: https://github.com/Liozhang/z-search/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Liozhang/z-search/compare/v1.2.3...v1.3.0
+[1.2.3]: https://github.com/Liozhang/z-search/compare/v1.2.2...v1.2.3
+[1.2.2]: https://github.com/Liozhang/z-search/compare/v1.2.1...v1.2.2
+[1.2.1]: https://github.com/Liozhang/z-search/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Liozhang/z-search/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/Liozhang/z-search/releases/tag/v1.1.0
-[0.1.0]: https://github.com/z-search/z-search/releases/tag/v0.1.0
+[1.1.0]: https://github.com/Liozhang/z-search/compare/v1.0.2...v1.1.0
+[0.1.0]: https://github.com/Liozhang/z-search/releases/tag/v0.1.0

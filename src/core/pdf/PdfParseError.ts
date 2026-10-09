@@ -1,9 +1,10 @@
 /**
- * PdfParseError — Explicit error type for the OpenDataLoader-only PDF pipeline.
+ * PdfParseError — structured error for the PDF analysis chain.
  *
- * OpenDataLoader is the single PDF parsing backend in z-search. There is no
- * silent fallback: when parsing fails, a PdfParseError propagates to the
- * caller with an actionable reason so the UI can surface it to the user.
+ * Backends are layered (ODL → MinerU → Zotero built-in fulltext, see
+ * parseChain.ts); infrastructure failures fall through to the next tier, so a
+ * PdfParseError escaping analyzePdf means EVERY tier failed. The reason field
+ * carries the most actionable cause for the UI to surface.
  */
 
 export type PdfParseErrorReason =
@@ -33,9 +34,9 @@ function userHint(reason: PdfParseErrorReason, detail?: string): string {
     case "no-attachment":
       return "No PDF attachment found for this item.";
     case "java-missing":
-      return "Java runtime not found. OpenDataLoader requires Java 11+. Install Java, make sure `java` is on PATH, then retry.";
+      return "Java runtime not found. OpenDataLoader requires Java 11+; z-search can auto-install a portable JRE when the JAR is present (pdfParser.opendataloader.autoJre), or install Java from https://adoptium.net.";
     case "jar-missing":
-      return "OpenDataLoader JAR is missing. Reinstall z-search to restore opendataloader-pdf-cli.jar.";
+      return "opendataloader-pdf-cli.jar is not installed (it is not shipped with z-search). Download it from the OpenDataLoader releases page and place it in the plugin folder under core/pdf/lib/ to enable this backend; until then, Zotero's built-in text extraction is used.";
     case "timeout":
       return `OpenDataLoader parsing timed out${suffix}.`;
     case "parse-failed":

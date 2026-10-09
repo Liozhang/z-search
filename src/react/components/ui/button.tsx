@@ -120,37 +120,24 @@ const Button = React.memo(
       },
       ref,
     ) => {
-      const button = React.useMemo(
-        () => (
-          <BaseButton
-            ref={ref}
-            render={render}
-            data-slot="button"
-            data-variant={variant ?? "default"}
-            data-size={size ?? "default"}
-            className={cn(buttonVariants({ variant, size, className }))}
-            disabled={disabled || loading}
-            aria-label={ariaLabel}
-            {...props}
-          >
-            {loading ? <Spinner size={ICON.base} className="shrink-0" /> : icon}
-            {loading && loadingText ? <span>{loadingText}</span> : children}
-          </BaseButton>
-        ),
-        [
-          render,
-          variant,
-          size,
-          className,
-          disabled,
-          loading,
-          ariaLabel,
-          icon,
-          loadingText,
-          children,
-          ref,
-          props,
-        ],
+      // 不做 useMemo：rest props / children 每次渲染都是新引用， memo 必失效
+      // （曾在此放 useMemo 并把 props 计入 deps——既不命中又让人误以为元素
+      // 稳定，2026-10-09 排查 too much recursion 时移除）。
+      const button = (
+        <BaseButton
+          ref={ref}
+          render={render}
+          data-slot="button"
+          data-variant={variant ?? "default"}
+          data-size={size ?? "default"}
+          className={cn(buttonVariants({ variant, size, className }))}
+          disabled={disabled || loading}
+          aria-label={ariaLabel}
+          {...props}
+        >
+          {loading ? <Spinner size={ICON.base} className="shrink-0" /> : icon}
+          {loading && loadingText ? <span>{loadingText}</span> : children}
+        </BaseButton>
       );
 
       if (!tooltip) return button;

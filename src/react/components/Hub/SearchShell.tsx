@@ -24,6 +24,11 @@ export function SearchShell(): React.ReactElement {
   // → __hubBridge → transport 回退链）。
   useEffect(() => {
     let unsub: (() => void) | null = null;
+    // 深链去重（2026-10-09）：宿主侧 ack 守望是 400ms×12 重发——ack 一旦
+    // 迟到，同一 deep link 会送达多次，每次都同步派发 zsearch:find-similar
+    // （找相似 RPC 有在途守卫，但 scope/view 的连续变更纯属浪费）。1s 内
+    // 同 action 只消费一次；右键菜单的两次人工触发远隔数秒，不受影响。
+    let lastActionAt = 0;
     const attach = () => {
       const bridge = getBridge();
       if (!bridge || typeof bridge.on !== "function") return;
@@ -36,6 +41,9 @@ export function SearchShell(): React.ReactElement {
           // 风暴，findSimilar 深链被重复触发十余次。
           sendToBackend("hub.setActiveTabAck", { tab: payload?.tab });
           if (payload?.action === "findSimilar") {
+            const now = Date.now();
+            if (now - lastActionAt < 1000) return;
+            lastActionAt = now;
             // 右键菜单深链：切到本地腿并自动发起找相似（页面侧监听消费）
             window.dispatchEvent(
               new CustomEvent("zsearch:find-similar", {

@@ -22,11 +22,12 @@ const field = (fieldId: string) => {
 };
 
 describe("ENDPOINT_FIELDS", () => {
-  it("四个区域限定端点，pref 键与内置值齐备", () => {
+  it("五个区域限定端点，pref 键与内置值齐备", () => {
     expect(ENDPOINT_FIELDS.map((f) => f.fieldId)).toEqual([
       "endpoint-easyscholar",
       "endpoint-mineru-cloud",
       "endpoint-jre-mirror",
+      "endpoint-embedding-mirror",
       "endpoint-wikipedia-host",
     ]);
     expect(field("endpoint-easyscholar").builtin).toContain("easyscholar.cc");
@@ -36,6 +37,11 @@ describe("ENDPOINT_FIELDS", () => {
     expect(field("endpoint-jre-mirror").builtin).toBe(
       "https://api.adoptium.net/v3",
     );
+  });
+
+  it("嵌入模型镜像无内置值（默认按区域动态求值）", () => {
+    expect(field("endpoint-embedding-mirror").builtin).toBe("");
+    expect(field("endpoint-embedding-mirror").kind).toBe("url");
   });
 
   it("维基域名型无内置值（默认跟随界面语言）", () => {
