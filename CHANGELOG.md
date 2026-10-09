@@ -5,7 +5,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
-## [Unreleased]
+## [1.5.0] - 2026-10-09
 
 ### Changed
 
