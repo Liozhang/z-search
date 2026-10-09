@@ -7,42 +7,44 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
 ## [Unreleased]
 
-## [1.4.2] - 2026-10-09
+### Changed
 
-### Added
-
-- **Embedding model source auto-detection**: before a model download, the
-  two built-in sources (huggingface.co and hf-mirror.com) are probed
-  concurrently and the reachable one wins — the faster one when both
-  respond — with the result cached for 24 hours. A download that fails on
-  the selected source falls back to the other built-in source once; an
-  explicitly configured mirror is never silently replaced. The region
-  declaration alone previously decided the source, so a mainland machine
-  without a declared region was locked out of model downloads by the
-  unreachable default endpoint.
-- **Embedding model status row with download controls** in the Hub local
-  search tab: the row shows the model name and whether its files are on
-  disk (missing models highlighted in the warning tone), plus a manual
-  download button that bypasses the 60-second auto-retry cooldown and a
-  "detect mirror" button that re-probes both sources and shows the winner
-  with its latency. Download completion and failure now surface as a Hub
-  toast instead of living only in the progress window.
+- **Journal search modes renamed by matching strategy: fuzzy / exact**:
+  the two modes were previously framed as "by field" vs. "by journal name",
+  while both really took the same kind of input. They are now "Fuzzy
+  Search" (candidate list, service-side mode `discover`) and "Exact
+  Search" (single quality card, service-side mode `metric`). Fuzzy search
+  now also merges local JCR-table substring hits (top 25 by JIF) with
+  OpenAlex keyword hits, deduplicated by ISSN or normalized name, so the
+  candidate list covers journals OpenAlex ranks low or does not list.
+- **Crossref searches now fetch a field whitelist**, cutting the response
+  payload from 1.7–2.7 MB to ~120 KB at 100 rows (a ~14× reduction). Full
+  metadata responses were the main reason the Crossref leg timed out on
+  constrained international links; the 14 fields the article mapper consumes
+  (DOI / title / authors / abstract / journal / citation count / dates / URL)
+  are unchanged. Timeout and connection-reset failures now also surface their
+  real error text instead of a bare `error: 0`.
+- **Failed literature-search sources now state why they failed**: the Hub
+  search status line appends a localized reason to each failed source name
+  (response timeout / network connection failed / rate limited / API error),
+  classified host-side from the adapter error, instead of listing bare names.
 
 ### Fixed
 
-- **Index-build summary no longer counts failures as successes**: the
-  metadata leg incremented "processed" even when the embedding threw, so a
-  machine with a failed model download reported "N succeeded, N failed" at
-  once. Items count as processed only after a successful embed, and batch
-  write failures move their items out of the success count.
-- **Metadata indexing failures now state why they failed**: a build where
-  every metadata embedding failed reported a bare failure count with no
-  reason. The first error message — with its network/mirror guidance — is
-  appended to the build summary.
-- **An unconfigured embedding no longer aborts the whole build**: with API
-  embedding mode and no model assigned, the PDF chunk batch failed hard
-  before indexing a single item; all candidates are now skipped with an
-  explicit "embedding not configured" reason in the skip details.
+- **Journal "h5-index" sort no longer fails with OpenAlex 400**: OpenAlex
+  retired `summary_stats.h5_index` — it is gone from `/sources` responses
+  and rejected as a sort key (`summary_stats.h5_index is not a valid
+field`). The sort now uses `summary_stats.h_index` (h-index), list rows
+  and the metric card display h-index instead of the dead h5 field, and the
+  unused `openalexH5Index` plumbing was removed.
+- **Hub crash on opening the import-target dropdown** ("too much recursion"):
+  the select popup's collision detection walked overflow ancestors across the
+  iframe boundary into the XUL host window, whose document has no `body` —
+  @floating-ui/utils then cycled between the host document and the frame
+  element until SpiderMonkey's stack was exhausted, taking down the whole Hub
+  tree. A build patch (`patches/@floating-ui+utils+0.2.12.patch`, applied via
+  patch-package) stops frame traversal at host documents without a `<body>`,
+  fixing every floating popup (select / menu / popover) inside the Hub.
 
 ## [1.4.1] - 2026-10-09
 
@@ -51,8 +53,9 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 - **Journal row quartile badges now distinguish the two ranking systems**:
   JCR and CAS quartiles both rendered as bare "Q1"–"Q4", so two identical
   chips sat side by side with no way to tell them apart. Journal rows now use
-  the same localized labels as the literature card (JCR Q1 / 一区, JCR Q1 /
-  CAS Q1), and the CAS chip gains a tooltip.
+  the same localized labels as the literature card ("JCR Q1" for the JCR
+  system and the locale's CAS tier label for the CAS system), and the CAS
+  chip gains a tooltip.
 
 ## [1.4.0] - 2026-10-09
 

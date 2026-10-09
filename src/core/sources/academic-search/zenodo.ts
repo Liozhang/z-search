@@ -22,7 +22,9 @@ export async function searchZenodo(args: {
     if (!result.ok) {
       return {
         success: false,
-        error: `Zenodo API error: ${result.status}`,
+        // status=0 是网络层失败（超时/连接重置）——error 带真实措辞，裸 0
+        // 无法归类也无法排查。
+        error: `Zenodo API error: ${result.status || result.error}`,
         total: 0,
         articles: [],
         source: "zenodo",

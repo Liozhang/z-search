@@ -519,9 +519,9 @@ export interface OpenAlexJournal {
   type?: string;
   worksCount?: number;
   citedByCount?: number;
-  h5Index?: number;
   homepageUrl?: string;
-  // Summary stats (academic indices).
+  // Summary stats (academic indices). OpenAlex 已下线 h5_index——summary_stats
+  // 现仅含 2yr_mean_citedness / h_index / i10_index，排序也只认这三者。
   hIndex?: number;
   i10Index?: number;
   twoYearMeanCitedness?: number;
@@ -548,7 +548,7 @@ export async function searchOpenAlexSources(args: {
   search?: string;
   issn?: string;
   limit?: number;
-  sortBy?: "relevance" | "works" | "cited" | "h5";
+  sortBy?: "relevance" | "works" | "cited" | "hindex";
 }): Promise<{
   total: number;
   returned: number;
@@ -563,7 +563,9 @@ export async function searchOpenAlexSources(args: {
       relevance: "relevance_score:desc",
       works: "works_count:desc",
       cited: "cited_by_count:desc",
-      h5: "summary_stats.h5_index:desc",
+      // OpenAlex 的合法排序字段清单不含 summary_stats.h5_index（传了即 400，
+      // 2026-10-09 实测）；h5 指数排序退役，改按 h_index。
+      hindex: "summary_stats.h_index:desc",
     };
     const sortBy = args.sortBy ?? (args.search ? "relevance" : "works");
 
@@ -635,13 +637,10 @@ export async function searchOpenAlexSources(args: {
           typeof s.works_count === "number" ? s.works_count : undefined,
         citedByCount:
           typeof s.cited_by_count === "number" ? s.cited_by_count : undefined,
-        // h5_index lives under summary_stats in current OpenAlex responses.
-        h5Index:
-          typeof summaryStats.h5_index === "number"
-            ? summaryStats.h5_index
-            : undefined,
         homepageUrl: s.homepage_url || undefined,
-        // Academic indices from summary_stats.
+        // Academic indices from summary_stats. h5_index 已从 OpenAlex 下线
+        // （2026-10-09 实测 summary_stats 仅剩 2yr_mean_citedness / h_index /
+        // i10_index），不再解析。
         hIndex:
           typeof summaryStats.h_index === "number"
             ? summaryStats.h_index

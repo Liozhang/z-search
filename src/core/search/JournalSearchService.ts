@@ -352,7 +352,6 @@ class JournalSearchService {
       predatoryCategory: bealls?.journals[0]?.category,
       // OpenAlex supplementary — always from OpenAlex when available.
       openalexWorksCount: oaSrc?.worksCount,
-      openalexH5Index: oaSrc?.h5Index,
       hIndex: oaSrc?.hIndex,
       i10Index: oaSrc?.i10Index,
       twoYearMeanCitedness: oaSrc?.twoYearMeanCitedness,
@@ -378,11 +377,11 @@ class JournalSearchService {
 
     const limit = Math.min(Math.max(payload.limit ?? 25, 1), 25);
     const sortBy = payload.sortBy ?? "relevance";
-    const oaSortMap: Record<JournalSortBy, "relevance" | "works" | "h5"> = {
+    const oaSortMap: Record<JournalSortBy, "relevance" | "works" | "hindex"> = {
       relevance: "relevance",
       jif: "works", // OpenAlex has no JIF; 'works' as a sensible default for IF sort
       works: "works",
-      h5: "h5",
+      hindex: "hindex",
       library: "works",
     };
 
@@ -392,11 +391,17 @@ class JournalSearchService {
     // 子集内排序（诚实上限），但显著降低排序失真。
     const fetchLimit = sortBy === "jif" ? Math.min(limit * 2, 50) : limit;
 
-    const oa = await searchOpenAlexSources({
-      search: keyword,
-      limit: fetchLimit,
-      sortBy: oaSortMap[sortBy],
-    });
+    // 模糊搜索双路并行（2026-10-09 模式重构）：本地 JCR 表按刊名包含匹配 +
+    // OpenAlex 关键词检索。本地命中带权威 JIF 与分区，且为 OpenAlex 未收录
+    // 或排名靠后的期刊提供 ISSN 供下钻精确卡。
+    const [oa, localHits] = await Promise.all([
+      searchOpenAlexSources({
+        search: keyword,
+        limit: fetchLimit,
+        sortBy: oaSortMap[sortBy],
+      }),
+      JCRStore.searchByNameFuzzy(keyword, limit),
+    ]);
     // 错误上抛（审计 P1-8）：断网时的空结果会被 UI 当「无数据」空态展示
     if (oa.error) {
       return { mode: "discover", list: [], total: 0, error: oa.error };
@@ -407,24 +412,57 @@ class JournalSearchService {
       name: j.displayName,
       issn: j.issn || j.issnL,
       worksCount: j.worksCount,
-      h5Index: j.h5Index,
+      hIndex: j.hIndex,
     }));
+
+    // 本地命中排在候选前部，与 OpenAlex 命中按 ISSN 或规范刊名去重
+    // （OpenAlex 的同一本刊往往以不同拼写再现，ISSN 是最稳的同一性判据）。
+    // 本地名额上限 10：宽泛关键词在 JCR 表能命中上百行，全部放行会把
+    // OpenAlex 候选挤出整屏（截断后取影响因子最高的前十）。
+    const localItems: JournalListItem[] = localHits.slice(0, 10).map((r) => ({
+      source: "local" as const,
+      name: r.journal_name,
+      issn: r.issn || r.eissn || undefined,
+      jif: r.jif ?? undefined,
+      jifQuartile: cleanQuartile(r.jif_quartile),
+    }));
+    if (localItems.length > 0) {
+      const seenIssn = new Set<string>();
+      const seenName = new Set<string>();
+      for (const li of localItems) {
+        if (li.issn) seenIssn.add(normalizeISSN(li.issn));
+        seenName.add(normalizeJournalName(li.name));
+      }
+      const deduped = items.filter((it) => {
+        const issn = it.issn ? normalizeISSN(it.issn) : null;
+        if (issn && seenIssn.has(issn)) return false;
+        if (seenName.has(normalizeJournalName(it.name))) return false;
+        if (issn) seenIssn.add(issn);
+        seenName.add(normalizeJournalName(it.name));
+        return true;
+      });
+      items = [...localItems, ...deduped];
+    }
 
     await this.batchEnrichLocalMetrics(items);
 
-    // Client-side re-sort if the user asked for JIF (OpenAlex can't sort by it).
+    // 排序收口：relevance 保持「本地前、OpenAlex 相关度后」；其余排序键
+    // 一律客户端重排（本地条目缺该指标时排末尾——无数据不冒充有数据）。
     if (sortBy === "jif") {
       items.sort((a, b) => (b.jif ?? -1) - (a.jif ?? -1));
-      items = items.slice(0, limit);
+    } else if (sortBy === "works") {
+      items.sort((a, b) => (b.worksCount ?? -1) - (a.worksCount ?? -1));
+    } else if (sortBy === "hindex") {
+      items.sort((a, b) => (b.hIndex ?? -1) - (a.hIndex ?? -1));
     }
+    items = items.slice(0, limit);
 
-    // 计数诚实化（审计 P2-3）：OpenAlex 只取一页（fetchLimit），total 是
-    // 远端全量——展示层用 list.length 与 total 中较小者，防「N 条结果」
-    // 实示 25 的落差（分页 UI 俟后续）。
+    // 计数诚实化（审计 P2-3）：无分页，展示数即返回列表长度——OpenAlex 的
+    // 远端全量计数不参与（合并本地命中后更不可比）。
     return {
       mode: "discover",
       list: items,
-      total: Math.min(oa.total ?? items.length, items.length) || items.length,
+      total: items.length,
     };
   }
 
@@ -466,7 +504,7 @@ class JournalSearchService {
       items.sort((a, b) => (b.jif ?? -1) - (a.jif ?? -1));
     }
     // 'library' sort is already the default order from computeLibraryJournalCounts.
-    // 'works'/'h5'/'relevance' don't apply to library mode meaningfully — keep as-is.
+    // 'works'/'hindex'/'relevance' don't apply to library mode meaningfully — keep as-is.
 
     return { mode: "library", list: items, total: counts.length };
   }

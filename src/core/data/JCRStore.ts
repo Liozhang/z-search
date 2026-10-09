@@ -211,6 +211,38 @@ class JCRStore {
   }
 
   /**
+   * Fuzzy journal-name search (substring match) for the Hub 模糊搜索 mode.
+   * SQLite 的 LIKE 对 ASCII 默认不区分大小写；表内 journal_name 已按
+   * normalizeJournalName 规整（大写、空白折叠），关键词同口径规整后做包含
+   * 匹配即可。LIKE 通配符（% 与 _）按字面量转义；命中按影响因子降序截断。
+   */
+  async searchByNameFuzzy(
+    keyword: string,
+    limit = 25,
+    year?: number,
+  ): Promise<JCRRecord[]> {
+    const normalized = normalizeJournalName(keyword);
+    if (!normalized) return [];
+    const targetYear = year ?? (await this.getLatestYear());
+    if (!targetYear) return [];
+
+    const pattern = "%" + normalized.replace(/[\\%_]/g, "\\$&") + "%";
+    try {
+      const rows = await queryPlain(
+        `SELECT * FROM zsearch_impact_factors
+         WHERE jcr_year = ? AND journal_name LIKE ? ESCAPE '\\'
+         ORDER BY jif IS NULL, jif DESC
+         LIMIT ?`,
+        [targetYear, pattern, limit],
+      );
+      return rows ?? [];
+    } catch (e) {
+      safeDebug("[z-search] JCRStore.searchByNameFuzzy failed: " + e);
+      return [];
+    }
+  }
+
+  /**
    * Batch lookup full JCR records by ISSN/eISSN. Each DB record is keyed by
    * BOTH its normalized issn and eissn so callers can look up using whichever
    * identifier an article carries. Used by literature search enrichment.

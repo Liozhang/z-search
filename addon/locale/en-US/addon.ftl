@@ -180,16 +180,16 @@ semantic-duplicate-item = { $title } + { $count } duplicates
 semantic-results-count = Results ({ $count })
 semantic-onboarding-desc = Build the full-text index to enable library semantic search, similar items, and duplicate detection.
 
-# Journal Search (Hub "Journal" tab)
-journal-mode-metric = Lookup by Name / ISSN
-journal-mode-discover = Discover by Field
-journal-placeholder-metric = Enter journal name or ISSN...
-journal-placeholder-discover = Enter research field keywords...
+# Journal Search (Hub "Journal" tab) — modes named by matching strategy (2026-10-09)
+journal-mode-fuzzy = Fuzzy Search
+journal-mode-exact = Exact Search
+journal-placeholder-fuzzy = Enter journal name keywords...
+journal-placeholder-exact = Enter an exact journal name or ISSN...
 journal-source-local = Local
 journal-source-openalex = OpenAlex
 journal-no-data = No data found in local DB or OpenAlex
-journal-empty-hint = Enter a journal name or ISSN to look up metrics
-journal-empty-hint-discover = Enter research field keywords to discover journals
+journal-empty-hint = Enter an exact journal name or ISSN to look up metrics
+journal-empty-hint-fuzzy = Enter journal name keywords to search candidate journals
 journal-not-found = Journal not found
 journal-jcr-section = JCR Metrics
 journal-cass-section = CAS Quartile
@@ -221,14 +221,13 @@ journal-predatory-data-year = Beall's list cutoff: Jan 2017
 journal-predatory-cat-standalone = standalone journal
 journal-predatory-cat-hijacked = hijacked journal
 journal-works-count-label = Works
-journal-h5-index-label = h5-index
 journal-library-count-label = Papers
 journal-results-count = { $count } journals
 journal-sort-label = Sort
 journal-sort-relevance = Relevance
 journal-sort-jif = JIF
 journal-sort-works = Works Count
-journal-sort-h5 = h5-index
+journal-sort-hindex = h-index
 journal-sort-library = Paper Count
 journal-search-failed = Journal search failed: { $error }
 
@@ -481,6 +480,12 @@ hub-search-history-reuse-tip = Click to search this term
 # (2026-09-23): the loading title only reports how many legs were attempted
 hub-search-sources-nokey = { $count } sources not enabled (no API Key): { $sources } — add keys in Zotero Settings · Academic Search API Keys
 hub-search-sources-failed = { $count } sources returned no results: { $sources }
+# Failure-kind codes (classified host-side by classifySourceError) → the
+# parenthetical after each failed source name
+hub-search-src-err-timeout = response timeout
+hub-search-src-err-network = network connection failed
+hub-search-src-err-rate-limited = rate limited
+hub-search-src-err-http = API error
 # claim 层极性（2026-09-06 审计 #11）：此前 fallback 英文 Title Case
 # cross layer edge types
 # relationship layer edge types

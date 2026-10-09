@@ -23,6 +23,26 @@ export function isSourceAvailable(source: string): boolean {
 }
 
 /**
+ * 界面失败括注的原因码：classifySourceError 产出，随 literature.search
+ * 回执的 failedReasons 透传前端，本地化标签见 hub-search-src-err-*。
+ */
+export type SourceErrorKind = "timeout" | "network" | "rate-limited" | "http";
+
+/**
+ * 把单源失败的错误文本归类为界面可本地化的原因码。
+ *
+ * 顺序即优先级：超时文本不会携带状态码，先判；429/限流措辞单列；其余
+ * 三位数状态码归接口错误；连接重置/拒绝等（含空消息）一律归网络失败。
+ */
+export function classifySourceError(message?: string | null): SourceErrorKind {
+  const msg = String(message || "");
+  if (/timed?\s*-?\s*out|request timeout/i.test(msg)) return "timeout";
+  if (/\b429\b|rate\s*limit/i.test(msg)) return "rate-limited";
+  if (/\b[45]\d{2}\b/.test(msg)) return "http";
+  return "network";
+}
+
+/**
  * Identifier type accepted by importArticle. */
 export type IdentifierType =
   "doi" | "arxiv" | "pmid" | "isbn" | "url" | "title";

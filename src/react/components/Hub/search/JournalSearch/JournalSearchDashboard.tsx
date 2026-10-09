@@ -1,8 +1,11 @@
 /**
  * JournalSearchDashboard — Hub "Journal" tab. Single input box + 2-way mode
- * segmented control (lookup / discover). E3: the library mode moved to
- * Stats > Bibliometrics (JournalLibraryView); JournalSearchMode keeps the
- * 'library' member only for that shared RPC consumer.
+ * segmented control (fuzzy / exact). 2026-10-09 用户裁决：模式按匹配策略
+ * 命名——模糊搜索（候选列表，服务侧 mode='discover'，含本地期刊表模糊命中
+ * 与 OpenAlex 关键词命中）与精确搜索（单刊指标卡，服务侧 mode='metric'）。
+ * E3: the library mode moved to Stats > Bibliometrics (JournalLibraryView);
+ * JournalSearchMode keeps the 'library' member only for that shared RPC
+ * consumer.
  *
  * Self-contained: owns its own state and bridge
  * calls. All async work happens in JournalSearchService (main script); this
@@ -36,7 +39,7 @@ import { ICON } from "../../../../utils/iconSizes";
 
 import { isIMEComposing } from "../../../../../utils/ime";
 export function JournalSearchDashboard(): React.ReactElement {
-  const [mode, setMode] = useState<JournalSearchMode>("metric");
+  const [mode, setMode] = useState<JournalSearchMode>("discover");
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<JournalSortBy>("relevance");
   const [isLoading, setIsLoading] = useState(false);
@@ -94,10 +97,11 @@ export function JournalSearchDashboard(): React.ReactElement {
   const isMetricMode = mode === "metric";
   const isDiscoverMode = mode === "discover";
 
-  // E3: mode is metric|discover in this UI (library moved to the stats page)
+  // E3: mode is metric|discover in this UI (library moved to the stats page).
+  // 2026-10-09：文案按模糊/精确命名——exact 对应服务侧 metric。
   const placeholderKey = isMetricMode
-    ? "journal-placeholder-metric"
-    : "journal-placeholder-discover";
+    ? "journal-placeholder-exact"
+    : "journal-placeholder-fuzzy";
 
   const inputDisabled = false;
 
@@ -427,8 +431,8 @@ export function JournalSearchDashboard(): React.ReactElement {
           desc={
             hasSearched
               ? getString("journal-no-data")
-              : // 列表分支只在 discover 模式渲染（metric 已在上方分流）
-                getString("journal-empty-hint-discover")
+              : // 列表分支只在模糊搜索模式渲染（精确搜索已在上方分流）
+                getString("journal-empty-hint-fuzzy")
           }
         />
       ) : (

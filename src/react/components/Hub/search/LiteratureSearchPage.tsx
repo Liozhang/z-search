@@ -96,6 +96,29 @@ const sourceNames = (values: string[]): string =>
     })
     .join(" · ");
 
+/** 失败原因码 → 本地化标签（hub-search-src-err-*；未知码不括注）。 */
+const FAILURE_KIND_LABEL_KEYS: Record<string, string> = {
+  timeout: "hub-search-src-err-timeout",
+  network: "hub-search-src-err-network",
+  "rate-limited": "hub-search-src-err-rate-limited",
+  http: "hub-search-src-err-http",
+};
+
+/** 失败源 → 展示名 + 原因括注（如「Crossref (响应超时)」）。原因码由宿主侧
+ *  classifySourceError 分类、随 literature.search 回执透传。 */
+const sourceFailureLabels = (
+  values: string[],
+  reasons: Record<string, string>,
+): string =>
+  values
+    .map((v) => {
+      const found = AVAILABLE_SOURCES.find((s) => s.value === v);
+      const name = found ? getString(found.labelKey) : v;
+      const labelKey = FAILURE_KIND_LABEL_KEYS[reasons?.[v]];
+      return labelKey ? `${name} (${getString(labelKey)})` : name;
+    })
+    .join(" · ");
+
 /**
  * 引擎状态标记（v2 §4.5 批6）：两腿引擎共用一个标记位——
  *   ok   → 信号绿 ✓ 字符（「通了」，不占视觉预算）
@@ -698,7 +721,10 @@ export function LiteratureSearchPage({
             {getString("hub-search-sources-failed", {
               args: {
                 count: lit.failedSources.length,
-                sources: sourceNames(lit.failedSources),
+                sources: sourceFailureLabels(
+                  lit.failedSources,
+                  lit.failedReasons,
+                ),
               },
             })}
           </span>

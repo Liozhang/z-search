@@ -16,7 +16,10 @@ import {
   normalizeDoi,
   enrichJournalMetrics,
 } from "../../core/search/literatureSearchHelpers";
-import { isSourceAvailable } from "../../core/sources/academic-search/utils";
+import {
+  classifySourceError,
+  isSourceAvailable,
+} from "../../core/sources/academic-search/utils";
 
 const {
   callSearchAPI,
@@ -163,6 +166,9 @@ export async function handleLiteratureRequest(
         //   failedSources = 发起了请求但抛错（网络/限流/解析）
         const skippedNoKey: string[] = [];
         const failedSources: string[] = [];
+        // 源 → 失败原因码（classifySourceError）：前端在失败源名单后括注
+        // 「响应超时/网络连接失败/接口限流/接口错误」，不再只报一个名字。
+        const failedReasons: Record<string, string> = {};
         try {
           // 并发扇出（2026-09-23）：Hub 搜索页前端已改为逐源并行 RPC
           // （每次单源调用，本循环体只跑一轮）；这里的并发化服务于仍传
@@ -190,6 +196,7 @@ export async function handleLiteratureRequest(
               } catch (e) {
                 safeDebug("[z-search] " + e);
                 failedSources.push(src);
+                failedReasons[src] = classifySourceError(toErrorMessage(e));
                 /* skip failed source */
                 return null;
               }
@@ -202,7 +209,9 @@ export async function handleLiteratureRequest(
               // 适配器失败不抛错（httpJsonGet 一律 return {ok:false}）——
               // success:false 必须点名进 failedSources，否则「源全挂」被
               // 谎报成「0 条结果」（2026-09-25 审计 P1-1）
-              failedSources.push(resp.source || "unknown");
+              const srcName = resp.source || "unknown";
+              failedSources.push(srcName);
+              failedReasons[srcName] = classifySourceError(resp.error);
             }
           }
 
@@ -264,6 +273,7 @@ export async function handleLiteratureRequest(
             })),
             skippedNoKey,
             failedSources,
+            failedReasons,
           };
         } finally {
           bridge._searchAbortSignal.delete(searchId);

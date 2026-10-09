@@ -64,7 +64,6 @@ export interface JournalMetric {
 
   // --- OpenAlex supplementary (academic indices + publishing metadata) ---
   openalexWorksCount?: number;
-  openalexH5Index?: number;
   hIndex?: number;
   i10Index?: number;
   twoYearMeanCitedness?: number;
@@ -94,7 +93,7 @@ export interface JournalListItem {
 
   // OpenAlex metrics (mode 'discover').
   worksCount?: number;
-  h5Index?: number;
+  hIndex?: number;
 
   // In-library paper count (mode 'library').
   libraryCount?: number;
@@ -102,7 +101,10 @@ export interface JournalListItem {
 
 export type JournalSearchMode = "metric" | "discover" | "library";
 
-export type JournalSortBy = "relevance" | "jif" | "works" | "h5" | "library";
+/** 'hindex' 排序走 OpenAlex 的 summary_stats.h_index（h5_index 已被
+ *  OpenAlex 下线，不再作为排序键，2026-10-09）。 */
+export type JournalSortBy =
+  "relevance" | "jif" | "works" | "hindex" | "library";
 
 /** Bridge request payload (iframe → main). */
 export interface JournalSearchPayload {

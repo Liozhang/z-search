@@ -26,9 +26,12 @@ import type {
 // E3（拍板 #11，2026-09-04）：library 模式迁 统计>文献计量>期刊列表，
 // 期刊页 3→2。JournalSearchMode 联合保留（后端 journal.search 仍支持，
 // 统计页 JournalLibraryView 经同一 RPC 消费）。
+// 2026-10-09 用户裁决：两种模式按匹配策略命名——模糊搜索（服务侧 id 仍为
+// 'discover'，返回候选列表）与精确搜索（服务侧 id 仍为 'metric'，直达单刊
+// 指标卡）；按领域/按刊名的旧叫法退役。
 export const MODE_OPTIONS: { id: JournalSearchMode; labelKey: string }[] = [
-  { id: "metric", labelKey: "journal-mode-metric" },
-  { id: "discover", labelKey: "journal-mode-discover" },
+  { id: "discover", labelKey: "journal-mode-fuzzy" },
+  { id: "metric", labelKey: "journal-mode-exact" },
 ];
 
 export const DISCOVER_SORT_OPTIONS: {
@@ -38,7 +41,8 @@ export const DISCOVER_SORT_OPTIONS: {
   { value: "relevance", labelKey: "journal-sort-relevance" },
   { value: "jif", labelKey: "journal-sort-jif" },
   { value: "works", labelKey: "journal-sort-works" },
-  { value: "h5", labelKey: "journal-sort-h5" },
+  // OpenAlex 已下线 h5_index，排序键改走 summary_stats.h_index。
+  { value: "hindex", labelKey: "journal-sort-hindex" },
 ];
 
 export const LIBRARY_SORT_OPTIONS: {

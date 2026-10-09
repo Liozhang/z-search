@@ -186,16 +186,16 @@ semantic-duplicate-item = { $title } + { $count } 個重複項
 semantic-results-count = 結果 ({ $count })
 semantic-onboarding-desc = 建立全文索引後，可啟用庫內語意搜尋、相似文獻與重複偵測。
 
-# 期刊搜尋（Hub「期刊」分頁）
-journal-mode-metric = 按刊名/ISSN 查指標
-journal-mode-discover = 按領域發現
-journal-placeholder-metric = 輸入刊名或 ISSN...
-journal-placeholder-discover = 輸入研究領域關鍵詞...
+# 期刊搜尋（Hub「期刊」分頁）——兩種模式按匹配策略命名（2026-10-09）
+journal-mode-fuzzy = 模糊搜尋
+journal-mode-exact = 精確搜尋
+journal-placeholder-fuzzy = 輸入期刊名稱關鍵詞...
+journal-placeholder-exact = 輸入完整期刊名稱或 ISSN...
 journal-source-local = 本地
 journal-source-openalex = OpenAlex
 journal-no-data = 本地與 OpenAlex 均無資料
-journal-empty-hint = 輸入刊名或 ISSN 查詢期刊指標
-journal-empty-hint-discover = 輸入研究領域關鍵詞探索期刊
+journal-empty-hint = 輸入完整期刊名稱或 ISSN 查詢期刊指標
+journal-empty-hint-fuzzy = 輸入期刊名稱關鍵詞搜尋候選期刊
 journal-predatory-data-year = Beall 清單截止：2017 年 1 月
 journal-not-found = 未找到該期刊
 journal-jcr-section = JCR 指標
@@ -227,14 +227,13 @@ journal-predatory-label = 掠奪性
 journal-predatory-cat-standalone = 獨立期刊
 journal-predatory-cat-hijacked = 劫持期刊
 journal-works-count-label = 發文量
-journal-h5-index-label = h5 指數
 journal-library-count-label = 庫內篇數
 journal-results-count = { $count } 本期刊
 journal-sort-label = 排序
 journal-sort-relevance = 相關性
 journal-sort-jif = 影響因子
 journal-sort-works = 發文量
-journal-sort-h5 = h5 指數
+journal-sort-hindex = h 指數
 journal-sort-library = 篇數
 journal-search-failed = 期刊搜尋失敗：{ $error }
 
@@ -461,6 +460,11 @@ hub-search-history-reuse-tip = 點擊用詞搜尋
 # 缺 Key 的來源不發請求，跑失敗的來源記名（2026-09-23）：載入標題只報「發起幾路」，這兩行補上實際哪幾路沒跑
 hub-search-sources-nokey = { $count } 個來源未啟用（未填 API Key）：{ $sources }——可在 Zotero 設定 · 學術檢索 API Keys 填寫
 hub-search-sources-failed = { $count } 個來源未回傳結果：{ $sources }
+# 失敗原因碼（宿主側 classifySourceError 分類）→ 失敗來源名後的括註文案
+hub-search-src-err-timeout = 回應逾時
+hub-search-src-err-network = 網路連線失敗
+hub-search-src-err-rate-limited = 介面限流
+hub-search-src-err-http = 介面錯誤
 # 值為該 tag/author 覆蓋的篇數（2026-09-06 審計 #8 文案修正）
 # claim 層極性（2026-09-06 審計 #11）
 # cross layer edge types

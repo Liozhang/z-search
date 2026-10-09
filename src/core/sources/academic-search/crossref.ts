@@ -51,6 +51,28 @@ export async function searchCrossRef(
 
   let url = `https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=${maxResults}&sort=${sort}`;
 
+  // select 白名单：只取下方映射消费的 14 个字段。全字段响应 rows=100 达
+  // 1.7~2.7 MB（引用列表/reference-count 等映射不用的字段占九成），是
+  // 跨境链路 30s 超时的主因；白名单后缩到 ~120 KB，字段一条不少。select
+  // 含未知字段 Crossref 整单 400——映射新增取值字段时必须同步这里。
+  const SELECT_FIELDS = [
+    "DOI",
+    "title",
+    "author",
+    "abstract",
+    "container-title",
+    "ISSN",
+    "volume",
+    "issue",
+    "page",
+    "type",
+    "publisher",
+    "is-referenced-by-count",
+    "published",
+    "URL",
+  ];
+  url += `&select=${SELECT_FIELDS.join(",")}`;
+
   if (filterParts.length > 0) {
     url += `&filter=${filterParts.join(",")}`;
   }
@@ -63,7 +85,9 @@ export async function searchCrossRef(
   if (!result.ok) {
     return {
       success: false,
-      error: `CrossRef API error: ${result.status}`,
+      // status=0 是网络层失败（超时/连接重置），httpJsonGet 的 error 带
+      // 真实措辞——裸打 "error: 0" 无法归类也无法排查。
+      error: `CrossRef API error: ${result.status || result.error}`,
       total: 0,
       articles: [],
     };

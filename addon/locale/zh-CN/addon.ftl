@@ -176,16 +176,16 @@ semantic-duplicate-item = { $title } + { $count } 个重复项
 semantic-results-count = 结果 ({ $count })
 semantic-onboarding-desc = 构建全文索引后，可启用库内语义搜索、相似文献与重复检测。
 
-# 期刊搜索（Hub「期刊」标签页）
-journal-mode-metric = 按刊名/ISSN 查指标
-journal-mode-discover = 按领域发现
-journal-placeholder-metric = 输入刊名或 ISSN...
-journal-placeholder-discover = 输入研究领域关键词...
+# 期刊搜索（Hub「期刊」标签页）——两种模式按匹配策略命名（2026-10-09）
+journal-mode-fuzzy = 模糊搜索
+journal-mode-exact = 精确搜索
+journal-placeholder-fuzzy = 输入期刊名称关键词...
+journal-placeholder-exact = 输入完整期刊名称或 ISSN...
 journal-source-local = 本地
 journal-source-openalex = OpenAlex
 journal-no-data = 本地与 OpenAlex 均无数据
-journal-empty-hint = 输入刊名或 ISSN 查询期刊指标
-journal-empty-hint-discover = 输入研究领域关键词发现期刊
+journal-empty-hint = 输入完整期刊名称或 ISSN 查询期刊指标
+journal-empty-hint-fuzzy = 输入期刊名称关键词搜索候选期刊
 journal-not-found = 未找到该期刊
 journal-jcr-section = JCR 指标
 journal-cass-section = 中科院分区
@@ -217,14 +217,13 @@ journal-predatory-data-year = Beall's 列表截止：2017 年 1 月
 journal-predatory-cat-standalone = 独立期刊
 journal-predatory-cat-hijacked = 劫持期刊
 journal-works-count-label = 发文量
-journal-h5-index-label = h5 指数
 journal-library-count-label = 库内篇数
 journal-results-count = { $count } 本期刊
 journal-sort-label = 排序
 journal-sort-relevance = 相关性
 journal-sort-jif = 影响因子
 journal-sort-works = 发文量
-journal-sort-h5 = h5 指数
+journal-sort-hindex = h 指数
 journal-sort-library = 篇数
 journal-search-failed = 期刊搜索失败：{ $error }
 
@@ -469,6 +468,11 @@ hub-search-history-reuse-tip = 点击用该词搜索
 # 缺 Key 的源不发请求，跑失败的源记名（2026-09-23）：加载标题只报「发起几路」，这两行补上实际哪几路没跑
 hub-search-sources-nokey = { $count } 个源未启用（未填 API Key）：{ $sources }——可在 Zotero 设置 · 学术检索 API Keys 填写
 hub-search-sources-failed = { $count } 个源未返回结果：{ $sources }
+# 失败原因码（宿主侧 classifySourceError 分类）→ 失败源名后的括注文案
+hub-search-src-err-timeout = 响应超时
+hub-search-src-err-network = 网络连接失败
+hub-search-src-err-rate-limited = 接口限流
+hub-search-src-err-http = 接口错误
 # 值为该 tag/author 覆盖的篇数（2026-09-06 审计 #8 文案修正）
 # claim 层极性（2026-09-06 审计 #11）
 # cross layer edge types

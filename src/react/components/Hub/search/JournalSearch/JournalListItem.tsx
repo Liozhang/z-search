@@ -141,7 +141,7 @@ export function JournalListItemView({
           )}
         </div>
       )}
-      {/* 行3：指标行——ISSN / IF / 收录与发文量 / h5 指数，gap 归
+      {/* 行3：指标行——ISSN / IF / 收录与发文量 / h 指数，gap 归
           --space-2 对齐文献 meta 行。 */}
       <div className="flex items-center gap-[var(--space-2)] flex-wrap text-[length:var(--text-xs)] text-[color:var(--text-secondary)]">
         {item.issn && <span className="tabular-nums">ISSN: {item.issn}</span>}
@@ -155,7 +155,11 @@ export function JournalListItemView({
             {countLabel} {count.toLocaleString()}
           </span>
         )}
-        {item.h5Index != null && <span>h5 {item.h5Index}</span>}
+        {item.hIndex != null && (
+          <span>
+            {getString("journal-h-index-label")} {item.hIndex}
+          </span>
+        )}
       </div>
     </div>
   );

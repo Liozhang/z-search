@@ -72,7 +72,6 @@ export function JournalMetricCard({
     hasAcademicIndices ||
     hasPublishingMeta ||
     metric.openalexWorksCount != null ||
-    metric.openalexH5Index != null ||
     !!metric.homepageUrl;
 
   return (
@@ -150,12 +149,6 @@ export function JournalMetricCard({
             <MetricRow
               label={getString("journal-works-count-label")}
               value={metric.openalexWorksCount.toLocaleString()}
-            />
-          )}
-          {metric.openalexH5Index != null && (
-            <MetricRow
-              label={getString("journal-h5-index-label")}
-              value={String(metric.openalexH5Index)}
             />
           )}
           {/* Publishing metadata. */}

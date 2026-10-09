@@ -71,9 +71,14 @@ export function useLiteratureSearch() {
 
   // 未产出结果的源（2026-09-23 可观测性）：缺 API Key 未发起请求的 / 发起
   // 了但跑失败的。渐进扇出后逐源结算：单源回执的 skippedNoKey/failedSources
-  // 与 RPC 本身的抛错都汇入这两张名单。
+  // 与 RPC 本身的抛错都汇入这两张名单。failedReasons 是源 → 失败原因码
+  // （timeout/network/rate-limited/http，宿主侧 classifySourceError 分类），
+  // 界面在失败源名后括注具体原因。
   const [skippedNoKey, setSkippedNoKey] = useState<string[]>([]);
   const [failedSources, setFailedSources] = useState<string[]>([]);
+  const [failedReasons, setFailedReasons] = useState<Record<string, string>>(
+    {},
+  );
 
   // Filters state
   const now = new Date().getFullYear();
@@ -173,6 +178,7 @@ export function useLiteratureSearch() {
       setSourcesDone(0);
       setSkippedNoKey([]);
       setFailedSources([]);
+      setFailedReasons({});
 
       // UX-M25（渐进变体）：旧结果保留（灰显于刷新条之后）直到第一批新结果
       // 落地——首个落地源替换列表，其后各源追加；选择/展开/导入/全文状态
@@ -268,6 +274,7 @@ export function useLiteratureSearch() {
             articles: ArticleResult[];
             skippedNoKey?: string[];
             failedSources?: string[];
+            failedReasons?: Record<string, string>;
           }>(
             "literature.search",
             {
@@ -290,16 +297,28 @@ export function useLiteratureSearch() {
           if (data?.failedSources?.length) {
             failedCount++;
             setFailedSources((prev) => [...prev, src]);
+            const reasons = data.failedReasons;
+            if (reasons && Object.keys(reasons).length > 0) {
+              setFailedReasons((prev) => ({ ...prev, ...reasons }));
+            }
           }
           // aborted:true 等非良构回执 = 已取消，丢弃即可
           if (Array.isArray(data?.articles) && data.articles.length > 0) {
             landedAny = true;
             merge(data.articles);
           }
-        } catch {
+        } catch (e) {
           if (myId !== requestId.current) return;
           failedCount++;
           setFailedSources((prev) => [...prev, src]);
+          // 走到这里基本是 RPC 层 60s 截止（源内失败经回执名单带出，不抛错）；
+          // 错误文本不含超时措辞的按网络失败归类。
+          setFailedReasons((prev) => ({
+            ...prev,
+            [src]: /timeout|timed out/i.test(toErrorMessage(e))
+              ? "timeout"
+              : "network",
+          }));
         } finally {
           if (myId === requestId.current) setSourcesDone((d) => d + 1);
         }
@@ -353,6 +372,7 @@ export function useLiteratureSearch() {
     setSearchError(null);
     setSkippedNoKey([]);
     setFailedSources([]);
+    setFailedReasons({});
     setSelectedIds(new Set());
     setImportResults(new Map());
     setExpandedKeys(new Set());
@@ -852,6 +872,7 @@ export function useLiteratureSearch() {
     searchSourceCount,
     sourcesDone,
     failedSources,
+    failedReasons,
     searchGen,
     skippedNoKey,
     handleSearch,
