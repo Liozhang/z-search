@@ -88,6 +88,9 @@ pref("embedding.local.model", "Xenova/multilingual-e5-small");
 // 模型下载镜像覆盖（空 = 自动：中国大陆 hf-mirror.com，其余 huggingface.co）。
 // 区域限定端点之一（endpointSchema.ts），设置面板「区域限定端点」组可改。
 pref("embedding.local.mirror", "");
+// 端点自动检测的缓存（JSON：{endpoint, at}，24 小时有效；只认两个内置源）。
+// 下载前并发探测两个内置源后写入，清空即强制下次下载重新检测。
+pref("embedding.local.detectedEndpoint", "");
 
 // ── PDF parsing (PdfTextProvider — full-text indexing for vector search) ──
 pref("pdfParser.backend", "opendataloader"); // "opendataloader" | "mineru"

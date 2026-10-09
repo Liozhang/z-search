@@ -483,9 +483,15 @@ class EmbeddingStore {
     createSearchTextFn: (item: any) => string,
     onProgress?: (current: number, total: number) => void,
     shouldCancel?: () => boolean,
-  ): Promise<{ processed: number; errors: number }> {
+  ): Promise<{
+    processed: number;
+    errors: number;
+    /** 首条错误消息（截断）——全部失败时 UI 需要一个可行动的原因出口。 */
+    firstError: string | null;
+  }> {
     let processed = 0;
     let errors = 0;
+    let firstError: string | null = null;
 
     // Items waiting to be embedded, accumulated until a batch is full.
     const WRITE_BATCH = 25;
@@ -526,8 +532,14 @@ class EmbeddingStore {
           }
         });
       } catch (e) {
-        // Batch write failed — count as errors but don't abort the whole rebuild.
+        // Batch write failed — those items were embedded but NOT stored:
+        // move them out of processed into errors so the summary stays
+        // honest (processed + errors accounts for every attempted item).
         errors += batch.length;
+        processed -= batch.length;
+        if (!firstError) {
+          firstError = String((e as any)?.message || e).slice(0, 300);
+        }
         safeDebug(
           `[z-search] EmbeddingStore.rebuildIndex batch write error: ${e}`,
         );
@@ -554,7 +566,11 @@ class EmbeddingStore {
         if (shouldCancel?.()) break;
         try {
           const searchText = createSearchTextFn(item);
-          if (!searchText.trim()) continue;
+          // 空检索文本：无内容可嵌入，按已处理计（不是错误），保进度守恒。
+          if (!searchText.trim()) {
+            processed++;
+            continue;
+          }
 
           const embedding = await embedFn(searchText);
           pending.push({
@@ -567,20 +583,25 @@ class EmbeddingStore {
             searchText,
             embedding,
           });
+          // 嵌入成功才计 processed——此前计数在 try 之外，嵌入全错时
+          // 「成功 X 篇」与「失败 X 篇」同时虚高、互相矛盾。
+          processed++;
 
           if (pending.length >= WRITE_BATCH) {
             await flushBatch();
           }
         } catch (e) {
           errors++;
+          if (!firstError) {
+            firstError = String((e as any)?.message || e).slice(0, 300);
+          }
           if (errors <= 3) {
             safeDebug(
               `[z-search] EmbeddingStore.rebuildIndex item error #${errors}: ${e}`,
             );
           }
         }
-
-        processed++;
+        // 成败都要推进进度条（失败条目此前也推进——保持同一节奏）。
         if (onProgress && processed % 10 === 0) {
           onProgress(processed, total);
         }
@@ -596,7 +617,7 @@ class EmbeddingStore {
       safeDebug("[z-search] EmbeddingStore rebuildIndex error: " + e);
     }
 
-    return { processed, errors };
+    return { processed, errors, firstError };
   }
 }
 

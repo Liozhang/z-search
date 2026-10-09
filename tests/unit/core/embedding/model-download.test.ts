@@ -28,6 +28,8 @@ vi.hoisted(() => {
 
 beforeEach(() => {
   h.prefs.clear();
+  // 端点检测带模块级会话缓存（sessionDetected），逐用例重置模块避免串扰。
+  vi.resetModules();
 });
 
 const importManager = () =>
@@ -111,5 +113,215 @@ describe("resolveModelEndpoint（pref 覆盖 > 区域推导）", () => {
       "hf.example.com",
     );
     expect(resolveModelEndpoint()).toBe("https://hf-mirror.com");
+  });
+});
+
+describe("buildEndpointProbeUrl", () => {
+  it("探测 URL 与下载同布局（config.json 为探针）", async () => {
+    const { buildEndpointProbeUrl } = await importManager();
+    expect(
+      buildEndpointProbeUrl(
+        "https://huggingface.co",
+        "Xenova/multilingual-e5-small",
+      ),
+    ).toBe(
+      "https://huggingface.co/Xenova/multilingual-e5-small/resolve/main/config.json",
+    );
+  });
+});
+
+describe("selectEndpointFromProbes（探测结果选源）", () => {
+  it("只有探测成功（latencyMs 非 null）的候选可入选，取最快", async () => {
+    const { selectEndpointFromProbes } = await importManager();
+    const best = selectEndpointFromProbes([
+      { endpoint: "https://huggingface.co", latencyMs: null, error: "timeout" },
+      { endpoint: "https://hf-mirror.com", latencyMs: 230 },
+      { endpoint: "https://huggingface.co", latencyMs: 500 },
+    ]);
+    expect(best?.endpoint).toBe("https://hf-mirror.com");
+  });
+
+  it("全部失败返回 null（调用方回落区域默认）", async () => {
+    const { selectEndpointFromProbes } = await importManager();
+    expect(
+      selectEndpointFromProbes([
+        { endpoint: "https://huggingface.co", latencyMs: null, error: "x" },
+        { endpoint: "https://hf-mirror.com", latencyMs: null, error: "y" },
+      ]),
+    ).toBeNull();
+    expect(selectEndpointFromProbes([])).toBeNull();
+  });
+});
+
+describe("resolveModelEndpointAsync（覆盖 > 检测缓存 > 现场探测 > 区域默认）", () => {
+  const PREF = "extensions.zotero.zsearch.embedding.local.detectedEndpoint";
+
+  /** 装 HTTP 假实现：按 URL 域名与探针/文件分流。 */
+  function mockHttp(
+    byHost: Record<string, (url: string) => any | Promise<any>>,
+  ) {
+    (globalThis as any).Zotero.HTTP = {
+      request: async (_method: string, url: string) => {
+        const host = Object.keys(byHost).find((k) => url.includes(k));
+        if (!host) throw new Error(`unexpected url: ${url}`);
+        return await byHost[host](url);
+      },
+    };
+  }
+
+  it("显式镜像覆盖最优先，不发探测请求", async () => {
+    const httpSpy = vi.fn();
+    (globalThis as any).Zotero.HTTP = { request: httpSpy };
+    h.prefs.set(
+      "extensions.zotero.zsearch.embedding.local.mirror",
+      "https://hf.example.com/",
+    );
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://hf.example.com");
+    expect(httpSpy).not.toHaveBeenCalled();
+  });
+
+  it("24 小时内的检测缓存直接复用，不重发探测", async () => {
+    const httpSpy = vi.fn();
+    (globalThis as any).Zotero.HTTP = { request: httpSpy };
+    h.prefs.set(
+      PREF,
+      JSON.stringify({ endpoint: "https://hf-mirror.com", at: Date.now() }),
+    );
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://hf-mirror.com");
+    expect(httpSpy).not.toHaveBeenCalled();
+  });
+
+  it("过期缓存（>24h）不采信，现场探测后写入新缓存", async () => {
+    mockHttp({
+      "huggingface.co": () => ({ status: 200, response: "{}" }),
+      "hf-mirror.com": () => {
+        throw new Error("timed out");
+      },
+    });
+    h.prefs.set(
+      PREF,
+      JSON.stringify({
+        endpoint: "https://hf-mirror.com",
+        at: Date.now() - 25 * 60 * 60 * 1000,
+      }),
+    );
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://huggingface.co");
+    const cached = JSON.parse(h.prefs.get(PREF));
+    expect(cached.endpoint).toBe("https://huggingface.co");
+  });
+
+  it("无缓存时现场探测：官方 200、镜像失败 → 选官方并记缓存", async () => {
+    mockHttp({
+      "huggingface.co": () => ({ status: 200, response: "{}" }),
+      "hf-mirror.com": () => {
+        throw new Error("connection refused");
+      },
+    });
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://huggingface.co");
+    expect(JSON.parse(h.prefs.get(PREF)).endpoint).toBe(
+      "https://huggingface.co",
+    );
+  });
+
+  it("两端点均不可达 → 回落区域默认（cn → hf-mirror），不写缓存", async () => {
+    mockHttp({
+      "huggingface.co": () => {
+        throw new Error("timed out");
+      },
+      "hf-mirror.com": () => {
+        throw new Error("timed out");
+      },
+    });
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://hf-mirror.com");
+    expect(h.prefs.get(PREF)).toBeUndefined();
+  });
+});
+
+describe("downloadModel（端点回落）", () => {
+  const PREF = "extensions.zotero.zsearch.embedding.local.detectedEndpoint";
+
+  /** 无盘环境：所有文件视为未下载，写盘只记录不落 IO。 */
+  function mockDisk() {
+    const written: string[] = [];
+    (globalThis as any).PathUtils = {
+      join: (...segs: string[]) => segs.join("/"),
+    };
+    (globalThis as any).Zotero.DataDirectory = { dir: "/data" };
+    (globalThis as any).IOUtils = {
+      stat: async () => {
+        throw new Error("not found");
+      },
+      makeDirectory: async () => {},
+      write: async (path: string) => {
+        written.push(path);
+      },
+    };
+    return written;
+  }
+
+  it("选中端点文件下载失败 → 自动回落另一内置源并完成下载", async () => {
+    mockDisk();
+    const requestedHosts: string[] = [];
+    (globalThis as any).Zotero.HTTP = {
+      request: async (_method: string, url: string) => {
+        requestedHosts.push(url);
+        if (url.includes("hf-mirror.com")) {
+          throw new Error("mirror broken");
+        }
+        return { status: 200, response: new Uint8Array([1]).buffer };
+      },
+    };
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    // 预置新鲜检测缓存指向镜像：主端点即镜像（失败方），官方为回落方。
+    h.prefs.set(
+      PREF,
+      JSON.stringify({ endpoint: "https://hf-mirror.com", at: Date.now() }),
+    );
+    const { downloadModel } = await importManager();
+    await downloadModel("Xenova/multilingual-e5-small");
+    expect(requestedHosts.some((u) => u.includes("hf-mirror.com"))).toBe(true);
+    expect(requestedHosts.some((u) => u.includes("huggingface.co"))).toBe(true);
+    // 回落成功后检测缓存翻转到成功的端点。
+    expect(JSON.parse(h.prefs.get(PREF)).endpoint).toBe(
+      "https://huggingface.co",
+    );
+  });
+
+  it("显式镜像覆盖失败时如实上抛，不静默换源", async () => {
+    mockDisk();
+    const requestedHosts: string[] = [];
+    (globalThis as any).Zotero.HTTP = {
+      request: async (_method: string, url: string) => {
+        requestedHosts.push(url);
+        throw new Error("override broken");
+      },
+    };
+    h.prefs.set(
+      "extensions.zotero.zsearch.embedding.local.mirror",
+      "https://hf.example.com",
+    );
+    const { downloadModel } = await importManager();
+    await expect(downloadModel("Xenova/multilingual-e5-small")).rejects.toThrow(
+      /hf\.example\.com/,
+    );
+    expect(requestedHosts.every((u) => u.includes("hf.example.com"))).toBe(
+      true,
+    );
   });
 });

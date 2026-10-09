@@ -618,6 +618,67 @@ export function LiteratureSearchPage({
           </span>
         </div>
 
+        {/* 嵌入模型下载通道（2026-10-09）：模型不随包分发，此前状态不可见
+              ——全新机器上模型没下载成，构建横幅只有「失败 N 篇」没有任何
+              指引。状态行 + 下载/检测按钮把这件事搬出水面：未下载亮黄字，
+              检测按钮并发探测两个模型源并选可达者。 */}
+        {scope === "local" &&
+          sem.modelInfo &&
+          sem.modelInfo.mode === "local" &&
+          !!sem.modelInfo.name && (
+            <div className="flex flex-wrap items-center gap-[var(--space-2)] [font:var(--ui-font-caption)] text-[color:var(--text-secondary)]">
+              <span>
+                {getString("semantic-model-status-label", {
+                  args: { name: sem.modelInfo.name },
+                })}
+              </span>
+              {sem.modelInfo.downloaded === true ? (
+                <span className="text-[color:var(--text-tertiary)]">
+                  {getString("semantic-model-ready")}
+                </span>
+              ) : sem.modelInfo.downloaded === false ? (
+                <span className="text-[color:var(--warning)]">
+                  {getString("semantic-model-missing")}
+                </span>
+              ) : null}
+              {sem.modelInfo.downloaded === false && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={sem.isDownloadingModel}
+                  onClick={() => void sem.handleDownloadModel()}
+                >
+                  {getString("semantic-model-download")}
+                </Button>
+              )}
+              <span title={getString("semantic-model-detect-tip")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  loading={sem.isDetectingEndpoint}
+                  onClick={() => void sem.handleDetectEndpoint()}
+                >
+                  {getString("semantic-model-detect-mirror")}
+                </Button>
+              </span>
+              {sem.endpointDetected &&
+                (sem.endpointProbe ? (
+                  <span className="text-[color:var(--text-tertiary)]">
+                    {getString("semantic-model-endpoint-active", {
+                      args: {
+                        endpoint: sem.endpointProbe.endpoint,
+                        latency: sem.endpointProbe.latencyMs ?? 0,
+                      },
+                    })}
+                  </span>
+                ) : (
+                  <span className="text-[color:var(--warning)]">
+                    {getString("semantic-model-endpoint-unreachable")}
+                  </span>
+                ))}
+            </div>
+          )}
+
         {/* 未产出结果的源（2026-09-23 可观测性修复）：加载标题报的是「发起
             了几路」，这里补上「实际哪几路没跑」——缺 Key 与跑失败分开说，
             前者给设置指引。缺 Key 的源本就不该发请求，事后还说「8 个来源」

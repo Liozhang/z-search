@@ -49,6 +49,24 @@ export interface ModelInfo {
   name: string;
   dimension: number;
   hasStaleChunks: boolean;
+  /** "local" | "api"——本地模式才有模型下载通道（downloaded/endpoint）。 */
+  mode: string;
+  /** 本地模型必需文件是否齐全；api 模式为 null（无下载通道）。 */
+  downloaded: boolean | null;
+  /** 同步求值的当前模型源（用户镜像覆盖 > 区域默认）；自动检测实况以
+   *  semantic.detectEndpoint 的返回为准。 */
+  endpoint: string;
+  /** 用户是否显式配置了镜像覆盖（true 时下载失败不自动换源）。 */
+  mirrorOverride: boolean;
+}
+
+/** semantic.detectEndpoint 的返回：端点自动检测实况（两端点里可达且最快的
+ *  一个；全部不可达为 null）。 */
+export interface EndpointProbeInfo {
+  endpoint: string;
+  latencyMs: number | null;
+  status?: number;
+  error?: string;
 }
 
 export const SECTION_OPTIONS: {

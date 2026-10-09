@@ -62,9 +62,12 @@ declare namespace _ZoteroTypes {
       "apis.kipris.apiKey": string;
       "embedding.mode": string;
       "embedding.local.model": string;
+      "embedding.local.mirror": string;
+      "embedding.local.detectedEndpoint": string;
       "pdfParser.backend": string;
       "pdfParser.backendFallback": boolean;
       "pdfParser.opendataloader.enabled": boolean;
+      "pdfParser.opendataloader.autoJre": boolean;
       "pdfParser.opendataloader.tableEnable": string;
       "pdfParser.opendataloader.returnImages": boolean;
       "pdfParser.opendataloader.timeout": number;

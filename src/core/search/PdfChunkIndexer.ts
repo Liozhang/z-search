@@ -299,7 +299,27 @@ class PdfChunkIndexerClass {
     onProgress?: (p: IndexProgress) => void,
     shouldCancel?: () => boolean,
   ): Promise<BuildResult> {
-    const model = EmbeddingsManager.getModelInfo().name;
+    // 模型名是 chunk 存储键：API 模式未配置模型时 getModelInfo() 抛本地化
+    // 错误——此前在逐条 try 之外，一条都没处理就整条构建报「构建失败」。
+    // 改为全部候选按 skip 记录（原因码 embedding-unconfigured），构建正常
+    // 收尾，UI 能出跳过明细与下载指引。
+    let model: string;
+    try {
+      model = EmbeddingsManager.getModelInfo().name;
+    } catch (e) {
+      safeDebug(
+        `[z-search] PdfChunkIndexer: no usable embedding model, skipping batch of ${itemIds.length}: ${e}`,
+      );
+      return {
+        processed: 0,
+        skipped: itemIds.length,
+        errors: 0,
+        skippedDetails: itemIds.map((itemId) => ({
+          itemId,
+          reason: "embedding-unconfigured",
+        })),
+      };
+    }
     const result: BuildResult = {
       processed: 0,
       skipped: 0,

@@ -91,11 +91,18 @@ export function createItemSearchText(item: any): string {
 async function buildMetadataIndex(
   notify: NotifyFn,
   isCancelled: () => boolean,
-): Promise<{ processed: number; errors: number; skipped: boolean }> {
+): Promise<{
+  processed: number;
+  errors: number;
+  skipped: boolean;
+  firstError: string | null;
+}> {
   try {
     const { default: EM } = await import("../ai/EmbeddingsManager");
     const model = EM.getModelInfo().name; // 未配置时抛本地化错误 → 跳过
-    if (!model) return { processed: 0, errors: 0, skipped: true };
+    if (!model) {
+      return { processed: 0, errors: 0, skipped: true, firstError: null };
+    }
     const { default: EmbeddingStore } = await import("./EmbeddingStore");
     const r = await EmbeddingStore.rebuildIndex(
       model,
@@ -107,11 +114,16 @@ async function buildMetadataIndex(
       },
       isCancelled,
     );
-    return { processed: r.processed, errors: r.errors, skipped: false };
+    return {
+      processed: r.processed,
+      errors: r.errors,
+      skipped: false,
+      firstError: r.firstError,
+    };
   } catch (e) {
     // 未配置 embedding / 模型不可用：跳过本阶段（PDF 阶段有自己的降级路径）
     safeDebug("[z-search] metadata index skipped: " + toErrorMessage(e));
-    return { processed: 0, errors: 0, skipped: true };
+    return { processed: 0, errors: 0, skipped: true, firstError: null };
   }
 }
 
@@ -164,6 +176,13 @@ export async function runFullLibraryBuild(
     if (meta.skipped) {
       skipCounts.set("metadata-embedding-unavailable", 1);
     }
+    // 元数据腿跑了但条目失败（典型：本地模型未下载且下载失败，全库逐条
+    // 抛错）——此前只有失败计数没有原因出口，用户只看到「失败 N 篇」。
+    // 首条错误消息（含镜像/网络指引的本地化文案）随载荷上抛给 UI 渲染。
+    const metadataFailed =
+      !meta.skipped && meta.errors > 0
+        ? { errors: meta.errors, firstError: meta.firstError ?? "" }
+        : null;
     const skips = Array.from(skipCounts, ([reason, count]) => ({
       reason,
       count,
@@ -176,6 +195,7 @@ export async function runFullLibraryBuild(
       metadataProcessed: meta.processed,
       failedList,
       skips,
+      metadataFailed,
     });
   } catch (e: any) {
     notify("semantic.buildError", {

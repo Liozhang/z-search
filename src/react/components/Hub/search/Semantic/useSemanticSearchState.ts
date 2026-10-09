@@ -21,6 +21,7 @@ import { onBridgeReady } from "../../../../utils/bridge";
 import { zoteroNotify } from "@/utils/zoteroNotification";
 import { useToast } from "@/components/ui/toast";
 import { SearchResult, DuplicateGroup, ModelInfo } from "./types";
+import type { EndpointProbeInfo } from "./types";
 
 /** 跳过原因码 → 本地化键（buildComplete.skips 的渲染用；未收录码原样展示）。
  *  与 PdfChunkIndexer / runFullLibraryBuild 的 reason 常量保持同步。 */
@@ -32,6 +33,7 @@ const SKIP_REASON_KEYS: Record<string, string> = {
   "already-indexed": "semantic-skip-already-indexed",
   "metadata-embedding-unavailable":
     "semantic-skip-metadata-embedding-unavailable",
+  "embedding-unconfigured": "semantic-skip-embedding-unconfigured",
 };
 
 export interface SemanticSearchState {
@@ -80,6 +82,15 @@ export interface SemanticSearchState {
     bm25ChunkCount?: number;
   } | null;
 
+  // --- 模型下载通道（本地模式） ---
+  isDownloadingModel: boolean;
+  isDetectingEndpoint: boolean;
+  /** 最近一次端点检测的结果；null = 从未检测或两端点均不可达（用
+   *  endpointDetected 区分这两种情形）。 */
+  endpointProbe: EndpointProbeInfo | null;
+  /** 是否跑过至少一次端点检测。 */
+  endpointDetected: boolean;
+
   // --- Handlers ---
   handleSearch: (queryOverride?: string) => Promise<void>;
   /** Cancel an in-flight semantic.search. Client-side only (no backend RPC):
@@ -93,6 +104,11 @@ export interface SemanticSearchState {
   handleCancelBuild: () => Promise<void>;
   handleRebuildIndex: () => Promise<void>;
   handleOpenItem: (itemID: number) => void;
+  /** 手动触发本地嵌入模型下载（绕过自动下载的失败冷却）。完成经
+   *  semantic.modelDownloadComplete 通知回执，loading 旗在那里复位。 */
+  handleDownloadModel: () => Promise<void>;
+  /** 手动重测两个模型源，刷新 24 小时端点缓存；结果渲染在状态行。 */
+  handleDetectEndpoint: () => Promise<void>;
   /** SE-2：重跑「最近一次失败的动作」（error 有 8 个写入点，重试不能一律查询检索） */
   retryLastAction: () => void;
 }
@@ -148,6 +164,18 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
 
   // Model info
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+
+  // 模型下载通道（本地模式）：手动下载的 loading 旗 + 端点检测的展示态。
+  // downloading 复位靠 semantic.modelDownloadComplete 通知（下载以分钟计，
+  // 早应答的 RPC 不能承载完成时刻）。
+  const isDownloadingModelRef = useRef(false);
+  const [isDownloadingModel, setIsDownloadingModel] = useState(false);
+  const [isDetectingEndpoint, setIsDetectingEndpoint] = useState(false);
+  const [endpointProbe, setEndpointProbe] = useState<EndpointProbeInfo | null>(
+    null,
+  );
+  /** 区分「还没检测过」（idle）与「检测过但两个源都不可达」（unreachable）。 */
+  const [endpointDetected, setEndpointDetected] = useState(false);
 
   // Index status — distinguishes "library not indexed" (show onboarding card)
   // from "indexed but no matches" (show normal empty hint). null = not loaded yet.
@@ -243,6 +271,7 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
             errors: number;
             failedList?: string;
             skips?: Array<{ reason: string; count: number }>;
+            metadataFailed?: { errors: number; firstError: string } | null;
           }) => {
             setIsBuilding(false);
             isBuildingRef.current = false;
@@ -256,6 +285,17 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
                 return `  • ${key ? getString(key) : reason} ×${count}`;
               })
               .join("\n");
+            // 元数据腿失败的原因出口（2026-10-09）：模型下载失败等场景此前
+            // 只有「失败 N 篇」计数，firstError 是后端拼好的本地化可行动文案
+            // （网络/镜像指引），原样附在明细末尾。
+            const metadataFailedLine = r.metadataFailed
+              ? `\n${getString("semantic-metadata-failed", {
+                  args: {
+                    count: r.metadataFailed.errors,
+                    detail: r.metadataFailed.firstError || "-",
+                  },
+                })}`
+              : "";
             setBuildResult(
               getString("semantic-build-done", {
                 args: {
@@ -267,6 +307,7 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
                 (skipLines
                   ? `\n${getString("semantic-skipped-details")}\n${skipLines}`
                   : "") +
+                metadataFailedLine +
                 (r.failedList
                   ? `\n\n${getString("semantic-failed-items")}\n${r.failedList}`
                   : ""),
@@ -287,6 +328,29 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
             }),
           );
         }),
+      );
+      // 手动下载的完成回执：后端早应答，这里才是终态——刷新模型状态
+      // （downloaded 旗驱动「下载模型」按钮显隐），成功失败都给 Hub 窗内
+      // 回执（JA-3 同款：点击所在的窗必须有可感知反馈）。
+      unsubs.push(
+        bridge.on(
+          "semantic.modelDownloadComplete",
+          (r: { ok: boolean; modelName?: string; error?: string }) => {
+            isDownloadingModelRef.current = false;
+            setIsDownloadingModel(false);
+            refreshModelInfo();
+            if (r.ok) {
+              toast.success(getString("embedding-model-download-done"));
+            } else {
+              toast.error(
+                r.error ||
+                  getString("embedding-model-download-failed", {
+                    args: { detail: "-" },
+                  }),
+              );
+            }
+          },
+        ),
       );
       unsubs.push(
         bridge.on(
@@ -343,7 +407,9 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
       }
       offReady?.();
     };
-  }, [refreshModelInfo, refreshIndexStatus]);
+    // toast：modelDownloadComplete 订阅里用到；bind 本就设计为可重跑
+    // （桥重建即重绑），依赖变化多重绑一次无害。
+  }, [refreshModelInfo, refreshIndexStatus, toast]);
 
   // Watchdog — if build/scan stalls for >5 min, force-clear loading flags.
   // 仅在 isActive 时运行，避免 SearchPane 切走后 30s 定时器空转。
@@ -626,6 +692,56 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
     [toast],
   );
 
+  // 手动触发模型下载：绕过自动通道的 60 秒失败冷却（用户显式点按钮就是
+  // 要重试）。后端早应答 {started:true}，终态在 modelDownloadComplete 通知。
+  // started 缺席 = 后端拒绝（无可用本地模型名，如 API 模式未配置），就地复位。
+  const handleDownloadModel = useCallback(async () => {
+    if (isDownloadingModelRef.current) return;
+    isDownloadingModelRef.current = true;
+    setIsDownloadingModel(true);
+    try {
+      const res = await semanticRequest<{ started: boolean }>(
+        "semantic.downloadModel",
+      );
+      if (!res?.started) {
+        isDownloadingModelRef.current = false;
+        setIsDownloadingModel(false);
+        toast.error(getString("semantic-model-download-unavailable"));
+      }
+    } catch (e: unknown) {
+      isDownloadingModelRef.current = false;
+      setIsDownloadingModel(false);
+      toast.error(handleUiError(e, { silent: true }));
+    }
+  }, [toast]);
+
+  // 手动重测两个模型源（并发探测，最快可达者当选并刷新 24 小时缓存）。
+  // 25 秒超时 > 后端探测上限（两端点各 8 秒），桥抖动时不至于挂着按钮。
+  const handleDetectEndpoint = useCallback(async () => {
+    if (isDetectingEndpoint) return;
+    setIsDetectingEndpoint(true);
+    try {
+      const res = await semanticRequest<EndpointProbeInfo | null>(
+        "semantic.detectEndpoint",
+        {},
+        25000,
+      );
+      setEndpointProbe(res ?? null);
+      setEndpointDetected(true);
+      if (res) {
+        toast.success(getString("semantic-model-detect-done"));
+      } else {
+        toast.warning(getString("semantic-model-endpoint-unreachable"));
+      }
+    } catch {
+      setEndpointProbe(null);
+      setEndpointDetected(true);
+      toast.warning(getString("semantic-model-endpoint-unreachable"));
+    } finally {
+      setIsDetectingEndpoint(false);
+    }
+  }, [isDetectingEndpoint, toast]);
+
   // 重试路由（审计 SE-2）：error 有 8 个写入点（查询/找相似/查重/建索引/
   // 重建/watchdog…），重试按钮必须重跑「失败的那个操作」，不能一律
   // handleSearch——查重失败被重试成查询检索，页面被切走且失败操作从未被重试。
@@ -681,6 +797,10 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
     hasScanned,
     modelInfo,
     indexStatus,
+    isDownloadingModel,
+    isDetectingEndpoint,
+    endpointProbe,
+    endpointDetected,
     handleSearch,
     handleCancelSearch,
     handleClear,
@@ -690,6 +810,8 @@ export function useSemanticSearchState(isActive = true): SemanticSearchState {
     handleCancelBuild,
     handleRebuildIndex,
     handleOpenItem,
+    handleDownloadModel,
+    handleDetectEndpoint,
     retryLastAction,
   };
 }

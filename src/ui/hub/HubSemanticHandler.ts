@@ -226,8 +226,94 @@ const SEMANTIC_ACTIONS: Record<
     // 重建」（审计 P2-3）。空名直接跳过 stale 判定。
     const hasStale =
       !!info.name && (await PdfChunkStore2.default.hasStaleChunks(info.name));
-    const result: any = { ...info, hasStaleChunks: hasStale };
+    // 模型下载通道状态（本地模式专属）：downloaded 是面板「下载模型」按钮
+    // 的显隐依据；endpoint 是同步求值的展示值（覆盖 > 区域默认），自动检测
+    // 的实况以 semantic.detectEndpoint 为准。
+    const { getPrefDynamic } = await import("../../utils/prefs");
+    const MDM = await import("../../core/embedding/ModelDownloadManager");
+    const mode = String(getPrefDynamic("embedding.mode") ?? "") || "local";
+    let downloaded: boolean | null = null;
+    if (mode === "local" && info.name) {
+      downloaded = await MDM.isModelDownloaded(info.name);
+    }
+    const result: any = {
+      ...info,
+      hasStaleChunks: hasStale,
+      mode,
+      downloaded,
+      endpoint: MDM.resolveModelEndpoint(),
+      mirrorOverride: MDM.hasMirrorOverride(),
+    };
     return { result, error };
+  },
+  "semantic.downloadModel": async (
+    bridge: any,
+    payload: any,
+    id: string | number,
+    source: Window,
+  ): Promise<{ result: any; error: string | null }> => {
+    const { default: EM3 } = await import("../../core/ai/EmbeddingsManager");
+    let modelName = String(payload?.modelName ?? "").trim();
+    if (!modelName) {
+      try {
+        modelName = EM3.getModelInfo().name;
+      } catch {
+        /* API 未配置等：无本地模型名可下 */
+      }
+    }
+    const { sanitizeModelId } =
+      await import("../../core/embedding/ModelDownloadManager");
+    if (!sanitizeModelId(modelName)) {
+      return {
+        result: null,
+        error: "semantic.downloadModel: no usable local model id",
+      };
+    }
+    const result: any = { started: true, modelName };
+    bridge.respond(id, result, null, source);
+
+    // 下载以分钟计，早应答 + 完成通知（semantic.modelDownloadComplete）。
+    const MDM3 = await import("../../core/embedding/ModelDownloadManager");
+    void MDM3.downloadModelWithProgressWindow(modelName)
+      .then(() => {
+        bridge.sendNotifyToIframe("semantic.modelDownloadComplete", {
+          ok: true,
+          modelName,
+        });
+      })
+      .catch((e: any) => {
+        bridge.sendNotifyToIframe("semantic.modelDownloadComplete", {
+          ok: false,
+          modelName,
+          error: toErrorMessage(e),
+        });
+      });
+
+    return { result: { _earlyResponse: true }, error: null };
+  },
+  "semantic.detectEndpoint": async (
+    _bridge: any,
+    payload: any,
+    _id: string | number,
+    _source: Window,
+  ): Promise<{ result: any; error: string | null }> => {
+    const { default: EM4 } = await import("../../core/ai/EmbeddingsManager");
+    let modelName = String(payload?.modelName ?? "").trim();
+    if (!modelName) {
+      try {
+        modelName = EM4.getModelInfo().name;
+      } catch {
+        /* 无模型名时探测退化为默认仓库路径 */
+      }
+    }
+    const { detectModelEndpoint } =
+      await import("../../core/embedding/ModelDownloadManager");
+    // 每次手动检测都重新探测（结果同时刷新 24 小时缓存）；两端点全不可达
+    // 返回 null，由前端按「均不可达」渲染指引。
+    const best = await detectModelEndpoint(
+      modelName || "Xenova/multilingual-e5-small",
+    );
+    return { result: best, error: null };
   },
   "semantic.getIndexStatus": async (
     _bridge: any,
