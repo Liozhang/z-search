@@ -440,6 +440,7 @@ export function JournalSearchDashboard(): React.ReactElement {
               key={`${item.name}-${idx}`}
               item={item}
               countKind="works"
+              query={query}
               onClick={(name, issn) => {
                 // Drill into a full metric card: switch mode, seed the query
                 // box (so the user sees what was looked up), then fire the
