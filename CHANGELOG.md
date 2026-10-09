@@ -7,6 +7,16 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-09
+
+### Fixed
+
+- **Journal row quartile badges now distinguish the two ranking systems**:
+  JCR and CAS quartiles both rendered as bare "Q1"–"Q4", so two identical
+  chips sat side by side with no way to tell them apart. Journal rows now use
+  the same localized labels as the literature card (JCR Q1 / 一区, JCR Q1 /
+  CAS Q1), and the CAS chip gains a tooltip.
+
 ## [1.4.0] - 2026-10-09
 
 ### Added
