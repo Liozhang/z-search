@@ -12,7 +12,7 @@
 import React from "react";
 import { getString } from "../../../../utils/locale";
 import type { JournalListItem } from "../../../../../types/journalSearch";
-import { formatQuartile } from "./types";
+import { normalizeQuartile, formatQuartile } from "./types";
 import { ChevronRightIconSvg } from "../../../../utils/icons";
 import { ICON } from "../../../../utils/iconSizes";
 import { highlightSegments } from "../../../../utils/highlight";
@@ -118,13 +118,20 @@ export function JournalListItemView({
               title={`${getString("journal-jif-label")} ${formatQuartile(item.jifQuartile)}`}
             >
               <span aria-hidden="true" className={QUARTILE_DOT} />
-              {formatQuartile(item.jifQuartile)}
+              {getString(
+                `lit-quartile-jcr-q${normalizeQuartile(item.jifQuartile)}`,
+              )}
             </span>
           )}
           {item.cassQuartile != null && (
-            <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
+            <span
+              className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+              title={getString("journal-cass-quartile-label")}
+            >
               <span aria-hidden="true" className={QUARTILE_DOT} />
-              {formatQuartile(item.cassQuartile)}
+              {getString(
+                `lit-quartile-cass-${normalizeQuartile(item.cassQuartile)}`,
+              )}
             </span>
           )}
           {item.cassIsTop && (
