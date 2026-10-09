@@ -130,8 +130,8 @@ describe("z-search import-target select regression (real Zotero + real network)"
       await runUiSearch("MHC genotyping alpine chamois");
       const cardReady = await waitFor(() => {
         const root = hubRoot();
-        return root && root.querySelectorAll('[data-slot="select-trigger"]')
-          .length
+        return root &&
+          root.querySelectorAll('[data-slot="select-trigger"]').length
           ? root.querySelector('[data-slot="select-trigger"]')
           : null;
       }, 150000);
@@ -184,8 +184,9 @@ describe("z-search import-target select regression (real Zotero + real network)"
       }
 
       const popupText = popup.textContent || "";
-      const followOk =
-        /跟随主窗|Follow( the)? (main|primary) window/i.test(popupText);
+      const followOk = /跟随主窗|Follow( the)? (main|primary) window/i.test(
+        popupText,
+      );
       const rootText = hubRoot()?.textContent || "";
       const boundaryHit = /too much recursion/.test(rootText);
       const stackErrors = errors.filter((m) => /recursion/i.test(m));
@@ -196,10 +197,7 @@ describe("z-search import-target select regression (real Zotero + real network)"
       } catch {
         /* 已存在 */
       }
-      const shotPath = PathUtils.join(
-        OUT_DIR,
-        "import-target-select-open.png",
-      );
+      const shotPath = PathUtils.join(OUT_DIR, "import-target-select-open.png");
       try {
         const canvas = doc.createElementNS(
           "http://www.w3.org/1999/xhtml",
@@ -208,8 +206,14 @@ describe("z-search import-target select regression (real Zotero + real network)"
         canvas.width = hubWin.innerWidth;
         canvas.height = hubWin.innerHeight;
         const ctx = canvas.getContext("2d");
-        ctx.drawWindow(win, 0, 0, hubWin.innerWidth, hubWin.innerHeight,
-          "rgb(255,255,255)");
+        ctx.drawWindow(
+          win,
+          0,
+          0,
+          hubWin.innerWidth,
+          hubWin.innerHeight,
+          "rgb(255,255,255)",
+        );
         const dataUrl = canvas.toDataURL("image/png");
         const b64 = dataUrl.split(",")[1];
         await Zotero.File.putContentsAsync(shotPath, atob(b64), "binary");
@@ -219,8 +223,10 @@ describe("z-search import-target select regression (real Zotero + real network)"
 
       expect(followOk, "popup lists the follow option").to.be.true;
       expect(boundaryHit, "no ErrorBoundary stack-overflow panel").to.be.false;
-      expect(stackErrors, "no recursion errors on iframe error pipeline")
-        .to.have.lengthOf(0);
+      expect(
+        stackErrors,
+        "no recursion errors on iframe error pipeline",
+      ).to.have.lengthOf(0);
     } catch (e) {
       reportError("open-select", e);
     }

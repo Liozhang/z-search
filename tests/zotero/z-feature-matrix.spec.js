@@ -877,6 +877,10 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
 
   // ── S6 semantic.* 向量全流程 ──────────────────────────────────────────
   it("builds the vector index and serves semantic search, find-similar, duplicate scan", async function () {
+    // 构建双腿走真机 wasm 推理，本机实测 322s 才收尾——套件级 300s 预算
+    // 不够，本用例单独放宽（mocha 超时的报错经 JSON 往返只剩 undefined，
+    // 且断言后的异步收尾仍会写出「成功」产物，极具迷惑性）。
+    this.timeout(900000);
     if (!vectorReady) {
       this.skip();
       return;
@@ -885,9 +889,13 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
     try {
       // 向量链路必须走插件运行时桥（EmbedFrameHost 需要插件 rootURI）
       const pBridge = await openHubViaPlugin();
+      const buildT0 = Date.now();
       const origNotify = pBridge.sendNotifyToIframe.bind(pBridge);
       pBridge.sendNotifyToIframe = (ev, p) => {
-        notifyLog.push({ ev, p });
+        // at = 通知相对构建发起的毫秒偏移——区分「慢构建错过等待窗口」
+        // 与「真挂起」（2026-10-09 排查：构建工作全部完成但窗口内无完成
+        // 通知，需要时间线才能定论）。
+        notifyLog.push({ ev, p, at: Date.now() - buildT0 });
         return origNotify(ev, p);
       };
 
@@ -946,21 +954,27 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
       };
       const started = await route(pBridge, "semantic.buildIndex", {});
       expect(started.started).to.be.true;
+      // 600s：全库元数据 + PDF 分块双腿都走真机 wasm 推理，库内条目数随
+      // 前序用例的导入增长（2026-10-09 实测 11 条元数据 + 2 篇 PDF），
+      // 300s 窗口在慢机上贴边。
       const done = await waitFor(() => {
         const complete = notifyLog.find(
           (n) => n.ev === "semantic.buildComplete",
         );
         const error = notifyLog.find((n) => n.ev === "semantic.buildError");
         return complete || error || null;
-      }, 300000);
+      }, 600000);
       Zotero.debug = origDebug;
-      expect(done, "build finished (complete or error notification)").to.be.ok;
+      // 诊断先行：构建挂起（done=null）时也要先落盘现场再断言，否则
+      // debugLines 与 notifyLog 随失败一起丢掉，事后无迹可查。
       const status = await route(pBridge, "semantic.getIndexStatus", {});
       await writeReport("z-matrix-vector-build.json", {
+        buildFinished: done != null,
         notifyLog: notifyLog.filter((n) => n.ev !== "hub.setActiveTab"),
         indexStatus: status,
         zsearchDebugLines: debugLines.slice(0, 40),
       });
+      expect(done, "build finished (complete or error notification)").to.be.ok;
       expect(
         done.ev,
         `build outcome: ${JSON.stringify(

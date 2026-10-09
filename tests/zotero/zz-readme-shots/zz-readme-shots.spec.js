@@ -284,14 +284,15 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
 
   it("journal discover list for a field", async function () {
     try {
-      const segBtn = findBtn(/discover by field|按领域发现/i);
+      // 2026-10-09 模式改名：按匹配策略命名——模糊搜索（en: Fuzzy Search）
+      const segBtn = findBtn(/fuzzy search|模糊搜索|模糊搜尋/i);
       if (!segBtn) {
         reportError("journal-discover", { message: "discover toggle missing" });
       }
       segBtn.click();
       await Zotero.Promise.delay(1000);
 
-      await runUiSearch("oncology", /research field|研究方向/i);
+      await runUiSearch("oncology", /journal name keywords|期刊名称关键词/i);
 
       // 等 discover 行列表（行内带 ISSN 文本）
       const rows = await waitFor(() => {

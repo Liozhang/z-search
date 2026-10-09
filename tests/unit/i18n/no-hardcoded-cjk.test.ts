@@ -115,23 +115,29 @@ function scan(file: string, src: string): Offender[] {
 }
 
 describe("i18n: no hardcoded CJK in user-facing literals", () => {
-  it("finds no untranslated CJK outside the allowlist", () => {
-    const roots = [join(REPO, "src"), join(REPO, "addon", "content")];
-    const offenders: Offender[] = [];
-    for (const root of roots) {
-      for (const file of walk(root)) {
-        const rel = relative(REPO, file).split("\\").join("/");
-        if (ALLOWLIST[rel] || BUILT.has(rel)) continue;
-        offenders.push(...scan(rel, readFileSync(file, "utf-8")));
+  // 全量源码（约 270 个文件、3.4MB）过一遍 TS 扫描器比常规单测重一个量级，
+  // 显式放宽到 60s——守卫本体不受影响。
+  it(
+    "finds no untranslated CJK outside the allowlist",
+    { timeout: 60_000 },
+    () => {
+      const roots = [join(REPO, "src"), join(REPO, "addon", "content")];
+      const offenders: Offender[] = [];
+      for (const root of roots) {
+        for (const file of walk(root)) {
+          const rel = relative(REPO, file).split("\\").join("/");
+          if (ALLOWLIST[rel] || BUILT.has(rel)) continue;
+          offenders.push(...scan(rel, readFileSync(file, "utf-8")));
+        }
       }
-    }
-    expect(
-      offenders.map(
-        (o) => `${o.file}:${o.line} [${o.kind}] ${JSON.stringify(o.text)}`,
-      ),
-      "CJK must be moved to FTL (zh-CN/zh-TW/en-US) - see the test header",
-    ).toEqual([]);
-  });
+      expect(
+        offenders.map(
+          (o) => `${o.file}:${o.line} [${o.kind}] ${JSON.stringify(o.text)}`,
+        ),
+        "CJK must be moved to FTL (zh-CN/zh-TW/en-US) - see the test header",
+      ).toEqual([]);
+    },
+  );
 
   it("keeps allowlist entries explained and existing", () => {
     for (const [file, reason] of Object.entries(ALLOWLIST)) {

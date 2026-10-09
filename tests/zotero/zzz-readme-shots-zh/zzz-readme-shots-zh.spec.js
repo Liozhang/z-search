@@ -341,7 +341,8 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
 
   it("journal discover list for a field", async function () {
     try {
-      const segBtn = findBtn(/discover by field|按领域发现/i);
+      // 2026-10-09 模式改名：按匹配策略命名——模糊搜索（en: Fuzzy Search）
+      const segBtn = findBtn(/fuzzy search|模糊搜索|模糊搜尋/i);
       if (!segBtn) {
         reportError("journal-discover-zh", {
           message: "discover toggle missing",
@@ -350,9 +351,8 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
       segBtn.click();
       await Zotero.Promise.delay(1000);
 
-      // zh-CN 占位文本是「输入研究领域关键词...」——与研究方向的英文说法
-      // 并列覆盖（历史上两种中文文案都出现过）
-      await runUiSearch("oncology", /research field|研究领域|研究方向/i);
+      // zh-CN 占位文本是「输入期刊名称关键词...」
+      await runUiSearch("oncology", /journal name keywords|期刊名称关键词/i);
 
       // 等 discover 行列表（行内带 ISSN 文本）
       const rows = await waitFor(() => {

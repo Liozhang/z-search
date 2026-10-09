@@ -525,11 +525,12 @@ describe("z-search hub visual search verification (real Zotero + real network)",
 
   it("captures the journal discover list for a research field", async function () {
     try {
-      // 上一用例停在 metric 模式——切到 discover（模式 seg 在仪表盘顶部）
+      // 上一用例停在 exact 模式——切到 fuzzy（模式 seg 在仪表盘顶部）。
+      // 2026-10-09 模式改名：按匹配策略命名——模糊搜索（en: Fuzzy Search）
       const segBtn = Array.from(
         hubRoot()?.querySelectorAll("button") || [],
       ).find((b) =>
-        /discover by field|按领域发现/i.test((b.textContent || "").trim()),
+        /fuzzy search|模糊搜索|模糊搜尋/i.test((b.textContent || "").trim()),
       );
       if (!segBtn) {
         reportError("hub-visual-discover", {
@@ -539,12 +540,13 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       segBtn.click();
       await Zotero.Promise.delay(1000);
 
-      // 等 discover 输入框（placeholder 区分于 metric 的刊名/ISSN）。
+      // 等 fuzzy 输入框（placeholder 区分于 exact 的刊名/ISSN）。
       // 可见性用 offsetParent（display:none 祖先下为 null）——keep-alive 的
       // .hub-pane-slot 隐藏态不落在 class 上，className 探测不可靠。
       const input = await waitFor(() => {
         const i = Array.from(hubRoot()?.querySelectorAll("input") || []).find(
-          (x) => /research field|研究方向/i.test(x.placeholder || ""),
+          (x) =>
+            /journal name keywords|期刊名称关键词/i.test(x.placeholder || ""),
         );
         return i && i.offsetParent !== null ? i : null;
       }, 15000);
@@ -576,7 +578,10 @@ describe("z-search hub visual search verification (real Zotero + real network)",
         ).length;
       };
 
-      const drive = await runUiSearch("oncology", /research field|研究方向/i);
+      const drive = await runUiSearch(
+        "oncology",
+        /journal name keywords|期刊名称关键词/i,
+      );
       const rows = await waitFor(countRows, 120000);
       await Zotero.Promise.delay(1000);
 
