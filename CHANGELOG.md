@@ -7,6 +7,55 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-09
+
+### Added
+
+- **PDF full-text fallback chain with a guaranteed tail**: backend order and
+  skip conditions moved into a pure decision layer (`parseChain`), and the
+  chain now always ends with Zotero's built-in pdf.js text extraction
+  (`ZoteroFulltextAdapter`, IR source `tier2-zotero-fulltext`). Fresh installs
+  without the OpenDataLoader jar or a MinerU token previously failed hard and
+  lost PDF full-text indexing entirely; now any PDF yields text. The fallback
+  tier carries plain text only — no layout structure, a single item-level page
+  span — and never impersonates a structured backend.
+- **Local embedding model downloads**: `ModelDownloadManager` fetches model
+  files on first use following the transformers.js `localModelPath` layout.
+  Endpoint resolution follows the existing "override > region-derived >
+  built-in" order — mainland China defaults to hf-mirror.com, elsewhere
+  huggingface.co; `embedding.local.mirror` accepts a self-hosted proxy under
+  Settings ▸ Regional endpoints. Models were previously neither bundled nor
+  downloadable, leaving vector features unusable on fresh installs. A dedicated
+  window shows download progress with ready/failure copy.
+- **Automatic JRE for OpenDataLoader** (`pdfParser.opendataloader.autoJre`,
+  on by default): when the jar is present but no Java runtime is found, a
+  Temurin portable JRE (~40–50 MB) is downloaded into the data directory —
+  no admin rights required; concurrent consumers share one install. Never
+  triggers without the jar.
+- **Search term history**: recent queries persist across sessions (dynamic
+  pref, case-insensitive dedup, newest first, capacity-capped, write failures
+  silent). With an empty search box the Hub search row lists recent terms for
+  one-click reuse, plus a clear button.
+- **Citation explorer drill-down**: the citation dialog now stacks — drill
+  from any result into its cited-by or references list, move back up the
+  stack, switch direction in place, sort results, and import rows inline
+  without leaving the dialog.
+
+### Fixed
+
+- **Bridge stack-overflow on cyclic or deep payloads** (`PostMessageBridge`):
+  the structured-clone walker now replaces cycles with marker objects and caps
+  traversal depth — previously a deep payload (button-click chains) could
+  exhaust SpiderMonkey's stack ("too much recursion") instead of degrading.
+
+### Changed
+
+- **Journal list rows adopt the literature-card visual grammar**: badge shell
+  recipes extracted to a single source (`badgeRecipes`) shared with the
+  literature card; rows switch to the bottom-divider row form, journal names
+  move to the title tier with query-hit highlighting, and quality badges
+  (risk / quartile / top) get their own line.
+
 ## [1.3.0] - 2026-09-30
 
 ### Added
