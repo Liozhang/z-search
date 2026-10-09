@@ -7,6 +7,43 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-10-09
+
+### Added
+
+- **Embedding model source auto-detection**: before a model download, the
+  two built-in sources (huggingface.co and hf-mirror.com) are probed
+  concurrently and the reachable one wins — the faster one when both
+  respond — with the result cached for 24 hours. A download that fails on
+  the selected source falls back to the other built-in source once; an
+  explicitly configured mirror is never silently replaced. The region
+  declaration alone previously decided the source, so a mainland machine
+  without a declared region was locked out of model downloads by the
+  unreachable default endpoint.
+- **Embedding model status row with download controls** in the Hub local
+  search tab: the row shows the model name and whether its files are on
+  disk (missing models highlighted in the warning tone), plus a manual
+  download button that bypasses the 60-second auto-retry cooldown and a
+  "detect mirror" button that re-probes both sources and shows the winner
+  with its latency. Download completion and failure now surface as a Hub
+  toast instead of living only in the progress window.
+
+### Fixed
+
+- **Index-build summary no longer counts failures as successes**: the
+  metadata leg incremented "processed" even when the embedding threw, so a
+  machine with a failed model download reported "N succeeded, N failed" at
+  once. Items count as processed only after a successful embed, and batch
+  write failures move their items out of the success count.
+- **Metadata indexing failures now state why they failed**: a build where
+  every metadata embedding failed reported a bare failure count with no
+  reason. The first error message — with its network/mirror guidance — is
+  appended to the build summary.
+- **An unconfigured embedding no longer aborts the whole build**: with API
+  embedding mode and no model assigned, the PDF chunk batch failed hard
+  before indexing a single item; all candidates are now skipped with an
+  explicit "embedding not configured" reason in the skip details.
+
 ## [1.4.1] - 2026-10-09
 
 ### Fixed
