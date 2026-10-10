@@ -113,6 +113,7 @@ export const ALL_LOCALE_KEYS: readonly string[] = [
   "journal-source-local",
   "journal-source-openalex",
   "journal-no-data",
+  "journal-partial-remote-failed",
   "journal-empty-hint",
   "journal-empty-hint-fuzzy",
   "journal-not-found",

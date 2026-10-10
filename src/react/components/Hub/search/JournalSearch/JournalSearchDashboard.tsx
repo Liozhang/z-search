@@ -52,6 +52,9 @@ export function JournalSearchDashboard(): React.ReactElement {
   /** 内置期刊数据集导入失败旗（审计 P1-9）：启动导入挂掉时提示用户数据
    *  缺席的原因，而不是只看到「无数据」。可关闭。 */
   const [dataImportFailed, setDataImportFailed] = useState(false);
+  /** 部分成功旗（2026-10-10）：OpenAlex 失败但本地命中仍在——列表照常
+   *  渲染，横幅提示远端缺席，不再让整单失败吞掉已有数据。 */
+  const [partialError, setPartialError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -119,6 +122,7 @@ export function JournalSearchDashboard(): React.ReactElement {
       const myId = ++requestId.current;
       setIsLoading(true);
       setError(null);
+      setPartialError(null);
       setHasSearched(false);
 
       try {
@@ -143,15 +147,21 @@ export function JournalSearchDashboard(): React.ReactElement {
           return;
         }
 
-        // 服务侧错误（如 OpenAlex 断网）与「无结果」分流——不再谎报空态
-        // （审计 P1-8）
-        if ((result as { error?: string }).error) {
+        // 服务侧错误（如 OpenAlex 断网）与「无结果」分流（审计 P1-8）；
+        // 但本地命中 / 指标卡仍在时降级为部分成功——数据照常渲染，横幅
+        // 提示远端缺席（2026-10-10：此前整单失败把已取回的本地数据吞掉）。
+        const serviceError = (result as { error?: string }).error;
+        const hasData = !!(result.metric || (result.list?.length ?? 0) > 0);
+        if (serviceError && !hasData) {
           setError(
             getString("journal-search-failed", {
-              args: { error: String(result.error).slice(0, 160) },
+              args: { error: String(serviceError).slice(0, 160) },
             }),
           );
           return;
+        }
+        if (serviceError) {
+          setPartialError(String(serviceError).slice(0, 160));
         }
 
         setMetric(result.metric ?? null);
@@ -184,6 +194,7 @@ export function JournalSearchDashboard(): React.ReactElement {
     const myId = ++requestId.current;
     setIsLoading(true);
     setError(null);
+    setPartialError(null);
     setHasSearched(false);
 
     try {
@@ -205,14 +216,19 @@ export function JournalSearchDashboard(): React.ReactElement {
         );
         return;
       }
-      // 服务侧错误与「无结果」分流（与 onSearch 同口径）
-      if ((result as { error?: string }).error) {
+      // 服务侧错误与「无结果」分流（与 onSearch 同口径）：指标卡在手时
+      // 降级为部分成功，OpenAlex 独占字段的缺席由横幅提示。
+      const serviceError = (result as { error?: string }).error;
+      if (serviceError && !result.metric) {
         setError(
           getString("journal-search-failed", {
-            args: { error: String(result.error).slice(0, 160) },
+            args: { error: String(serviceError).slice(0, 160) },
           }),
         );
         return;
+      }
+      if (serviceError) {
+        setPartialError(String(serviceError).slice(0, 160));
       }
       setMetric(result.metric ?? null);
       setHasSearched(true);
@@ -260,6 +276,7 @@ export function JournalSearchDashboard(): React.ReactElement {
     requestId.current++;
     setMode(next);
     setError(null);
+    setPartialError(null);
     setMetric(null);
     setList([]);
     setTotal(null);
@@ -308,6 +325,19 @@ export function JournalSearchDashboard(): React.ReactElement {
           </span>
           <Button variant="ghost" size="sm" onClick={dismissDataBanner}>
             {getString("btn-close")}
+          </Button>
+        </div>
+      )}
+
+      {/* 部分成功横幅（2026-10-10）：远端失败但本地命中已渲染——提示而不是
+          吞数据。重试复用 onSearch（带当前排序），成功即清。 */}
+      {partialError && !error && !isLoading && (
+        <div className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--radius-sm)] border border-[color:var(--warning)] px-[var(--space-2)] py-[var(--space-1)]">
+          <span className="text-[length:var(--text-xs)] text-[color:var(--warning)]">
+            {getString("journal-partial-remote-failed")}
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => void onSearch()}>
+            {getString("btn-retry")}
           </Button>
         </div>
       )}

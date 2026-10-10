@@ -184,6 +184,8 @@ journal-placeholder-exact = 输入完整期刊名称或 ISSN...
 journal-source-local = 本地
 journal-source-openalex = OpenAlex
 journal-no-data = 本地与 OpenAlex 均无数据
+
+journal-partial-remote-failed = 远端检索（OpenAlex）失败，仅显示本地数据结果。
 journal-empty-hint = 输入完整期刊名称或 ISSN 查询期刊指标
 journal-empty-hint-fuzzy = 输入期刊名称关键词搜索候选期刊
 journal-not-found = 未找到该期刊

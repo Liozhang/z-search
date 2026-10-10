@@ -5,6 +5,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.5.2] - 2026-10-10
+
+### Fixed
+
+- **Fuzzy journal search no longer returns an empty list for incomplete
+  words** (e.g. "nature bio"). Two compounding causes: OpenAlex
+  `/sources?search=` matches whole tokens only, so any query containing a
+  word fragment returns zero remote hits; and the local JCR-table layer
+  required the entire query to appear as one contiguous substring, so
+  fragments only matched when every preceding word was complete. Local
+  matching now splits the query on whitespace and requires every token as
+  a substring (AND), making word order irrelevant and allowing each word
+  to be a prefix ("nat bio" finds _Nature Biotechnology_).
+- **An OpenAlex failure no longer discards already-fetched local hits.**
+  When the remote request failed (network error, HTTP 429 quota
+  exhaustion), `discover` returned a hard failure and dropped the local
+  results fetched in the same round trip — the mode went completely empty
+  even though the local table had dozens of matches. The service now
+  degrades to a local-only list (top 10, same quota as the merged path)
+  and surfaces the remote error as a flag; the UI renders the partial
+  results with a warning banner and retry instead of a failure state.
+  The same discard affected `metric` mode, where a locally-composed card
+  was thrown away when the OpenAlex enrichment failed — the card now
+  renders and the banner notes the missing remote fields.
+
 ## [1.5.1] - 2026-10-09
 
 ### Changed

@@ -213,27 +213,34 @@ class JCRStore {
   /**
    * Fuzzy journal-name search (substring match) for the Hub 模糊搜索 mode.
    * SQLite 的 LIKE 对 ASCII 默认不区分大小写；表内 journal_name 已按
-   * normalizeJournalName 规整（大写、空白折叠），关键词同口径规整后做包含
-   * 匹配即可。LIKE 通配符（% 与 _）按字面量转义；命中按影响因子降序截断。
+   * normalizeJournalName 规整（大写、空白折叠），关键词按空白切词后逐词
+   * 做包含匹配（AND）——每个词都允许只是完整单词的前缀（"nat bio" 命中
+   * "NATURE BIOTECHNOLOGY"），整串连续包含只是其特例。LIKE 通配符（% 与
+   * _）按字面量转义；命中按影响因子降序截断。
    */
   async searchByNameFuzzy(
     keyword: string,
     limit = 25,
     year?: number,
   ): Promise<JCRRecord[]> {
-    const normalized = normalizeJournalName(keyword);
-    if (!normalized) return [];
+    const tokens = normalizeJournalName(keyword).split(" ").filter(Boolean);
+    if (tokens.length === 0) return [];
     const targetYear = year ?? (await this.getLatestYear());
     if (!targetYear) return [];
 
-    const pattern = "%" + normalized.replace(/[\\%_]/g, "\\$&") + "%";
+    const conditions = tokens
+      .map(() => "journal_name LIKE ? ESCAPE '\\'")
+      .join(" AND ");
+    const patterns = tokens.map(
+      (t) => "%" + t.replace(/[\\%_]/g, "\\$&") + "%",
+    );
     try {
       const rows = await queryPlain(
         `SELECT * FROM zsearch_impact_factors
-         WHERE jcr_year = ? AND journal_name LIKE ? ESCAPE '\\'
+         WHERE jcr_year = ? AND (${conditions})
          ORDER BY jif IS NULL, jif DESC
          LIMIT ?`,
-        [targetYear, pattern, limit],
+        [targetYear, ...patterns, limit],
       );
       return rows ?? [];
     } catch (e) {

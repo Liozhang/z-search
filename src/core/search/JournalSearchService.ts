@@ -391,9 +391,9 @@ class JournalSearchService {
     // 子集内排序（诚实上限），但显著降低排序失真。
     const fetchLimit = sortBy === "jif" ? Math.min(limit * 2, 50) : limit;
 
-    // 模糊搜索双路并行（2026-10-09 模式重构）：本地 JCR 表按刊名包含匹配 +
-    // OpenAlex 关键词检索。本地命中带权威 JIF 与分区，且为 OpenAlex 未收录
-    // 或排名靠后的期刊提供 ISSN 供下钻精确卡。
+    // 模糊搜索双路并行（2026-10-09 模式重构）：本地 JCR 表按刊名逐词包含
+    // 匹配 + OpenAlex 关键词检索。本地命中带权威 JIF 与分区，且为 OpenAlex
+    // 未收录或排名靠后的期刊提供 ISSN 供下钻精确卡。
     const [oa, localHits] = await Promise.all([
       searchOpenAlexSources({
         search: keyword,
@@ -402,9 +402,29 @@ class JournalSearchService {
       }),
       JCRStore.searchByNameFuzzy(keyword, limit),
     ]);
-    // 错误上抛（审计 P1-8）：断网时的空结果会被 UI 当「无数据」空态展示
+
+    // OpenAlex 失败不再丢弃已取回的本地命中（2026-10-10 用户报告：配额
+    // 打满时段整模式必空，本地 95 条 ONCOLOGY 命中一并蒸发）。本地有结果时
+    // 降级为「仅本地」列表 + error 软标记（UI 展示部分结果并提示远端失败，
+    // 不再谎报无数据）；两侧皆空才维持整单失败。
     if (oa.error) {
-      return { mode: "discover", list: [], total: 0, error: oa.error };
+      if (localHits.length === 0) {
+        return { mode: "discover", list: [], total: 0, error: oa.error };
+      }
+      const items: JournalListItem[] = localHits.slice(0, 10).map((r) => ({
+        source: "local" as const,
+        name: r.journal_name,
+        issn: r.issn || r.eissn || undefined,
+        jif: r.jif ?? undefined,
+        jifQuartile: cleanQuartile(r.jif_quartile),
+      }));
+      await this.batchEnrichLocalMetrics(items);
+      return {
+        mode: "discover",
+        list: items.slice(0, limit),
+        total: Math.min(items.length, limit),
+        error: oa.error,
+      };
     }
 
     let items: JournalListItem[] = oa.journals.map((j) => ({

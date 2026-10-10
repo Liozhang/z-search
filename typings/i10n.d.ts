@@ -145,6 +145,7 @@ export type FluentMessageId =
   | 'journal-not-found'
   | 'journal-oa-label'
   | 'journal-overview-section'
+  | 'journal-partial-remote-failed'
   | 'journal-placeholder-exact'
   | 'journal-placeholder-fuzzy'
   | 'journal-predatory-cat-hijacked'

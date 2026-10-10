@@ -188,6 +188,8 @@ journal-placeholder-exact = Enter an exact journal name or ISSN...
 journal-source-local = Local
 journal-source-openalex = OpenAlex
 journal-no-data = No data found in local DB or OpenAlex
+
+journal-partial-remote-failed = Remote search (OpenAlex) failed — showing local data only.
 journal-empty-hint = Enter an exact journal name or ISSN to look up metrics
 journal-empty-hint-fuzzy = Enter journal name keywords to search candidate journals
 journal-not-found = Journal not found

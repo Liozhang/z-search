@@ -194,6 +194,8 @@ journal-placeholder-exact = 輸入完整期刊名稱或 ISSN...
 journal-source-local = 本地
 journal-source-openalex = OpenAlex
 journal-no-data = 本地與 OpenAlex 均無資料
+
+journal-partial-remote-failed = 遠端檢索（OpenAlex）失敗，僅顯示本地資料結果。
 journal-empty-hint = 輸入完整期刊名稱或 ISSN 查詢期刊指標
 journal-empty-hint-fuzzy = 輸入期刊名稱關鍵詞搜尋候選期刊
 journal-predatory-data-year = Beall 清單截止：2017 年 1 月
