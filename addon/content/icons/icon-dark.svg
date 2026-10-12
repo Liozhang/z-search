@@ -2,21 +2,22 @@
   <!--
     z-search 标的深色宿主变体。
 
-    与 icon.svg 同构、同几何（2026-10-10 同步只改图层顺序：柄垫到圆盘下，
-    路径坐标仍是 09-29 定稿）：圆心 (39, 40.5)、半径 28，Z 在 x 24..54 /
-    y 28.5..52.5（粗 8），柄 (60.5,59)→(81,79.5)（粗 8、45°，起笔改接镜框，
-    见 icon.svg 内注）。只把明度对调：深底场景下墨圆会糊进背景，故圆用
-    浅墨 #fafafa、Z 用墨色负形、绯红手柄不变。
+    与 icon.svg 同构、同几何（2026-10-12 同步 Z 减重缩位、柄纯径向化与
+    加粗，圆心 (39.75, 39.75)、半径 28，Z 横划心线 x 27.25..52.25 /
+    y 29.75 / 49.75（粗 7），柄 (59.55,59.55)→(79.75,79.75)（粗 9、45°、
+    起笔帽心恰在圆周上、轴过圆心），数值依据见 icon.svg 内注）。
+    只把明度对调：深底场景下墨圆会糊进背景，故圆用浅墨 #fafafa、
+    Z 用墨色负形、绯红手柄不变。
 
     当前仓库内无直接引用点——Zotero 菜单的自定义深色图标机制只在旧工具栏按钮
     上用过。偏好窗（src/modules/prefPaneIcon.ts）按主题切的是栅格化的
     icon-dark-48.png。留作深底场景资产；确认不再需要可直接删。
   -->
-  <path d="M60.5 59 L81 79.5" stroke="#b5343a" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="39" cy="40.5" r="28" fill="#fafafa"/>
-  <g stroke="#1a1a1a" stroke-width="8" stroke-linecap="round" fill="none">
-    <path d="M24 28.5 H54"/>
-    <path d="M54 28.5 L24 52.5"/>
-    <path d="M24 52.5 H54"/>
+  <path d="M59.55 59.55 L79.75 79.75" stroke="#b5343a" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="39.75" cy="39.75" r="28" fill="#fafafa"/>
+  <g stroke="#1a1a1a" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M27.25 29.75 H52.25"/>
+    <path d="M52.25 29.75 L27.25 49.75"/>
+    <path d="M27.25 49.75 H52.25"/>
   </g>
 </svg>
