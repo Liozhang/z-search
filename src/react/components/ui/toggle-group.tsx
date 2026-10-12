@@ -102,7 +102,9 @@ const ToggleGroupItem = React.forwardRef<
           className,
         )}
         {...props}
-        title={autoTitle}
+        // 调用方显式传入的 title 优先（写在 {...props} 之后会把它覆盖为
+        // autoTitle=undefined——2026-10-12 修复：来源筛选片的悬停提示失效）。
+        title={props.title ?? autoTitle}
       >
         {dotColor && (
           <span

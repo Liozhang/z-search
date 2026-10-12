@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { ICON } from "../../../../utils/iconSizes";
 import { highlightSegments } from "../../../../utils/highlight";
+import { SourceLogo } from "../SourceLogo";
 import type { ArticleResult, FulltextResult, ImportResult } from "./types";
 /* 徽章壳配方单源（2026-10-09 期刊行并入时上提）——配方与出处注释见
    ../badgeRecipes.ts，本文件不再持有副本。 */
@@ -350,7 +351,10 @@ export function LiteratureResultCard({
                 PMC
               </span>
             )}
-            <span className={`${TAG_BASE} ${TAG_KIND.source}`}>
+            <span
+              className={`${TAG_BASE} ${TAG_KIND.source} inline-flex items-center gap-[var(--space-1)]`}
+            >
+              <SourceLogo source={article.source} state="hit" size={12} />
               {article.source}
             </span>
           </div>

@@ -94,10 +94,25 @@ class HubWindowManager {
     // 创建 Bridge + 同步 initialize（openDialog 前构造，避免竞态）
     this.bridge = new HubWindowBridge();
 
+    // 首开尺寸自适应主屏：取可用区域 85%，不低于原默认 1280×860。
+    // 只在首次开窗生效（此后 XUL persist 记住用户手动调整的尺寸）。
+    let width = 1280;
+    let height = 860;
+    try {
+      const availWidth = mainWindow.screen?.availWidth ?? 0;
+      const availHeight = mainWindow.screen?.availHeight ?? 0;
+      if (availWidth > 0 && availHeight > 0) {
+        width = Math.max(width, Math.round(availWidth * 0.85));
+        height = Math.max(height, Math.round(availHeight * 0.85));
+      }
+    } catch {
+      /* 屏幕信息不可得时保持默认 */
+    }
+
     const hubWin = mainWindow.openDialog(
       "chrome://zsearch/content/hub/hubWindow.xhtml",
       `zsearch-hub-window-${Date.now()}`,
-      "chrome,resizable,dialog=false,width=1280,height=860",
+      `chrome,resizable,dialog=false,width=${width},height=${height}`,
     );
 
     if (!hubWin) return;

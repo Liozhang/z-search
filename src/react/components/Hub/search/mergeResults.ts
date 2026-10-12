@@ -19,6 +19,7 @@
 
 import type { SearchResult } from "./Semantic/types";
 import type { ArticleResult } from "./LiteratureSearch/types";
+import { articleSourcesOf } from "../../../../core/metadata/importExtras";
 
 /** One entry of the merged result list. `sourceIndex` (articles only) is the
  *  item's index in the original literature response — callers must derive
@@ -59,19 +60,15 @@ export function normalizeDoi(doi?: string | null): string | undefined {
 }
 
 /**
- * Stable identity key for an external article（2026-09-23 渐进检索）：
- * DOI 归一优先，无 DOI 退化为标题（非字母数字剥除，≥10 字符才可用——
- * 与后端 deduplicateArticles 同口径）。Returns null when neither is usable
- * （该条不参与去重，直接保留）。
+ * Stable identity key for an external article（渐进检索的身份键）：
+ * **只认 DOI**（归一化：剥 URL/doi: 前缀 + 小写）。无 DOI 返回 null——
+ * 该条不参与跨条目合并、直接保留（2026-10-12 用户裁决：标题撞车的误判
+ * 代价高于漏合并——同名不同文、预印本与正式版标题微差都会误并；标题只
+ * 作勾选状态键，不作身份判定。与后端 deduplicateArticles 同口径）。
  */
-export function externalArticleKey(a: {
-  doi?: string | null;
-  title?: string | null;
-}): string | null {
+export function externalArticleKey(a: { doi?: string | null }): string | null {
   const doi = normalizeDoi(a.doi);
-  if (doi) return `doi:${doi}`;
-  const t = (a.title ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return t.length >= 10 ? `title:${t}` : null;
+  return doi ? `doi:${doi}` : null;
 }
 
 /** 字段级合并（2026-09-25 审计 P1-2）：同一作品跨源命中时后到源不再整条
@@ -80,20 +77,31 @@ export function externalArticleKey(a: {
 function mergeEntry<T>(base: T, inc: T): T {
   const out: Record<string, unknown> = { ...(base as Record<string, unknown>) };
   const incRec = inc as Record<string, unknown>;
-  const baseRec = base as Record<string, unknown>;
   for (const k of Object.keys(incRec)) {
     if (k === "citationCount") {
-      out[k] = Math.max(Number(baseRec[k]) || 0, Number(incRec[k]) || 0);
+      out[k] = Math.max(Number(out[k]) || 0, Number(incRec[k]) || 0);
       continue;
     }
-    const b = baseRec[k];
+    const b = (base as Record<string, unknown>)[k];
     const i = incRec[k];
     const empty = (v: unknown) => v === undefined || v === null || v === "";
     if (empty(b)) out[k] = i;
     // 非空保留首到值（title/authors/journal/source 等身份字段不随后到源漂移）
   }
+  // 多源归属取并集（按源筛选的判定口径），保持首到顺序去重。无条件从两侧
+  // 的 sources/source 重新聚合——逐源 RPC 下后端 sources 恒缺省，要合并的
+  // 正是 source 单值；只认入参的 sources 键会漏掉全部跨源合并。
+  const mergedSources = articleSourcesOf(base as never).slice();
+  for (const s of articleSourcesOf(inc as never)) {
+    if (!mergedSources.includes(s)) mergedSources.push(s);
+  }
+  if (mergedSources.length) out.sources = mergedSources;
   return out as T;
 }
+
+// 多源归属口径迁至 core/metadata/importExtras（导入写 Extra 共用同一判定），
+// 原地转出保持既有 import 路径不变。
+export { articleSourcesOf };
 
 /**
  * Merge `incoming` external articles into `base`, merging fields of entries

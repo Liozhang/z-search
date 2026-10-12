@@ -68,10 +68,13 @@ import { AVAILABLE_SOURCES } from "./LiteratureSearch/types";
 import {
   mergeResults,
   sortMixedResults,
+  articleSourcesOf,
   DISPLAY_SORT_OPTIONS,
   type MixedSortBy,
 } from "./mergeResults";
+import { matchKeywordFilter } from "../../../../core/sources/academic-search/fieldQuery";
 import { SubPageHeader } from "../SubPageHeader";
+import { SourceLogo } from "./SourceLogo";
 import { isIMEComposing } from "../../../../utils/ime";
 import { useSearchHistory } from "../../../hooks/useSearchHistory";
 import {
@@ -179,6 +182,11 @@ export function LiteratureSearchPage({
   const [displaySort, setDisplaySort] = useState<MixedSortBy>("relevance");
   const [webVisible, setWebVisible] = useState(VISIBLE_STEP);
   const [localVisible, setLocalVisible] = useState(VISIBLE_STEP);
+  // 搜索后按来源筛选（2026-10-12）：空集 = 显示全部；多选取并集口径——
+  // 合并卡（同文跨源命中）按「任一来源命中」保留，只按首到源单值会漏。
+  const [sourceFilter, setSourceFilter] = useState<Set<string>>(new Set());
+  // 结果内关键词过滤（纯前端，多词 AND，不打网络请求）——与来源筛选叠加。
+  const [keywordFilter, setKeywordFilter] = useState("");
 
   // 错误 toast 只挂当前 tab——后台 tab 的失败不弹（切回去时错误仍在，
   // dedup ref 会被重置从而正常复弹）。
@@ -242,8 +250,11 @@ export function LiteratureSearchPage({
     else sem.handleCancelSearch();
   };
   const clearAll = () => {
-    if (scope === "web") lit.handleClear();
-    else sem.handleClear();
+    if (scope === "web") {
+      lit.handleClear();
+      setSourceFilter(new Set());
+      setKeywordFilter("");
+    } else sem.handleClear();
     setResultsView("search");
   };
   // scope 受控后的视图复位：相似/查重输出是本地 tab 的整块替换视图，不跨
@@ -366,12 +377,38 @@ export function LiteratureSearchPage({
             (a, b) => (b.citationCount ?? 0) - (a.citationCount ?? 0),
           )
         : lit.results;
-    return sortMixedResults(mergeResults([], articles), displaySort).map((e) =>
+    // 按来源筛选 + 结果内关键词过滤（搜索后即时筛）：来源是多选并集口径
+    // （合并卡的 sources 任一命中即保留）；关键词是多词 AND。过滤在 merge
+    // 之后、排序之前，保留原对象引用，origIndex 原样随条目走，selection/
+    // import key 不受影响。
+    const merged = mergeResults([], articles).filter((e) => {
+      if (e.kind !== "article") return true;
+      if (
+        sourceFilter.size > 0 &&
+        !articleSourcesOf(e.article).some((s) => sourceFilter.has(s))
+      ) {
+        return false;
+      }
+      return matchKeywordFilter(e.article, keywordFilter);
+    });
+    return sortMixedResults(merged, displaySort).map((e) =>
       e.kind === "article"
         ? { ...e, sourceIndex: origIndex.get(e.article) ?? e.sourceIndex }
         : e,
     );
-  }, [lit.results, lit.sortBy, displaySort]);
+  }, [lit.results, lit.sortBy, displaySort, sourceFilter, keywordFilter]);
+
+  // 来源 logo 片的命中计数（13 源常驻显示——命中的亮色、未命中的灰化，
+  // 计数只对命中源展示）。固定按 AVAILABLE_SOURCES 顺序，不随命中数重排。
+  const webSourceCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const a of lit.results) {
+      for (const s of articleSourcesOf(a)) {
+        counts.set(s, (counts.get(s) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [lit.results]);
   const localList = useMemo(
     () => sortMixedResults(mergeResults(sem.searchResults, []), displaySort),
     [sem.searchResults, displaySort],
@@ -405,8 +442,15 @@ export function LiteratureSearchPage({
     if (lit.searchGen !== lastWebGenRef.current) {
       lastWebGenRef.current = lit.searchGen;
       setWebVisible(VISIBLE_STEP);
+      // 新一轮搜索重置来源筛选与结果内关键词——上一轮的筛选对新结果无意义。
+      setSourceFilter(new Set());
+      setKeywordFilter("");
     }
   }, [lit.searchGen]);
+  // 筛选变化重置开窗：筛选后的子集变小，窗口计数按初始步长重新展开。
+  useEffect(() => {
+    setWebVisible(VISIBLE_STEP);
+  }, [sourceFilter, keywordFilter]);
   useEffect(() => setLocalVisible(VISIBLE_STEP), [sem.searchResults]);
 
   // ── 筛选弹窗值（按 scope 组装/写回） ─────────────────────────────────────
@@ -419,6 +463,10 @@ export function LiteratureSearchPage({
     author: lit.authorFilter,
     journal: lit.journalFilter,
     openAccessOnly: lit.openAccessOnly,
+    title: lit.titleFilter,
+    abstract: lit.abstractFilter,
+    reviewOnly: lit.reviewOnly,
+    hasAbstract: lit.hasAbstractFilter,
     useFullText: sem.useFullText,
     sectionCategory: sem.sectionCategory,
   };
@@ -432,6 +480,10 @@ export function LiteratureSearchPage({
       lit.setAuthorFilter(v.author);
       lit.setJournalFilter(v.journal);
       lit.setOpenAccessOnly(v.openAccessOnly);
+      lit.setTitleFilter(v.title);
+      lit.setAbstractFilter(v.abstract);
+      lit.setReviewOnly(v.reviewOnly);
+      lit.setHasAbstractFilter(v.hasAbstract);
     } else {
       sem.setLimit(v.maxResults);
       sem.setUseFullText(v.useFullText);
@@ -480,8 +532,10 @@ export function LiteratureSearchPage({
        回归：视图层再消费水平 padding 会与 seg 错位 40px），本层只管纵向。
        2026-09-22 节奏统一收口：上下律从原型 .pane（上 24/下 48 全页统一）。
        2026-09-28：tab 行上移 pane 级后顶距降为 --space-4——pane 级 tab 行
-       与本页之间保持原 tab→内容 16px 节奏。 */
-    <div className="hub-lit-page flex flex-col h-full pt-[var(--space-4)] pb-[var(--space-12)] gap-[var(--space-4)] overflow-hidden">
+       与本页之间保持原 tab→内容 16px 节奏。
+       2026-10-12：顶距 space-4→space-2、段距 space-4→space-3、底距
+       space-12→space-6——固定配置区压缩，结果列表占比过半（用户反馈）。 */
+    <div className="hub-lit-page flex flex-col h-full pt-[var(--space-2)] pb-[var(--space-6)] gap-[var(--space-3)] overflow-hidden">
       {/* ═══ 工具行：输入即页面（v2 §4.5 批6）═══
           搜索页 95% 的会话以输入框为起点，它是本页唯一「主动作」——查询输入
           升为一级控件（lg 档 40px，body 字号）。2026-10-09 压缩固定区（用户
@@ -622,9 +676,11 @@ export function LiteratureSearchPage({
         )}
       </div>
 
-      {/* ═══ 状态区：当前 tab 的单腿读数（恒定）+（本地）索引生命周期 ═══ */}
+      {/* ═══ 状态区：当前 tab 的单腿读数（恒定）+（本地）索引生命周期 ═══
+          2026-10-12 压缩固定区（用户反馈「检索配置天然占了窗口近一半高」）：
+          缺 Key / 失败两路明细并入本条（窄宽自然折行），不再各占一行。 */}
       <div className="flex flex-col gap-[var(--space-2)]">
-        <div className="hub-search-engine-strip flex flex-wrap items-center gap-[var(--space-2)] [font:var(--ui-font-meta)] text-[color:var(--text-secondary)]">
+        <div className="hub-search-engine-strip flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-0-5)] [font:var(--ui-font-meta)] text-[color:var(--text-secondary)]">
           <span className="hub-search-engine-status inline-flex items-center gap-[var(--space-1-5)]">
             <EngineMark
               tone={scope === "web" ? extStatus.tone : libStatus.tone}
@@ -639,6 +695,31 @@ export function LiteratureSearchPage({
             <span>·</span>
             <span>{scope === "web" ? extStatus.text : libStatus.text}</span>
           </span>
+          {scope === "web" && lit.skippedNoKey.length > 0 && (
+            <span className="inline-flex items-center gap-[var(--space-1-5)] [font:var(--ui-font-caption)] text-[color:var(--text-tertiary)]">
+              <span aria-hidden="true">·</span>
+              {getString("hub-search-sources-nokey", {
+                args: {
+                  count: lit.skippedNoKey.length,
+                  sources: sourceNames(lit.skippedNoKey),
+                },
+              })}
+            </span>
+          )}
+          {scope === "web" && lit.failedSources.length > 0 && (
+            <span className="inline-flex items-center gap-[var(--space-1-5)] [font:var(--ui-font-caption)] text-[color:var(--warning)]">
+              <span aria-hidden="true">·</span>
+              {getString("hub-search-sources-failed", {
+                args: {
+                  count: lit.failedSources.length,
+                  sources: sourceFailureLabels(
+                    lit.failedSources,
+                    lit.failedReasons,
+                  ),
+                },
+              })}
+            </span>
+          )}
         </div>
 
         {/* 嵌入模型下载通道（2026-10-09）：模型不随包分发，此前状态不可见
@@ -702,33 +783,8 @@ export function LiteratureSearchPage({
             </div>
           )}
 
-        {/* 未产出结果的源（2026-09-23 可观测性修复）：加载标题报的是「发起
-            了几路」，这里补上「实际哪几路没跑」——缺 Key 与跑失败分开说，
-            前者给设置指引。缺 Key 的源本就不该发请求，事后还说「8 个来源」
-            而不提它，就是静默降级。 */}
-        {scope === "web" && lit.skippedNoKey.length > 0 && (
-          <span className="[font:var(--ui-font-caption)] text-[color:var(--text-tertiary)]">
-            {getString("hub-search-sources-nokey", {
-              args: {
-                count: lit.skippedNoKey.length,
-                sources: sourceNames(lit.skippedNoKey),
-              },
-            })}
-          </span>
-        )}
-        {scope === "web" && lit.failedSources.length > 0 && (
-          <span className="[font:var(--ui-font-caption)] text-[color:var(--warning)]">
-            {getString("hub-search-sources-failed", {
-              args: {
-                count: lit.failedSources.length,
-                sources: sourceFailureLabels(
-                  lit.failedSources,
-                  lit.failedReasons,
-                ),
-              },
-            })}
-          </span>
-        )}
+        {/* 未产出结果的源已并入上方引擎状态条（2026-10-12 压缩固定区），
+            这里不再单独占行。 */}
 
         {/* 索引生命周期（本地 tab 专属——注释即契约：web tab 不显示库内索引
               读数）。CTA 横幅已退役——「构建全文索引」的主按钮住空态
@@ -891,9 +947,11 @@ export function LiteratureSearchPage({
                   {getString("ux3-lit-refreshing")}
                 </div>
               )}
-              {/* Results header: display sort +（web）list actions + 右轨 tabular 计数（§23.4） */}
-              <div className="flex flex-wrap justify-between items-center gap-[var(--space-2)] py-[var(--space-1)]">
-                <div className="flex flex-wrap gap-[var(--space-2)] items-center">
+              {/* Results header（2026-10-12 一拆二，压缩固定区）：行 A = 检索
+                  收敛（排序 + 来源徽标 + 结果内关键词）；行 B = 清单/导入动作
+                  + 右缘总数。此前单行 flex-wrap 意外折行，节距不可控。 */}
+              <div className="flex flex-wrap items-center gap-[var(--space-1-5)] py-[var(--space-0-5)]">
+                <div className="flex flex-wrap gap-[var(--space-1-5)] items-center">
                   <ToggleGroup
                     variant="filter"
                     multiple={false}
@@ -914,8 +972,78 @@ export function LiteratureSearchPage({
                       </ToggleGroupItem>
                     ))}
                   </ToggleGroup>
-                  {/* 清单/导入类动作只属于外部结果（库内行本就在库里，无
-                      选择/导入概念）。 */}
+                  {/* 按来源筛选（搜索后即时筛）：13 源圆形徽标常驻——命中的
+                      品牌色圆 + 深描边，未命中/未启用/失败灰化（悬停说明原因）；
+                      多选并集口径，空选 = 全部。检索进行中随源落地逐个点亮。 */}
+                  {scope === "web" &&
+                    (lit.isSearching || lit.results.length > 0) && (
+                      <>
+                        <ToggleGroup
+                          variant="filter"
+                          multiple
+                          value={[...sourceFilter]}
+                          onValueChange={(v) => setSourceFilter(new Set(v))}
+                          aria-label={getString("lit-source-filter-label")}
+                          className="[font:var(--ui-font-meta)]"
+                        >
+                          {AVAILABLE_SOURCES.map(({ value: src }) => {
+                            const count = webSourceCounts.get(src) ?? 0;
+                            const name = sourceNames([src]);
+                            const title =
+                              count > 0
+                                ? `${name} · ${getString("lit-source-logo-hit", { args: { count } })}`
+                                : lit.skippedNoKey.includes(src)
+                                  ? `${name} · ${getString("lit-source-logo-nokey")}`
+                                  : lit.failedSources.includes(src)
+                                    ? `${name} · ${getString("lit-source-logo-failed")}`
+                                    : `${name} · ${getString("lit-source-logo-miss")}`;
+                            return (
+                              <ToggleGroupItem
+                                key={src}
+                                value={src}
+                                title={title}
+                              >
+                                <span className="inline-flex items-center gap-[var(--space-1)]">
+                                  <SourceLogo
+                                    source={src}
+                                    state={count > 0 ? "hit" : "miss"}
+                                    size={16}
+                                  />
+                                  {count > 0 ? count : ""}
+                                </span>
+                              </ToggleGroupItem>
+                            );
+                          })}
+                        </ToggleGroup>
+                        {sourceFilter.size > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSourceFilter(new Set())}
+                          >
+                            {getString("lit-source-filter-all")}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  {/* 结果内关键词过滤（纯前端，多词 AND）：与来源筛选叠加，
+                      即时收窄，不打网络请求。 */}
+                  {scope === "web" && lit.results.length > 0 && (
+                    <SearchInput
+                      size="sm"
+                      className="max-w-[220px]"
+                      value={keywordFilter}
+                      onChange={(e) => setKeywordFilter(e.target.value)}
+                      placeholder={getString("lit-keyword-filter-placeholder")}
+                      aria-label={getString("lit-keyword-filter-aria")}
+                    />
+                  )}
+                </div>
+              </div>
+              {/* 行 B：清单/导入类动作只属于外部结果（库内行本就在库里，无
+                  选择/导入概念）。 */}
+              <div className="flex flex-wrap items-center gap-[var(--space-1-5)] py-[var(--space-0-5)]">
+                <div className="flex flex-wrap gap-[var(--space-1-5)] items-center">
                   {scope === "web" && (
                     <>
                       <Button

@@ -367,6 +367,24 @@ lit-source-europe-pmc = Europe PMC
 lit-source-pubmed = PubMed
 lit-source-github = GitHub
 
+# 結果區按來源篩選（搜尋後即時篩）
+lit-source-filter-label = 按來源篩選結果
+lit-source-filter-all = 全部
+lit-source-logo-hit = 命中 { $count } 條
+lit-source-logo-miss = 未命中
+lit-source-logo-nokey = 未填 API Key，未參與本次檢索
+lit-source-logo-failed = 檢索失敗
+
+# 進階檢索（fieldQuery 逐源編譯）與結果內關鍵詞篩選
+lit-filter-adv-section = 進階檢索
+lit-filter-title-placeholder = 標題包含…
+lit-filter-abstract-placeholder = 摘要包含…
+lit-filter-review-only = 僅綜述
+lit-filter-has-abstract = 僅有摘要
+lit-keyword-filter-placeholder = 在結果內篩選…
+lit-keyword-filter-aria = 結果內關鍵詞篩選
+lit-syntax-hint = 提示：Europe PMC、PubMed、HAL、Zenodo、CORE、GitHub 支援在搜尋框直接使用各源自帶的檢索語法（欄位限定、AND/OR、引號短語），原樣生效。
+
 # Result card
 lit-citations = 引用 { $count }
 lit-tag-pdf = PDF

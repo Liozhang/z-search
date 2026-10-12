@@ -10,6 +10,7 @@ import {
   countMixed,
   externalArticleKey,
   mergeExternalArticles,
+  articleSourcesOf,
 } from "../../../../../../src/react/components/Hub/search/mergeResults";
 import type { SearchResult } from "../../../../../../src/react/components/Hub/search/Semantic/types";
 import type { ArticleResult } from "../../../../../../src/types/literatureSearch";
@@ -180,15 +181,13 @@ describe("externalArticleKey（渐进检索的身份键）", () => {
     expect(externalArticleKey(art({ doi: "10.1/x" }))).toBe("doi:10.1/x");
   });
 
-  it("无 DOI 退化为标题（非字母数字剥除，≥10 字符）", () => {
+  it("无 DOI 一律 null（不参与身份判定，条目直接保留）", () => {
+    // 2026-10-12 用户裁决：身份只认 DOI——标题撞车（同名不同文/预印本与
+    // 正式版）的误判代价高于漏合并。
     expect(externalArticleKey(art({ doi: "", title: "Hello World!" }))).toBe(
-      "title:helloworld",
+      null,
     );
-    // 标题过短不可作身份（后端同口径）
     expect(externalArticleKey(art({ doi: "", title: "hi" }))).toBeNull();
-  });
-
-  it("DOI 与标题缺省 → null（不参与去重）", () => {
     expect(externalArticleKey(art({ doi: "", title: "" }))).toBeNull();
   });
 });
@@ -204,14 +203,14 @@ describe("mergeExternalArticles（渐进合并原语）", () => {
     expect(out.map((a) => a.title)).toEqual(["From OpenAlex", "Unique"]);
   });
 
-  it("无 DOI 条目按标题键去重；不可标识条目直接保留", () => {
+  it("无 DOI 条目不做身份合并，全部保留（含同标题变体）", () => {
+    // 身份只认 DOI：两条无 DOI 的同题记录视为「无法判定」，不去重。
     const base = [art({ doi: "", title: "Same Paper Title Here" })];
     const out = mergeExternalArticles(base, [
       art({ doi: "", title: "same  paper  title here" }),
-      art({ doi: "", title: "ok" }), // 过短 → null key → 保留
+      art({ doi: "", title: "ok" }),
     ]);
-    expect(out).toHaveLength(2);
-    expect(out[1].title).toBe("ok");
+    expect(out).toHaveLength(3);
   });
 
   it("纯追加：不重排不移除既有项（位置索引 = selection 状态键）", () => {
@@ -289,5 +288,42 @@ describe("sortMixedResults 对 number year 的健壮性（审计 P0-4）", () =>
       e.kind === "article" ? e.article.title : e.result.title,
     );
     expect(titles[0]).toBe("StrYear");
+  });
+});
+
+describe("多源归属（按源筛选的判定口径）", () => {
+  it("mergeExternalArticles 同键命中时 sources 取并集且保持首到顺序", () => {
+    const first = art({
+      title: "Same paper",
+      doi: "10.1/x",
+      source: "openalex",
+    });
+    const second = art({
+      title: "Same paper",
+      doi: "10.1/x",
+      source: "arxiv",
+      sources: ["arxiv"],
+    });
+    const out = mergeExternalArticles([first], [second]);
+    expect(out[0].source).toBe("openalex");
+    expect(out[0].sources).toEqual(["openalex", "arxiv"]);
+  });
+
+  it("sources 缺省时 articleSourcesOf 以 source 单值兜底", () => {
+    expect(articleSourcesOf(art({ source: "zenodo" }))).toEqual(["zenodo"]);
+    expect(articleSourcesOf({ source: "", sources: undefined })).toEqual([]);
+    expect(
+      articleSourcesOf({ source: "arxiv", sources: ["arxiv", "pubmed"] }),
+    ).toEqual(["arxiv", "pubmed"]);
+  });
+
+  it("同键合并后 filters 任一命中口径成立（openalex+arxiv 合并卡命中 arxiv 筛选）", () => {
+    const merged = mergeExternalArticles(
+      [art({ title: "Dual", doi: "10.2/y", source: "openalex" })],
+      [art({ title: "Dual", doi: "10.2/y", source: "arxiv" })],
+    );
+    const sources = articleSourcesOf(merged[0]);
+    expect(sources).toContain("arxiv");
+    expect(sources).toContain("openalex");
   });
 });

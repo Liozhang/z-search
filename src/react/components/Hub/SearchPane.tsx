@@ -117,8 +117,9 @@ export function SearchPane({
         {/* ═══ 域 tab 行：网络/本地/期刊（2026-09-28 三段化）═══
             pane 级唯一域切换器，页头之下、视图之上（R14 上置不变）。默认
             白片 seg 制式，与期刊页检索模式 seg 同款；单选清空 no-op 防御
-            同款。顶距沿用原文献页 tab 行的 --space-6 节奏。 */}
-        <div className="shrink-0 pt-[var(--space-6)]">
+            同款。2026-10-12 顶距 space-6 → space-3（压缩固定区：配置区
+            不得挤占结果区过半，用户反馈）。 */}
+        <div className="shrink-0 pt-[var(--space-3)]">
           <ToggleGroup
             multiple={false}
             className="self-start"

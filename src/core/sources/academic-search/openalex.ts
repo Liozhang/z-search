@@ -4,6 +4,7 @@ import { withOpenalexAuth } from "../../../utils/openalexAuth";
 import { httpJsonGet, HttpGetResult } from "../../../utils/http";
 import { safeDebug } from "../../../utils/logger";
 import { openalexThrottle } from "../../../utils/openalexThrottle";
+import { buildOpenAlexFieldFilterParts } from "./fieldQuery";
 
 /** 公开（P0-2）：literature.citations RPC 复用同一映射，保持钻取结果与
  *  主检索结果字段口径一致。 */
@@ -68,10 +69,37 @@ export async function openalexSourceSearch(args: {
   maxResults?: number;
   landingBase?: string; // preprint server base for pdf fallback, e.g. "https://www.medrxiv.org"
   source: string; // article.source to stamp ("biorxiv" / "medrxiv")
+  year?: string;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
 }): Promise<any> {
   const maxResults = Math.min(args.maxResults ?? 10, 25);
   try {
-    let url = `https://api.openalex.org/works?search=${encodeURIComponent(args.query)}&filter=primary_location.source.id:${args.sourceId}&per_page=${maxResults}&select=id,doi,title,authorships,publication_year,abstract_inverted_index,primary_location,cited_by_count,open_access,biblio,type&sort=relevance_score:desc`;
+    // 结构化条件统一走 filter 串：源限定 + 年份区间 + 字段限定（高级检索）。
+    const filterParts: string[] = [
+      `primary_location.source.id:${args.sourceId}`,
+    ];
+    if (args.year) {
+      const range = args.year.match(/^(\d{4})\s*-\s*(\d{4})$/);
+      if (range) {
+        filterParts.push(`publication_year:${range[1]}-${range[2]}`);
+      } else {
+        const yearNum = parseInt(args.year, 10);
+        if (!isNaN(yearNum)) {
+          filterParts.push(`publication_year:${yearNum}`);
+        }
+      }
+    }
+    filterParts.push(
+      ...buildOpenAlexFieldFilterParts({
+        title: args.title,
+        abstract: args.abstract,
+        hasAbstract: args.hasAbstract,
+      }),
+    );
+
+    let url = `https://api.openalex.org/works?search=${encodeURIComponent(args.query)}&filter=${filterParts.join(",")}&per_page=${maxResults}&select=id,doi,title,authorships,publication_year,abstract_inverted_index,primary_location,cited_by_count,open_access,biblio,type&sort=relevance_score:desc`;
 
     url = withOpenalexAuth(url);
 
@@ -169,6 +197,10 @@ export async function searchOpenAlex(args: {
   journal?: string;
   sort?: string;
   reviewOnly?: boolean;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
+  openAccessOnly?: boolean;
 }): Promise<any> {
   const maxResults = Math.min(args.maxResults ?? 10, 25);
   try {
@@ -201,6 +233,15 @@ export async function searchOpenAlex(args: {
     if (args.reviewOnly) {
       filterParts.push(`type:review`);
     }
+    // 高级检索字段限定 + 仅有摘要 + 服务端 OA（编译口径见 fieldQuery.ts）。
+    filterParts.push(
+      ...buildOpenAlexFieldFilterParts({
+        title: args.title,
+        abstract: args.abstract,
+        hasAbstract: args.hasAbstract,
+        openAccessOnly: args.openAccessOnly,
+      }),
+    );
 
     const sortMap: Record<string, string> = {
       relevance: "relevance_score:desc",

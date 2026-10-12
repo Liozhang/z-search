@@ -3,14 +3,18 @@
 import { getPrefDynamic } from "../../../utils/prefs";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
 import { toErrorMessage } from "../../../utils/error";
+import type { SearchFilters } from "./utils";
+import { githubQueryWithQualifiers } from "./fieldQuery";
 
 export async function searchGithub(
   query: string,
   year?: string,
   limit?: number,
+  filters?: SearchFilters,
 ): Promise<any> {
   const maxResults = limit ?? 10;
-  let q = query;
+  // 标题限定 → in:title 限定符（高级检索；其余 GitHub 语法原样透传）。
+  let q = githubQueryWithQualifiers(query, filters?.title);
   if (year) {
     // created: 过滤器只认完整日期——区间串 "2017-2026" 原样拼入会 422
     // 整源归零（审计 P0-3）。区间展开为 lo-01-01..hi-12-31。

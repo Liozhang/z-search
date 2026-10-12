@@ -407,29 +407,61 @@ const SEARCH_API_CALLERS: Readonly<
       journal: filters?.journal,
       sort: filters?.sort,
       reviewOnly: filters?.reviewOnly,
+      title: filters?.title,
+      abstract: filters?.abstract,
+      hasAbstract: filters?.hasAbstract,
+      openAccessOnly: filters?.openAccessOnly,
     }),
   "semantic-scholar": (query, year, limit, filters) =>
-    searchSemanticScholar(query, year, limit, filters),
+    // 无字段限定语法：标题限定降级为「标题词作主查询」（fieldQuery 口径，
+    // 下同——doaj/zenodo/hal/core 同）。
+    searchSemanticScholar(filters?.title || query, year, limit, filters),
   crossref: (query, year, limit, filters) =>
     searchCrossRef(query, year, limit, filters),
-  arxiv: (query, _year, limit, filters) =>
+  arxiv: (query, year, limit, filters) =>
     searchArxiv({
       query,
       maxResults: limit,
       author: filters?.author,
       sort: filters?.sort,
+      year,
+      title: filters?.title,
+      abstract: filters?.abstract,
     }),
-  biorxiv: (query, _year, limit) => searchBiorxiv({ query, maxResults: limit }),
-  medrxiv: (query, _year, limit) => searchMedrxiv({ query, maxResults: limit }),
-  doaj: (query, _year, limit) => searchDoaj({ query, maxResults: limit }),
-  zenodo: (query, _year, limit) => searchZenodo({ query, maxResults: limit }),
-  hal: (query, _year, limit) => searchHal({ query, maxResults: limit }),
-  core: (query, _year, limit) => searchCORE({ query, maxResults: limit }),
+  biorxiv: (query, year, limit, filters) =>
+    searchBiorxiv({
+      query,
+      year,
+      maxResults: limit,
+      title: filters?.title,
+      abstract: filters?.abstract,
+      hasAbstract: filters?.hasAbstract,
+    }),
+  medrxiv: (query, year, limit, filters) =>
+    searchMedrxiv({
+      query,
+      year,
+      maxResults: limit,
+      title: filters?.title,
+      abstract: filters?.abstract,
+      hasAbstract: filters?.hasAbstract,
+    }),
+  doaj: (query, _year, limit, filters) =>
+    searchDoaj({ query: filters?.title || query, maxResults: limit }),
+  zenodo: (query, _year, limit, filters) =>
+    searchZenodo({ query: filters?.title || query, maxResults: limit }),
+  hal: (query, _year, limit, filters) =>
+    searchHal({ query: filters?.title || query, maxResults: limit }),
+  core: (query, _year, limit, filters) =>
+    searchCORE({ query: filters?.title || query, maxResults: limit }),
   "europe-pmc": (query, _year, limit, filters) =>
     searchEuropePMC({
       query,
       maxResults: limit,
       reviewOnly: filters?.reviewOnly,
+      title: filters?.title,
+      abstract: filters?.abstract,
+      hasAbstract: filters?.hasAbstract,
     }),
   dimensions: (query, _year, limit) =>
     searchDimensions({ query, maxResults: limit }),
@@ -439,10 +471,14 @@ const SEARCH_API_CALLERS: Readonly<
       maxResults: limit,
       year,
       reviewOnly: filters?.reviewOnly,
+      title: filters?.title,
+      abstract: filters?.abstract,
+      hasAbstract: filters?.hasAbstract,
     }),
   chinaxiv: (query, _year, limit, _filters) =>
     searchChinaxiv({ query, maxResults: limit }),
-  github: (query, year, limit) => searchGithub(query, year, limit),
+  github: (query, year, limit, filters) =>
+    searchGithub(query, year, limit, filters),
 };
 
 async function callSearchAPI(
@@ -462,11 +498,12 @@ function deduplicateArticles(articles: any[]): any[] {
   const out: any[] = [];
 
   for (const article of articles) {
+    // 身份判定只认 DOI（2026-10-12 用户裁决）：有 DOI 按归一化键去重合并
+    // （审计 P1-7：normalizeDoi 剥 URL/doi: 前缀 + 小写）；无 DOI 一律保留、
+    // 不做标题级合并——标题撞车（同名不同文/预印本与正式版）的误判代价高于
+    // 漏合并。GitHub 短仓库名、纯中文标题等无 DOI 条目天然安全（原 P1-4 的
+    // 「短标题必须保留」随之成为普适行为）。
     if (article.doi) {
-      // DOI 归一化去重（审计 P1-7）：OpenAlex 主搜索回填 https://doi.org/
-      // 全 URL，裸 toLowerCase 比较会让同文跨源各留一条，mergeArticleInfo
-      // 全部失效。normalizeDoi 剥 URL/doi: 前缀；DOI 不分大小写，再统一
-      // 小写，否则同文不同大小写写法会各留一条。
       const key =
         normalizeDoi(article.doi).toLowerCase() ||
         article.doi.toLowerCase().trim();
@@ -478,21 +515,7 @@ function deduplicateArticles(articles: any[]): any[] {
       }
       continue;
     }
-
-    const titleKey = article.title.toLowerCase().replace(/[^a-z0-9]/g, "");
-    // 短标题/CJK 标题（拉丁剥除后 <10 字符）不参与去重但**必须保留**
-    // （审计 P1-4）：旧 continue 把 GitHub 短仓库名、纯中文标题的 DOAJ/HAL
-    // 结果整条静默删除——与前端 externalArticleKey「保留不去重」的口径对齐。
-    if (titleKey.length < 10) {
-      out.push(article);
-      continue;
-    }
-    if (!seen.has(titleKey)) {
-      seen.set(titleKey, article);
-      out.push(article);
-    } else {
-      mergeArticleInfo(seen.get(titleKey)!, article);
-    }
+    out.push(article);
   }
 
   return out;

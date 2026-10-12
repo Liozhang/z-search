@@ -20,6 +20,9 @@ export interface ArticleResult {
   isOpenAccess: boolean;
   abstract?: string;
   source: string;
+  /** 该文献命中的全部来源（后端跨源去重聚合；按源筛选的判定口径）。
+   *  缺省时前端以 source 单值兜底。 */
+  sources?: string[];
   /** PubMed/Europe PMC 源的 PMID——全文解析的 PMID→PMCID 反查入口。 */
   pmid?: string;
   /** PMC 编号（开放获取文章才有）——efetch db=pmc 直取，省 ID Converter 往返。 */

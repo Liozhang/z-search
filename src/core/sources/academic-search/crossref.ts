@@ -48,6 +48,10 @@ export async function searchCrossRef(
   if (filters?.reviewOnly) {
     filterParts.push(`type:review-article`);
   }
+  // 仅有摘要（Crossref 原生 filter）——高级检索「仅有摘要」开关。
+  if (filters?.hasAbstract) {
+    filterParts.push(`has-abstract:true`);
+  }
 
   let url = `https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=${maxResults}&sort=${sort}`;
 
@@ -78,6 +82,11 @@ export async function searchCrossRef(
   }
   if (filters?.author) {
     url += `&query.author=${encodeURIComponent(filters.author)}`;
+  }
+  // 标题限定（高级检索）：Crossref 原生 query.title——与 query= 全字段检索
+  // 是 AND 语义，标题词只参与题名匹配。摘要无搜索语法，仅有摘要走 filter。
+  if (filters?.title) {
+    url += `&query.title=${encodeURIComponent(filters.title)}`;
   }
 
   const result = await httpJsonGet(url);

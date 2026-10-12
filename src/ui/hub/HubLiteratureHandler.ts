@@ -11,6 +11,7 @@ import { getPrefDynamic } from "../../utils/prefs";
 import { truncate } from "../../utils/truncate";
 import type { ImportResult } from "../../types/literatureSearch";
 import academicSearch from "../../core/tool/builtin/handlers/academic-search/index";
+import { mergeExtraLines } from "../../core/metadata/importExtras";
 import { safeDebug } from "../../utils/logger";
 import {
   normalizeDoi,
@@ -26,6 +27,44 @@ const {
   deduplicateArticles,
   importArticle: doImportArticle,
 } = academicSearch;
+
+/**
+ * Extra 字段载荷宽松校验：只收 string→string 形状的键值对象（上限 16 键，
+ * 单值 300 字符截断——Extra 是给人工阅读的备注位，不是数据同步通道）。
+ */
+function sanitizeExtraFields(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof k !== "string" || !k.trim()) continue;
+    if (typeof v !== "string" && typeof v !== "number") continue;
+    if (Object.keys(out).length >= 16) break;
+    out[k.trim().slice(0, 64)] = String(v).slice(0, 300);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * 把聚合字段合并写入条目 Extra：同键旧行替换、用户手写内容保留
+ * （mergeExtraLines 语义）。fire-and-forget——导入回执不等这次落盘。
+ */
+async function applyExtraFields(
+  itemId: number,
+  fields: Record<string, string> | undefined,
+): Promise<void> {
+  if (!itemId || !fields || Object.keys(fields).length === 0) return;
+  try {
+    const item = Zotero.Items.get(itemId);
+    if (!item) return;
+    const existing = item.getField("extra");
+    const merged = mergeExtraLines(existing, fields);
+    if (merged === existing) return;
+    item.setField("extra", merged);
+    await item.saveTx();
+  } catch (e) {
+    safeDebug("[z-search] import extra fields failed: " + e);
+  }
+}
 
 /**
  * OA PDF 附件（P0-1）：导入建项成功后后台拉开放获取 PDF 挂为附件。
@@ -99,7 +138,9 @@ async function markInLibrary(articles: any[]): Promise<void> {
         chunk.map(async (doi) => {
           try {
             const s = new Zotero.Search();
-            s.addCondition("doi", "is", doi);
+            // 条件名必须是字段别名 'DOI'（fieldsCombined 的 fieldName）——
+            // 小写 'doi' 不是合法条件，Zotero 10 直接抛错并让标记整体失效。
+            s.addCondition("DOI", "is", doi);
             const ids = await s.search();
             if (ids?.length) found.add(doi);
           } catch {
@@ -196,6 +237,19 @@ export async function handleLiteratureRequest(
                     author: payload.author,
                     journal: payload.journal,
                     sort: payload.sort || "relevance",
+                    // 高级检索（fieldQuery 逐源编译）：标题/摘要限定 +
+                    // 仅综述 + 仅有摘要 + 服务端 OA（仅 OpenAlex）。
+                    title:
+                      typeof payload.title === "string"
+                        ? payload.title
+                        : undefined,
+                    abstract:
+                      typeof payload.abstract === "string"
+                        ? payload.abstract
+                        : undefined,
+                    reviewOnly: payload.reviewOnly === true,
+                    hasAbstract: payload.hasAbstract === true,
+                    openAccessOnly: payload.openAccessOnly === true,
                   },
                 );
               } catch (e) {
@@ -259,6 +313,13 @@ export async function handleLiteratureRequest(
               isOpenAccess: a.isOpenAccess || a.openAccess || false,
               abstract: a.abstract || "",
               source: a.source || "",
+              // 多源归属（按源筛选）：后端 mergeArticleInfo 已聚合同文跨源
+              // 命中的 sources 数组，转发给前端做「任一来源命中」筛选口径；
+              // 单源命中时缺省，前端以 source 兜底。
+              sources:
+                Array.isArray(a.sources) && a.sources.length
+                  ? a.sources
+                  : undefined,
               // 全文解析标识（PMC 标签与「全文」按钮的可用性依据）。
               pmid: a.pmid || undefined,
               pmcid: a.pmcid || undefined,
@@ -473,6 +534,7 @@ export async function handleLiteratureRequest(
           title?: string;
           year?: string;
           pdfUrl?: string;
+          extra?: Record<string, string>;
         }> = [];
         if (Array.isArray(payload?.entries)) {
           for (const e of payload.entries) {
@@ -490,6 +552,9 @@ export async function handleLiteratureRequest(
                   typeof e.pdfUrl === "string" && /^https?:\/\//.test(e.pdfUrl)
                     ? e.pdfUrl
                     : undefined,
+                // 多源聚合信息（被引/命中源/期刊指标）→ 条目 Extra 字段。
+                // 宽松校验：只收 string→string 形状的键值。
+                extra: sanitizeExtraFields(e.extra),
               });
             }
           }
@@ -566,6 +631,7 @@ export async function handleLiteratureRequest(
           doi: string;
           title: string;
           pdfUrl?: string;
+          extra?: Record<string, string>;
         }> = [];
         // 标题→DOI 解析并行化（审计 P2-7）：串行最坏 63s/条，批量 120s RPC
         // 超时下后段条目必超时（前端 toast 失败、后端继续建条目 → 重复导入）。
@@ -596,6 +662,7 @@ export async function handleLiteratureRequest(
                   doi,
                   title: e.title || doi,
                   pdfUrl: e.pdfUrl,
+                  extra: e.extra,
                 });
               } else {
                 importResults[idx] = {
@@ -646,7 +713,8 @@ export async function handleLiteratureRequest(
                 if (!doi) return;
                 try {
                   const s = new Zotero.Search();
-                  s.addCondition("doi", "is", doi);
+                  // 同上：字段别名 'DOI'，小写 'doi' 在 Zotero 10 抛错
+                  s.addCondition("DOI", "is", doi);
                   const ids = await s.search();
                   if (ids?.length) existingByDoi.set(doi, ids[0]);
                 } catch {
@@ -662,6 +730,9 @@ export async function handleLiteratureRequest(
             const existingId = existingByDoi.get(doiKey(j.doi));
             if (existingId == null) continue;
             const item = Zotero.Items.get(existingId);
+            // 幂等命中同样补写聚合信息——已在库的条目也能获得被引/来源/
+            // 指标的 Extra 行（异步，不阻塞回执）。
+            if (j.extra) void applyExtraFields(existingId, j.extra);
             importResults[j.idx] = {
               success: true,
               itemId: existingId,
@@ -696,6 +767,8 @@ export async function handleLiteratureRequest(
                 // 幂等命中的既有条目不重复挂附件。
                 if (itemResult?.success && itemResult?.itemId) {
                   void attachOaPdf(itemResult.itemId, job.doi, job.pdfUrl);
+                  // 多源聚合信息 → 条目 Extra（后台写，不阻塞回执）。
+                  void applyExtraFields(itemResult.itemId, job.extra);
                 }
               }
             } catch (e: any) {

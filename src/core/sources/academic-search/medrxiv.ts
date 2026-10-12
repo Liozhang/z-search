@@ -8,6 +8,10 @@ const MEDRXIV_SOURCE = "https://openalex.org/S3005729997";
 export async function searchMedrxiv(args: {
   query: string;
   maxResults?: number;
+  year?: string;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
 }): Promise<any> {
   return openalexSourceSearch({
     sourceId: MEDRXIV_SOURCE,
@@ -15,5 +19,9 @@ export async function searchMedrxiv(args: {
     maxResults: args.maxResults,
     landingBase: "https://www.medrxiv.org",
     source: "medrxiv",
+    year: args.year,
+    title: args.title,
+    abstract: args.abstract,
+    hasAbstract: args.hasAbstract,
   });
 }

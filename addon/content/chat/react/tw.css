@@ -528,6 +528,12 @@
   .zsearch-root .gap-\[var\(--space-4\)\] {
     gap: var(--space-4);
   }
+  .zsearch-root .gap-x-\[var\(--space-2\)\] {
+    column-gap: var(--space-2);
+  }
+  .zsearch-root .gap-y-\[var\(--space-0-5\)\] {
+    row-gap: var(--space-0-5);
+  }
   .zsearch-root .self-start {
     align-self: flex-start;
   }
@@ -938,12 +944,6 @@
   .zsearch-root .pt-\[var\(--space-4\)\] {
     padding-top: var(--space-4);
   }
-  .zsearch-root .pt-\[var\(--space-5\)\] {
-    padding-top: var(--space-5);
-  }
-  .zsearch-root .pt-\[var\(--space-6\)\] {
-    padding-top: var(--space-6);
-  }
   .zsearch-root .pr-0 {
     padding-right: 0px;
   }
@@ -961,6 +961,9 @@
   }
   .zsearch-root .pb-\[var\(--space-3\)\] {
     padding-bottom: var(--space-3);
+  }
+  .zsearch-root .pb-\[var\(--space-6\)\] {
+    padding-bottom: var(--space-6);
   }
   .zsearch-root .pb-\[var\(--space-12\)\] {
     padding-bottom: var(--space-12);

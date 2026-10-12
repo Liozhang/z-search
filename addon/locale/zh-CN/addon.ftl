@@ -382,6 +382,24 @@ lit-source-europe-pmc = Europe PMC
 lit-source-pubmed = PubMed
 lit-source-github = GitHub
 
+# 结果区按来源筛选（搜索后即时筛）
+lit-source-filter-label = 按来源筛选结果
+lit-source-filter-all = 全部
+lit-source-logo-hit = 命中 { $count } 条
+lit-source-logo-miss = 未命中
+lit-source-logo-nokey = 未填 API Key，未参与本次检索
+lit-source-logo-failed = 检索失败
+
+# 高级检索（fieldQuery 逐源编译）与结果内关键词过滤
+lit-filter-adv-section = 高级检索
+lit-filter-title-placeholder = 标题包含…
+lit-filter-abstract-placeholder = 摘要包含…
+lit-filter-review-only = 仅综述
+lit-filter-has-abstract = 仅有摘要
+lit-keyword-filter-placeholder = 在结果内筛选…
+lit-keyword-filter-aria = 结果内关键词筛选
+lit-syntax-hint = 提示：Europe PMC、PubMed、HAL、Zenodo、CORE、GitHub 支持在搜索框直接使用各源自带的检索语法（字段限定、AND/OR、引号短语），原样生效。
+
 # Result card
 lit-citations = 引用 { $count }
 lit-tag-pdf = PDF

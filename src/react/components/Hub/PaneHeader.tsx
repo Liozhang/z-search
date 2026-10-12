@@ -34,8 +34,10 @@ export function PaneHeader({
   /** 页头右缘动作区（法定入口位；本轮仅设置页分区搜索框接线）。 */
   actions?: React.ReactNode;
 }): React.ReactElement {
+  // 2026-10-12 节距收紧 pt-5/pb-3 → pt-4/pb-2：压缩固定区（用户反馈
+  // 「检索配置天然占了窗口近一半高」），全 pane 页头统一受益。
   return (
-    <header className="flex flex-wrap items-center gap-[var(--space-3)] border-b border-[color:var(--line-faint)] pb-[var(--space-3)] pt-[var(--space-5)]">
+    <header className="flex flex-wrap items-center gap-[var(--space-3)] border-b border-[color:var(--line-faint)] pb-[var(--space-2)] pt-[var(--space-4)]">
       <div className="flex min-w-0 flex-col gap-[var(--space-0-5)]">
         {/* h1 字号：--ui-font-title 是含字号的 font 简写令牌，text-lg 档经
             style 直给——Tailwind 任意值工具与 font 简写的发射序不保证先后，

@@ -1,21 +1,27 @@
 /** Per-source academic search handlers. */
 
 import { httpJsonGet } from "../../../utils/http";
+import { buildEuropePMCQuery } from "./fieldQuery";
 
 export async function searchEuropePMC(args: {
   query: string;
   maxResults?: number;
   reviewOnly?: boolean;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
 }): Promise<any> {
   const maxResults = Math.min(args.maxResults ?? 10, 25);
   try {
-    // Europe PMC filters by publication type within the query syntax.
-    // pub_type is a single-token field; "Review" is the reliable value that
-    // covers both narrative and systematic reviews (avoids quoted-space ambiguity).
-    let searchQuery = args.query;
-    if (args.reviewOnly) {
-      searchQuery = `(${args.query}) AND pub_type:Review`;
-    }
+    // 结构化条件（综述/标题/摘要/有摘要）统一编译进 Europe PMC 查询语法，
+    // 见 fieldQuery.ts——reviewOnly-only 输出与历史行为逐字节一致。
+    const searchQuery = buildEuropePMCQuery({
+      query: args.query,
+      title: args.title,
+      abstract: args.abstract,
+      hasAbstract: args.hasAbstract,
+      reviewOnly: args.reviewOnly,
+    });
     const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(searchQuery)}&resultType=core&format=json&pageSize=${maxResults}`;
 
     const result = await httpJsonGet(url);

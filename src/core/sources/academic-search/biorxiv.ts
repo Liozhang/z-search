@@ -8,6 +8,10 @@ const BIORXIV_SOURCE = "https://openalex.org/S4306402567";
 export async function searchBiorxiv(args: {
   query: string;
   maxResults?: number;
+  year?: string;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
 }): Promise<any> {
   return openalexSourceSearch({
     sourceId: BIORXIV_SOURCE,
@@ -15,5 +19,9 @@ export async function searchBiorxiv(args: {
     maxResults: args.maxResults,
     landingBase: "https://www.biorxiv.org",
     source: "biorxiv",
+    year: args.year,
+    title: args.title,
+    abstract: args.abstract,
+    hasAbstract: args.hasAbstract,
   });
 }

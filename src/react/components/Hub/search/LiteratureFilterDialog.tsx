@@ -56,6 +56,11 @@ export interface LiteratureFilterValues {
   journal: string;
   // 只看开放获取（web；宿主侧过滤，cap 作用于过滤后集合）
   openAccessOnly: boolean;
+  // 高级检索（web；fieldQuery 逐源编译，不支持字段语法的源降级）
+  title: string;
+  abstract: string;
+  reviewOnly: boolean;
+  hasAbstract: boolean;
   // 库内全文范围（local）
   useFullText: boolean;
   sectionCategory: string | undefined;
@@ -77,6 +82,10 @@ function getDefaultLiteratureFilters(
     author: "",
     journal: "",
     openAccessOnly: false,
+    title: "",
+    abstract: "",
+    reviewOnly: false,
+    hasAbstract: false,
     useFullText: false,
     sectionCategory: undefined,
   };
@@ -99,6 +108,10 @@ export function isDefaultLiteratureFilters(
     v.author === def.author &&
     v.journal === def.journal &&
     v.openAccessOnly === def.openAccessOnly &&
+    v.title === def.title &&
+    v.abstract === def.abstract &&
+    v.reviewOnly === def.reviewOnly &&
+    v.hasAbstract === def.hasAbstract &&
     v.useFullText === def.useFullText &&
     v.sectionCategory === def.sectionCategory
   );
@@ -119,7 +132,11 @@ export function countActiveLiteratureFilters(
         (v.maxResults !== def.maxResults ? 1 : 0) +
         (v.author !== def.author ? 1 : 0) +
         (v.journal !== def.journal ? 1 : 0) +
-        (v.openAccessOnly ? 1 : 0)
+        (v.openAccessOnly ? 1 : 0) +
+        (v.title !== def.title ? 1 : 0) +
+        (v.abstract !== def.abstract ? 1 : 0) +
+        (v.reviewOnly ? 1 : 0) +
+        (v.hasAbstract ? 1 : 0)
     : (v.maxResults !== def.maxResults ? 1 : 0) +
         (v.useFullText ? 1 : 0) +
         (v.sectionCategory != null ? 1 : 0);
@@ -424,7 +441,8 @@ export function LiteratureFilterDialog({
                     />
                   </section>
 
-                  {/* 只看开放获取（P0-3）：宿主侧过滤，cap 作用于过滤后集合 */}
+                  {/* 只看开放获取（P0-3）：宿主侧过滤，cap 作用于过滤后集合；
+                      OpenAlex 额外走服务端 filter，命中集更大 */}
                   <section className="hub-graph-filter-section">
                     <div className="hub-graph-filter-switch">
                       <Switch
@@ -435,6 +453,61 @@ export function LiteratureFilterDialog({
                         ariaLabel={getString("lit-filter-open-access")}
                       />
                       <div>{getString("lit-filter-open-access-hint")}</div>
+                    </div>
+                  </section>
+
+                  {/* 高级检索（fieldQuery 逐源编译）：标题/摘要限定 + 综述/
+                      有摘要开关。不支持字段语法的源自动降级为标题词主查询。 */}
+                  <section className="hub-graph-filter-section">
+                    <div className="hub-graph-filter-section-title">
+                      {getString("lit-filter-adv-section")}
+                    </div>
+                    <SearchInput
+                      size="sm"
+                      className="hub-graph-filter-keyword"
+                      value={values.title}
+                      onChange={(e) =>
+                        onChange({ ...values, title: e.target.value })
+                      }
+                      placeholder={getString("lit-filter-title-placeholder")}
+                    />
+                  </section>
+                  <section className="hub-graph-filter-section">
+                    <SearchInput
+                      size="sm"
+                      className="hub-graph-filter-keyword"
+                      value={values.abstract}
+                      onChange={(e) =>
+                        onChange({ ...values, abstract: e.target.value })
+                      }
+                      placeholder={getString("lit-filter-abstract-placeholder")}
+                    />
+                  </section>
+                  <section className="hub-graph-filter-section">
+                    <div className="hub-graph-filter-switch">
+                      <Switch
+                        checked={values.reviewOnly}
+                        onChange={(v) => onChange({ ...values, reviewOnly: v })}
+                        ariaLabel={getString("lit-filter-review-only")}
+                      />
+                      <div>{getString("lit-filter-review-only")}</div>
+                    </div>
+                    <div className="hub-graph-filter-switch">
+                      <Switch
+                        checked={values.hasAbstract}
+                        onChange={(v) =>
+                          onChange({ ...values, hasAbstract: v })
+                        }
+                        ariaLabel={getString("lit-filter-has-abstract")}
+                      />
+                      <div>{getString("lit-filter-has-abstract")}</div>
+                    </div>
+                  </section>
+
+                  {/* 语法透传引导：这些源的搜索框原生支持字段限定/布尔/短语 */}
+                  <section className="hub-graph-filter-section">
+                    <div className="hub-graph-filter-switch">
+                      <div>{getString("lit-syntax-hint")}</div>
                     </div>
                   </section>
                 </FilterZone>

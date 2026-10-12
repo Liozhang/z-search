@@ -54,6 +54,15 @@ export interface SearchFilters {
   sort?: string;
   /** Restrict results to review/survey papers (sources supporting type filters only). */
   reviewOnly?: boolean;
+  /** 高级检索（fieldQuery.ts 编译）：标题/摘要包含。支持字段语法的源编译为
+   *  原生限定，其余源降级为标题词主查询。 */
+  title?: string;
+  abstract?: string;
+  /** 仅有摘要（OpenAlex/Crossref/Europe PMC/PubMed 原生过滤，其余源忽略）。 */
+  hasAbstract?: boolean;
+  /** 服务端 OA 过滤（OpenAlex 原生 open_access.is_oa；其余源走客户端
+   *  后置过滤，双重过滤无害）。 */
+  openAccessOnly?: boolean;
 }
 
 /** Strip JATS XML tags from CrossRef abstracts. */

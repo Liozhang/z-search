@@ -14,8 +14,11 @@
   overflow: hidden;
   /* 2026-09-07 R11-D5 终裁：页级收编 L1 1440 上限——水平消费 --page-inline-pad
      （≤1520px 窗恒等 40px 渲染不变；宽窗内容居中收窄）。slot 内滚动条随列内收
-     （gallery 全宽滚动条先例的已知偏差），登记欠真机验收。 */
-  padding-inline: var(--page-inline-pad);
+     （gallery 全宽滚动条先例的已知偏差），登记欠真机验收。
+     2026-10-12 用户反馈「搜索结果占屏幕一半都不到」改判：1120 居中轨在宽窗
+     把结果列挤成窄柱。检索结果是逐行卡片列表与指标栅格（非长文段落——卡片
+     内摘要已有 68ch 行宽上限），本面板放开为全幅 + 常量边距。 */
+  padding-inline: var(--page-content-padding);
 }
 
 /* 域切换行（.hub-search-seg / .hub-search-view-toggle / .hub-search-view-btn

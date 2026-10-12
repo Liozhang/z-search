@@ -5,21 +5,30 @@ import { getPrefDynamic } from "../../../utils/prefs";
 import { httpJsonGet } from "../../../utils/http";
 import { safeDebug } from "../../../utils/logger";
 import { ncbiThrottle } from "../../../utils/ncbiThrottle";
+import { buildPubMedTerm } from "./fieldQuery";
 
 export async function searchPubMed(args: {
   query: string;
   maxResults?: number;
   year?: string;
   reviewOnly?: boolean;
+  title?: string;
+  abstract?: string;
+  hasAbstract?: boolean;
 }): Promise<any> {
   const maxResults = Math.min(args.maxResults ?? 10, 25);
   const apiKey = getPrefDynamic("apis.pubmed.apiKey") as string;
 
   try {
-    // PubMed publication-type filter is appended to the search term.
-    const term = args.reviewOnly
-      ? `(${args.query}) AND Review[ptyp]`
-      : args.query;
+    // 结构化条件（综述/标题/摘要/有摘要）统一编译进检索词，见 fieldQuery.ts
+    // ——reviewOnly-only 输出与历史行为逐字节一致。
+    const term = buildPubMedTerm({
+      query: args.query,
+      title: args.title,
+      abstract: args.abstract,
+      hasAbstract: args.hasAbstract,
+      reviewOnly: args.reviewOnly,
+    });
     // Step 1: ESearch - get PMIDs
     let searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=${maxResults}&tool=zsearch`;
     if (apiKey) searchUrl += `&api_key=${encodeURIComponent(apiKey)}`;

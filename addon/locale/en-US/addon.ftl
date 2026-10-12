@@ -395,6 +395,24 @@ lit-source-europe-pmc = Europe PMC
 lit-source-pubmed = PubMed
 lit-source-github = GitHub
 
+# Post-search source filter (results chips)
+lit-source-filter-label = Filter results by source
+lit-source-filter-all = All
+lit-source-logo-hit = {$count} results
+lit-source-logo-miss = no results
+lit-source-logo-nokey = no API key — not queried
+lit-source-logo-failed = query failed
+
+# Advanced search (per-source field compilation) & in-results keyword filter
+lit-filter-adv-section = Advanced search
+lit-filter-title-placeholder = Title contains…
+lit-filter-abstract-placeholder = Abstract contains…
+lit-filter-review-only = Reviews only
+lit-filter-has-abstract = Has abstract
+lit-keyword-filter-placeholder = Filter within results…
+lit-keyword-filter-aria = Filter results by keyword
+lit-syntax-hint = Tip: Europe PMC, PubMed, HAL, Zenodo, CORE and GitHub accept their native search syntax (field tags, AND/OR, quoted phrases) directly in the search box.
+
 # Result card
 lit-citations = { $count } citations
 lit-tag-pdf = PDF

@@ -28,6 +28,7 @@ import {
   AVAILABLE_SOURCES,
 } from "./types";
 import { mergeExternalArticles } from "../mergeResults";
+import { buildExtraFields } from "../../../../../core/metadata/importExtras";
 import { useClipboard } from "@/hooks/useClipboard";
 import { safeDebug } from "../../../../../utils/logger";
 
@@ -89,6 +90,11 @@ export function useLiteratureSearch() {
   const [authorFilter, setAuthorFilter] = useState("");
   const [journalFilter, setJournalFilter] = useState("");
   const [openAccessOnly, setOpenAccessOnly] = useState(false);
+  // 高级检索（fieldQuery 逐源编译）：标题/摘要限定 + 综述/有摘要开关。
+  const [titleFilter, setTitleFilter] = useState("");
+  const [abstractFilter, setAbstractFilter] = useState("");
+  const [reviewOnly, setReviewOnly] = useState(false);
+  const [hasAbstractFilter, setHasAbstractFilter] = useState(false);
   // ── 导入目标（P2 批）── null = 跟随主窗选择（旧行为）；
   // {libraryID, collectionID|null} = 显式目标（collectionID null = 文库根）。
   // 经 pref search.importTarget 持久化；collectionID 失效时选择器侧自复位。
@@ -286,6 +292,10 @@ export function useLiteratureSearch() {
               author: authorFilter || undefined,
               journal: journalFilter || undefined,
               openAccessOnly: openAccessOnly || undefined,
+              title: titleFilter || undefined,
+              abstract: abstractFilter || undefined,
+              reviewOnly,
+              hasAbstract: hasAbstractFilter,
             },
             60000,
           );
@@ -358,6 +368,10 @@ export function useLiteratureSearch() {
       authorFilter,
       openAccessOnly,
       journalFilter,
+      titleFilter,
+      abstractFilter,
+      reviewOnly,
+      hasAbstractFilter,
       collectionsLoaded,
     ],
   );
@@ -388,8 +402,12 @@ export function useLiteratureSearch() {
     setAuthorFilter("");
     setJournalFilter("");
     // 与弹窗「重置」同口径：openAccessOnly 也是筛选维度之一，漏复位会让
-    // 清除后筛选角标仍显示生效计数。
+    // 清除后筛选角标仍显示生效计数。高级检索四项同理。
     setOpenAccessOnly(false);
+    setTitleFilter("");
+    setAbstractFilter("");
+    setReviewOnly(false);
+    setHasAbstractFilter(false);
     // If a search is in flight, also tell the Bridge to stop iterating
     // sources; otherwise the backend loop keeps running to completion.
     if (wasSearching) {
@@ -611,7 +629,8 @@ export function useLiteratureSearch() {
       try {
         // entries 契约统一承载（有无 DOI 都走它）：宿主侧标题→DOI 回退解析
         // 后入库；pdfUrl 是 OA PDF 附件的零成本提示（P0-1，有则免一次
-        // OpenAlex 反查）。
+        // OpenAlex 反查）。extra 携带多源聚合信息（被引/命中源/期刊指标），
+        // 宿主写入条目 Extra 字段。
         const data = await semanticRequest<ImportResult[]>(
           "literature.import",
           {
@@ -621,6 +640,7 @@ export function useLiteratureSearch() {
                 title: article.title,
                 year: article.year ? String(article.year) : undefined,
                 pdfUrl: article.pdfUrl || undefined,
+                extra: buildExtraFields(article),
               },
             ],
             target: importTarget
@@ -705,6 +725,8 @@ export function useLiteratureSearch() {
       year: p.article.year ? String(p.article.year) : undefined,
       // OA PDF 零成本提示（P0-1）：命中则宿主免一次 OpenAlex 反查
       pdfUrl: p.article.pdfUrl || undefined,
+      // 多源聚合信息 → 条目 Extra 字段
+      extra: buildExtraFields(p.article),
     }));
     const keys = keyArticlePairs.map((p) => p.key);
 
@@ -893,6 +915,14 @@ export function useLiteratureSearch() {
     setJournalFilter,
     openAccessOnly,
     setOpenAccessOnly,
+    titleFilter,
+    setTitleFilter,
+    abstractFilter,
+    setAbstractFilter,
+    reviewOnly,
+    setReviewOnly,
+    hasAbstractFilter,
+    setHasAbstractFilter,
     // 导入目标（P2 批）：树 + 当前目标 + 选择/清除（写 pref 持久化）
     collectionsTree,
     importTarget,
