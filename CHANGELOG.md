@@ -5,6 +5,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.6.0] - 2026-10-12
+
+### Added
+
+- **Advanced literature search.** Title and abstract terms are compiled
+  per source into its native field syntax (Crossref `query.title`,
+  OpenAlex `title.search`, arXiv `ti:`/`abs:`, Europe PMC `TITLE:`,
+  PubMed `[Title]`/`[tiab]`, GitHub `in:title`), so a title search no
+  longer degrades into a everywhere-full-text query. The year filter now
+  reaches every source, review-only and has-abstract switches narrow
+  biomedical sources, and a results-header keyword filter (multi-word
+  AND, purely client-side) narrows the merged list instantly.
+
+- **Fixed circular source logos.** All 13 sources now show as constant
+  circular badges in the results header: brand-colored with a dark ring
+  and a live count when the source returned hits, grayed out otherwise,
+  with hover text explaining why (no results / no API key / query
+  failed). Clicking a badge filters the list to that source, and every
+  result card's source tag carries a matching mini badge.
+
+- **Aggregated metadata is written into imported items.** Importing a
+  merged result records the aggregate facts in the Zotero item's Extra
+  field: citation count (highest across sources), which sources hit it,
+  impact factor, JCR/CAS quartiles, warning level and GitHub stars.
+  Re-importing the same DOI replaces same-key lines instead of
+  duplicating them and leaves user-written lines untouched; items that
+  were already in the library get the same facts via the idempotent-hit
+  path.
+
+### Changed
+
+- **Search-result identity is now DOI-only.** Two results are merged
+  into one card only when they share a DOI; entries without one are no
+  longer merged by title similarity, which previously could fuse
+  distinct papers that happened to share a title.
+
+- **Search results use the whole window.** The hub window's hidden
+  1920×1080 size cap is removed and the first open adapts to 85% of the
+  screen. The search pane drops the centered 1120px reading track for a
+  full-width layout (abstracts keep their 68-character line cap), the
+  status details collapse into one line, and the action rows above the
+  results are tightened — the results list grows from roughly half the
+  window to about 70% of it.
+
+### Fixed
+
+- **arXiv failed every search with a bogus network error.** The Atom
+  parser looked up `opensearch:totalResults` with a colon-bearing CSS
+  selector, which is invalid and threw on every document, taking the
+  whole arXiv source down each search.
+
+- **"In library" marks and import idempotence never worked.** Both
+  queried with `addCondition("doi", …)`, but the valid search condition
+  in Zotero is the field alias `DOI`; the lowercase form throws and the
+  errors were swallowed. In-library badges light up again, and importing
+  a DOI that is already in the library updates the existing item instead
+  of creating a duplicate.
+
+- **Source filter chips lost their hover tooltips.** The toggle-group
+  item overwrote any explicitly passed `title` with its auto-title
+  fallback, so tooltip text never reached the DOM — for every caller,
+  not just the new chips.
+
 ## [1.5.3] - 2026-10-12
 
 ### Added
