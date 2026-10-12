@@ -9,9 +9,10 @@
  * 本模块补上缺失的一环：首次使用时按 transformers.js 的 localModelPath 布局
  * 把模型文件取回本地。端点求值序「覆盖 > 检测 > 区域推导 > 内置」：用户填的
  * `embedding.local.mirror`（设置 ▸ 区域限定端点）最优先；未覆盖时下载前并发
- * 探测 huggingface.co 与 hf-mirror.com，可达者（都可达时更快者）当选，结果
- * 记 24 小时缓存——区域声明只是静态猜测，实际以跑通为准；选中的源下载失败
- * 再向另一内置源回落一次。全部不可达时按区域默认收尾并如实报错。
+ * 探测三个内置源（huggingface.co / hf-mirror.com / modelscope.cn），可达者
+ * （都可达时更快者）当选，结果记 24 小时缓存——区域声明只是静态猜测，实际
+ * 以跑通为准；选中的源下载失败再沿其余内置源逐个回落。全部不可达时按区域
+ * 默认收尾并如实报错。
  *
  * 纯函数（文件清单 / URL 拼装 / 模型名校验 / 区域默认 / 探测结果选源）单独
  * 导出供 vitest 直接测试——与 embedFrameLogic 同一模式；IO 编排仅在插件运行
@@ -29,6 +30,19 @@ import { safeDebug } from "../../utils/logger";
 export const DEFAULT_MODEL_ENDPOINT = "https://huggingface.co";
 /** 中国大陆区域的可达镜像（hf-mirror.com 是 huggingface.co 的只读镜像）。 */
 export const CN_MODEL_ENDPOINT = "https://hf-mirror.com";
+/**
+ * 魔搭社区（ModelScope，阿里云旗下）模型源：国内免代理直连，实测响应常快于
+ * hf-mirror；托管同一批 Xenova ONNX 模型（四个内置模型 2026-10-11 全部实测
+ * 可达）。文件布局多一段 /models、分支用 master（见 buildModelFileUrl）。
+ */
+export const MODELSCOPE_ENDPOINT = "https://www.modelscope.cn";
+
+/** 内置模型源全集——并发探测与下载回落链按此展开；用户镜像 pref 不在其中。 */
+export const BUILTIN_MODEL_ENDPOINTS: readonly string[] = [
+  DEFAULT_MODEL_ENDPOINT,
+  CN_MODEL_ENDPOINT,
+  MODELSCOPE_ENDPOINT,
+];
 
 /** dtype q8 管线必需的文件（缺失任一即视为未下载完整）。 */
 const REQUIRED_MODEL_FILES = [
@@ -65,13 +79,19 @@ export function getModelDir(modelName: string): string {
   return PathUtils.join(getModelRootDir(), ...modelName.split("/"));
 }
 
-/** 拼一个模型文件的下载 URL（镜像基址去尾斜杠，路径段原样）。 */
+/** 拼一个模型文件的下载 URL（基址去尾斜杠，路径段原样）。 */
 export function buildModelFileUrl(
   endpoint: string,
   modelName: string,
   relPath: string,
 ): string {
   const base = endpoint.replace(/\/+$/, "");
+  // ModelScope 的 HF 兼容布局是 /models/{org}/{repo}/resolve/master/{path}——
+  // 多一段 /models、分支叫 master。其余源（含用户自填镜像）统一 HF 的
+  // resolve/main 布局；自建 ModelScope 反代不在此识别范围，按 HF 布局拼。
+  if (base === MODELSCOPE_ENDPOINT) {
+    return `${base}/models/${modelName}/resolve/master/${relPath}`;
+  }
   return `${base}/${modelName}/resolve/main/${relPath}`;
 }
 
@@ -186,8 +206,7 @@ function readDetectedEndpointCache(): string | null {
       const endpoint = String(parsed.endpoint ?? "");
       const at = Number(parsed.at ?? 0);
       if (
-        (endpoint === DEFAULT_MODEL_ENDPOINT ||
-          endpoint === CN_MODEL_ENDPOINT) &&
+        (BUILTIN_MODEL_ENDPOINTS as readonly string[]).includes(endpoint) &&
         at > 0 &&
         Date.now() - at < DETECTION_TTL_MS
       ) {
@@ -211,7 +230,7 @@ function readDetectedEndpointCache(): string | null {
 }
 
 function rememberDetectedEndpoint(endpoint: string): void {
-  if (endpoint !== DEFAULT_MODEL_ENDPOINT && endpoint !== CN_MODEL_ENDPOINT) {
+  if (!(BUILTIN_MODEL_ENDPOINTS as readonly string[]).includes(endpoint)) {
     return;
   }
   sessionDetected = { endpoint, at: Date.now() };
@@ -228,16 +247,17 @@ function rememberDetectedEndpoint(endpoint: string): void {
 }
 
 /**
- * 并发探测两个内置源并记忆结果。手动「检测镜像」与下载前自动选择共用；
+ * 并发探测全部内置源并记忆结果。手动「检测镜像」与下载前自动选择共用；
  * 全部不可达返回 null——调用方回落区域默认端点。
  */
 export async function detectModelEndpoint(
   modelName: string,
 ): Promise<EndpointProbeResult | null> {
-  const results = await Promise.all([
-    probeEndpoint(modelName, DEFAULT_MODEL_ENDPOINT),
-    probeEndpoint(modelName, CN_MODEL_ENDPOINT),
-  ]);
+  const results = await Promise.all(
+    BUILTIN_MODEL_ENDPOINTS.map((endpoint) =>
+      probeEndpoint(modelName, endpoint),
+    ),
+  );
   const best = selectEndpointFromProbes(results);
   if (best) {
     rememberDetectedEndpoint(best.endpoint);
@@ -285,8 +305,61 @@ async function hasContent(p: string): Promise<boolean> {
 const downloadedMemo = new Set<string>();
 
 /**
+ * 从 transformers.js 模型配置提取向量维度（纯函数，供单测）。各架构的键名
+ * 不一：hidden_size（BERT/E5/MiniLM 系）、d_model（部分变体）。取不到或不
+ * 合法返回 null，由调用方走静态表与默认值回退。
+ */
+export function extractModelDimension(config: unknown): number | null {
+  const raw = (config as any)?.hidden_size ?? (config as any)?.d_model;
+  return typeof raw === "number" && Number.isFinite(raw) && raw > 0
+    ? Math.round(raw)
+    : null;
+}
+
+/** 维度记录的动态 pref：JSON 映射 { 模型id: 维度 }，按模型覆盖静态表。 */
+const DIMENSION_MAP_PREF = "embedding.local.dimensions";
+
+function readDimensionMap(): Record<string, number> {
+  try {
+    const map = JSON.parse(String(getPrefDynamic(DIMENSION_MAP_PREF) ?? "{}"));
+    return map && typeof map === "object" ? map : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 读已下载模型的 config.json，把真实维度记入维度映射 pref。失败静默——
+ * 维度记录是增益，不是依赖；查询侧另有三级回退（静态表 → 映射 → 384）。
+ * 此前未知模型一律按 384 处理，768/1024 维的自定义模型会在 IVF 索引处以
+ * 「维度不匹配」炸掉（2026-10-11 审计）。
+ */
+export async function refreshModelDimension(modelName: string): Promise<void> {
+  const id = sanitizeModelId(modelName);
+  if (!id) return;
+  try {
+    const configPath = PathUtils.join(getModelDir(id), "config.json");
+    const text = (await Zotero.File.getContentsAsync(configPath)) as string;
+    const dim = extractModelDimension(JSON.parse(String(text)));
+    if (dim === null || readDimensionMap()[id] === dim) return;
+    setPrefDynamic(
+      DIMENSION_MAP_PREF,
+      JSON.stringify({ ...readDimensionMap(), [id]: dim }),
+    );
+    safeDebug(
+      `[z-search] ModelDownloadManager: recorded dimension ${dim} for ${id}`,
+    );
+  } catch (e) {
+    safeDebug(
+      `[z-search] ModelDownloadManager: dimension refresh skipped for ${id}: ${e}`,
+    );
+  }
+}
+
+/**
  * 模型必需文件是否齐全（可选文件不计入）。齐全即跳过下载——手动把文件
- * 放进模型目录的离线用户照常工作。结果按模型记忆化（会话内）。
+ * 放进模型目录的离线用户照常工作。结果按模型记忆化（会话内）；记忆化
+ * 落笔时顺带刷新一次维度记录（每模型每会话至多一次小文件读取）。
  */
 export async function isModelDownloaded(modelName: string): Promise<boolean> {
   const id = sanitizeModelId(modelName);
@@ -298,7 +371,23 @@ export async function isModelDownloaded(modelName: string): Promise<boolean> {
       return false;
     }
   }
+  // 存量污染治理：旧版本曾把「HTTP 200 且非空」的 HTML 错误页写进模型
+  // 目录，hasContent 只看文件大小，垃圾文件永远通过检查。下载校验只护
+  // 新下载——这里对 config.json 做一次廉价解析，解析失败按未下载处理，
+  // ensureModelDownloaded 会触发重下（自愈），而不是留到加载时才炸。
+  try {
+    const configText = (await Zotero.File.getContentsAsync(
+      PathUtils.join(dir, "config.json"),
+    )) as string;
+    JSON.parse(String(configText));
+  } catch (e) {
+    safeDebug(
+      `[z-search] ModelDownloadManager: ${id} config.json invalid, treating as not downloaded: ${e}`,
+    );
+    return false;
+  }
   downloadedMemo.add(id);
+  void refreshModelDimension(id);
   return true;
 }
 
@@ -309,9 +398,47 @@ export interface ModelDownloadProgress {
 }
 
 /**
+ * 下载内容校验（纯函数，供单测）：完整性与端点无关的最后一道闸——此前唯一
+ * 的判据是「HTTP 200 且非空」，一个返回 200 + HTML 错误页的反代足以把垃圾
+ * 字节写进模型目录并通过 hasContent 检查，在 transformers.js 加载时才以晦涩
+ * 错误暴露（2026-10-11 审计）。两条规则：
+ *   1. 一切文件：去首部空白后以 `<` 开头按 HTML 错误页拒绝（JSON/ONNX 的
+ *      首字节分别为 `{` 与 protobuf 0x08，永不冲突）；
+ *   2. .json 文件：必须整体可解析（config.json 损坏 = 模型不可用）。
+ *
+ * @returns 合法返回 null；非法返回一句可直接拼进错误消息的原因。
+ */
+export function validateModelFileContent(
+  relPath: string,
+  bytes: Uint8Array,
+): string | null {
+  let start = 0;
+  while (
+    start < bytes.length &&
+    (bytes[start] === 0x20 ||
+      bytes[start] === 0x09 ||
+      bytes[start] === 0x0a ||
+      bytes[start] === 0x0d)
+  ) {
+    start++;
+  }
+  if (start < bytes.length && bytes[start] === 0x3c /* '<' */) {
+    return "response looks like an HTML error page, not a model file";
+  }
+  if (relPath.endsWith(".json") && typeof TextDecoder === "function") {
+    try {
+      JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      return "response is not valid JSON";
+    }
+  }
+  return null;
+}
+
+/**
  * 下载一个模型文件。返回 true = 已存在/下载成功；false = 可选文件取不到
- * （404 类）；网络/写盘失败抛错。端点由调用方显式传入——downloadModel
- * 负责端点选择与失败回落，本函数不做任何决策。
+ * （404 类）；网络/写盘/内容校验失败抛错。端点由调用方显式传入——
+ * downloadModel 负责端点选择与失败回落，本函数不做任何决策。
  */
 async function fetchModelFile(
   modelName: string,
@@ -340,6 +467,10 @@ async function fetchModelFile(
   const data = new Uint8Array(response.response);
   if (data.byteLength === 0) {
     throw new Error(`${url} → empty response`);
+  }
+  const invalidReason = validateModelFileContent(relPath, data);
+  if (invalidReason) {
+    throw new Error(`${url} → ${invalidReason}`);
   }
   // 目标父目录由 relPath 段数推导（PathUtils.dirname 不在类型声明里）。
   const segs = relPath.split("/");
@@ -420,26 +551,36 @@ export async function downloadModel(
     } catch (primaryError) {
       // 用户显式配置的镜像失败——如实上抛，不静默换源。
       if (hasMirrorOverride()) throw primaryError;
-      const alternate =
-        primary === DEFAULT_MODEL_ENDPOINT
-          ? CN_MODEL_ENDPOINT
-          : DEFAULT_MODEL_ENDPOINT;
-      safeDebug(
-        `[z-search] ModelDownloadManager: download via ${primary} failed, falling back to ${alternate}: ${primaryError}`,
-      );
-      try {
-        await runFileLoop(id, files, onProgress, alternate);
-        rememberDetectedEndpoint(alternate);
-      } catch (alternateError) {
-        const detail = `${primary} → ${String((primaryError as any)?.message || primaryError).slice(0, 220)}；${alternate} → ${String((alternateError as any)?.message || alternateError).slice(0, 220)}`;
-        throw new Error(detail, { cause: alternateError });
+      // 内置源回落链：主源失败后逐个尝试其余内置源（已在盘上的文件按盘
+      // 跳过，换源不做重复工作）。全部失败时合并各源的错误详情上抛。
+      const alternates = BUILTIN_MODEL_ENDPOINTS.filter((e) => e !== primary);
+      const attempts: string[] = [
+        `${primary} → ${String((primaryError as any)?.message || primaryError).slice(0, 220)}`,
+      ];
+      for (const alternate of alternates) {
+        safeDebug(
+          `[z-search] ModelDownloadManager: download via previous endpoint failed, trying ${alternate}: ${primaryError}`,
+        );
+        try {
+          await runFileLoop(id, files, onProgress, alternate);
+          rememberDetectedEndpoint(alternate);
+          return;
+        } catch (alternateError) {
+          attempts.push(
+            `${alternate} → ${String((alternateError as any)?.message || alternateError).slice(0, 220)}`,
+          );
+        }
       }
+      throw new Error(attempts.join("；"), { cause: primaryError });
     }
   })();
 
   inFlight.set(id, task);
   try {
     await task;
+    // 新下载完成 → 记录真实维度（未知模型此前盲按 384 处理，见
+    // refreshModelDimension 注释）。fire-and-forget，失败不影响下载结果。
+    void refreshModelDimension(id);
   } catch (e) {
     lastFailureAt = Date.now();
     lastFailureModel = id;

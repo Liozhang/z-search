@@ -18,6 +18,7 @@ import { getPrefDynamic } from "../../utils/prefs";
 import * as quotaStore from "./MinerUQuotaStore";
 import { safeDebug } from "../../utils/logger";
 import { getString } from "../../utils/locale";
+import { withTimeout } from "../../utils/abortSignal";
 
 /** Infrastructure error — auth/network/timeout/quota. Triggers fallback. */
 export class MinerUInfraError extends Error {
@@ -303,13 +304,13 @@ async function parseLocal(
   onProgress(getString("pdf-mineru-parsing-local"));
   // L-27: the cloud path polls with a 5-minute ceiling and the health check
   // times out in 5s — the local fetch was the only unbounded wait. A hung
-  // local service would leave the request pending forever. AbortSignal.any
-  // preserves the caller's cancellation signal.
+  // local service would leave the request pending forever. The caller's
+  // cancellation signal and the timeout are merged by the sandbox-safe shim —
+  // this site previously bare-called AbortSignal.timeout/.any, the same
+  // pattern that crashed the translation engines in the Zotero 10 sandbox
+  // (2026-10-11 audit).
   const LOCAL_PARSE_TIMEOUT_MS = 5 * 60 * 1000;
-  const timeoutSignal = AbortSignal.timeout(LOCAL_PARSE_TIMEOUT_MS);
-  const combinedSignal = signal
-    ? AbortSignal.any([signal, timeoutSignal])
-    : timeoutSignal;
+  const combinedSignal = withTimeout(signal, LOCAL_PARSE_TIMEOUT_MS);
   const resp = await fetch(`${base}/file_parse`, {
     method: "POST",
     body: formData,

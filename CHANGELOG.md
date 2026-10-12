@@ -5,6 +5,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.5.3] - 2026-10-12
+
+### Added
+
+- **ModelScope joins the built-in download mirrors for local embedding
+  models.** Downloads probe HuggingFace, the CN mirror and ModelScope and
+  fall back automatically; every downloaded file is content-validated (an
+  HTML error page served with status 200 no longer lands in the model
+  directory), and each model's true vector dimension is recorded from its
+  `config.json` instead of assuming 384 — custom 768/1024-dimension models
+  no longer break the vector index with a dimension mismatch. A model
+  directory poisoned by the old download path is detected (its
+  `config.json` no longer parses) and re-downloaded automatically.
+
+### Fixed
+
+- **Concurrent imports no longer land in the wrong library.** The save
+  target (library/collection) was held in shared singleton state, so two
+  imports started in quick succession could overwrite each other's target
+  and file items under the wrong library. The target now travels with each
+  import call. The main-window fallback also validates that the selected
+  object is a collection and resolves its owning library, so a
+  group-library collection no longer pairs with a default save into
+  My Library.
+- **Duplicate items from DOI case variants.** DOIs are case-insensitive,
+  but the in-library pre-check, the "already in library" marking and the
+  search-result dedup compared them case-sensitively, and a batch holding
+  the same DOI twice created two items. All comparison keys are lowercased
+  now and a batch deduplicates itself before importing.
+- **Import failures report the real reason.** Item creation swallowed
+  every exception into a generic "Failed to create item"; the underlying
+  message now reaches the result card. An item the translator already
+  created but failed to add to a collection is reported as the existing
+  item instead of a failure, so retrying no longer creates a duplicate.
+  A failed metadata extraction is no longer cached for five minutes, so
+  retrying after a transient network error actually retries. The ISBN
+  fallback previously routed to a URL parser that only understands
+  DOI/arXiv links and could never succeed; it now queries translators with
+  the ISBN directly.
+- **Deleting an item now cleans up its search index.** The plugin never
+  registered Zotero's item-delete notifier, so full-text chunks, their
+  full-text-index rows and embedding vectors stayed behind forever and
+  deleted papers kept returning in semantic search as ghost results with
+  missing titles. A delete observer now cleans chunks and vectors, startup
+  runs an orphan sweep (covering sync restores and cascaded attachment
+  deletions), and search results skip items that no longer exist or sit in
+  the trash.
+- **Rebuilding after switching embedding models no longer stalls.** The
+  full-text build skipped itself whenever Zotero's full-text version was
+  unchanged, and switching models (which deletes the old model's chunks)
+  did not reopen that gate — the new model's index could never be built
+  and vector search kept reporting "not indexed". Deleting a model's
+  chunks now resets the guard, and a build that finished with errors no
+  longer writes it either, so temporarily failed PDFs are retried on the
+  next build instead of being skipped forever.
+- **Edited items are re-embedded.** The metadata-vector build skipped
+  anything already embedded, so title/abstract edits never reached the
+  index and edited notes kept matching by their old text. The build now
+  compares stored search texts and re-embeds what changed.
+- **Switching models at runtime no longer breaks vector search until
+  restart.** The in-memory vector index was loaded once at startup and
+  never re-checked against the configured model; after a switch it served
+  the previous model's vectors, failing with dimension mismatches or
+  partial recall. Search now detects the mismatch and reloads the index.
+- **Trash is excluded from counts and note similarity.** The "unembedded
+  N items" counter never reached zero while trashed items lacked vectors,
+  and similar-note search matched notes sitting in the trash.
+- **Pre-aborted cancel signals are respected.** The timeout/cancel signal
+  bridge only listened for the abort transition, so a signal already
+  aborted on entry silently lost its cancel and the request ran to the
+  full timeout.
+- **Storage and startup robustness.** The one-time external-database
+  migration ran before the target tables existed and silently did nothing
+  on the first upgrade launch; core-store initialization failures were
+  swallowed entirely (first symptom: a cryptic "no such table" at search
+  time) and now log a warning; the AI cache is flushed on quit (previously
+  up to five minutes of entries were lost on every exit) and written
+  atomically, so a crash no longer discards the whole cache; the JCR/CASS
+  import gate compared "latest year equals expected" and would re-import
+  whole datasets on every start once any newer year existed.
+- **The Bealls list imports completely after a partial failure.** The
+  "import only when all three tables are empty" gate let one partial
+  import (a transaction timeout that only landed the smallest table) block
+  re-imports forever. Segments are now re-imported per table, the
+  clear-and-refill runs in a single transaction, and journal abbreviations
+  (previously dropped at import) are persisted so abbreviation matching
+  works.
+- **Journal dataset import failures surface a banner.** When a bundled
+  dataset failed to import at startup, the journal page silently showed
+  "no data"; a dismissible banner now explains the failure.
+- **MinerU parsing and translation engines use the sandbox-safe timeout
+  shim** throughout — Zotero 10's sandbox does not expose
+  `AbortSignal.timeout`, and bare calls failed instantly.
+
 ## [1.5.2] - 2026-10-10
 
 ### Fixed

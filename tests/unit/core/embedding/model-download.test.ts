@@ -71,6 +71,19 @@ describe("buildModelFileUrl", () => {
       "https://hf-mirror.com/Xenova/multilingual-e5-small/resolve/main/onnx/model_quantized.onnx",
     );
   });
+
+  it("modelscope.cn 走 /models/{id}/resolve/master 布局", async () => {
+    const { buildModelFileUrl } = await importManager();
+    expect(
+      buildModelFileUrl(
+        "https://www.modelscope.cn",
+        "Xenova/multilingual-e5-small",
+        "onnx/model_quantized.onnx",
+      ),
+    ).toBe(
+      "https://www.modelscope.cn/models/Xenova/multilingual-e5-small/resolve/master/onnx/model_quantized.onnx",
+    );
+  });
 });
 
 describe("defaultModelEndpointFor（区域默认源）", () => {
@@ -251,6 +264,39 @@ describe("resolveModelEndpointAsync（覆盖 > 检测缓存 > 现场探测 > 区
     ).toBe("https://hf-mirror.com");
     expect(h.prefs.get(PREF)).toBeUndefined();
   });
+
+  it("三个内置源都在探测之列：仅 modelscope 可达时被选中并写入缓存", async () => {
+    mockHttp({
+      "huggingface.co": () => {
+        throw new Error("timed out");
+      },
+      "hf-mirror.com": () => {
+        throw new Error("connection refused");
+      },
+      "modelscope.cn": () => ({ status: 200, response: "{}" }),
+    });
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://www.modelscope.cn");
+    expect(JSON.parse(h.prefs.get(PREF)).endpoint).toBe(
+      "https://www.modelscope.cn",
+    );
+  });
+
+  it("检测缓存接受 modelscope 端点（白名单覆盖三源）", async () => {
+    const httpSpy = vi.fn();
+    (globalThis as any).Zotero.HTTP = { request: httpSpy };
+    h.prefs.set(
+      PREF,
+      JSON.stringify({ endpoint: "https://www.modelscope.cn", at: Date.now() }),
+    );
+    const { resolveModelEndpointAsync } = await importManager();
+    expect(
+      await resolveModelEndpointAsync("Xenova/multilingual-e5-small"),
+    ).toBe("https://www.modelscope.cn");
+    expect(httpSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("downloadModel（端点回落）", () => {
@@ -278,13 +324,18 @@ describe("downloadModel（端点回落）", () => {
   it("选中端点文件下载失败 → 自动回落另一内置源并完成下载", async () => {
     mockDisk();
     const requestedHosts: string[] = [];
+    // .json 文件必须回合法 JSON（内容校验会拒绝垃圾字节），.onnx 回二进制。
+    const okBody = (url: string) =>
+      url.endsWith(".json")
+        ? new TextEncoder().encode('{"ok":true}').buffer
+        : new Uint8Array([0x08, 0x01]).buffer;
     (globalThis as any).Zotero.HTTP = {
       request: async (_method: string, url: string) => {
         requestedHosts.push(url);
         if (url.includes("hf-mirror.com")) {
           throw new Error("mirror broken");
         }
-        return { status: 200, response: new Uint8Array([1]).buffer };
+        return { status: 200, response: okBody(url) };
       },
     };
     h.prefs.set("extensions.zotero.zsearch.region", "cn");
@@ -323,5 +374,145 @@ describe("downloadModel（端点回落）", () => {
     expect(requestedHosts.every((u) => u.includes("hf.example.com"))).toBe(
       true,
     );
+  });
+
+  it("回落链：主源与第一回落都失败 → 继续向第三内置源（modelscope）下载", async () => {
+    mockDisk();
+    const requestedHosts: string[] = [];
+    // .json 文件必须回合法 JSON（内容校验会拒绝垃圾字节），.onnx 回二进制。
+    const okBody = (url: string) =>
+      url.endsWith(".json")
+        ? new TextEncoder().encode('{"ok":true}').buffer
+        : new Uint8Array([0x08, 0x01]).buffer;
+    (globalThis as any).Zotero.HTTP = {
+      request: async (_method: string, url: string) => {
+        requestedHosts.push(url);
+        if (!url.includes("modelscope.cn")) {
+          throw new Error("down");
+        }
+        return { status: 200, response: okBody(url) };
+      },
+    };
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    // 预置新鲜检测缓存指向官方：主端点官方（失败），回落链 hf-mirror → modelscope。
+    h.prefs.set(
+      PREF,
+      JSON.stringify({ endpoint: "https://huggingface.co", at: Date.now() }),
+    );
+    const { downloadModel } = await importManager();
+    await downloadModel("Xenova/multilingual-e5-small");
+    expect(requestedHosts.some((u) => u.includes("huggingface.co"))).toBe(true);
+    expect(requestedHosts.some((u) => u.includes("hf-mirror.com"))).toBe(true);
+    expect(
+      requestedHosts.some((u) =>
+        u.includes(
+          "modelscope.cn/models/Xenova/multilingual-e5-small/resolve/master/",
+        ),
+      ),
+    ).toBe(true);
+    // 回落成功后检测缓存翻转到成功的端点。
+    expect(JSON.parse(h.prefs.get(PREF)).endpoint).toBe(
+      "https://www.modelscope.cn",
+    );
+  });
+
+  it("全部内置源失败 → 错误信息合并三个源的详情", async () => {
+    mockDisk();
+    (globalThis as any).Zotero.HTTP = {
+      request: async (_method: string, url: string) => {
+        throw new Error(`down: ${new URL(url).host}`);
+      },
+    };
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    h.prefs.set(
+      PREF,
+      JSON.stringify({ endpoint: "https://huggingface.co", at: Date.now() }),
+    );
+    const { downloadModel } = await importManager();
+    const error = await downloadModel("Xenova/multilingual-e5-small").catch(
+      (e: Error) => e,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain("huggingface.co");
+    expect(error.message).toContain("hf-mirror.com");
+    expect(error.message).toContain("modelscope.cn");
+  });
+});
+
+describe("validateModelFileContent（下载内容校验）", () => {
+  it("JSON 文件必须整体可解析", async () => {
+    const { validateModelFileContent } = await importManager();
+    expect(
+      validateModelFileContent(
+        "config.json",
+        new TextEncoder().encode('{"hidden_size": 384}'),
+      ),
+    ).toBeNull();
+    expect(
+      validateModelFileContent(
+        "config.json",
+        new TextEncoder().encode("<html>502 Bad Gateway</html>"),
+      ),
+    ).toMatch(/HTML error page/);
+  });
+
+  it("二进制文件以「<」开头按错误页拒绝，正常 ONNX 放行", async () => {
+    const { validateModelFileContent } = await importManager();
+    const html = new TextEncoder().encode("\n\n  <!DOCTYPE html>");
+    expect(validateModelFileContent("onnx/model_quantized.onnx", html)).toMatch(
+      /HTML error page/,
+    );
+    // ONNX protobuf 首字节 0x08，JSON 首字节 {（0x7b）——都不该被误伤
+    expect(
+      validateModelFileContent(
+        "onnx/model_quantized.onnx",
+        new Uint8Array([0x08, 0x01, 0x12, 0x00]),
+      ),
+    ).toBeNull();
+  });
+
+  it("下载返回 200 + HTML 错误页 → 三源全拒且不写盘", async () => {
+    // 无盘环境：所有文件视为未下载，写盘只记录不落 IO。
+    (globalThis as any).PathUtils = {
+      join: (...segs: string[]) => segs.join("/"),
+    };
+    (globalThis as any).Zotero.DataDirectory = { dir: "/data" };
+    const written: string[] = [];
+    (globalThis as any).IOUtils = {
+      stat: async () => {
+        throw new Error("not found");
+      },
+      makeDirectory: async () => {},
+      write: async (p: string) => {
+        written.push(p);
+      },
+    };
+    (globalThis as any).Zotero.HTTP = {
+      request: async () => ({
+        status: 200,
+        response: new TextEncoder().encode("<html>blocked</html>").buffer,
+      }),
+    };
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    h.prefs.set(
+      "extensions.zotero.zsearch.embedding.local.detectedEndpoint",
+      JSON.stringify({ endpoint: "https://huggingface.co", at: Date.now() }),
+    );
+    const { downloadModel } = await importManager();
+    await expect(downloadModel("Xenova/multilingual-e5-small")).rejects.toThrow(
+      /HTML error page/,
+    );
+    expect(written).toHaveLength(0);
+  });
+});
+
+describe("extractModelDimension（config.json 维度提取）", () => {
+  it("hidden_size / d_model 均可提取，非法值返回 null", async () => {
+    const { extractModelDimension } = await importManager();
+    expect(extractModelDimension({ hidden_size: 384 })).toBe(384);
+    expect(extractModelDimension({ d_model: 768.4 })).toBe(768);
+    expect(extractModelDimension({})).toBeNull();
+    expect(extractModelDimension({ hidden_size: -1 })).toBeNull();
+    expect(extractModelDimension({ hidden_size: "384" })).toBeNull();
   });
 });

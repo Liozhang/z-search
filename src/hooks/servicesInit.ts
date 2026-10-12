@@ -58,9 +58,42 @@ export async function servicesInit(): Promise<void> {
     TokenUsageStore.initialize(),
     AICache.initialize(),
   ];
-  await Promise.allSettled(phase1);
+  const phase1Results = await Promise.allSettled(phase1);
+  // 核心存储初始化失败不允许静默：EmbeddingStore/PdfChunkStore 初始化内部
+  // 刻意 catch→log→rethrow，rejection 落到这里若无人消费，启动照常、首个
+  // 症状是搜索期晦涩的「no such table」。至少落到 warn 日志。
+  for (const r of phase1Results) {
+    if (r.status === "rejected") {
+      warn("startup.core_store_failed", { error: String(r.reason) });
+    }
+  }
+
+  // 条目删除 → 索引清理的观察者（此前清理 API 全部无人调用，删除条目的
+  // 分块与向量永久残留并在搜索里复活）。注册幂等。
+  try {
+    const { registerLibraryIndexNotifier, removeOrphanIndexRows } =
+      await import("../modules/libraryIndexNotifier");
+    registerLibraryIndexNotifier();
+    // 孤儿清理（同步还原、附件级联删除等绕过通知器的场景）：启动后异步
+    // 跑一次，不阻塞引导。
+    void removeOrphanIndexRows();
+  } catch (e) {
+    safeDebug("[z-search] index cleanup notifier register failed: " + e);
+  }
 
   // ── Phase 2: 期刊数据 schema + 首次数据导入 ───────────────────────
+  // 失败旗助手必须在 Phase 2 外层 try 之外声明：外层 catch（模块动态导入
+  // 失败等）此前只写日志不置旗——横幅盲区，用户在期刊页只见「无数据」而
+  // 无任何提示（2026-10-11 审计）。
+  let journalDataFailed = false;
+  const markJournalDataFailure = () => {
+    journalDataFailed = true;
+    try {
+      setPrefDynamic("journalData.importFailed", true);
+    } catch {
+      /* 旗写失败不放大错误 */
+    }
+  };
   try {
     const [
       { default: JCRSchema },
@@ -70,7 +103,7 @@ export async function servicesInit(): Promise<void> {
       { default: WarningListSchema },
       { default: WarningListStore },
       { default: BeallsListSchema },
-      { default: BeallsListStore },
+      { default: BeallsListStore, emptyBeallsSegments },
       { default: OpenAlexJournalCacheSchema },
       { default: OpenAlexJournalCacheStore },
     ] = await Promise.all([
@@ -98,21 +131,13 @@ export async function servicesInit(): Promise<void> {
     // 「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，可关闭；
     // 本轮全部 stage 成功即复位（否则一次失败后即使重启导入成功，横幅
     // 也会每次打开都挂起，与横幅自身文案相悖）。
-    let journalDataFailed = false;
-    const markJournalDataFailure = () => {
-      journalDataFailed = true;
-      try {
-        setPrefDynamic("journalData.importFailed", true);
-      } catch {
-        /* 旗写失败不放大错误 */
-      }
-    };
 
     // 1. JCR data — check the DB year BEFORE reading the large JSON.
     try {
       const JCR_EXPECTED_YEAR = 2024; // matches jcr-2024.json's embedded `year`
-      const latestYear = await JCRStore.getLatestYear();
-      if (latestYear !== JCR_EXPECTED_YEAR) {
+      // 门控谓词是「期望年份存在」而非「最大年份恰等于期望」：库里一旦
+      // 出现更新年份（未来版本导入 2025），不等式会让每次启动都全量重导。
+      if (!(await JCRStore.hasData(JCR_EXPECTED_YEAR))) {
         const jcr = await loadDataFile<{
           year: number;
           data: (string | number | null)[][];
@@ -156,8 +181,8 @@ export async function servicesInit(): Promise<void> {
     // 2. CASS quartile data
     try {
       const CASS_EXPECTED_YEAR = 2025; // matches cass-2025.json's embedded `year`
-      const latestYear = await CASSStore.getLatestYear();
-      if (latestYear !== CASS_EXPECTED_YEAR) {
+      // 门控谓词同 JCR：按期望年份判存，不比最大年份。
+      if (!(await CASSStore.hasData(CASS_EXPECTED_YEAR))) {
         const cass = await loadDataFile<{
           year: number;
           data: (string | number | null)[][];
@@ -229,12 +254,12 @@ export async function servicesInit(): Promise<void> {
 
     // 4. Beall's list data (predatory journals/publishers/misleading metrics)
     try {
+      // 按表补导（2026-10-11）：此前「三表全零才导入」——一次部分导入之后
+      // （并发事务超时只落下最小的 metrics 表），非空表把补导条件永久挡死，
+      // 实机出现 metrics=53 而 journals/publishers 恒空。哪张空就补哪张。
       const counts = await BeallsListStore.getCounts();
-      if (
-        counts.journals === 0 &&
-        counts.publishers === 0 &&
-        counts.metrics === 0
-      ) {
+      const missing = emptyBeallsSegments(counts);
+      if (missing.length > 0) {
         const bealls = await loadDataFile<{
           standalone: (string | null)[][];
           publishers: (string | null)[][];
@@ -244,6 +269,9 @@ export async function servicesInit(): Promise<void> {
         const standalone = bealls.standalone.map((t) => ({
           journal_name: t[0],
           journal_url: t[1],
+          // 第三列是期刊缩写——查询层 L3 缩写匹配从 extra 读（见
+          // BeallsListStore.ensureIndex），此前导入时被丢弃，缩写层形同虚设。
+          extra: t[2] ?? null,
         }));
         const publishers = bealls.publishers.map((t) => ({
           publisher_name: t[0],
@@ -259,13 +287,13 @@ export async function servicesInit(): Promise<void> {
           metric_url: t[1],
         }));
         const imported = await BeallsListStore.importRows({
-          standalone,
-          publishers,
-          hijacked,
-          misleading,
+          standalone: missing.includes("journals") ? standalone : undefined,
+          hijacked: missing.includes("journals") ? hijacked : undefined,
+          publishers: missing.includes("publishers") ? publishers : undefined,
+          misleading: missing.includes("metrics") ? misleading : undefined,
         });
         safeDebug(
-          `[z-search] Bealls data imported: ${imported.journals} journals, ${imported.publishers} publishers, ${imported.metrics} misleading metrics`,
+          `[z-search] Bealls data imported: ${imported.journals} journals, ${imported.publishers} publishers, ${imported.metrics} misleading metrics (empty segments repaired: ${missing.join("+")})`,
         );
       }
     } catch (e) {
@@ -282,6 +310,9 @@ export async function servicesInit(): Promise<void> {
       }
     }
   } catch (e) {
+    // 外层失败（数据模块动态导入失败等）同样置旗——横幅必须覆盖一切
+    // 「内置数据集缺席」的形态，而不是只覆盖四个导入 stage。
+    markJournalDataFailure();
     warn("startup.journal_data_failed", { error: String(e) });
   }
 

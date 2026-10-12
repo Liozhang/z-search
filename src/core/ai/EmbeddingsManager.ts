@@ -16,7 +16,7 @@ import { cosineSimilarity } from "ai";
 import { getPrefDynamic } from "../../utils/prefs";
 import { getString } from "../../utils/locale";
 import {
-  LOCAL_MODEL_DIMENSIONS,
+  getModelDimension,
   DEFAULT_LOCAL_MODEL,
 } from "../embedding/EmbeddingProvider";
 import type { EmbedMode } from "../embedding/EmbeddingProvider";
@@ -258,7 +258,7 @@ export class EmbeddingsManager {
         DEFAULT_LOCAL_MODEL;
       return {
         name: localName,
-        dimension: LOCAL_MODEL_DIMENSIONS[localName] ?? 384,
+        dimension: getModelDimension(localName),
       };
     }
     // API mode: an embedding model MUST be assigned. Fail loudly with a

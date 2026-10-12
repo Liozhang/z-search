@@ -69,6 +69,8 @@ class AICacheManager {
   /** Monotonic counter bumped by clear(); lets an in-flight save detect that its
    *  data was invalidated mid-write and clean up the stale file. */
   private writeGeneration = 0;
+  /** 最近一次成功落盘的写入代数——陈旧写入的删除只认这个值。 */
+  private lastPersistedGeneration = 0;
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -374,10 +376,34 @@ class AICacheManager {
         cacheObj[key] = serializable;
       }
       const cacheJSON = JSON.stringify(cacheObj);
-      await IOUtils.writeUTF8(this.cacheFilePath, cacheJSON);
+      // 原子替换：先写临时文件再 move。直写目标文件时进程崩溃会留下截断
+      // 的 JSON，下次启动整个缓存被丢弃。
+      const tmpPath = this.cacheFilePath + ".tmp";
+      await IOUtils.writeUTF8(tmpPath, cacheJSON);
+      try {
+        await IOUtils.move(tmpPath, this.cacheFilePath);
+      } catch (e) {
+        // 部分宿主（旧 IOUtils）无 move：回退直写，宁可回到旧风险面也不
+        // 让保存整段失败。
+        safeDebug(
+          "[z-search] AICache: atomic move unavailable, falling back: " + e,
+        );
+        await IOUtils.writeUTF8(this.cacheFilePath, cacheJSON);
+        try {
+          await IOUtils.remove(tmpPath);
+        } catch {
+          /* 临时文件清理失败无害 */
+        }
+      }
+      this.lastPersistedGeneration = gen;
       // If clear() bumped the generation during the async write, the file we
       // just wrote contains stale data — remove it to prevent "resurrection".
-      if (gen !== this.writeGeneration) {
+      // 仅当本次写入仍是最近一次完成的写入时才删：clear() 之后可能已有
+      // 新一轮保存写完新文件，无条件 remove 会把新文件一并删掉。
+      if (
+        gen !== this.writeGeneration &&
+        this.lastPersistedGeneration === gen
+      ) {
         try {
           await IOUtils.remove(this.cacheFilePath);
         } catch (e) {

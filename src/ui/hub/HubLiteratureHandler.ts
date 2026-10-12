@@ -85,7 +85,9 @@ async function markInLibrary(articles: any[]): Promise<void> {
   try {
     const dois = [
       ...new Set(
-        articles.map((a) => normalizeDoi(a?.doi)).filter(Boolean) as string[],
+        articles
+          .map((a) => normalizeDoi(a?.doi).toLowerCase())
+          .filter(Boolean) as string[],
       ),
     ];
     if (dois.length === 0) return;
@@ -107,7 +109,10 @@ async function markInLibrary(articles: any[]): Promise<void> {
       );
     }
     for (const a of articles) {
-      if (normalizeDoi(a?.doi) && found.has(normalizeDoi(a.doi)!)) {
+      if (
+        normalizeDoi(a?.doi) &&
+        found.has(normalizeDoi(a.doi)!.toLowerCase())
+      ) {
         a.inLibrary = true;
       }
     }
@@ -539,7 +544,15 @@ export async function handleLiteratureRequest(
             const pane = Zotero.getActiveZoteroPane?.();
             const selected = pane?.getSelectedCollectionID?.();
             if (typeof selected === "number" && selected > 0) {
-              collectionId = selected;
+              // 校验确为分类对象并解析其所属文库：分类 ID 与保存搜索等
+              // 对象共用 ID 空间，不校验可能命中不相干对象；只带分类不
+              // 带文库时 translate 会默认落 My Library，而该分类可能属
+              // 于群组库——跨库错配。
+              const col = Zotero.Collections.get(selected);
+              if (col && !col.deleted) {
+                collectionId = selected;
+                targetLibraryId = col.libraryID;
+              }
             }
           } catch (e) {
             safeDebug("[z-search] " + e);
@@ -597,17 +610,39 @@ export async function handleLiteratureRequest(
         }
 
         if (doiJobs.length > 0) {
+          // 批内去重：同批搜索结果可能混入同一 DOI（大小写变体/前缀差异）。
+          // DOI 不分大小写，比较键统一小写——否则同文两条都过预检、各建
+          // 一条重复条目。保留首次出现位次。
+          const doiKey = (d: string) => normalizeDoi(d).toLowerCase();
+          const seenInBatch = new Set<string>();
+          const dedupedJobs: typeof doiJobs = [];
+          for (const j of doiJobs) {
+            const key = doiKey(j.doi);
+            if (!key) continue;
+            if (seenInBatch.has(key)) {
+              importResults[j.idx] = {
+                success: false,
+                title: j.title,
+                error: "Duplicate entry in batch",
+                imported: false,
+              };
+              continue;
+            }
+            seenInBatch.add(key);
+            dedupedJobs.push(j);
+          }
+
           // DOI 幂等防重：core 侧 createItemFromMetadata 无存在性检查，
           // 前端超时重试/引文弹窗重复点击/批量混入已在库条目都会重复建条
           // 目。此处按归一化 DOI 预检（Zotero.Search 的 doi 条件走字段索引，
           // 与 markInLibrary 同机制），命中即回执既有条目、不再新建。
           const existingByDoi = new Map<string, number>();
           const IDMP_CONCURRENCY = 8;
-          for (let i = 0; i < doiJobs.length; i += IDMP_CONCURRENCY) {
-            const chunk = doiJobs.slice(i, i + IDMP_CONCURRENCY);
+          for (let i = 0; i < dedupedJobs.length; i += IDMP_CONCURRENCY) {
+            const chunk = dedupedJobs.slice(i, i + IDMP_CONCURRENCY);
             await Promise.all(
               chunk.map(async (j) => {
-                const doi = normalizeDoi(j.doi);
+                const doi = doiKey(j.doi);
                 if (!doi) return;
                 try {
                   const s = new Zotero.Search();
@@ -620,11 +655,11 @@ export async function handleLiteratureRequest(
               }),
             );
           }
-          const freshJobs = doiJobs.filter(
-            (j) => !existingByDoi.has(normalizeDoi(j.doi) ?? ""),
+          const freshJobs = dedupedJobs.filter(
+            (j) => !existingByDoi.has(doiKey(j.doi)),
           );
-          for (const j of doiJobs) {
-            const existingId = existingByDoi.get(normalizeDoi(j.doi) ?? "");
+          for (const j of dedupedJobs) {
+            const existingId = existingByDoi.get(doiKey(j.doi));
             if (existingId == null) continue;
             const item = Zotero.Items.get(existingId);
             importResults[j.idx] = {
@@ -638,7 +673,10 @@ export async function handleLiteratureRequest(
             try {
               const r = await doImportArticle({
                 identifiers: freshJobs.map((j) => j.doi),
-                type: payload.type,
+                // freshJobs 的标识符全部是 DOI，类型在此定死。不透传
+                // payload.type——未来若有调用方传 "title"，DOI 串会被
+                // 当标题再做一次文献检索，全部失败。
+                type: "doi",
                 collectionId,
                 libraryId: targetLibraryId,
               });

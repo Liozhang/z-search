@@ -136,6 +136,22 @@ export async function runFullLibraryBuild(
     // ── 阶段 1：条目元数据向量（快——每条一次嵌入，无 PDF 解析） ──
     const meta = await buildMetadataIndex(notify, isCancelled);
 
+    // 取消后不再进入阶段 2：buildFullLibraryIndex 内部也会立即停下，
+    // 但省一次候选枚举 + 全库条目枚举。仍要发 buildComplete——UI 靠它
+    // 退出「构建中」状态，漏发会永远转圈。
+    if (isCancelled()) {
+      notify("semantic.buildComplete", {
+        processed: meta.processed,
+        skipped: 0,
+        errors: meta.errors,
+        metadataProcessed: meta.processed,
+        failedList: "",
+        skips: [],
+        metadataFailed: null,
+      });
+      return;
+    }
+
     // ── 阶段 2：PDF 全文分块向量（慢——分块 + 逐块嵌入） ──
     const buildResult = await indexer.buildFullLibraryIndex(
       (p: { current: number; total: number }) => {

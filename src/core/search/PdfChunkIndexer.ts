@@ -482,8 +482,10 @@ class PdfChunkIndexerClass {
       shouldCancel,
     );
 
-    // 构建完整跑完（未被取消）才落版本戳：取消路径不写，下次可续跑/重建。
-    if (!shouldCancel?.()) {
+    // 构建完整跑完且零错误才落版本戳：取消不写（下次可续跑/重建）；
+    // 存在错误也不写——临时性失败（PDF 被占用、解析抖动）的条目要靠
+    // 下次构建重试，落了戳会被上方的 fast-skip 永久跳过。
+    if (!shouldCancel?.() && batchResult.errors === 0) {
       try {
         const currentVersion = await (
           Zotero as any

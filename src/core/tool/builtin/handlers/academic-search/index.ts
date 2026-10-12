@@ -110,13 +110,17 @@ async function importArticle(args: {
         type = "doi";
       }
 
-      // 保存目标（P2 批）：本批导入统一目标；用完即清，防串批
-      MetadataExtractor.setSaveTarget(
+      // 保存目标随 extract 参数逐次传递（不存单例状态：并发导入消息
+      // 会互相覆盖共享字段，条目落错文库）。
+      const saveTarget =
         args.libraryId != null || args.collectionId != null
           ? { libraryID: args.libraryId, collectionID: args.collectionId }
-          : null,
+          : null;
+      const metadata = await MetadataExtractor.extract(
+        type,
+        extractedId,
+        saveTarget,
       );
-      const metadata = await MetadataExtractor.extract(type, extractedId);
       if (!metadata.success) {
         results.push({
           identifier: id,
@@ -160,7 +164,6 @@ async function importArticle(args: {
     failed: results.filter((r) => !r.success).length,
     results,
   };
-  MetadataExtractor.setSaveTarget(null);
   return summary;
 }
 
@@ -462,8 +465,11 @@ function deduplicateArticles(articles: any[]): any[] {
     if (article.doi) {
       // DOI 归一化去重（审计 P1-7）：OpenAlex 主搜索回填 https://doi.org/
       // 全 URL，裸 toLowerCase 比较会让同文跨源各留一条，mergeArticleInfo
-      // 全部失效。normalizeDoi 剥 URL/doi: 前缀。
-      const key = normalizeDoi(article.doi) ?? article.doi.toLowerCase().trim();
+      // 全部失效。normalizeDoi 剥 URL/doi: 前缀；DOI 不分大小写，再统一
+      // 小写，否则同文不同大小写写法会各留一条。
+      const key =
+        normalizeDoi(article.doi).toLowerCase() ||
+        article.doi.toLowerCase().trim();
       if (!seen.has(key)) {
         seen.set(key, article);
         out.push(article);

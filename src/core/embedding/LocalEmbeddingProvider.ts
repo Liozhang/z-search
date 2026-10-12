@@ -23,10 +23,7 @@
  */
 
 import type { EmbeddingProvider, EmbedMode } from "./EmbeddingProvider";
-import {
-  LOCAL_MODEL_DIMENSIONS,
-  DEFAULT_LOCAL_MODEL,
-} from "./EmbeddingProvider";
+import { getModelDimension, DEFAULT_LOCAL_MODEL } from "./EmbeddingProvider";
 import { getPrefDynamic } from "../../utils/prefs";
 import { toErrorMessage } from "../../utils/error";
 import { EmbedFrameHost } from "./EmbedFrameHost";
@@ -42,7 +39,7 @@ class LocalEmbeddingProvider implements EmbeddingProvider {
   }
 
   get dimension(): number {
-    return LOCAL_MODEL_DIMENSIONS[this.name] ?? 384;
+    return getModelDimension(this.name);
   }
 
   // Model of the last successful embed — drives isReady(). The pipeline

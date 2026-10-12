@@ -50,14 +50,8 @@ class EmbeddingStore {
       // External connections inherit no busy_timeout — see TaskStore.init
       await conn.queryAsync("PRAGMA busy_timeout = 5000", []);
 
-      // One-time migration: rows written by older versions live in the
-      // user's MAIN zotero.sqlite. Copy into the external file, then drop
-      // the stray tables from the main DB (INSERT OR REPLACE keeps the
-      // migration idempotent across retries). Also carries claim vectors,
-      // whose table moved to this file for the same size reasons.
-      await migrateTableFromMainDb(conn, "zsearch_embeddings");
-      await migrateTableFromMainDb(conn, "zsearch_claim_embeddings");
-
+      // DDL 先行：迁移把行写入外部库的目标表，目标表不存在时整个迁移
+      // 必然空转（首次升级启动正是这种状态），杂散表要多背一个启动周期。
       await conn.executeTransaction(async () => {
         await conn.queryAsync(`
           CREATE TABLE IF NOT EXISTS zsearch_embeddings (
@@ -107,6 +101,15 @@ class EmbeddingStore {
           ["embeddings", 1],
         );
       });
+
+      // One-time migration: rows written by older versions live in the
+      // user's MAIN zotero.sqlite. Copy into the external file, then drop
+      // the stray tables from the main DB (INSERT OR REPLACE keeps the
+      // migration idempotent across retries). Also carries claim vectors,
+      // whose table moved to this file for the same size reasons.
+      // 位置在建表之后（原在之前）：迁移目标表必须先存在。
+      await migrateTableFromMainDb(conn, "zsearch_embeddings");
+      await migrateTableFromMainDb(conn, "zsearch_claim_embeddings");
 
       this.initialized = true;
     } catch (e) {
@@ -370,7 +373,47 @@ class EmbeddingStore {
       safeDebug(
         `[z-search] EmbeddingStore.deleteEmbeddingsByItemId failed for item ${itemId}: ${e}`,
       );
+      // 与 deleteEmbedding/clearAll 同口径上抛：清理方（条目删除监听）
+      // 需要知道失败，否则会误以为清理成功。
+      throw e;
     }
+  }
+
+  /**
+   * 删除 item_id 已不存在于 items 表的孤儿嵌入行。嵌入表在外部库，
+   * 无法跨库联表——按 ID 集合比对（同 getUnembeddedItemCount 的口径）。
+   * 供启动时的孤儿清理调用，幂等。
+   */
+  async deleteOrphanEmbeddings(): Promise<number> {
+    const rows = await this.dbConn().queryAsync(
+      `SELECT DISTINCT item_id FROM zsearch_embeddings`,
+    );
+    const ids = (rows || []).map((r: any) => Number(r.item_id));
+    if (ids.length === 0) return 0;
+
+    const alive = new Set<number>();
+    for (let i = 0; i < ids.length; i += SAFE_BATCH_SIZE) {
+      const chunk = ids.slice(i, i + SAFE_BATCH_SIZE);
+      const ph = chunk.map(() => "?").join(",");
+      const found = (await Zotero.DB.queryAsync(
+        `SELECT itemID FROM items WHERE itemID IN (${ph})`,
+        chunk,
+      )) as any[];
+      for (const r of found || []) alive.add(Number(r.itemID));
+    }
+
+    const orphanIds = ids.filter((id: number) => !alive.has(id));
+    if (orphanIds.length === 0) return 0;
+
+    for (let i = 0; i < orphanIds.length; i += SAFE_BATCH_SIZE) {
+      const chunk = orphanIds.slice(i, i + SAFE_BATCH_SIZE);
+      const ph = chunk.map(() => "?").join(",");
+      await this.dbConn().queryAsync(
+        `DELETE FROM zsearch_embeddings WHERE item_id IN (${ph})`,
+        chunk,
+      );
+    }
+    return orphanIds.length;
   }
 
   async clearAll(model?: string): Promise<void> {
@@ -422,8 +465,12 @@ class EmbeddingStore {
       // numbers itemTypeID from the alphabetically ordered schema.json
       // (3=attachment, 14=document, 28=note), so it counted every note and
       // attachment and dropped every document. See src/utils/zoteroSql.ts §面 B.
+      // 回收站条目一并排除：rebuildIndex 用 Zotero.Items.getAll（不含回收
+      // 站），计数不排除会让「待嵌入 N 条」永远清不掉。
       const totalRows = (await Zotero.DB.queryAsync(
-        `SELECT COUNT(*) as count FROM items i WHERE ${SQL_IS_REGULAR_ITEM}`,
+        `SELECT COUNT(*) as count FROM items i
+         WHERE ${SQL_IS_REGULAR_ITEM}
+           AND i.itemID NOT IN (SELECT itemID FROM deletedItems)`,
       )) as any[];
       const total = Number(totalRows?.[0]?.count ?? 0);
 
@@ -433,7 +480,10 @@ class EmbeddingStore {
         const chunk = embeddedIds.slice(i, i + SAFE_BATCH_SIZE);
         const ph = chunk.map(() => "?").join(",");
         const rows = (await Zotero.DB.queryAsync(
-          `SELECT COUNT(*) as count FROM items i WHERE ${SQL_IS_REGULAR_ITEM} AND i.itemID IN (${ph})`,
+          `SELECT COUNT(*) as count FROM items i
+           WHERE ${SQL_IS_REGULAR_ITEM}
+             AND i.itemID NOT IN (SELECT itemID FROM deletedItems)
+             AND i.itemID IN (${ph})`,
           chunk,
         )) as any[];
         embeddedInZotero += Number(rows?.[0]?.count ?? 0);
@@ -469,8 +519,29 @@ class EmbeddingStore {
   }
 
   /**
-   * Rebuild index for all items that don't have embeddings yet.
-   * Only processes items not already present in the embedding store.
+   * Get stored search texts for a model, keyed by item_id（不带向量 BLOB，
+   * 供构建期做内容变更比对）。
+   */
+  async getSearchTextMap(model: string): Promise<Map<number, string>> {
+    try {
+      const rows = await this.dbConn().queryAsync(
+        `SELECT item_id, search_text FROM zsearch_embeddings WHERE model = ?`,
+        [model],
+      );
+      const map = new Map<number, string>();
+      for (const row of rows || []) {
+        map.set(Number(row.item_id), row.search_text ?? "");
+      }
+      return map;
+    } catch (e) {
+      safeDebug(`[z-search] EmbeddingStore.getSearchTextMap failed: ${e}`);
+      throw e;
+    }
+  }
+
+  /**
+   * Rebuild index for all items that don't have embeddings yet, plus items
+   * whose search text changed since last embedding (title/abstract edits).
    *
    * Embeddings are computed in batches and written once per batch inside a
    * single transaction (instead of one transaction per item). ONNX inference
@@ -508,20 +579,11 @@ class EmbeddingStore {
       const batch = pending.splice(0, pending.length);
       try {
         await this.dbConn().executeTransaction(async () => {
-          // One bulk re-check: drop any items embedded since we started this batch.
-          const ids = batch.map((b) => b.itemId);
-          const alreadyEmbedded = new Set<number>();
-          for (let i = 0; i < ids.length; i += SAFE_BATCH_SIZE) {
-            const chunk = ids.slice(i, i + SAFE_BATCH_SIZE);
-            const ph = chunk.map(() => "?").join(",");
-            const rows = await this.dbConn().queryAsync(
-              `SELECT item_id FROM zsearch_embeddings WHERE model = ? AND item_id IN (${ph})`,
-              [model, ...chunk],
-            );
-            for (const r of rows || []) alreadyEmbedded.add(r.item_id);
-          }
           for (const b of batch) {
-            if (alreadyEmbedded.has(b.itemId)) continue;
+            // storeEmbedding 是 upsert（UNIQUE(item_id, model) 冲突时更新
+            // 向量与 search_text）。不做「已嵌入即跳过」的二次检查——重嵌
+            // 入场景（内容变更）本来就带着旧行来，必须覆盖；并发构建双写
+            // 同一内容也是无害的。
             await this.storeEmbedding(
               b.itemId,
               b.embedding,
@@ -552,11 +614,20 @@ class EmbeddingStore {
 
       // PDF 注释条目一并入库（对齐 All Search 覆盖面）：注释行让
       // 高亮文本与批注可被语义检索命中。
-      const toProcess = items.filter(
-        (item: any) =>
-          (item.isRegularItem() || item.isNote() || item.isAnnotation?.()) &&
-          !embeddedIDs.has(item.id),
-      );
+      // 增量口径是「内容」而非「存在」：已嵌入但检索文本已变的条目
+      // （标题/摘要被编辑）也要重嵌入，否则索引永远停留在旧内容上。
+      // 比对载体是入库时保存的 search_text，无需额外哈希列。
+      const storedTexts = await this.getSearchTextMap(model);
+      const currentTexts = new Map<number, string>();
+      const toProcess = items.filter((item: any) => {
+        if (!(item.isRegularItem() || item.isNote() || item.isAnnotation?.())) {
+          return false;
+        }
+        const text = createSearchTextFn(item);
+        currentTexts.set(item.id, text);
+        if (!embeddedIDs.has(item.id)) return true;
+        return (storedTexts.get(item.id) ?? "") !== text;
+      });
 
       const total = toProcess.length;
 
@@ -565,7 +636,8 @@ class EmbeddingStore {
         // 不应继续烧推理；已写入批次保留，下次构建按 embeddedIDs 续跑。
         if (shouldCancel?.()) break;
         try {
-          const searchText = createSearchTextFn(item);
+          const searchText =
+            currentTexts.get(item.id) ?? createSearchTextFn(item);
           // 空检索文本：无内容可嵌入，按已处理计（不是错误），保进度守恒。
           if (!searchText.trim()) {
             processed++;

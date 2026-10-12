@@ -8,6 +8,8 @@
  * based on the `embedding.mode` preference (CLAUDE.md: no provider ref caching).
  */
 
+import { getPrefDynamic } from "../../utils/prefs";
+
 export interface EmbeddingProvider {
   /** Provider identifier (e.g., "text-embedding-3-small", "Xenova/all-MiniLM-L6-v2") */
   readonly name: string;
@@ -51,7 +53,9 @@ export type EmbedMode = "query" | "passage";
  * LocalEmbeddingProvider (runtime) and EmbeddingsManager.getModelInfo
  * (sync dimension lookup without loading the model).
  *
- * Add new local models here when adding them to ModelDownloadManager.AVAILABLE_MODELS.
+ * Custom models outside this table get their real dimension recorded into
+ * the `embedding.local.dimensions` pref map by ModelDownloadManager after
+ * first download/verification (read from the model's config.json).
  */
 export const LOCAL_MODEL_DIMENSIONS: Record<string, number> = {
   "Xenova/multilingual-e5-small": 384,
@@ -59,6 +63,31 @@ export const LOCAL_MODEL_DIMENSIONS: Record<string, number> = {
   "Xenova/paraphrase-multilingual-mpnet-base-v2": 768,
   "Xenova/multilingual-e5-large": 1024,
 };
+
+/** 未知模型的兜底维度——仅在静态表与已记录映射都未命中时使用。 */
+export const FALLBACK_MODEL_DIMENSION = 384;
+
+/**
+ * 模型维度三级回退：内置表 → 已记录映射（ModelDownloadManager 从
+ * config.json 读到的 hidden_size）→ 兜底 384。同步读——getModelInfo 与
+ * provider.dimension 都是热路径同步消费方；映射由下载/校验路径异步预写。
+ */
+export function getModelDimension(modelName: string): number {
+  const known = LOCAL_MODEL_DIMENSIONS[modelName];
+  if (known) return known;
+  try {
+    const map = JSON.parse(
+      String(getPrefDynamic("embedding.local.dimensions") ?? "{}"),
+    );
+    const dim = map?.[modelName];
+    if (typeof dim === "number" && Number.isFinite(dim) && dim > 0) {
+      return Math.round(dim);
+    }
+  } catch {
+    /* 未记录或 pref 损坏 → 兜底 */
+  }
+  return FALLBACK_MODEL_DIMENSION;
+}
 
 /**
  * Default local model. multilingual-e5-small gives 384-dim (same schema as the

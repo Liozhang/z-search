@@ -8,12 +8,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ADDON_ID = "zsearch@z-search.dev";
 const BUILD_DIR = ".scaffold/build/addon";
+// profile/exe 支持环境变量覆盖（2026-10-11）：此前三处机器特定路径全部写死，
+// 换机器或重建 profile 后部署会静默落到错误位置。ZOTERO_PLUGIN_ZOTERO_BIN_PATH
+// 与 test:zotero 脚本共用同一个变量名。
 const ZOTERO_PROFILE =
+  process.env.ZSEARCH_DEV_PROFILE ||
   process.env.APPDATA + "/Zotero/Zotero/Profiles/lel4974k.default";
 const TARGET_DIR = path.join(ZOTERO_PROFILE, "extensions", ADDON_ID);
 const ZOTERO_LOCAL = process.env.LOCALAPPDATA + "/Zotero/Zotero";
-const LOCAL_PROFILE = path.join(ZOTERO_LOCAL, "Profiles", "lel4974k.default");
-const ZOTERO_EXE = "D:/zotero10/zotero.exe";
+const LOCAL_PROFILE = path.join(
+  ZOTERO_LOCAL,
+  "Profiles",
+  path.basename(ZOTERO_PROFILE),
+);
+const ZOTERO_EXE =
+  process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH || "D:/zotero10/zotero.exe";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -61,6 +70,27 @@ async function deploy() {
     console.error("    → run the full build first (npm run build)");
     process.exit(1);
   }
+
+  // 1.5 Version guard（2026-10-11）：构建目录的 manifest 与 package.json 版本
+  // 不一致 = 构建目录是旧构建的混合残渣（实机事故：部署目录 manifest 顶着
+  // 1.4.1、跑的却是更新的代码，扩展管理器版本号失真，排障时被误导）。
+  // 版本一致不能证明构建新鲜，但版本不一致一定说明需要重新全量构建。
+  const pkgVersion = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"),
+  ).version;
+  const buildVersion = JSON.parse(
+    fs.readFileSync(path.join(BUILD_DIR, "manifest.json"), "utf8"),
+  ).version;
+  if (buildVersion !== pkgVersion) {
+    console.error(
+      `❌ deploy aborted: stale build — manifest version ${buildVersion} ≠ package.json ${pkgVersion}.`,
+    );
+    console.error(
+      "    → the build dir mixes old and new artifacts; run the full build (npm run build).",
+    );
+    process.exit(1);
+  }
+  console.log(`  ✓ Build version matches package.json (${pkgVersion})`);
 
   // 2. Size guard: reactBundle over 10MB means a dev artifact shipped.
   const bundleSize = fs.statSync(

@@ -1,4 +1,5 @@
 import { safeDebug } from "../utils/logger";
+import AICache from "../core/cache/AICache";
 
 /**
  * onShutdown — z-search 关闭序列。
@@ -12,6 +13,23 @@ async function onShutdown(): Promise<void> {
     hubWindowManager.closeAll();
   } catch (e) {
     safeDebug("[z-search] hubWindowManager.closeAll error: " + e);
+  }
+
+  // 条目删除观察者注销：shutdown 后 observer 闭包不得再触库操作。
+  try {
+    const { unregisterLibraryIndexNotifier } =
+      await import("../modules/libraryIndexNotifier");
+    unregisterLibraryIndexNotifier();
+  } catch (e) {
+    safeDebug("[z-search] unregisterLibraryIndexNotifier error: " + e);
+  }
+
+  // AI 缓存立即落盘：退出前最后一次持久化。此前 flushNow 是死代码，
+  // 缓存只靠五分钟周期定时器写盘，每次退出丢最近一个周期的写入。
+  try {
+    await AICache.flushNow();
+  } catch (e) {
+    safeDebug("[z-search] AICache.flushNow error: " + e);
   }
 
   _globalThis.addon.data.alive = false;

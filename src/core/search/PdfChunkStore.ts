@@ -78,6 +78,8 @@ class PdfChunkStoreClass {
   private initialized = false;
   private dimension = 1536;
   private index: VectorIndex | null = null;
+  /** 内存索引当前装入的模型名（loadIndexFromDB 时记录），用于失配检测。 */
+  private indexModelName = "";
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -363,11 +365,28 @@ class PdfChunkStoreClass {
       );
     }
     if (!this.index) {
-      // No data has been stored/loaded yet — return an empty index with
-      // default dimension so search returns [] instead of throwing.
-      this.index = new InMemoryMatrixIndex(this.dimension);
+      // No data has been stored/loaded yet — return an empty index so
+      // search returns [] instead of throwing. loadIndexFromDB 的清空态
+      // 会把 dimension 归零，而构造器要求正数——空索引的 search 在
+      // size 检查处直接返回 []，维度永不参与比较，1 维占位即可。
+      this.index = new InMemoryMatrixIndex(Math.max(this.dimension, 1));
     }
     return this.index;
+  }
+
+  /**
+   * 内存索引与当前模型失配时从 DB 重载。内存索引只在启动时按当时的模型
+   * 装入一次；运行中切换到另一个已有分块的模型后，若不重载，向量查询会
+   * 维度不匹配（或召回残缺），直到重启才恢复。检索入口在拿到模型名后
+   * 调用本方法。
+   */
+  async ensureIndexForModel(model: string): Promise<void> {
+    if (!this.initialized) return;
+    if (this.indexModelName === model) return;
+    safeDebug(
+      `[z-search] PdfChunkStore: in-memory index is for "${this.indexModelName || "(none)"}", reloading for "${model}"`,
+    );
+    await this.loadIndexFromDB(model);
   }
 
   /**
@@ -387,7 +406,14 @@ class PdfChunkStoreClass {
       `zsearch-vector-${this.sanitizeModelName(model)}.bin`,
     );
     const liveCount = await this.countChunksForModel(model);
-    if (liveCount === 0) return;
+    if (liveCount === 0) {
+      // 目标模型在库中无分块：丢弃内存索引（可能仍装着旧模型的向量），
+      // 并记录模型名——否则检索入口的失配检测会反复触发无谓重载。
+      this.index = null;
+      this.dimension = 0;
+      this.indexModelName = model;
+      return;
+    }
 
     try {
       // The binary cache only stores a brute-force matrix; for large corpora we
@@ -401,6 +427,7 @@ class PdfChunkStoreClass {
             this.ensureIndex(meta.dimension);
             this.index!.clear();
             await this.index!.deserialize(cachePath);
+            this.indexModelName = model;
             return; // fast path succeeded
           }
         }
@@ -418,7 +445,12 @@ class PdfChunkStoreClass {
       `SELECT id, item_id, section_category, dimension FROM zsearch_pdf_chunks WHERE model = ?`,
       [model],
     );
-    if (!rows || rows.length === 0) return;
+    if (!rows || rows.length === 0) {
+      this.index = null;
+      this.dimension = 0;
+      this.indexModelName = model;
+      return;
+    }
 
     // Dimension is inferred from DB rows (authoritative source), NOT from
     // EmbeddingsManager.getModelInfo() which is looked up per model and may
@@ -426,7 +458,12 @@ class PdfChunkStoreClass {
     // Text-only rows (dimension 0) carry no vector — filter them out so the
     // index dimension is learned from a vector-bearing row.
     const vectorRows = (rows as any[]).filter((r) => r.dimension > 0);
-    if (vectorRows.length === 0) return;
+    if (vectorRows.length === 0) {
+      this.index = null;
+      this.dimension = 0;
+      this.indexModelName = model;
+      return;
+    }
     const dim: number = vectorRows[0].dimension;
     this.dimension = dim;
 
@@ -472,6 +509,7 @@ class PdfChunkStoreClass {
         );
       }
     }
+    this.indexModelName = model;
   }
 
   /** Row count for a model — used to validate the binary cache. */
@@ -1020,6 +1058,18 @@ class PdfChunkStoreClass {
       `DELETE FROM zsearch_pdf_chunks WHERE model = ?`,
       [model],
     );
+    // 版本戳一并失效：lastFullTextVersion 的承诺是「当前模型的全量候选都
+    // 被构建过」。删掉任一模型的分块都可能是换模型/重建的开端——不重置
+    // 的话，下一次构建会被「全文版本未变」快跳直接拦下，新模型永远建不
+    // 出索引（向量搜索一直报 PDF_CHUNKS_NOT_INDEXED）。
+    try {
+      const { setPrefDynamic } = await import("../../utils/prefs");
+      await setPrefDynamic("pdfIndexer.lastFullTextVersion", 0);
+    } catch (e) {
+      safeDebug(
+        `[z-search] PdfChunkStore: reset lastFullTextVersion failed (non-fatal): ${e}`,
+      );
+    }
     // Sync before any early return below — FTS must not keep stale-model rows.
     await this.syncBm25Remove(bm25Ids);
     // 被删模型的外部向量同步清理（失败非致命，见 deleteVectorsExternal）。

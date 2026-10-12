@@ -55,26 +55,29 @@ import { safeDebug } from "../../utils/logger";
 export type TranslationSource =
   "url" | "doi" | "isbn" | "pmid" | "arxiv" | "patent" | "manual";
 
+/**
+ * 导入目标（导入目标选择器）：libraryID 指定文库（含群组库），
+ * collectionID 指定分类。Zotero Translate 基类的 translate(options) 原生
+ * 接受这两个字段（translate.js: this._libraryID = options.libraryID;
+ * collections 校验数组）——条目直接落目标库，无需跨库搬运。
+ *
+ * 目标随 extract() 参数逐次传递，不存实例状态：本类是模块级单例，而每条
+ * 导入消息并发分发（Bridge fire-and-forget），共享字段会让并发导入互相
+ * 覆盖目标、条目落错文库。
+ */
+export type SaveTarget = {
+  libraryID?: number;
+  collectionID?: number;
+} | null;
+
 class MetadataExtractor {
   private translationCache: Map<string, MetadataExtractionResult> = new Map();
   private cacheTimeout = 5 * 60 * 1000; // 5 minutes
-  /**
-   * 保存目标（导入目标选择器）：libraryID 指定文库（含群组库），
-   * collectionID 指定分类。Zotero Translate 基类的 translate(options) 原生
-   * 接受这两个字段（translate.js: this._libraryID = options.libraryID;
-   * collections 校验数组）——条目直接落目标库，无需跨库搬运。
-   * 每次导入前由调用方设置、用后清除（防串目标）。
-   */
-  private _saveTarget: { libraryID?: number; collectionID?: number } | null =
-    null;
-
-  setSaveTarget(target: { libraryID?: number; collectionID?: number } | null) {
-    this._saveTarget = target;
-  }
 
   async extract(
     source: TranslationSource,
     identifier: string,
+    saveTarget?: SaveTarget,
   ): Promise<MetadataExtractionResult> {
     const cacheKey = `${source}:${identifier}`;
 
@@ -88,25 +91,25 @@ class MetadataExtractor {
     try {
       switch (source) {
         case "url":
-          result = await this.extractFromURL(identifier);
+          result = await this.extractFromURL(identifier, saveTarget);
           break;
         case "doi":
-          result = await this.extractFromDOI(identifier);
+          result = await this.extractFromDOI(identifier, saveTarget);
           break;
         case "isbn":
-          result = await this.extractFromISBN(identifier);
+          result = await this.extractFromISBN(identifier, saveTarget);
           break;
         case "pmid":
           result = await this.extractFromPMID(identifier);
           break;
         case "arxiv":
-          result = await this.extractFromArXiv(identifier);
+          result = await this.extractFromArXiv(identifier, saveTarget);
           break;
         case "patent":
           result = await this.extractFromPatent(identifier);
           break;
         case "manual":
-          result = await this.extractManual(identifier);
+          result = await this.extractManual(identifier, saveTarget);
           break;
         default:
           result = { success: false, error: "Unknown source type" };
@@ -116,7 +119,11 @@ class MetadataExtractor {
     }
 
     (result as any).timestamp = Date.now();
-    this.translationCache.set(cacheKey, result);
+    // 失败结果不进缓存：瞬时网络故障若被缓存，五分钟内重试不会发起任何
+    // 请求，一次抖动被放大成持续失败。只有成功结果值得复用。
+    if (result.success) {
+      this.translationCache.set(cacheKey, result);
+    }
 
     return result;
   }
@@ -127,6 +134,7 @@ class MetadataExtractor {
    */
   private async runTranslateSearch(
     identifier: Record<string, string>,
+    saveTarget?: SaveTarget,
   ): Promise<MetadataExtractionResult> {
     const Translate = (Zotero as any).Translate;
     if (!Translate || !Translate.Search) {
@@ -155,24 +163,32 @@ class MetadataExtractor {
       },
     );
 
+    // translate.js 对 handler 回调的异常只 logError 不外传——throw 大概率
+    // 被吞。错误存进闭包，translate() 返回后统一检查。
+    let translateError: string | null = null;
     translate.setHandler("error", (trans: any, error: any) => {
-      throw new Error(toErrorMessage(error));
+      translateError = toErrorMessage(error);
     });
 
     const newItems: any[] = await translate.translate({
       saveAttachments: false,
       // 导入目标选择器（P2 批）：空集合时 collections 传 undefined——
       // translate 会校验非数组抛错，只在真有目标时携带。
-      ...(this._saveTarget?.libraryID != null
-        ? { libraryID: this._saveTarget.libraryID }
+      ...(saveTarget?.libraryID != null
+        ? { libraryID: saveTarget.libraryID }
         : {}),
-      ...(this._saveTarget?.collectionID != null
-        ? { collections: [this._saveTarget.collectionID] }
+      ...(saveTarget?.collectionID != null
+        ? { collections: [saveTarget.collectionID] }
         : {}),
     });
 
+    // 结果优先：翻译器可能发出过非致命 error 事件但仍返回了条目，此时
+    // 按成功处理；条目为空时才把错误原因作为失败理由透出。
     if (!newItems || newItems.length === 0) {
-      return { success: false, error: "No items found" };
+      return {
+        success: false,
+        error: translateError ?? "No items found",
+      };
     }
 
     const item = newItems[0];
@@ -195,14 +211,20 @@ class MetadataExtractor {
     };
   }
 
-  private async extractFromURL(url: string): Promise<MetadataExtractionResult> {
+  private async extractFromURL(
+    url: string,
+    saveTarget?: SaveTarget,
+  ): Promise<MetadataExtractionResult> {
     const doiMatch = url.match(/doi\.org\/(10\.\d{4,9}\/[^\s]+)/);
     const arxivMatch = url.match(/arxiv\.org\/abs\/(\d+\.\d+)/);
 
     if (doiMatch) {
-      return await this.runTranslateSearch({ DOI: doiMatch[1] });
+      return await this.runTranslateSearch({ DOI: doiMatch[1] }, saveTarget);
     } else if (arxivMatch) {
-      return await this.runTranslateSearch({ arXiv: arxivMatch[1] });
+      return await this.runTranslateSearch(
+        { arXiv: arxivMatch[1] },
+        saveTarget,
+      );
     }
     return {
       success: false,
@@ -210,13 +232,17 @@ class MetadataExtractor {
     };
   }
 
-  private async extractFromDOI(doi: string): Promise<MetadataExtractionResult> {
+  private async extractFromDOI(
+    doi: string,
+    saveTarget?: SaveTarget,
+  ): Promise<MetadataExtractionResult> {
     const cleanDoi = doi.replace(/^https?:\/\/doi\.org\//, "");
-    return await this.runTranslateSearch({ DOI: cleanDoi });
+    return await this.runTranslateSearch({ DOI: cleanDoi }, saveTarget);
   }
 
   private async extractFromISBN(
     isbn: string,
+    saveTarget?: SaveTarget,
   ): Promise<MetadataExtractionResult> {
     // Use Google Books API
     try {
@@ -255,8 +281,10 @@ class MetadataExtractor {
       safeDebug("[z-search] ISBN lookup error: " + e);
     }
 
-    // Fallback to Zotero translators
-    return await this.extractFromURL(`https://worldcat.org/isbn/${isbn}`);
+    // Fallback to Zotero translators（ISBN 检索条件）。此前误走
+    // extractFromURL("https://worldcat.org/isbn/...")——该函数只认
+    // doi.org/arxiv.org 两种 URL，回退注定失败。
+    return await this.runTranslateSearch({ ISBN: isbn }, saveTarget);
   }
 
   private async extractFromPMID(
@@ -315,11 +343,12 @@ class MetadataExtractor {
 
   private async extractFromArXiv(
     arxivId: string,
+    saveTarget?: SaveTarget,
   ): Promise<MetadataExtractionResult> {
     const cleanId = arxivId
       .replace(/^https?:\/\/arxiv\.org\/abs\//, "")
       .replace(/^https?:\/\/arxiv\.org\//, "");
-    return await this.runTranslateSearch({ arXiv: cleanId });
+    return await this.runTranslateSearch({ arXiv: cleanId }, saveTarget);
   }
 
   /**
@@ -476,14 +505,17 @@ class MetadataExtractor {
     }
   }
 
-  private async extractManual(data: string): Promise<MetadataExtractionResult> {
+  private async extractManual(
+    data: string,
+    saveTarget?: SaveTarget,
+  ): Promise<MetadataExtractionResult> {
     // Try to detect the type of input
     if (data.match(/^10\.\d{4,9}/)) {
-      return await this.extractFromDOI(data);
+      return await this.extractFromDOI(data, saveTarget);
     } else if (data.match(/\d{10,13}/)) {
-      return await this.extractFromISBN(data);
+      return await this.extractFromISBN(data, saveTarget);
     } else if (data.startsWith("http")) {
-      return await this.extractFromURL(data);
+      return await this.extractFromURL(data, saveTarget);
     }
 
     return { success: false, error: "Could not identify input type" };
@@ -562,14 +594,23 @@ class MetadataExtractor {
       // If Translate API already created the item, just add to collection
       if (metadata.zoteroItemId) {
         if (collectionID !== undefined) {
-          const item = Zotero.Items.get(metadata.zoteroItemId);
-          if (item) {
-            const collections = item.getCollections();
-            if (!collections.includes(collectionID)) {
-              collections.push(collectionID);
-              item.setCollections(collections);
-              await item.saveTx();
+          try {
+            const item = Zotero.Items.get(metadata.zoteroItemId);
+            if (item) {
+              const collections = item.getCollections();
+              if (!collections.includes(collectionID)) {
+                collections.push(collectionID);
+                item.setCollections(collections);
+                await item.saveTx();
+              }
             }
+          } catch (e) {
+            // 翻译器已建条成功，加入分类失败只记日志——条目本体已在库，
+            // 返回失败会让用户重试再建一条重复条目。
+            safeDebug(
+              "[z-search] MetadataExtractor: add translated item to collection failed: " +
+                e,
+            );
           }
         }
         return metadata.zoteroItemId;
@@ -592,15 +633,29 @@ class MetadataExtractor {
         }
       }
 
-      item.setField("abstractNote", metadata.abstract || "");
-      item.setField("date", metadata.date || "");
-      item.setField("publicationTitle", metadata.publicationTitle || "");
-      item.setField("volume", metadata.volume || "");
-      item.setField("issue", metadata.issue || "");
-      item.setField("pages", metadata.pages || "");
-      item.setField("DOI", metadata.doi || "");
-      item.setField("ISBN", metadata.isbn || "");
-      item.setField("url", metadata.url || "");
+      // 非 patent 分支同样按字段防御写入：Zotero 的 setField 对「该条目
+      // 类型不存在的字段」会抛错（如 book 没有 publicationTitle/issue），
+      // 单字段失败跳过而不是让整个条目建不出来。
+      const setFieldSafe = (field: string, value: unknown) => {
+        if (value === undefined || value === null || value === "") return;
+        try {
+          item.setField(field, value);
+        } catch (e) {
+          safeDebug(
+            `[z-search] MetadataExtractor: setField(${field}) skipped on ${itemType}: ${e}`,
+          );
+        }
+      };
+
+      setFieldSafe("abstractNote", metadata.abstract);
+      setFieldSafe("date", metadata.date);
+      setFieldSafe("publicationTitle", metadata.publicationTitle);
+      setFieldSafe("volume", metadata.volume);
+      setFieldSafe("issue", metadata.issue);
+      setFieldSafe("pages", metadata.pages);
+      setFieldSafe("DOI", metadata.doi);
+      setFieldSafe("ISBN", metadata.isbn);
+      setFieldSafe("url", metadata.url);
 
       // Patent-specific fields (only when itemType === "patent")
       if (itemType === "patent") {
@@ -641,8 +696,11 @@ class MetadataExtractor {
 
       await item.saveTx();
       return item.id;
-    } catch (_e) {
-      return null;
+    } catch (e) {
+      // 真实失败原因向上透传（调用方回执给用户），不再吞成无差别的
+      // "Failed to create item"——那让排查无从下手。
+      safeDebug("[z-search] MetadataExtractor: createItemFromMetadata: " + e);
+      throw new Error(toErrorMessage(e), { cause: e });
     }
   }
 
@@ -662,16 +720,27 @@ class MetadataExtractor {
     try {
       // Update fields that are present in metadata
       if (metadata.title) item.setField("title", metadata.title);
-      if (metadata.abstract) item.setField("abstractNote", metadata.abstract);
-      if (metadata.date) item.setField("date", metadata.date);
-      if (metadata.publicationTitle)
-        item.setField("publicationTitle", metadata.publicationTitle);
-      if (metadata.volume) item.setField("volume", metadata.volume);
-      if (metadata.issue) item.setField("issue", metadata.issue);
-      if (metadata.pages) item.setField("pages", metadata.pages);
-      if (metadata.doi) item.setField("DOI", metadata.doi);
-      if (metadata.isbn) item.setField("ISBN", metadata.isbn);
-      if (metadata.url) item.setField("url", metadata.url);
+      // 单字段失败跳过：字段与条目类型不匹配时 setField 会抛错，
+      // 不应让其余字段一起更新失败。
+      const setFieldSafe = (field: string, value: unknown) => {
+        if (value === undefined || value === null || value === "") return;
+        try {
+          item.setField(field, value);
+        } catch (e) {
+          safeDebug(
+            `[z-search] MetadataExtractor: updateField(${field}) skipped: ${e}`,
+          );
+        }
+      };
+      setFieldSafe("abstractNote", metadata.abstract);
+      setFieldSafe("date", metadata.date);
+      setFieldSafe("publicationTitle", metadata.publicationTitle);
+      setFieldSafe("volume", metadata.volume);
+      setFieldSafe("issue", metadata.issue);
+      setFieldSafe("pages", metadata.pages);
+      setFieldSafe("DOI", metadata.doi);
+      setFieldSafe("ISBN", metadata.isbn);
+      setFieldSafe("url", metadata.url);
 
       if (metadata.tags) {
         for (const tag of metadata.tags) {
@@ -681,7 +750,8 @@ class MetadataExtractor {
 
       await item.saveTx();
       return true;
-    } catch (_e) {
+    } catch (e) {
+      safeDebug("[z-search] MetadataExtractor: updateItemFromMetadata: " + e);
       return false;
     }
   }

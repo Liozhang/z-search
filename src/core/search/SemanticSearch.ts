@@ -258,6 +258,10 @@ export class SemanticSearch {
       throw err;
     }
 
+    // 内存索引可能还装着上一个模型的向量（启动时装入，运行中换模型不重
+    // 载）——失配时从 DB 重载，否则向量查询维度不匹配或召回残缺。
+    await PdfChunkStore.ensureIndexForModel(model);
+
     try {
       const queryEmbedding = await this.embeddings.embedQuery(query);
       const queryVec = new Float32Array(queryEmbedding);
@@ -571,6 +575,9 @@ export class SemanticSearch {
     for (const entry of ranked) {
       const zoteroItem = itemMap.get(entry.itemId);
       const chunk = chunkMap.get(entry.chunkId);
+      // 条目已被删除（取回为空）或已进回收站：索引行尚存（清理异步于删
+      // 除），但不应再出现在结果里——用户删掉的文献继续被命中是幽灵结果。
+      if (!zoteroItem || zoteroItem.deleted) continue;
       results.push({
         itemID: entry.itemId,
         similarity: entry.similarity,
@@ -799,7 +806,9 @@ export class SemanticSearch {
 
       // Query only note item IDs directly from DB to avoid loading all items
       const noteIDs = (await Zotero.DB.columnQueryAsync(
-        `SELECT itemID FROM items WHERE itemTypeID = ? AND libraryID = ? AND itemID != ?`,
+        `SELECT itemID FROM items
+         WHERE itemTypeID = ? AND libraryID = ? AND itemID != ?
+           AND itemID NOT IN (SELECT itemID FROM deletedItems)`,
         [
           Zotero.ItemTypes.getID("note"),
           Zotero.Libraries.userLibraryID,

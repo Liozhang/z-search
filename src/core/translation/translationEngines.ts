@@ -29,6 +29,7 @@ import type {
 } from "../pdf/translation/translateParagraphs";
 import { getPrefDynamic } from "../../utils/prefs";
 import { parseJsonFromMarkdown } from "../../utils/json";
+import { timeoutSignal } from "../../utils/abortSignal";
 import { DEFAULT_TRANSLATE_ENGINE_TYPE } from "../../utils/defaults";
 import { toErrorMessage } from "../../utils/error";
 import { getString } from "../../utils/locale";
@@ -116,30 +117,6 @@ function toDeepLTargetLang(code: string): string {
  * timeout (~60-120s per paragraph).
  */
 const KEYLESS_ENDPOINT_TIMEOUT_MS = 10000;
-
-/**
- * Timeout signal for the keyless endpoints. The bootstrap sandbox（Zotero 10
- * 实机验证 2026-09-30）不暴露 AbortSignal 全局——裸调 AbortSignal.timeout 会
- * 抛 ReferenceError，让 Google 与 Bing web 兜底在毫秒级双双失败。优先用宿主
- * AbortSignal.timeout，退回 AbortController + setTimeout，两者皆缺时放弃
- * 超时（signal 传 undefined）——宁可没有超时，也不能让请求直接炸掉。
- */
-function timeoutSignal(ms: number): AbortSignal | undefined {
-  const G = globalThis as any;
-  try {
-    if (typeof G.AbortSignal?.timeout === "function") {
-      return G.AbortSignal.timeout(ms);
-    }
-    if (typeof G.AbortController === "function") {
-      const ctl = new G.AbortController();
-      setTimeout(() => ctl.abort(), ms);
-      return ctl.signal;
-    }
-  } catch {
-    /* fall through */
-  }
-  return undefined;
-}
 
 async function httpPost(
   url: string,

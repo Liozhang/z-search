@@ -88,6 +88,26 @@ export interface BeallsCheckResult {
   metrics: Array<BeallsMetricRecord & { layer: MatchLayer }>;
 }
 
+/**
+ * 三张表中的空表清单——启动导入据此「哪张空补哪张」。
+ *
+ * 此前启动侧的补导条件是「三表全零才导入」：一次部分导入（见 importRows 的
+ * 并发事务事故）之后，非空的最小表会永久挡住其余空表的补导——实机出现过
+ * metrics=53 而 journals/publishers 恒空的状态。按表判断让任何部分状态都能
+ * 在下次启动自愈。
+ */
+export function emptyBeallsSegments(counts: {
+  journals: number;
+  publishers: number;
+  metrics: number;
+}): Array<BeallsTable> {
+  const missing: Array<BeallsTable> = [];
+  if (counts.journals === 0) missing.push("journals");
+  if (counts.publishers === 0) missing.push("publishers");
+  if (counts.metrics === 0) missing.push("metrics");
+  return missing;
+}
+
 // --- Normalization helpers ---
 
 const STOP_WORDS = new Set([
@@ -625,11 +645,16 @@ class BeallsListStore {
         opts?.filterLogic,
       ),
     ]);
-    const [j, p, m] = await Promise.all([
-      clearTable("zsearch_bealls_journals", jw),
-      clearTable("zsearch_bealls_publishers", pw),
-      clearTable("zsearch_bealls_metrics", mw),
-    ]);
+    // 三表清除必须串进同一个事务（clearTable 传 tx 跳过自包事务）：此前
+    // Promise.all 三表并发 = 三个 executeTransaction 并发抢锁，与 importRows
+    // 的并发事故同款（Zotero.DB 等锁 30 秒抛超时）。单事务还让三表清除
+    // 原子化——要么全清，要么全留，不再出现半清状态。
+    const [j, p, m] = await Zotero.DB.executeTransaction(async () => {
+      const j = await clearTable("zsearch_bealls_journals", jw, true);
+      const p = await clearTable("zsearch_bealls_publishers", pw, true);
+      const m = await clearTable("zsearch_bealls_metrics", mw, true);
+      return [j, p, m] as const;
+    });
     this.indexLoaded = false;
     return { journals: j.deleted, publishers: p.deleted, metrics: m.deleted };
   }
@@ -722,49 +747,74 @@ class BeallsListStore {
       journals.push({ ...r, category: "hijacked" });
     }
 
-    const tasks: Array<Promise<{ inserted: number }>> = [];
+    // 串行执行，禁止并发：Zotero.DB 的 executeTransaction 同一时刻只允许一个
+    // 事务，并发调用会排队等锁，等待超过 30 秒直接抛 TimeoutError（Zotero 10
+    // db.js 的 waitTimeout 默认值）。此前 Promise.all 三表并发在启动高峰期把
+    // 等锁的大表事务拖到超时回滚，只剩最小的 metrics 表落库——实机证据
+    // （2026-10-11）：metrics=53 而 journals/publishers 恒空。串行后各表独立
+    // 成事务；单表失败不阻断其余表（照常落库），最后汇总报错让启动侧置失败旗。
+    let journalsInserted = 0;
+    let publishersInserted = 0;
+    let metricsInserted = 0;
+    const failures: string[] = [];
     if (journals.length > 0) {
-      tasks.push(
-        importRowsUtil({
-          tableName: "zsearch_bealls_journals",
-          columns: ["journal_name", "journal_url", "category", "extra"],
-          rows: journals,
-          mode: "insert-or-ignore",
-          // UNIQUE(journal_name, category)（见 BeallsListSchema）
-          conflictKeys: [["journal_name", "category"]],
-        }).then((r) => ({ inserted: r.inserted })),
-      );
+      try {
+        journalsInserted = (
+          await importRowsUtil({
+            tableName: "zsearch_bealls_journals",
+            columns: ["journal_name", "journal_url", "category", "extra"],
+            rows: journals,
+            mode: "insert-or-ignore",
+            // UNIQUE(journal_name, category)（见 BeallsListSchema）
+            conflictKeys: [["journal_name", "category"]],
+          })
+        ).inserted;
+      } catch (e) {
+        failures.push(`journals: ${String(e)}`);
+      }
     }
-    if ((rows.publishers ?? []).length > 0) {
-      tasks.push(
-        importRowsUtil({
-          tableName: "zsearch_bealls_publishers",
-          columns: ["publisher_name", "publisher_url"],
-          rows: rows.publishers!,
-          mode: "insert-or-ignore",
-          // UNIQUE(publisher_name)（见 BeallsListSchema）
-          conflictKeys: [["publisher_name"]],
-        }).then((r) => ({ inserted: r.inserted })),
-      );
+    const publishers = rows.publishers;
+    if (publishers && publishers.length > 0) {
+      try {
+        publishersInserted = (
+          await importRowsUtil({
+            tableName: "zsearch_bealls_publishers",
+            columns: ["publisher_name", "publisher_url"],
+            rows: publishers,
+            mode: "insert-or-ignore",
+            // UNIQUE(publisher_name)（见 BeallsListSchema）
+            conflictKeys: [["publisher_name"]],
+          })
+        ).inserted;
+      } catch (e) {
+        failures.push(`publishers: ${String(e)}`);
+      }
     }
-    if ((rows.misleading ?? []).length > 0) {
-      tasks.push(
-        importRowsUtil({
-          tableName: "zsearch_bealls_metrics",
-          columns: ["metric_name", "metric_url"],
-          rows: rows.misleading!,
-          mode: "insert-or-ignore",
-          // UNIQUE(metric_name)（见 BeallsListSchema）
-          conflictKeys: [["metric_name"]],
-        }).then((r) => ({ inserted: r.inserted })),
-      );
+    const misleading = rows.misleading;
+    if (misleading && misleading.length > 0) {
+      try {
+        metricsInserted = (
+          await importRowsUtil({
+            tableName: "zsearch_bealls_metrics",
+            columns: ["metric_name", "metric_url"],
+            rows: misleading,
+            mode: "insert-or-ignore",
+            // UNIQUE(metric_name)（见 BeallsListSchema）
+            conflictKeys: [["metric_name"]],
+          })
+        ).inserted;
+      } catch (e) {
+        failures.push(`metrics: ${String(e)}`);
+      }
     }
-    const results = await Promise.all(tasks);
     this.indexLoaded = false;
+    if (failures.length > 0) {
+      throw new Error(`Bealls import partial failure — ${failures.join("; ")}`);
+    }
     return {
-      journals: results[0]?.inserted ?? 0,
-      publishers: results[1]?.inserted ?? 0,
-      metrics: results[2]?.inserted ?? 0,
+      journals: journalsInserted,
+      publishers: publishersInserted,
+      metrics: metricsInserted,
     };
   }
 
