@@ -36,6 +36,10 @@ export interface SearchResult {
   degraded?: "vector-leg-unavailable";
   /** R4-21：rerank 已开启但排序未生效——结果仍是原序。 */
   rerankUnavailable?: boolean;
+  /** 贡献通道（"vector" / "bm25" / "zotero-ft"）。"zotero-ft" = Zotero 宿主
+   *  全文索引召回（ZoteroFtLeg），独占命中无 snippet/page（宿主索引不
+   *  提供块级信息），ResultItem 据此渲染来源徽章。 */
+  sources?: string[];
 }
 
 export interface DuplicateGroup {

@@ -170,6 +170,7 @@ semantic-section-method = 方法
 semantic-section-intro = 引言
 semantic-section-discussion = 討論
 semantic-section-conclusion = 結論
+semantic-source-zotero-ft = 全文索引命中
 semantic-build-index = 建立全文索引
 semantic-build-confirm = 將對全庫 PDF 建立全文索引，可能需要較長時間。繼續？
 semantic-build-done = 完成：成功 { $processed } 篇，跳過 { $skipped } 篇，失敗 { $errors } 篇

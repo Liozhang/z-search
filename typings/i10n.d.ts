@@ -516,6 +516,7 @@ export type FluentMessageId =
   | 'semantic-sort-label'
   | 'semantic-sort-relevance'
   | 'semantic-sort-title'
+  | 'semantic-source-zotero-ft'
   | 'semantic-tab-duplicates'
   | 'semantic-tab-similar'
   | 'semantic-vector-gap-desc'

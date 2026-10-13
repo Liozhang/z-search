@@ -92,6 +92,7 @@ export const ALL_LOCALE_KEYS: readonly string[] = [
   "semantic-section-intro",
   "semantic-section-discussion",
   "semantic-section-conclusion",
+  "semantic-source-zotero-ft",
   "semantic-build-index",
   "semantic-build-confirm",
   "semantic-build-done",

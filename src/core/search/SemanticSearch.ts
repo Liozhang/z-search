@@ -16,7 +16,12 @@ import { cosineSimilarity } from "ai";
 import { SAFE_BATCH_SIZE } from "../../utils/constants";
 
 import { rewriteQuery } from "./QueryRewriter";
-import { aggregateHybridChunks, type FusionLegChunk } from "./fulltext-fusion";
+import {
+  aggregateHybridChunks,
+  mergeZoteroFtLeg,
+  type FusionLegChunk,
+} from "./fulltext-fusion";
+import { fetchZoteroFtLeg } from "./ZoteroFtLeg";
 import ConfigManager from "../../utils/config/ConfigManager";
 import { ZoteroFetch } from "../ai/ZoteroFetch";
 import { getPrefDynamic } from "../../utils/prefs";
@@ -458,6 +463,11 @@ export class SemanticSearch {
    * fused list but does NOT overwrite its display scores (the fused/cosine
    * values are the consumer-facing contract, unlike the vector path where
    * the cross-encoder score replaces cosine).
+   *
+   * 第三路：Zotero 宿主全文索引（ZoteroFtLeg，条目级布尔命中）在 rerank
+   * 之后做条目级二次融合（mergeZoteroFtLeg）。宿主索引的抽取范围/分块与
+   * 插件索引互有缺口，这路负责补召回，尤其插件两腿都空手时仍可能带回
+   * 结果；章节过滤开启时跳过——宿主命中无法验证章节归属。
    */
   private async searchFullTextHybrid(
     query: string,
@@ -469,11 +479,30 @@ export class SemanticSearch {
       vectorLeg: FusionLegChunk[];
     },
   ): Promise<FullTextSearchResult[]> {
-    const bm25Hits = await PdfChunkStore.searchByKeyword(
-      query,
-      Math.max(args.limit * 5, 50),
-      args.sectionCategory,
-    );
+    // 宿主腿与 BM25 腿并行取（两者都只读，互不依赖）。章节过滤时宿主
+    // 腿缺席：整篇命中无法归到请求的章节，硬放进结果就是假命中。
+    const sectionScoped =
+      args.sectionCategory !== undefined && args.sectionCategory !== "any";
+    const [bm25Hits, zoteroLeg] = await Promise.all([
+      PdfChunkStore.searchByKeyword(
+        query,
+        Math.max(args.limit * 5, 50),
+        args.sectionCategory,
+      ),
+      sectionScoped
+        ? Promise.resolve(null)
+        : fetchZoteroFtLeg(query).then((leg) => {
+            if (leg.status !== "ready") {
+              safeDebug(
+                `[z-search] searchFullTextHybrid: zotero-ft leg ${leg.status}` +
+                  (leg.reason ? ` (${leg.reason})` : ""),
+              );
+            }
+            return leg;
+          }),
+    ]);
+    const zoteroItemIds =
+      zoteroLeg?.status === "ready" ? zoteroLeg.itemIds : [];
     const bm25Leg: FusionLegChunk[] = bm25Hits.map((h) => ({
       id: h.chunkId,
       itemId: h.itemId,
@@ -486,12 +515,14 @@ export class SemanticSearch {
       limit: args.limit,
       bm25Weight: args.bm25Weight,
     });
-    if (fused.length === 0) return [];
+    // 插件两腿全空但宿主腿有命中时不再提前短路——宿主索引的抽取与分块
+    // 和插件不同源，这正是这路存在的意义。
+    if (fused.length === 0 && zoteroItemIds.length === 0) return [];
 
     let ordered = fused;
     let rerankUnavailable = false;
     const rerankEnabled = getPrefDynamic("search.rerankEnabled");
-    if (rerankEnabled) {
+    if (rerankEnabled && fused.length > 0) {
       const chunks = await PdfChunkStore.getChunksByIds(
         fused.map((f) => f.chunkId),
       );
@@ -519,8 +550,14 @@ export class SemanticSearch {
       }
     }
 
+    // rerank 之后再并宿主腿：rerank 吃的是 chunk 文本，宿主独占命中没有
+    // chunk 行，放前面会被 rerank 的候选过滤静默丢掉。
+    const merged = mergeZoteroFtLeg(ordered, zoteroItemIds, {
+      limit: args.limit,
+    });
+
     return this.enrichChunkResults(
-      ordered.map((f) => ({
+      merged.map((f) => ({
         itemId: f.itemId,
         chunkId: f.chunkId,
         sectionCategory: f.sectionCategory,
@@ -537,11 +574,14 @@ export class SemanticSearch {
    * Shared result construction for all retrieval modes: batch-loads chunk
    * rows + Zotero items (N+1-safe) and maps ranked entries to the public
    * result shape.
+   *
+   * chunkId 可缺省：宿主全文腿（zotero-ft）独占的命中没有插件块行可指，
+   * snippet/page 等块级字段随之留空（见 mergeZoteroFtLeg）。
    */
   private async enrichChunkResults(
     ranked: Array<{
       itemId: number;
-      chunkId: number;
+      chunkId?: number;
       sectionCategory?: string;
       similarity?: number;
       fusedScore?: number;
@@ -559,9 +599,12 @@ export class SemanticSearch {
     /** R4-21：本次检索开启了 rerank 但排序未生效——结果仍是原序，标记透传。 */
     rerankUnavailable = false,
   ): Promise<FullTextSearchResult[]> {
+    const chunkIds = ranked
+      .map((r) => r.chunkId)
+      .filter((id): id is number => typeof id === "number");
     const chunks =
       preloadedChunks ??
-      (await PdfChunkStore.getChunksByIds(ranked.map((r) => r.chunkId)));
+      (chunkIds.length > 0 ? await PdfChunkStore.getChunksByIds(chunkIds) : []);
     const chunkMap = new Map(chunks.map((c) => [c.id, c]));
 
     // Batch-load all Zotero items at once (was: per-id await in loop — N+1).
@@ -574,7 +617,8 @@ export class SemanticSearch {
     const results: FullTextSearchResult[] = [];
     for (const entry of ranked) {
       const zoteroItem = itemMap.get(entry.itemId);
-      const chunk = chunkMap.get(entry.chunkId);
+      const chunk =
+        entry.chunkId !== undefined ? chunkMap.get(entry.chunkId) : undefined;
       // 条目已被删除（取回为空）或已进回收站：索引行尚存（清理异步于删
       // 除），但不应再出现在结果里——用户删掉的文献继续被命中是幽灵结果。
       if (!zoteroItem || zoteroItem.deleted) continue;

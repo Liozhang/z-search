@@ -93,12 +93,26 @@ export function ResultItem({
             </Badge>
           )}
         </div>
-        {/* 元数据行：类型 · 年份 · 章节（仅有数据的才显示，对齐 mockup 的 authors 行） */}
-        {(result.type || year || result.sectionName) && (
+        {/* 元数据行：类型 · 年份 · 章节 · 来源（仅有数据的才显示，对齐 mockup 的 authors 行） */}
+        {(result.type ||
+          year ||
+          result.sectionName ||
+          (result.sources?.includes("zotero-ft") && !result.snippet)) && (
           <div className="semantic-result-meta flex flex-wrap gap-[var(--space-1-5)] text-[length:var(--text-2xs)] text-[color:var(--text-tertiary)]">
             {result.type && <span>{result.type}</span>}
             {year && <span>{year}</span>}
             {result.sectionName && <span>{result.sectionName}</span>}
+            {/* 宿主全文腿独占命中没有 chunk 预览（snippet 留空），一枚徽章
+                说明「为什么这条没有摘要」并标明命中来自宿主索引。混合命中
+                已有 snippet，不再叠加。 */}
+            {result.sources?.includes("zotero-ft") && !result.snippet && (
+              <Badge
+                tone="neutral"
+                className="semantic-result-source flex-shrink-0"
+              >
+                {getString("semantic-source-zotero-ft")}
+              </Badge>
+            )}
           </div>
         )}
         {result.snippet && (

@@ -164,6 +164,7 @@ semantic-section-method = Method
 semantic-section-intro = Introduction
 semantic-section-discussion = Discussion
 semantic-section-conclusion = Conclusion
+semantic-source-zotero-ft = Full-text index match
 semantic-build-index = Build Full-Text Index
 semantic-build-confirm = This will build a full-text index over all PDFs in your library and may take a while. Continue?
 semantic-build-done = Done: { $processed } indexed, { $skipped } skipped, { $errors } failed
