@@ -5,6 +5,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.8.0] - 2026-10-13
+
+### Added
+
+- **Manual re-import from the failure banner.** The journal page's
+  "dataset failed to load" banner now has an "Import now" button
+  (localized in en-US/zh-CN/zh-TW) backed by a new `journal.reimportData`
+  RPC: it runs the same gated import as startup (per-year presence,
+  per-table repair for Beall's) and reports per-stage results — success
+  clears the banner without a restart; failure lists the failed stage
+  names in place. The import logic itself moved to a shared module
+  (`journalDataImport`) used by both startup and the button, with an
+  in-flight lock so concurrent triggers share one run, and schema-setup
+  failures are now logged explicitly instead of surfacing later as
+  obscure "no such table" errors.
+
+### Fixed
+
+- **Journal datasets no longer fail to load during startup write
+  contention.** The startup import runs right when Zotero itself writes
+  most heavily (sync, indexing tasks); while a host transaction holds the
+  database write lock, dataset imports hit Zotero's default 30-second
+  transaction-wait ceiling and failed with TimeoutError — the root cause
+  of the "built-in journal dataset failed to load" banner (confirmed by
+  an on-device probe: TimeoutError at exactly ~30s under a held lock,
+  the same failure class as a 2026-10-11 real-machine incident). Import
+  transactions now wait up to 120 seconds, riding out startup contention:
+  a real-Zotero verification shows a 40-second lock hold now completes
+  (~40s) instead of failing, while a 130-second hold still fails honestly
+  at ~120s and recovers on retry.
+
 ## [1.7.0] - 2026-10-13
 
 ### Added
