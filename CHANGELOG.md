@@ -5,6 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.9.0] - 2026-10-13
+
+### Changed
+
+- **Literature search now sorts by relevance by default instead of
+  citation count.** Crossref's is-referenced-by-count ordering
+  overwhelms the query's relevance contribution entirely: adjacent
+  queries in the same field (deep learning vs machine learning)
+  returned 12 of the same top 20 hits, so every search looked
+  identical. Relevance ordering puts the query back in charge;
+  citation-first remains one click away in the filter dialog. The
+  default is kept in sync between the search hook's initial/reset
+  value and the filter dialog's defaults table — the dialog drives
+  both "reset" and the active-filter badge, so a drift would leave the
+  badge stuck on.
+
 ## [1.8.1] - 2026-10-13
 
 ### Fixed
