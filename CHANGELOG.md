@@ -5,6 +5,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.7.0] - 2026-10-13
+
+### Added
+
+- **Zotero's built-in full-text index joins hybrid search as a third
+  recall leg.** On Zotero 10, library full-text (hybrid) search now also
+  queries the host's FTS5 content index via
+  `Zotero.Fulltext.findItemsWithContent`, maps attachment hits to their
+  parent items, and fuses them with the existing vector + BM25 ranking
+  in an item-level weighted RRF pass (default weight 0.5, applied after
+  the optional rerank). The host leg covers gaps the plugin's own index
+  cannot: items whose text Zotero has already extracted but that are not
+  chunk-indexed yet, and queries where both plugin legs come up empty —
+  these no longer short-circuit to an empty result. Hits contributed by
+  the host leg alone carry no chunk snippet and are badged "Full-text
+  index match" (localized in en-US/zh-CN/zh-TW). The leg is skipped when
+  a section filter is active, degrades honestly when the host API is
+  missing or the term is not indexable, and is a no-op passthrough when
+  the host returns nothing, so behavior on other hosts is unchanged.
+  Index lifecycle stays entirely with the host: extraction, background
+  queueing, corruption recovery, and space reclamation cost the plugin
+  nothing.
+
 ## [1.6.0] - 2026-10-12
 
 ### Added
