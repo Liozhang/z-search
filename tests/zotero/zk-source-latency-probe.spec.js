@@ -1,3 +1,6 @@
+import * as academicUtils from "../../src/core/sources/academic-search/utils.js";
+import * as academicSources from "../../src/core/sources/academic-search/index.js";
+
 /**
  * zk-source-latency-probe — 「搜索总是要十多秒」的逐源计时探针。
  *
@@ -42,11 +45,7 @@ describe("per-source latency probe", function () {
   }
 
   it("times every default source in parallel (same as UI)", async function () {
-    const utils =
-      await import("../../src/core/sources/academic-search/utils.js");
-    const sources =
-      await import("../../src/core/sources/academic-search/index.js");
-    const isSourceAvailable = utils.isSourceAvailable;
+    const isSourceAvailable = academicUtils.isSourceAvailable;
 
     const started = Date.now();
     const entries = await Promise.all(
@@ -59,7 +58,7 @@ describe("per-source latency probe", function () {
         }
         const t0 = Date.now();
         try {
-          const fn = sources[fnName];
+          const fn = academicSources[fnName];
           if (typeof fn !== "function") {
             return { source: name, importError: `missing export ${fnName}` };
           }

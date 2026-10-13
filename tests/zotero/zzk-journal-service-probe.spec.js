@@ -2,18 +2,19 @@
  * zzk-journal-service-probe — journal.search 服务端取证（2026-10-13）。
  *
  * 背景：第四轮起实机套件中期刊域 UI 用例（掠夺性标志/发现列表/模糊探针）
- * 稳定失败，而测试库四表数据完好（SQL 直查 18871/21772/157/1425 行）、
- * OpenAlex 当日配额耗尽（429，Retry-After 52 564s）。UI 断言只能给出
- * 「标志缺失/列表空」，本探针绕过 UI 直接调 JournalSearchService，
- * 记录每次调用的耗时/返回形状/错误文本，把失败定位到服务层还是 UI 层。
+ * 稳定失败，而测试库四表数据完好（SQL 直查 18871/21772/157/1425 行）。
+ * UI 断言只能给出「标志缺失/列表空」，本探针绕过 UI 直接调
+ * JournalSearchService，把失败定位到服务层还是 UI 层。
  *
- * 全部调用只读（lookup/discover 均为查询；OpenAlex 结果照常进缓存，
- * 与 UI 路径一致）。报告落 sdt-out/journal-service-probe.json。
+ * v2（2026-10-14）：逐步留痕——每完成一步立即落盘一次报告，失败点即使
+ * 中断后续步骤，已完成步骤与当前步骤名也会留在磁盘上（v1 失败时报告
+ * 完全缺失，无法区分「挂在哪步」）。
  */
 describe("journal service direct probe", function () {
   this.timeout(180000);
 
   const OUT_DIR = "D:\\github_code\\z-search\\tests\\zotero\\sdt-out";
+  const REPORT = "journal-service-probe.json";
 
   async function writeReport(data) {
     try {
@@ -22,73 +23,84 @@ describe("journal service direct probe", function () {
       /* 已存在 */
     }
     await Zotero.File.putContentsAsync(
-      PathUtils.join(OUT_DIR, "journal-service-probe.json"),
+      PathUtils.join(OUT_DIR, REPORT),
       JSON.stringify(data, null, 2),
     );
   }
 
   it("calls metric + discover directly and records timing/shape", async function () {
-    const report = { startedAt: new Date().toISOString(), calls: {} };
-    let service;
-    try {
-      const mod = await import(
-        "../../src/core/search/JournalSearchService.js"
-      );
-      service = mod.default;
-    } catch (e) {
-      report.importError = String((e && e.message) || e);
-      await writeReport(report);
-      throw { message: "service import failed: " + report.importError };
-    }
-
-    const calls = [
-      {
-        name: "metricBealls",
-        payload: { mode: "metric", query: "Academic Exchange Quarterly" },
-      },
-      {
-        name: "metricJcr",
-        payload: { mode: "metric", query: "Nature" },
-      },
-      {
-        name: "discoverOncology",
-        payload: { mode: "discover", query: "oncology", limit: 25 },
-      },
-    ];
-
-    for (const c of calls) {
-      const t0 = Date.now();
+    const t0 = Date.now();
+    const report = {
+      startedAt: new Date().toISOString(),
+      steps: [],
+    };
+    let stepIndex = 0;
+    // 每步完成立即落盘；落盘自身失败不遮蔽主流程
+    async function step(name, data) {
+      stepIndex += 1;
+      report.steps.push({
+        step: stepIndex,
+        name,
+        elapsedMs: Date.now() - t0,
+        ...(data || {}),
+      });
       try {
-        const res = await service.search(c.payload);
-        const elapsed = Date.now() - t0;
-        report.calls[c.name] = {
-          elapsedMs: elapsed,
-          mode: res?.mode,
-          error: res?.error ?? null,
-          hasMetric: !!res?.metric,
-          metricKeys: res?.metric ? Object.keys(res.metric) : [],
-          beallsFlag: res?.metric?.bealls ?? res?.metric?.predatory ?? null,
-          listCount: (res?.list || []).length,
-          listSample: (res?.list || []).slice(0, 3).map((x) => ({
-            name: x.name,
-            jif: x.jif ?? null,
-            quartile: x.quartile ?? null,
-          })),
-        };
+        await writeReport(report);
       } catch (e) {
-        report.calls[c.name] = {
-          elapsedMs: Date.now() - t0,
-          threw: String((e && e.message) || e),
-        };
+        report.steps[report.steps.length - 1].reportWriteError = String(
+          (e && e.message) || e,
+        );
       }
     }
 
-    await writeReport(report);
+    try {
+      await step("begin");
 
-    // 取证探针不判读失败——报告即交付。仅当服务层整体抛错时让用例红，
-    // 保证轮次结果能反映服务可用性。
-    if (report.importError) {
-      throw { message: "service import failed" };
+      const mod = await import("../../src/core/search/JournalSearchService.js");
+      const service = mod.default;
+      await step("import-ok", {
+        hasSearch: typeof (service && service.search),
+      });
+
+      let res = await service.search({
+        mode: "metric",
+        query: "Academic Exchange Quarterly",
+      });
+      await step("metric-bealls-done", {
+        elapsedMs: Date.now() - t0,
+        mode: res && res.mode,
+        error: (res && res.error) || null,
+        hasMetric: !!(res && res.metric),
+        metricKeys: res && res.metric ? Object.keys(res.metric) : [],
+        beallsFlag: (res && res.metric && res.metric.bealls) || null,
+      });
+
+      res = await service.search({ mode: "metric", query: "Nature" });
+      await step("metric-jcr-done", {
+        elapsedMs: Date.now() - t0,
+        error: (res && res.error) || null,
+        hasMetric: !!(res && res.metric),
+        jif: (res && res.metric && res.metric.jif) || null,
+      });
+
+      res = await service.search({
+        mode: "discover",
+        query: "oncology",
+        limit: 25,
+      });
+      await step("discover-oncology-done", {
+        elapsedMs: Date.now() - t0,
+        error: (res && res.error) || null,
+        listCount: (res && res.list ? res.list : []).length,
+        total: (res && res.total) || null,
+      });
+
+      await step("all-done");
+    } catch (e) {
+      report.fatal = String((e && e.message) || e);
+      report.fatalStack = String((e && e.stack) || "").slice(0, 1200);
+      await writeReport(report);
+      throw { message: "[journal-service-probe] fatal: " + report.fatal };
     }
   });
 });

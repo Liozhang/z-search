@@ -300,6 +300,21 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
       journalTab.click();
       await Zotero.Promise.delay(1500);
 
+      // 切到 Exact Search（服务侧 metric，直出指标卡）。2026-10-14 修复：
+      // 默认的 Fuzzy 模式是 discover——主数据源为 OpenAlex，配额耗尽/被墙
+      // 时列表恒空（且此前断言「任意含 predatory 的叶子元素」被列表行
+      // 徽章提前满足，截图停在列表、从未进入指标卡）。Exact 模式的指标
+      // 卡字段全部来自本地内置表，不依赖配额。
+      const exactToggle = await waitFor(
+        () => findBtn(/^(Exact Search|精确搜索)$/),
+        15000,
+      );
+      if (!exactToggle) {
+        reportError("journal-metrics-zh", { message: "exact toggle missing" });
+      }
+      exactToggle.click();
+      await Zotero.Promise.delay(1000);
+
       const drive = await runUiSearch(
         "Academic Exchange Quarterly",
         /journal name|ISSN|刊名/i,

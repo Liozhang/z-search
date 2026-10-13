@@ -1,3 +1,6 @@
+import { default as JCRStore } from "../../src/core/data/JCRStore.js";
+import { HubWindowBridge } from "../../src/ui/hub/HubWindowBridge.js";
+
 /**
  * journal-fuzzy-probe — 「模糊搜索不完整单词返回空」的分层实机探针。
  *
@@ -51,8 +54,6 @@ describe("journal fuzzy empty-result probe", function () {
 
     // ── 层 1+2：本地数据与 LIKE 查询 ──────────────────────────────
     try {
-      const { default: JCRStore } =
-        await import("../../src/core/data/JCRStore.js");
       await JCRStore.initialize();
       const latestYear = await JCRStore.getLatestYear();
       report.layers.latestYear = latestYear;
@@ -79,8 +80,6 @@ describe("journal fuzzy empty-result probe", function () {
     async function rpcDiscover(query) {
       const state = { res: undefined, err: null };
       try {
-        const { HubWindowBridge } =
-          await import("../../src/ui/hub/HubWindowBridge.js");
         const bridge = new HubWindowBridge();
         bridge.handleIframeMessage(
           {
