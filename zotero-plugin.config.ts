@@ -19,7 +19,7 @@ export default defineConfig({
       ...pkg.config,
       author: pkg.author,
       description: pkg.description,
-      homepage: pkg.homepage || "https://github.com/z-search/z-search",
+      homepage: pkg.homepage || "https://github.com/Liozhang/z-search",
       buildVersion: pkg.version,
       buildTime: "{{buildTime}}",
     },
