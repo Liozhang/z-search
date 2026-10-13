@@ -76,7 +76,9 @@ function getDefaultLiteratureFilters(
   return {
     selectedSources: [],
     yearRange: `${now - 10 + 1}-${now}`,
-    sortBy: "cited",
+    // 与 useLiteratureSearch 的 useState 默认值保持一致（两处必须同步改：
+    // 本表驱动「重置」与「是否为默认筛选」判定，漂移会让角标常亮）。
+    sortBy: "relevance",
     // 结果数默认值按域：外部源 100（桥接上限），库内语义 10（引擎惯例密度）。
     maxResults: scope === "web" ? 100 : 10,
     author: "",

@@ -85,7 +85,11 @@ export function useLiteratureSearch() {
   const now = new Date().getFullYear();
   const [yearRange, setYearRange] = useState(`${now - 10 + 1}-${now}`);
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>("cited");
+  // 默认「相关度」而非「被引」：Crossref 的 is-referenced-by-count 排序
+  // 完全压过查询词的相关度贡献——同领域相邻查询（deep learning vs
+  // machine learning）前 20 条重合 12 条，看起来「每次搜索结果都一样」。
+  // 想要高被引优先时用户可在筛选里手动切换（2026-10-13）。
+  const [sortBy, setSortBy] = useState<string>("relevance");
   const [maxResults, setMaxResults] = useState(100);
   const [authorFilter, setAuthorFilter] = useState("");
   const [journalFilter, setJournalFilter] = useState("");
@@ -397,7 +401,7 @@ export function useLiteratureSearch() {
     setSourcesDone(0);
     setYearRange(`${now - 10 + 1}-${now}`);
     setSelectedSources([]);
-    setSortBy("cited");
+    setSortBy("relevance");
     setMaxResults(100);
     setAuthorFilter("");
     setJournalFilter("");
