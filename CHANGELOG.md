@@ -5,6 +5,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.8.1] - 2026-10-13
+
+### Fixed
+
+- **Built-in journal datasets now load from packaged XPI installs.** In
+  a packaged install the addon root is a `jar:` archive URI, and the
+  host's `Zotero.File.getContentsAsync` only accepts `file:`-prefixed
+  strings — anything else (including `jar:` and `resource:` roots) is
+  routed to the HTTP stack, which fails instantly on archive URIs
+  (confirmed against the Zotero 10 host source). Every import therefore
+  died at the first data-file read: all four stages — JCR / CAS /
+  warning / Beall's — failed instantly, both at startup and via the
+  banner's "Import now" button, while dev builds (a `file:` directory
+  root) were unaffected, so probes and CI never surfaced it. The
+  dataset loader now resolves the install root by form: `file:` roots
+  are read directly from disk, `resource:` roots are resolved through
+  the resource protocol handler, `jar:` roots are read in place with
+  nsIZipReader, and XHR remains only as a last-resort fallback.
+  Read failures now carry the root form in their message. Verified on
+  a real Zotero 10 with new probes that read `warning.json` and the
+  5.3 MB `jcr-2024.json` out of a packaged XPI via the same code path.
+- **Table creation now shares the widened transaction wait.** The
+  previous release raised the data-import transaction's wait ceiling to
+  120 seconds but left schema creation at Zotero's 30-second default,
+  and schema failures were swallowed silently — a lost race during the
+  startup write window left all four tables missing with no visible
+  cause (the "schema failure logging" added in 1.8.0 was dead code
+  since the errors never propagated). Schema creation now waits up to
+  120 seconds, logs failures as structured warnings, and rethrows, so
+  a failed table maps directly onto its import stage instead of
+  surfacing later as an obscure "no such table" error.
+- **The dataset failure banner shows per-stage error details.** A
+  failed "Import now" now lists each failed stage with its underlying
+  message (truncated to 500 characters overall), not just the stage
+  names, so failures are diagnosable without enabling debug output.
+
 ## [1.8.0] - 2026-10-13
 
 ### Added
