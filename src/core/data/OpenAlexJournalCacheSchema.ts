@@ -13,7 +13,7 @@
  */
 
 import { invalidateColumnCache } from "./queryPlain";
-import { safeDebug } from "../../utils/logger";
+import { safeDebug, warn } from "../../utils/logger";
 
 class OpenAlexJournalCacheSchema {
   private initialized = false;
@@ -52,6 +52,12 @@ class OpenAlexJournalCacheSchema {
       invalidateColumnCache("zsearch_openalex_journal_cache");
       this.initialized = true;
     } catch (e) {
+      // 缓存表失败不阻塞四数据集导入（故不冒泡），但必须落 warn——
+      // safeDebug 只进调试日志，生产默认静默。
+      warn("startup.journal_schema_failed", {
+        schema: "OpenAlexJournalCacheSchema",
+        error: String((e as any)?.message ?? e).slice(0, 300),
+      });
       safeDebug("[z-search] OpenAlexJournalCacheSchema initialize error: " + e);
     }
   }

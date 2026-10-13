@@ -87,22 +87,69 @@ async function doRun(): Promise<JournalDataImportResult> {
       import("./OpenAlexJournalCacheSchema"),
       import("./OpenAlexJournalCacheStore"),
     ]);
-    const initResults = await Promise.allSettled([
-      JCRSchema.initialize(),
-      CASSSchema.initialize(),
-      WarningListSchema.initialize(),
-      BeallsListSchema.initialize(),
-      OpenAlexJournalCacheSchema.initialize(),
-      OpenAlexJournalCacheStore.initialize(),
-    ]);
-    // 建表失败此前被 allSettled 静默吞掉，要拖到导入阶段才以晦涩的
-    // 「no such table」暴露——这里显式落日志（stage 仍照跑，对应表会
-    // 以清晰异常失败并置旗）。
-    for (const r of initResults) {
+    const initTargets: Array<{
+      name: string;
+      /** 对应导入 stage；OpenAlex 缓存不属于四数据集，置 null 只落日志。 */
+      stage: JournalDataStageName | null;
+      init: () => Promise<void>;
+    }> = [
+      { name: "JCRSchema", stage: "jcr", init: () => JCRSchema.initialize() },
+      {
+        name: "CASSSchema",
+        stage: "cass",
+        init: () => CASSSchema.initialize(),
+      },
+      {
+        name: "WarningListSchema",
+        stage: "warning",
+        init: () => WarningListSchema.initialize(),
+      },
+      {
+        name: "BeallsListSchema",
+        stage: "bealls",
+        init: () => BeallsListSchema.initialize(),
+      },
+      {
+        name: "OpenAlexJournalCacheSchema",
+        stage: null,
+        init: () => OpenAlexJournalCacheSchema.initialize(),
+      },
+      {
+        name: "OpenAlexJournalCacheStore",
+        stage: null,
+        init: () => OpenAlexJournalCacheStore.initialize(),
+      },
+    ];
+    const initResults = await Promise.allSettled(
+      initTargets.map((t) => t.init()),
+    );
+    // 建表失败以「no such table」拖到导入阶段才以晦涩异常暴露——这里把
+    // 建表异常直接映射到对应 stage 记失败（带原始错误），对应 stage 不再
+    // 瞎跑一次注定失败的判存查询。OpenAlex 缓存失败不阻塞四数据集。
+    const schemaFailures = new Map<JournalDataStageName, string>();
+    initResults.forEach((r, i) => {
       if (r.status === "rejected") {
-        warn("startup.journal_schema_failed", { error: String(r.reason) });
+        const target = initTargets[i];
+        const msg = String((r.reason as any)?.message ?? r.reason).slice(
+          0,
+          300,
+        );
+        warn("startup.journal_schema_failed", {
+          schema: target.name,
+          error: msg,
+        });
+        if (target.stage) schemaFailures.set(target.stage, msg);
       }
-    }
+    });
+    /** 该 stage 的表建表失败时返回失败结果（不进入导入流程）。 */
+    const schemaFailedStage = (
+      stage: JournalDataStageName,
+    ): JournalDataStageResult | null => {
+      const msg = schemaFailures.get(stage);
+      if (msg === undefined) return null;
+      markJournalDataFailure();
+      return { stage, status: "failed", detail: `schema: ${msg}` };
+    };
 
     // 数据集导入失败旗（审计 P1-9）：此前只写 debug 日志，用户在期刊页
     // 只见「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，
@@ -113,7 +160,10 @@ async function doRun(): Promise<JournalDataImportResult> {
       const JCR_EXPECTED_YEAR = 2024; // matches jcr-2024.json's embedded `year`
       // 门控谓词是「期望年份存在」而非「最大年份恰等于期望」：库里一旦
       // 出现更新年份（未来版本导入 2025），不等式会让每次启动都全量重导。
-      if (!(await JCRStore.hasData(JCR_EXPECTED_YEAR))) {
+      const schemaFailed = schemaFailedStage("jcr");
+      if (schemaFailed) {
+        stages.push(schemaFailed);
+      } else if (!(await JCRStore.hasData(JCR_EXPECTED_YEAR))) {
         const jcr = await loadDataFile<{
           year: number;
           data: (string | number | null)[][];
@@ -170,7 +220,10 @@ async function doRun(): Promise<JournalDataImportResult> {
     try {
       const CASS_EXPECTED_YEAR = 2025; // matches cass-2025.json's embedded `year`
       // 门控谓词同 JCR：按期望年份判存，不比最大年份。
-      if (!(await CASSStore.hasData(CASS_EXPECTED_YEAR))) {
+      const cassSchemaFailed = schemaFailedStage("cass");
+      if (cassSchemaFailed) {
+        stages.push(cassSchemaFailed);
+      } else if (!(await CASSStore.hasData(CASS_EXPECTED_YEAR))) {
         const cass = await loadDataFile<{
           year: number;
           data: (string | number | null)[][];
@@ -222,37 +275,42 @@ async function doRun(): Promise<JournalDataImportResult> {
 
     // 3. Warning list data
     try {
-      const count = await WarningListStore.getCount();
-      if (count === 0) {
-        const warning = await loadDataFile<{
-          data: (string | number | null)[][];
-        }>("warning.json");
-        const WARNING_COLUMNS = [
-          "journal_name",
-          "warning_year",
-          "warning_level",
-          "warning_level_en",
-          "warning_reason",
-          "warning_reason_en",
-        ];
-        const objRows = warning.data.map((tuple) => {
-          const o: Record<string, unknown> = {};
-          WARNING_COLUMNS.forEach((c, i) => {
-            o[c] = tuple[i];
-          });
-          return o;
-        });
-        const result = await WarningListStore.importRows(objRows);
-        stages.push({
-          stage: "warning",
-          status: "imported",
-          detail: `inserted=${result.inserted}`,
-        });
-        safeDebug(
-          `[z-search] Warning data imported: ${result.inserted} records`,
-        );
+      const warningSchemaFailed = schemaFailedStage("warning");
+      if (warningSchemaFailed) {
+        stages.push(warningSchemaFailed);
       } else {
-        stages.push({ stage: "warning", status: "skipped" });
+        const count = await WarningListStore.getCount();
+        if (count === 0) {
+          const warning = await loadDataFile<{
+            data: (string | number | null)[][];
+          }>("warning.json");
+          const WARNING_COLUMNS = [
+            "journal_name",
+            "warning_year",
+            "warning_level",
+            "warning_level_en",
+            "warning_reason",
+            "warning_reason_en",
+          ];
+          const objRows = warning.data.map((tuple) => {
+            const o: Record<string, unknown> = {};
+            WARNING_COLUMNS.forEach((c, i) => {
+              o[c] = tuple[i];
+            });
+            return o;
+          });
+          const result = await WarningListStore.importRows(objRows);
+          stages.push({
+            stage: "warning",
+            status: "imported",
+            detail: `inserted=${result.inserted}`,
+          });
+          safeDebug(
+            `[z-search] Warning data imported: ${result.inserted} records`,
+          );
+        } else {
+          stages.push({ stage: "warning", status: "skipped" });
+        }
       }
     } catch (e) {
       warn("startup.warninglist_import_failed", { error: String(e) });
@@ -266,54 +324,59 @@ async function doRun(): Promise<JournalDataImportResult> {
 
     // 4. Beall's list data (predatory journals/publishers/misleading metrics)
     try {
-      // 按表补导（2026-10-11）：此前「三表全零才导入」——一次部分导入之后
-      // （并发事务超时只落下最小的 metrics 表），非空表把补导条件永久挡死，
-      // 实机出现 metrics=53 而 journals/publishers 恒空。哪张空就补哪张。
-      const counts = await BeallsListStore.getCounts();
-      const missing = emptyBeallsSegments(counts);
-      if (missing.length > 0) {
-        const bealls = await loadDataFile<{
-          standalone: (string | null)[][];
-          publishers: (string | null)[][];
-          hijacked: (string | null)[][];
-          misleading: (string | null)[][];
-        }>("bealls.json");
-        const standalone = bealls.standalone.map((t) => ({
-          journal_name: t[0],
-          journal_url: t[1],
-          // 第三列是期刊缩写——查询层 L3 缩写匹配从 extra 读（见
-          // BeallsListStore.ensureIndex），此前导入时被丢弃，缩写层形同虚设。
-          extra: t[2] ?? null,
-        }));
-        const publishers = bealls.publishers.map((t) => ({
-          publisher_name: t[0],
-          publisher_url: t[1],
-        }));
-        const hijacked = bealls.hijacked.map((t) => ({
-          journal_name: t[0],
-          journal_url: t[1],
-          extra: t[2],
-        }));
-        const misleading = bealls.misleading.map((t) => ({
-          metric_name: t[0],
-          metric_url: t[1],
-        }));
-        const imported = await BeallsListStore.importRows({
-          standalone: missing.includes("journals") ? standalone : undefined,
-          hijacked: missing.includes("journals") ? hijacked : undefined,
-          publishers: missing.includes("publishers") ? publishers : undefined,
-          misleading: missing.includes("metrics") ? misleading : undefined,
-        });
-        stages.push({
-          stage: "bealls",
-          status: "imported",
-          detail: `journals=${imported.journals} publishers=${imported.publishers} metrics=${imported.metrics} (repaired: ${missing.join("+")})`,
-        });
-        safeDebug(
-          `[z-search] Bealls data imported: ${imported.journals} journals, ${imported.publishers} publishers, ${imported.metrics} misleading metrics (empty segments repaired: ${missing.join("+")})`,
-        );
+      const beallsSchemaFailed = schemaFailedStage("bealls");
+      if (beallsSchemaFailed) {
+        stages.push(beallsSchemaFailed);
       } else {
-        stages.push({ stage: "bealls", status: "skipped" });
+        // 按表补导（2026-10-11）：此前「三表全零才导入」——一次部分导入之后
+        // （并发事务超时只落下最小的 metrics 表），非空表把补导条件永久挡死，
+        // 实机出现 metrics=53 而 journals/publishers 恒空。哪张空就补哪张。
+        const counts = await BeallsListStore.getCounts();
+        const missing = emptyBeallsSegments(counts);
+        if (missing.length > 0) {
+          const bealls = await loadDataFile<{
+            standalone: (string | null)[][];
+            publishers: (string | null)[][];
+            hijacked: (string | null)[][];
+            misleading: (string | null)[][];
+          }>("bealls.json");
+          const standalone = bealls.standalone.map((t) => ({
+            journal_name: t[0],
+            journal_url: t[1],
+            // 第三列是期刊缩写——查询层 L3 缩写匹配从 extra 读（见
+            // BeallsListStore.ensureIndex），此前导入时被丢弃，缩写层形同虚设。
+            extra: t[2] ?? null,
+          }));
+          const publishers = bealls.publishers.map((t) => ({
+            publisher_name: t[0],
+            publisher_url: t[1],
+          }));
+          const hijacked = bealls.hijacked.map((t) => ({
+            journal_name: t[0],
+            journal_url: t[1],
+            extra: t[2],
+          }));
+          const misleading = bealls.misleading.map((t) => ({
+            metric_name: t[0],
+            metric_url: t[1],
+          }));
+          const imported = await BeallsListStore.importRows({
+            standalone: missing.includes("journals") ? standalone : undefined,
+            hijacked: missing.includes("journals") ? hijacked : undefined,
+            publishers: missing.includes("publishers") ? publishers : undefined,
+            misleading: missing.includes("metrics") ? misleading : undefined,
+          });
+          stages.push({
+            stage: "bealls",
+            status: "imported",
+            detail: `journals=${imported.journals} publishers=${imported.publishers} metrics=${imported.metrics} (repaired: ${missing.join("+")})`,
+          });
+          safeDebug(
+            `[z-search] Bealls data imported: ${imported.journals} journals, ${imported.publishers} publishers, ${imported.metrics} misleading metrics (empty segments repaired: ${missing.join("+")})`,
+          );
+        } else {
+          stages.push({ stage: "bealls", status: "skipped" });
+        }
       }
     } catch (e) {
       warn("startup.bealls_import_failed", { error: String(e) });

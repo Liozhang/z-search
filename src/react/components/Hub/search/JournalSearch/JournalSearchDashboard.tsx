@@ -97,12 +97,15 @@ export function JournalSearchDashboard(): React.ReactElement {
       if (res?.ok) {
         setDataImportFailed(false);
       } else {
-        // ok=false 时必有失败阶段（模块级失败记为 schema），列出阶段名即可
+        // ok=false 时必有失败阶段（模块级失败记为 schema）。除阶段名外
+        // 逐阶段带上 detail（core 侧已截断到 300 字符）——失败原因（如
+        // 「no such table」或写锁超时）就地可见，不再只给阶段名让人无从
+        // 排查。总体仍限长，避免横幅被超长错误撑爆。
         const failed = (res?.stages ?? [])
           .filter((s) => s.status === "failed")
-          .map((s) => s.stage)
-          .join(", ");
-        setReimportError(failed || "schema");
+          .map((s) => (s.detail ? `${s.stage}: ${s.detail}` : s.stage))
+          .join("; ");
+        setReimportError(failed.slice(0, 500) || "schema");
       }
     } catch (e) {
       setReimportError(String(e));

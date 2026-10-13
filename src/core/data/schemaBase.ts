@@ -10,7 +10,7 @@
  */
 
 import {} from "./utils/schema";
-import { safeDebug } from "../../utils/logger";
+import { safeDebug, warn } from "../../utils/logger";
 
 /**
  * Schema definition passed to createSchema().
@@ -77,16 +77,34 @@ export function createSchema(def: SchemaDef) {
 
       try {
         const steps = def.up(currentVersion, def.version);
-        await Zotero.DB.executeTransaction(async () => {
-          for (const step of steps) {
-            await step();
-          }
-        });
+        await Zotero.DB.executeTransaction(
+          async () => {
+            for (const step of steps) {
+              await step();
+            }
+          },
+          {
+            // 建表与数据导入同处启动窗口，同样与宿主长事务争主库写锁。
+            // Zotero 默认只等 30 秒（db.js waitTimeout）；争用窗口内建表
+            // 超时后四张表缺席，下游各导入 stage 会以「no such table」快速
+            // 全失败。DDL 幂等（CREATE IF NOT EXISTS），多等好过失败，
+            // 与 crud.importRows 对齐放宽到 120 秒。
+            waitTimeout: 120_000,
+          } as any,
+        );
 
         Zotero.Prefs.set(def.prefKey, def.version, true);
         initialized = true;
       } catch (e) {
+        // 失败必须冒泡：吞掉后调用方（journalDataImport 的 allSettled）
+        // 收不到 rejection，四张表缺席只会以晦涩的「no such table」暴露，
+        // 且此处只有 debug 级日志——生产默认完全静默，横幅失败无从诊断。
+        warn("startup.journal_schema_failed", {
+          prefKey: def.prefKey,
+          error: String((e as any)?.message ?? e).slice(0, 300),
+        });
         safeDebug("[z-search] " + def.prefKey + " initialize error: " + e);
+        throw e;
       }
     },
   };
