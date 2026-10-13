@@ -407,7 +407,12 @@ declare namespace Zotero {
     ): Promise<any[]>;
     function valueQueryAsync(sql: string, params?: any[]): Promise<any>;
     function columnQueryAsync(sql: string, params?: any[]): Promise<any[]>;
-    function executeTransaction<T>(fn: () => Promise<T>): Promise<T>;
+    function executeTransaction<T>(
+      fn: () => Promise<T>,
+      // 宿主 db.js 实际支持 options（如 waitTimeout 事务等待上限）；zotero-types
+      // 有声明但本桩先于其生效，这里按同款宽松风格补位。
+      options?: any,
+    ): Promise<T>;
     function columnQuery(sql: string, params?: any[]): any[] | null;
     function query(sql: string, params?: any[]): any[];
     function valueQuery(sql: string, params?: any[]): any;

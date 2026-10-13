@@ -966,6 +966,20 @@ export async function handleLiteratureRequest(
         }
         break;
       }
+
+      case "journal.reimportData": {
+        // 期刊页横幅「立即导入」：手动重跑内置数据集导入（与启动导入同一
+        // 实现、同一门控——缺哪组补哪组；在飞时共享同一次运行）。结果带
+        // 逐 stage 结算，横幅按 ok 清除自身或展示失败详情。
+        const { runJournalDataImport } =
+          await import("../../core/data/journalDataImport");
+        try {
+          result = await runJournalDataImport();
+        } catch (e: any) {
+          error = toErrorMessage(e);
+        }
+        break;
+      }
     }
   } catch (e: any) {
     error = toErrorMessage(e);

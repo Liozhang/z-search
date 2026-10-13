@@ -52,6 +52,11 @@ export function JournalSearchDashboard(): React.ReactElement {
   /** 内置期刊数据集导入失败旗（审计 P1-9）：启动导入挂掉时提示用户数据
    *  缺席的原因，而不是只看到「无数据」。可关闭。 */
   const [dataImportFailed, setDataImportFailed] = useState(false);
+  /** 「立即导入」手动重导（2026-10-13）：启动导入会与宿主启动期长事务
+   *  争写锁而超时（实机探针 30s TimeoutError 实证），横幅给一个不依赖
+   *  重启的恢复入口——点击后跑与启动同一套导入（缺哪组补哪组）。 */
+  const [reimporting, setReimporting] = useState(false);
+  const [reimportError, setReimportError] = useState<string | null>(null);
   /** 部分成功旗（2026-10-10）：OpenAlex 失败但本地命中仍在——列表照常
    *  渲染，横幅提示远端缺席，不再让整单失败吞掉已有数据。 */
   const [partialError, setPartialError] = useState<string | null>(null);
@@ -77,6 +82,33 @@ export function JournalSearchDashboard(): React.ReactElement {
     }).catch(() => {
       /* 关闭失败不放大 */
     });
+  };
+
+  const reimportData = async () => {
+    setReimporting(true);
+    setReimportError(null);
+    try {
+      // 导入大表（JCR/CASS 各两万行）本身以秒计，争用等待上限又放宽到了
+      // 120 秒——超时给足 300 秒。
+      const res = await semanticRequest<{
+        ok: boolean;
+        stages: { stage: string; status: string; detail?: string }[];
+      }>("journal.reimportData", {}, 300000);
+      if (res?.ok) {
+        setDataImportFailed(false);
+      } else {
+        // ok=false 时必有失败阶段（模块级失败记为 schema），列出阶段名即可
+        const failed = (res?.stages ?? [])
+          .filter((s) => s.status === "failed")
+          .map((s) => s.stage)
+          .join(", ");
+        setReimportError(failed || "schema");
+      }
+    } catch (e) {
+      setReimportError(String(e));
+    } finally {
+      setReimporting(false);
+    }
   };
 
   // UX-M23: elapsed-seconds ticker for the loading state. The journal handler
@@ -317,15 +349,38 @@ export function JournalSearchDashboard(): React.ReactElement {
         ))}
       </ToggleGroup>
 
-      {/* 数据集导入失败横幅（审计 P1-9） */}
+      {/* 数据集导入失败横幅（审计 P1-9）+「立即导入」手动重导（2026-10-13）：
+          启动导入会与宿主启动期长事务争写锁而超时，横幅提供不依赖重启的
+          恢复入口；失败详情（失败阶段名）就地展示。 */}
       {dataImportFailed && (
         <div className="flex items-center justify-between gap-[var(--space-2)] rounded-[var(--radius-sm)] border border-[color:var(--warning)] px-[var(--space-2)] py-[var(--space-1)]">
-          <span className="text-[length:var(--text-xs)] text-[color:var(--warning)]">
-            {getString("journal-data-import-failed")}
-          </span>
-          <Button variant="ghost" size="sm" onClick={dismissDataBanner}>
-            {getString("btn-close")}
-          </Button>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[length:var(--text-xs)] text-[color:var(--warning)]">
+              {getString("journal-data-import-failed")}
+            </span>
+            {reimportError && (
+              <span className="text-[length:var(--text-2xs)] text-[color:var(--text-tertiary)]">
+                {getString("journal-data-import-retry-failed", {
+                  args: { error: reimportError },
+                })}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-[var(--space-1)] flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={reimporting}
+              onClick={() => void reimportData()}
+            >
+              {reimporting
+                ? getString("journal-data-import-retrying")
+                : getString("journal-data-import-retry")}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={dismissDataBanner}>
+              {getString("btn-close")}
+            </Button>
+          </div>
         </div>
       )}
 

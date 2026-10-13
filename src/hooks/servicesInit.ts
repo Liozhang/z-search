@@ -17,7 +17,6 @@ import TokenUsageStore from "../core/ai/TokenUsageStore";
 import AICache from "../core/cache/AICache";
 import EmbeddingsManager from "../core/ai/EmbeddingsManager";
 import { safeDebug, warn } from "../utils/logger";
-import { loadDataFile } from "../core/data/DataLoader";
 import { getPrefDynamic, setPrefDynamic } from "../utils/prefs";
 import { handleSearchSourceMethod } from "../ui/hub/HubSearchSourceHandler";
 import { syncToolbarButtons } from "../modules/menuManager";
@@ -82,237 +81,28 @@ export async function servicesInit(): Promise<void> {
   }
 
   // ── Phase 2: 期刊数据 schema + 首次数据导入 ───────────────────────
-  // 失败旗助手必须在 Phase 2 外层 try 之外声明：外层 catch（模块动态导入
-  // 失败等）此前只写日志不置旗——横幅盲区，用户在期刊页只见「无数据」而
-  // 无任何提示（2026-10-11 审计）。
-  let journalDataFailed = false;
-  const markJournalDataFailure = () => {
-    journalDataFailed = true;
+  // 实现已抽到 core/data/journalDataImport（2026-10-13）：启动与期刊页
+  // 横幅「立即导入」（journal.reimportData RPC）共用同一实现、门控与失败
+  // 旗置位/复位逻辑。此处只消费结果落日志。
+  try {
+    const { runJournalDataImport } =
+      await import("../core/data/journalDataImport");
+    const result = await runJournalDataImport();
+    if (!result.ok) {
+      const failed = result.stages
+        .filter((s) => s.status === "failed")
+        .map((s) => s.stage)
+        .join(",");
+      warn("startup.journal_data_failed", { failed: failed || "unknown" });
+    }
+  } catch (e) {
+    // 模块动态导入本身失败等极端情况：模块内部已尽力置旗，这里兜底再置
+    // 一次——横幅必须覆盖一切「内置数据集缺席」的形态。
     try {
       setPrefDynamic("journalData.importFailed", true);
     } catch {
-      /* 旗写失败不放大错误 */
+      /* 旗写失败不放大 */
     }
-  };
-  try {
-    const [
-      { default: JCRSchema },
-      { default: JCRStore },
-      { default: CASSSchema },
-      { default: CASSStore },
-      { default: WarningListSchema },
-      { default: WarningListStore },
-      { default: BeallsListSchema },
-      { default: BeallsListStore, emptyBeallsSegments },
-      { default: OpenAlexJournalCacheSchema },
-      { default: OpenAlexJournalCacheStore },
-    ] = await Promise.all([
-      import("../core/data/JCRSchema"),
-      import("../core/data/JCRStore"),
-      import("../core/data/CASSSchema"),
-      import("../core/data/CASSStore"),
-      import("../core/data/WarningListSchema"),
-      import("../core/data/WarningListStore"),
-      import("../core/data/BeallsListSchema"),
-      import("../core/data/BeallsListStore"),
-      import("../core/data/OpenAlexJournalCacheSchema"),
-      import("../core/data/OpenAlexJournalCacheStore"),
-    ]);
-    await Promise.allSettled([
-      JCRSchema.initialize(),
-      CASSSchema.initialize(),
-      WarningListSchema.initialize(),
-      BeallsListSchema.initialize(),
-      OpenAlexJournalCacheSchema.initialize(),
-      OpenAlexJournalCacheStore.initialize(),
-    ]);
-
-    // 数据集导入失败旗（审计 P1-9）：此前只写 debug 日志，用户在期刊页只见
-    // 「无数据」，无从得知内置数据集没装上。旗由期刊页横幅消费，可关闭；
-    // 本轮全部 stage 成功即复位（否则一次失败后即使重启导入成功，横幅
-    // 也会每次打开都挂起，与横幅自身文案相悖）。
-
-    // 1. JCR data — check the DB year BEFORE reading the large JSON.
-    try {
-      const JCR_EXPECTED_YEAR = 2024; // matches jcr-2024.json's embedded `year`
-      // 门控谓词是「期望年份存在」而非「最大年份恰等于期望」：库里一旦
-      // 出现更新年份（未来版本导入 2025），不等式会让每次启动都全量重导。
-      if (!(await JCRStore.hasData(JCR_EXPECTED_YEAR))) {
-        const jcr = await loadDataFile<{
-          year: number;
-          data: (string | number | null)[][];
-        }>("jcr-2024.json");
-        const JCR_COLUMNS = [
-          "jcr_year",
-          "journal_name",
-          "abbreviated_name",
-          "publisher",
-          "issn",
-          "eissn",
-          "total_cites",
-          "total_articles",
-          "citable_items",
-          "cited_half_life",
-          "citing_half_life",
-          "jif",
-          "five_year_jif",
-          "jif_without_self",
-          "jci",
-          "jif_quartile",
-          "jif_rank",
-        ];
-        const objRows = jcr.data.map((tuple) => {
-          const o: Record<string, unknown> = {};
-          JCR_COLUMNS.forEach((c, i) => {
-            o[c] = tuple[i];
-          });
-          return o;
-        });
-        const result = await JCRStore.importRows(objRows);
-        safeDebug(
-          `[z-search] JCR data imported: ${result.inserted} records (year ${jcr.year})`,
-        );
-      }
-    } catch (e) {
-      warn("startup.jcr_import_failed", { error: String(e) });
-      markJournalDataFailure();
-    }
-
-    // 2. CASS quartile data
-    try {
-      const CASS_EXPECTED_YEAR = 2025; // matches cass-2025.json's embedded `year`
-      // 门控谓词同 JCR：按期望年份判存，不比最大年份。
-      if (!(await CASSStore.hasData(CASS_EXPECTED_YEAR))) {
-        const cass = await loadDataFile<{
-          year: number;
-          data: (string | number | null)[][];
-        }>("cass-2025.json");
-        const CASS_COLUMNS = [
-          "cass_year",
-          "journal_name",
-          "issn",
-          "eissn",
-          "is_review",
-          "is_oa",
-          "wos_category",
-          "major_category",
-          "major_category_en",
-          "major_quartile",
-          "major_rank",
-          "major_total",
-          "is_top",
-          "minor_categories",
-        ];
-        const objRows = cass.data.map((tuple) => {
-          const o: Record<string, unknown> = {};
-          CASS_COLUMNS.forEach((c, i) => {
-            o[c] = tuple[i];
-          });
-          return o;
-        });
-        const result = await CASSStore.importRows(objRows);
-        safeDebug(
-          `[z-search] CASS data imported: ${result.inserted} records (year ${cass.year})`,
-        );
-      }
-    } catch (e) {
-      warn("startup.cass_import_failed", { error: String(e) });
-      markJournalDataFailure();
-    }
-
-    // 3. Warning list data
-    try {
-      const count = await WarningListStore.getCount();
-      if (count === 0) {
-        const warning = await loadDataFile<{
-          data: (string | number | null)[][];
-        }>("warning.json");
-        const WARNING_COLUMNS = [
-          "journal_name",
-          "warning_year",
-          "warning_level",
-          "warning_level_en",
-          "warning_reason",
-          "warning_reason_en",
-        ];
-        const objRows = warning.data.map((tuple) => {
-          const o: Record<string, unknown> = {};
-          WARNING_COLUMNS.forEach((c, i) => {
-            o[c] = tuple[i];
-          });
-          return o;
-        });
-        const result = await WarningListStore.importRows(objRows);
-        safeDebug(
-          `[z-search] Warning data imported: ${result.inserted} records`,
-        );
-      }
-    } catch (e) {
-      warn("startup.warninglist_import_failed", { error: String(e) });
-      markJournalDataFailure();
-    }
-
-    // 4. Beall's list data (predatory journals/publishers/misleading metrics)
-    try {
-      // 按表补导（2026-10-11）：此前「三表全零才导入」——一次部分导入之后
-      // （并发事务超时只落下最小的 metrics 表），非空表把补导条件永久挡死，
-      // 实机出现 metrics=53 而 journals/publishers 恒空。哪张空就补哪张。
-      const counts = await BeallsListStore.getCounts();
-      const missing = emptyBeallsSegments(counts);
-      if (missing.length > 0) {
-        const bealls = await loadDataFile<{
-          standalone: (string | null)[][];
-          publishers: (string | null)[][];
-          hijacked: (string | null)[][];
-          misleading: (string | null)[][];
-        }>("bealls.json");
-        const standalone = bealls.standalone.map((t) => ({
-          journal_name: t[0],
-          journal_url: t[1],
-          // 第三列是期刊缩写——查询层 L3 缩写匹配从 extra 读（见
-          // BeallsListStore.ensureIndex），此前导入时被丢弃，缩写层形同虚设。
-          extra: t[2] ?? null,
-        }));
-        const publishers = bealls.publishers.map((t) => ({
-          publisher_name: t[0],
-          publisher_url: t[1],
-        }));
-        const hijacked = bealls.hijacked.map((t) => ({
-          journal_name: t[0],
-          journal_url: t[1],
-          extra: t[2],
-        }));
-        const misleading = bealls.misleading.map((t) => ({
-          metric_name: t[0],
-          metric_url: t[1],
-        }));
-        const imported = await BeallsListStore.importRows({
-          standalone: missing.includes("journals") ? standalone : undefined,
-          hijacked: missing.includes("journals") ? hijacked : undefined,
-          publishers: missing.includes("publishers") ? publishers : undefined,
-          misleading: missing.includes("metrics") ? misleading : undefined,
-        });
-        safeDebug(
-          `[z-search] Bealls data imported: ${imported.journals} journals, ${imported.publishers} publishers, ${imported.metrics} misleading metrics (empty segments repaired: ${missing.join("+")})`,
-        );
-      }
-    } catch (e) {
-      warn("startup.bealls_import_failed", { error: String(e) });
-      markJournalDataFailure();
-    }
-    // 本轮无任何 stage 失败（含「数据已是期望年份、无需导入」的正常路径）
-    // → 复位失败旗：上一版本遗留的 importFailed=true 不再永久挂横幅。
-    if (!journalDataFailed) {
-      try {
-        setPrefDynamic("journalData.importFailed", false);
-      } catch {
-        /* 复位失败不放大 */
-      }
-    }
-  } catch (e) {
-    // 外层失败（数据模块动态导入失败等）同样置旗——横幅必须覆盖一切
-    // 「内置数据集缺席」的形态，而不是只覆盖四个导入 stage。
-    markJournalDataFailure();
     warn("startup.journal_data_failed", { error: String(e) });
   }
 

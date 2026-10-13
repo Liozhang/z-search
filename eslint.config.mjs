@@ -73,8 +73,14 @@ const baseConfig = zotero({
     },
     // ── Zotero 宿主集成测试（zotero-plugin test / mocha + chai）—
     //    运行在 Zotero 窗口内，可用 Zotero/Gecko 平台全局。
+    //    tests/zotero-contention 是实机专项探针目录（不进默认测试入口，
+    //    经 zotero-plugin.config.ts 的 test.entries 临时指向后单跑），
+    //    全局声明与 tests/zotero 同一套。
     {
-      files: ["tests/zotero/**/*.spec.js"],
+      files: [
+        "tests/zotero/**/*.spec.js",
+        "tests/zotero-contention/**/*.spec.js",
+      ],
       languageOptions: {
         globals: {
           ...globals.mocha,

@@ -532,7 +532,15 @@ export async function importRows(
   if (tx) {
     return doImport();
   }
-  return Zotero.DB.executeTransaction(doImport);
+  // zotero-types 的 options 声明缺 waitTimeout（宿主 db.js 运行时实读该
+  // 字段：options.waitTimeout || 30000），断言绕过类型缺口。
+  return Zotero.DB.executeTransaction(doImport, {
+    // 数据集导入多发生在启动窗口，常与宿主长事务（同步、索引任务）争主库
+    // 写锁：Zotero 默认只等 30 秒，实机探针证实（2026-10-13）争用窗口内
+    // 必然 30s TimeoutError——这正是「内置期刊数据集未能加载」横幅的根因。
+    // 导入是幂等补漏写，多等好过失败重来，放宽到 120 秒。
+    waitTimeout: 120_000,
+  } as any);
 }
 
 // --- clearTable ---
