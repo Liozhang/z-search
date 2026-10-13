@@ -5,6 +5,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.9.1] - 2026-10-13
+
+### Fixed
+
+- **Corrected the build fallback for the addon homepage URL** from a
+  non-existent organization repository (`z-search/z-search`) to
+  `Liozhang/z-search`. The packaged artifact is unchanged —
+  `package.json` always provides a homepage, so the fallback never
+  fired; this only guards against future drift.
+- Added `zzk-journal-service-probe`, a dev-only probe that calls the
+  journal search service directly (metric/discover) and records
+  timing, result shape, and errors — tooling for chasing the stable
+  journal-domain test failures first seen on 2026-10-13. Not part of
+  the plugin bundle.
+
 ## [1.9.0] - 2026-10-13
 
 ### Changed
