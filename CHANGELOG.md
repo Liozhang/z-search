@@ -5,6 +5,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.10.0] - 2026-10-14
+
+### Changed
+
+- **The Hub window now opens at a fixed 1280×860 content size.** The
+  previous first-open logic scaled the window to 85% of the screen —
+  on a 2560×1440 display that produced a ~2176×1224 window where light
+  pages like the journal metrics card floated in a large blank area.
+  The new default matches the README screenshot size. A manual resize
+  is still remembered for future opens, so the default only affects the
+  first launch. (The openDialog width/height is the outer frame — the
+  parameters are 1296×938 so the content area lands at exactly
+  1280×860 on default Windows theming.)
+
 ## [1.9.1] - 2026-10-13
 
 ### Fixed
