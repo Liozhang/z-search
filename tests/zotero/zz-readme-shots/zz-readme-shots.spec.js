@@ -69,7 +69,7 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
     return pred();
   }
 
-  async function openHubReady(width = 1280, height = 860) {
+  async function openHubReady() {
     await hubWindowManager.openHub("search");
     const wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
       Ci.nsIWindowMediator,
@@ -87,9 +87,6 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
     // 逐像素同尺寸）。openDialog 的 width/height 是外框尺寸，按实测差值
     // 校正一次。2026-10-14 参数化：指标卡内容少，用 1280×640 紧凑窗口
     // 让卡片充满画面（860 高会留下大片空白）；列表类用例仍用 860。
-    const dw = hubWin.innerWidth - width;
-    const dh = hubWin.innerHeight - height;
-    if (dw !== 0 || dh !== 0) hubWin.resizeTo(width + dw, height + dh);
     await Zotero.Promise.delay(800);
   }
 
@@ -251,7 +248,7 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
   it("journal metric card with local predatory flag", async function () {
     try {
       // 指标卡内容少：紧凑窗口 1280×560，让卡片充满画面而非浮在空白上
-      await openHubReady(1280, 560);
+      await openHubReady();
 
       // 期刊域：三段 tab 行的文字钮（en-US 渲染 Journal）
       const journalTab = await waitFor(

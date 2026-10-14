@@ -94,20 +94,14 @@ class HubWindowManager {
     // 创建 Bridge + 同步 initialize（openDialog 前构造，避免竞态）
     this.bridge = new HubWindowBridge();
 
-    // 首开尺寸自适应主屏：取可用区域 85%，不低于原默认 1280×860。
-    // 只在首次开窗生效（此后 XUL persist 记住用户手动调整的尺寸）。
-    let width = 1280;
-    let height = 860;
-    try {
-      const availWidth = mainWindow.screen?.availWidth ?? 0;
-      const availHeight = mainWindow.screen?.availHeight ?? 0;
-      if (availWidth > 0 && availHeight > 0) {
-        width = Math.max(width, Math.round(availWidth * 0.85));
-        height = Math.max(height, Math.round(availHeight * 0.85));
-      }
-    } catch {
-      /* 屏幕信息不可得时保持默认 */
-    }
+    // 首开尺寸 1280×860（与 README 截图同口径）。2026-10-14 调整：此前
+    // 首开自适应主屏 85%（2560 屏上开出 2176×1224 的巨窗，内容密度骤降，
+    // 指标卡等轻内容页面大片留白）；固定 1280×860 后用户手动调整的尺寸
+    // 仍由 XUL persist 记住，默认值只影响首次开窗。
+    // 注意 openDialog 的 width/height 是外框尺寸——Windows 默认主题下
+    // 内容区比外框小 16×78，参数取 1296×938 使内容区恰为 1280×860。
+    const width = 1296;
+    const height = 938;
 
     const hubWin = mainWindow.openDialog(
       "chrome://zsearch/content/hub/hubWindow.xhtml",
