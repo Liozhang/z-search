@@ -13,6 +13,9 @@
  * 失败一律经 reportError 抛纯对象：runner 的 JSON 往返只保留自有可枚举
  * 属性，普通 Error 的 message 会丢成 undefined。
  */
+import { HubWindowBridge } from "../../src/ui/hub/HubWindowBridge.js";
+import { hubWindowManager as hubWindowManagerSingleton } from "../../src/ui/hub/HubWindowManager.js";
+
 describe("z-search hub visual search verification (real Zotero + real network)", function () {
   this.timeout(300000);
 
@@ -185,8 +188,6 @@ describe("z-search hub visual search verification (real Zotero + real network)",
   async function probeRpcSearch(query, sources) {
     const state = { res: undefined, err: null };
     try {
-      const { HubWindowBridge } =
-        await import("../../src/ui/hub/HubWindowBridge.js");
       const bridge = new HubWindowBridge();
       bridge.handleIframeMessage(
         {
@@ -238,10 +239,24 @@ describe("z-search hub visual search verification (real Zotero + real network)",
   }
 
   /** chrome 特权 drawWindow：整窗栅格 → PNG 落盘。 */
-  async function screenshotHub(name) {
+  // 2026-10-14 支持 cropW/cropH：此环境 openDialog 出窗 2160×1144 且
+  // resizeTo 不生效；cropW 小于窗口宽时把 Hub iframe 钉到左上并压到目标
+  // 宽度让内容重排，再从左上角裁剪——README 图统一 1280 宽、文字 1:1。
+  async function screenshotHub(name, cropW, cropH) {
     const doc = hubWin.document;
-    const w = hubWin.innerWidth;
-    const h = hubWin.innerHeight;
+    const w = Math.min(hubWin.innerWidth, cropW || hubWin.innerWidth);
+    const h = Math.min(hubWin.innerHeight, cropH || hubWin.innerHeight);
+    if (cropW && cropW < hubWin.innerWidth) {
+      const frame = doc.getElementById("zsearch-hub-iframe");
+      if (frame) {
+        frame.style.position = "fixed";
+        frame.style.left = "0";
+        frame.style.top = "0";
+        frame.style.width = cropW + "px";
+        frame.style.height = hubWin.innerHeight + "px";
+        await Zotero.Promise.delay(800);
+      }
+    }
     const canvas = doc.createElementNS(
       "http://www.w3.org/1999/xhtml",
       "canvas",
@@ -324,8 +339,7 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       Zotero.locale = "en-US";
       invalidateLocaleSnapshot();
 
-      const mod = await import("../../src/ui/hub/HubWindowManager.js");
-      hubWindowManager = mod.hubWindowManager;
+      hubWindowManager = hubWindowManagerSingleton;
       outDirReady = await ensureOutDir();
     } catch (e) {
       reportError("before", e);
@@ -391,7 +405,7 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       await Zotero.Promise.delay(1200);
 
       const stats = collectCardStats();
-      await screenshotHub("hub-visual-literature.png");
+      await screenshotHub("hub-visual-literature.png", 1280, 860);
       await writeReport("hub-visual-literature.json", {
         query: "cancer immunotherapy",
         rpc,
@@ -417,8 +431,6 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       // 先直打 journal.search RPC：验证服务层对名单期刊的命中（与 UI 解耦）
       const probe = { res: undefined, err: null };
       try {
-        const { HubWindowBridge } =
-          await import("../../src/ui/hub/HubWindowBridge.js");
         const bridge = new HubWindowBridge();
         bridge.handleIframeMessage(
           {

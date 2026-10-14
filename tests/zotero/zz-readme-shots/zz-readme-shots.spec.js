@@ -69,7 +69,7 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
     return pred();
   }
 
-  async function openHubReady() {
+  async function openHubReady(width = 1280, height = 860) {
     await hubWindowManager.openHub("search");
     const wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
       Ci.nsIWindowMediator,
@@ -85,10 +85,11 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
     }
     // README 尺寸口径：innerWidth×innerHeight = 1280×860（与 docs 里旧图
     // 逐像素同尺寸）。openDialog 的 width/height 是外框尺寸，按实测差值
-    // 校正一次。
-    const dw = hubWin.innerWidth - 1280;
-    const dh = hubWin.innerHeight - 860;
-    if (dw !== 0 || dh !== 0) hubWin.resizeTo(1280 + dw, 860 + dh);
+    // 校正一次。2026-10-14 参数化：指标卡内容少，用 1280×640 紧凑窗口
+    // 让卡片充满画面（860 高会留下大片空白）；列表类用例仍用 860。
+    const dw = hubWin.innerWidth - width;
+    const dh = hubWin.innerHeight - height;
+    if (dw !== 0 || dh !== 0) hubWin.resizeTo(width + dw, height + dh);
     await Zotero.Promise.delay(800);
   }
 
@@ -140,10 +141,27 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
   }
 
   /** chrome 特权 drawWindow：整窗栅格 → PNG 落盘。 */
-  async function screenshotHub(name) {
+  // 整窗截图。2026-10-14 支持 cropW/cropH：从窗口左上角按 CSS 像素裁剪
+  // ——此环境下 openDialog 出窗 2160×1144 且 resizeTo 不生效，指标卡在
+  // 860/1144 高的画布上只占顶部三分之一，下方大片空白；按内容目标尺寸
+  // 裁剪让卡片充满画面（文字 1:1 输出，比整窗缩放更清晰）。
+  async function screenshotHub(name, cropW, cropH) {
     const doc = hubWin.document;
-    const w = hubWin.innerWidth;
-    const h = hubWin.innerHeight;
+    const w = Math.min(hubWin.innerWidth, cropW || hubWin.innerWidth);
+    const h = Math.min(hubWin.innerHeight, cropH || hubWin.innerHeight);
+    if (cropW && cropW < hubWin.innerWidth) {
+      // 窗口比目标宽：把 Hub iframe 钉到窗口左上并压到目标宽度，让内容
+      // 按目标宽重排（右侧数值列等回到画面内），再从左上角裁剪
+      const frame = doc.getElementById("zsearch-hub-iframe");
+      if (frame) {
+        frame.style.position = "fixed";
+        frame.style.left = "0";
+        frame.style.top = "0";
+        frame.style.width = cropW + "px";
+        frame.style.height = hubWin.innerHeight + "px";
+        await Zotero.Promise.delay(800); // 等 React 按新视口重排
+      }
+    }
     const canvas = doc.createElementNS(
       "http://www.w3.org/1999/xhtml",
       "canvas",
@@ -232,7 +250,8 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
 
   it("journal metric card with local predatory flag", async function () {
     try {
-      await openHubReady();
+      // 指标卡内容少：紧凑窗口 1280×560，让卡片充满画面而非浮在空白上
+      await openHubReady(1280, 560);
 
       // 期刊域：三段 tab 行的文字钮（en-US 渲染 Journal）
       const journalTab = await waitFor(
@@ -283,7 +302,7 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
         reportError("journal-metric", { message: "predatory badge missing" });
       }
 
-      await screenshotHub("journal-metrics-en.png");
+      await screenshotHub("journal-metrics-en.png", 1280, 640);
       await Zotero.File.putContentsAsync(
         PathUtils.join(OUT_DIR, "journal-metrics.json"),
         JSON.stringify(
@@ -299,6 +318,9 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
 
   it("journal discover list for a field", async function () {
     try {
+      // 恢复标准 1280×860（上一用例的指标卡把窗缩到了 560；列表类截图
+      // 用标准高度，展示更多行）
+      await openHubReady();
       // 2026-10-09 模式改名：按匹配策略命名——模糊搜索（en: Fuzzy Search）
       const segBtn = findBtn(/fuzzy search|模糊搜索|模糊搜尋/i);
       if (!segBtn) {
@@ -322,7 +344,7 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
         reportError("journal-discover", { message: "no discover rows" });
       }
 
-      await screenshotHub("journal-discover-en.png");
+      await screenshotHub("journal-discover-en.png", 1280, 860);
       await Zotero.File.putContentsAsync(
         PathUtils.join(OUT_DIR, "journal-discover.json"),
         JSON.stringify({ rows }, null, 2),

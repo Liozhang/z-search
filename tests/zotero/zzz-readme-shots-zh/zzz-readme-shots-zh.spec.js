@@ -69,7 +69,7 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
     return pred();
   }
 
-  async function openHubReady() {
+  async function openHubReady(width = 1280, height = 860) {
     await hubWindowManager.openHub("search");
     const wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(
       Ci.nsIWindowMediator,
@@ -85,10 +85,11 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
     }
     // README 尺寸口径：innerWidth×innerHeight = 1280×860（与 docs 里英文图
     // 逐像素同尺寸）。openDialog 的 width/height 是外框尺寸，按实测差值
-    // 校正一次。
-    const dw = hubWin.innerWidth - 1280;
-    const dh = hubWin.innerHeight - 860;
-    if (dw !== 0 || dh !== 0) hubWin.resizeTo(1280 + dw, 860 + dh);
+    // 校正一次。2026-10-14 参数化：指标卡内容少，用 1280×640 紧凑窗口
+    // 让卡片充满画面（860 高会留下大片空白）；列表类用例仍用 860。
+    const dw = hubWin.innerWidth - width;
+    const dh = hubWin.innerHeight - height;
+    if (dw !== 0 || dh !== 0) hubWin.resizeTo(width + dw, height + dh);
     await Zotero.Promise.delay(800);
   }
 
@@ -140,10 +141,28 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
   }
 
   /** chrome 特权 drawWindow：整窗栅格 → PNG 落盘。 */
-  async function screenshotHub(name) {
+  // 整窗截图。2026-10-14 支持 cropW/cropH：此环境下 openDialog 出窗
+  // 2160×1144 且 resizeTo 不生效，指标卡在 1144 高的画布上只占顶部
+  // 三分之一。cropW 小于窗口宽时，把 Hub iframe 钉到窗口左上并压到
+  // 目标宽度——内容按目标宽重排（右侧数值列等回到画面内），再从左上
+  // 角裁剪目标区域，文字 1:1 输出。
+  async function screenshotHub(name, cropW, cropH) {
     const doc = hubWin.document;
-    const w = hubWin.innerWidth;
-    const h = hubWin.innerHeight;
+    const w = Math.min(hubWin.innerWidth, cropW || hubWin.innerWidth);
+    const h = Math.min(hubWin.innerHeight, cropH || hubWin.innerHeight);
+    if (cropW && cropW < hubWin.innerWidth) {
+      // 窗口比目标宽：把 Hub iframe 钉到窗口左上并压到目标宽度，让内容
+      // 按目标宽重排（右侧数值列等回到画面内），再从左上角裁剪
+      const frame = doc.getElementById("zsearch-hub-iframe");
+      if (frame) {
+        frame.style.position = "fixed";
+        frame.style.left = "0";
+        frame.style.top = "0";
+        frame.style.width = cropW + "px";
+        frame.style.height = hubWin.innerHeight + "px";
+        await Zotero.Promise.delay(800); // 等 React 按新视口重排
+      }
+    }
     const canvas = doc.createElementNS(
       "http://www.w3.org/1999/xhtml",
       "canvas",
@@ -260,7 +279,7 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
       }
       await Zotero.Promise.delay(1200);
 
-      await screenshotHub("search-results-zh.png");
+      await screenshotHub("search-results-zh.png", 1280, 860);
       await Zotero.File.putContentsAsync(
         PathUtils.join(OUT_DIR, "search-results-zh.json"),
         JSON.stringify(
@@ -287,7 +306,9 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
 
   it("journal metric card with local predatory flag", async function () {
     try {
-      // 复用上一用例打开的 Hub 窗（keep-alive），不再重复 openHub
+      // 复用上一用例打开的 Hub 窗（keep-alive）；重新校正尺寸——指标卡
+      // 内容少，用紧凑窗口 1280×640 让卡片充满画面而非浮在空白上
+      await openHubReady(1280, 560);
 
       // 期刊域：三段 tab 行的文字钮（zh-CN 渲染「期刊」）
       const journalTab = await waitFor(
@@ -340,7 +361,7 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
         });
       }
 
-      await screenshotHub("journal-metrics-zh.png");
+      await screenshotHub("journal-metrics-zh.png", 1280, 640);
       await Zotero.File.putContentsAsync(
         PathUtils.join(OUT_DIR, "journal-metrics-zh.json"),
         JSON.stringify(
@@ -356,6 +377,9 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
 
   it("journal discover list for a field", async function () {
     try {
+      // 恢复标准 1280×860（上一用例的指标卡把窗缩到了 560；列表类截图
+      // 用标准高度，展示更多行）
+      await openHubReady();
       // 2026-10-09 模式改名：按匹配策略命名——模糊搜索（en: Fuzzy Search）
       const segBtn = findBtn(/fuzzy search|模糊搜索|模糊搜尋/i);
       if (!segBtn) {
@@ -382,7 +406,7 @@ describe("z-search readme screenshots (literature/journal tabs, zh-CN)", functio
         reportError("journal-discover-zh", { message: "no discover rows" });
       }
 
-      await screenshotHub("journal-discover-zh.png");
+      await screenshotHub("journal-discover-zh.png", 1280, 860);
       await Zotero.File.putContentsAsync(
         PathUtils.join(OUT_DIR, "journal-discover-zh.json"),
         JSON.stringify({ rows }, null, 2),
