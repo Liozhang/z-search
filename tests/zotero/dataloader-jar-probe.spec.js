@@ -16,15 +16,17 @@
 describe("dataloader jar-branch probe (real Zotero)", function () {
   this.timeout(60000);
 
-  const XPI_PATH = "D:\\github_code\\z-search\\.scaffold\\zsearch-jar-probe.xpi";
+  const XPI_PATH =
+    "D:\\github_code\\z-search\\.scaffold\\zsearch-jar-probe.xpi";
 
   function fail(name, e) {
     const reason = e?.message != null ? String(e.message) : String(e);
     throw {
-      message: `[dataloader-jar-probe][${name}] ${reason}\n${e?.stack || ""}`.slice(
-        0,
-        1200,
-      ),
+      message:
+        `[dataloader-jar-probe][${name}] ${reason}\n${e?.stack || ""}`.slice(
+          0,
+          1200,
+        ),
     };
   }
 
@@ -37,7 +39,7 @@ describe("dataloader jar-branch probe (real Zotero)", function () {
       }
       const xpiPath = globalThis.Services.io
         .newURI(m[2])
-        .QueryInterface(Components.interfaces.nsIFileURL).file.path;
+        .QueryInterface(Ci.nsIFileURL).file.path;
       if (xpiPath.toLowerCase() !== XPI_PATH.toLowerCase()) {
         throw {
           message: `path round-trip mismatch: got ${xpiPath}`,
@@ -50,8 +52,6 @@ describe("dataloader jar-branch probe (real Zotero)", function () {
 
   it("reads data/warning.json from inside the xpi via nsIZipReader stream", async function () {
     try {
-      const Cc = Components.classes;
-      const Ci = Components.interfaces;
       const zipReader = Cc["@mozilla.org/libjar/zip-reader;1"].createInstance(
         Ci.nsIZipReader,
       );
@@ -85,8 +85,6 @@ describe("dataloader jar-branch probe (real Zotero)", function () {
 
   it("reads data/jcr-2024.json (5.3 MB) from inside the xpi", async function () {
     try {
-      const Cc = Components.classes;
-      const Ci = Components.interfaces;
       const zipReader = Cc["@mozilla.org/libjar/zip-reader;1"].createInstance(
         Ci.nsIZipReader,
       );
