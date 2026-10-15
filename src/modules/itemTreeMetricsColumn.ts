@@ -29,6 +29,7 @@ interface JournalBadges {
   jcrQuartile?: string;
   cassQuartile?: number;
   cassTop?: boolean;
+  xrQuartile?: number;
   warning?: boolean;
   predatory?: boolean;
 }
@@ -48,21 +49,29 @@ async function loadBadgeMap(): Promise<Map<string, JournalBadges>> {
     map.set(n, cur ? { ...cur, ...patch } : patch);
   };
   try {
-    // 中科院分区是区域限定功能：隐藏时不载入 CASS 行（省一次全表查询），
-    // CAS/顶刊徽章随之缺席；JCR/预警/掠夺性是国际通用数据，不门控。
+    // 中科院分区/新锐分区是区域限定功能：隐藏时不载入 CASS/XR 行（省两次
+    // 全表查询），CAS/新锐/顶刊徽章随之缺席；JCR/预警/掠夺性是国际通用
+    // 数据，不门控。
     const cassVisible = isCassPartitionVisible();
-    const [jcrRows, cassRows, warnRows, beallsRows] = await Promise.all([
-      queryPlain(
-        `SELECT journal_name, jif, jif_quartile FROM zsearch_impact_factors WHERE jcr_year = (SELECT MAX(jcr_year) FROM zsearch_impact_factors) AND (jif IS NOT NULL OR jif_quartile IS NOT NULL)`,
-      ),
-      cassVisible
-        ? queryPlain(
-            `SELECT journal_name, major_quartile, is_top FROM zsearch_cass_quartiles WHERE cass_year = (SELECT MAX(cass_year) FROM zsearch_cass_quartiles) AND major_quartile IS NOT NULL`,
-          )
-        : Promise.resolve([]),
-      queryPlain(`SELECT journal_name FROM zsearch_journal_warnings`),
-      queryPlain(`SELECT journal_name FROM zsearch_bealls_journals`),
-    ]);
+    const [jcrRows, cassRows, xrRows, warnRows, beallsRows] = await Promise.all(
+      [
+        queryPlain(
+          `SELECT journal_name, jif, jif_quartile FROM zsearch_impact_factors WHERE jcr_year = (SELECT MAX(jcr_year) FROM zsearch_impact_factors) AND (jif IS NOT NULL OR jif_quartile IS NOT NULL)`,
+        ),
+        cassVisible
+          ? queryPlain(
+              `SELECT journal_name, major_quartile, is_top FROM zsearch_cass_quartiles WHERE cass_year = (SELECT MAX(cass_year) FROM zsearch_cass_quartiles) AND major_quartile IS NOT NULL`,
+            )
+          : Promise.resolve([]),
+        cassVisible
+          ? queryPlain(
+              `SELECT journal_name, major_quartile FROM zsearch_xr_quartiles WHERE xr_year = (SELECT MAX(xr_year) FROM zsearch_xr_quartiles) AND major_quartile IS NOT NULL`,
+            )
+          : Promise.resolve([]),
+        queryPlain(`SELECT journal_name FROM zsearch_journal_warnings`),
+        queryPlain(`SELECT journal_name FROM zsearch_bealls_journals`),
+      ],
+    );
     for (const r of jcrRows) {
       put(r.journal_name, {
         jif: r.jif != null ? Number(r.jif) : undefined,
@@ -77,6 +86,9 @@ async function loadBadgeMap(): Promise<Map<string, JournalBadges>> {
         cassQuartile: r.major_quartile ?? undefined,
         cassTop: r.is_top === 1 || r.is_top === true,
       });
+    }
+    for (const r of xrRows) {
+      put(r.journal_name, { xrQuartile: r.major_quartile ?? undefined });
     }
     for (const r of warnRows) put(r.journal_name, { warning: true });
     for (const r of beallsRows) put(r.journal_name, { predatory: true });
@@ -136,6 +148,15 @@ function renderBadges(doc: Document, b: JournalBadges): HTMLElement {
     );
   if (cassVisible && b.cassTop)
     cell.appendChild(mk("★", IF_STYLE, getString("itemtree-metrics-top-tip")));
+  // 新锐分区徽章与 CAS 同门控：同为中文科研评价体系，列内以文字区分体系。
+  if (cassVisible && b.xrQuartile)
+    cell.appendChild(
+      mk(
+        `${getString("itemtree-metrics-xr-label")} ${b.xrQuartile}`,
+        Q_STYLE,
+        getString("itemtree-metrics-xr-tip"),
+      ),
+    );
   if (b.warning)
     cell.appendChild(mk("⚠", WARN_STYLE, getString("lit-warning")));
   if (b.predatory)

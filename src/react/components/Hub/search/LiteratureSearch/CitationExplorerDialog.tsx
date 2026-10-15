@@ -378,6 +378,13 @@ export function CitationExplorerDialog({
                           {getString("lit-quartile-cass-" + a.cassQuartile)}
                         </span>
                       )}
+                      {a.xrQuartile && (
+                        <span
+                          className={`${TAG_BASE} border border-[var(--border)]`}
+                        >
+                          {getString("lit-quartile-xr-" + a.xrQuartile)}
+                        </span>
+                      )}
                       {a.isOpenAccess && (
                         <span
                           className={`${TAG_BASE} bg-[var(--data-blue-bg)] text-[color:var(--data-blue-dark)]`}

@@ -29,12 +29,14 @@ export interface ArticleResult {
   pmcid?: string;
   /** 开放获取全文页（PMC 文章页等，服务端渲染含正文）——HTML 兜底候选。 */
   oaUrl?: string;
-  // 期刊指标（来自内置 JCR/CASS/Warning DB，匹配失败则全 undefined，UI 静默不显示）
+  // 期刊指标（来自内置 JCR/CASS/XR/Warning DB，匹配失败则全 undefined，UI 静默不显示）
   jif?: number; // 影响因子
   jcrQuartile?: string; // JCR Q1-Q4
   cassQuartile?: number; // 中科院大类 1-4
   cassCategory?: string; // 中科院大类名
   cassIsTop?: boolean; // 顶刊
+  xrQuartile?: number; // 新锐大类 1-4（2026 接续体系，与中科院分区并存分列）
+  xrUnderReview?: boolean; // 新锐 Under Review（2026 起取代独立预警名单）
   warningLevel?: string; // 命中预警时的等级；前端仅作 truthy 信号，文案走 lit-warning
   /** 命中 Beall's 掠夺性期刊名单。仅期刊表精确名匹配才置位——模糊层（缩写/
    *  关键词重叠）与出版社级命中不足以对单条检索结果作断言。前端仅作 truthy

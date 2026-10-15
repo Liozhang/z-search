@@ -222,6 +222,8 @@ export function LiteratureResultCard({
             article.cassQuartile ||
             article.cassIsTop ||
             article.cassCategory ||
+            article.xrQuartile ||
+            article.xrUnderReview ||
             article.chineseCore?.length) && (
             <div className="lit-result-metrics flex flex-wrap items-center gap-[var(--space-1-5)] mb-[var(--space-1)]">
               {article.warningLevel && (
@@ -256,6 +258,22 @@ export function LiteratureResultCard({
               {article.cassIsTop && (
                 <span className={`${TAG_BASE} ${TAG_KIND.top}`}>
                   {getString("lit-top")}
+                </span>
+              )}
+              {/* 新锐分区（2026 接续体系）——与 CAS 徽章同语法、独立成键，
+                  文案本身带「新锐」字样区分两套分区。 */}
+              {article.xrUnderReview && (
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.warning}`}
+                  title={getString("journal-xr-under-review-label")}
+                >
+                  {getString("journal-xr-under-review-label")}
+                </span>
+              )}
+              {article.xrQuartile && (
+                <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
+                  <span aria-hidden="true" className={QUARTILE_DOT} />
+                  {getString(`lit-quartile-xr-${article.xrQuartile}`)}
                 </span>
               )}
               {/* 中文核心名单（easyScholar 可选源；P1-4）——稳定码取词 */}

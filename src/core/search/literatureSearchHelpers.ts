@@ -6,14 +6,14 @@
  */
 
 /**
- * Enrich articles with journal quality metrics (JCR/CASS/Warning/Beall's)
+ * Enrich articles with journal quality metrics (JCR/CASS/XR/Warning/Beall's)
  * from the builtin DB. Mutates each article in place, attaching jif /
- * jcrQuartile / cassQuartile / cassCategory / cassIsTop / warningLevel /
- * beallsHit when matched.
+ * jcrQuartile / cassQuartile / cassCategory / cassIsTop / xrQuartile /
+ * xrUnderReview / warningLevel / beallsHit when matched.
  *
- * Lookup key: ISSN (normalized) for JCR/CASS, journal name (normalized) for
+ * Lookup key: ISSN (normalized) for JCR/CASS/XR, journal name (normalized) for
  * Warning and Beall's (neither table carries ISSN). Articles without issn are
- * skipped for JCR/CASS (accepted miss rate, see spec §2.2). Beall's is exact
+ * skipped for JCR/CASS/XR (accepted miss rate, see spec §2.2). Beall's is exact
  * journal-name only — the store's fuzzy layers are too coarse to assert
  * against a single search result.
  *
@@ -27,12 +27,13 @@ import { isCassPartitionVisible } from "../../utils/region";
 
 export async function enrichJournalMetrics(articles: any[]): Promise<void> {
   try {
-    // 中科院分区是中国科研评价体系的数据（区域限定功能）——网络区域声明为
-    // 国际、或用户显式隐藏时，查询与徽章字段一并缺席（JCR/预警/掠夺性名单
-    // 是国际通用数据，不受区域门控）。
+    // 中科院分区/新锐分区是中国科研评价体系的数据（区域限定功能）——网络区
+    // 域声明为国际、或用户显式隐藏时，查询与徽章字段一并缺席（JCR/预警/掠夺
+    // 性名单是国际通用数据，不受区域门控）。
     const cassEnabled = isCassPartitionVisible();
     const { default: JCRStore } = await import("../data/JCRStore");
     const { default: CASSStore } = await import("../data/CASSStore");
+    const { default: XRStore } = await import("../data/XRStore");
     const { default: WarningListStore } =
       await import("../data/WarningListStore");
     const { default: BeallsListStore } =
@@ -47,12 +48,15 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
       .filter(Boolean);
     if (issns.length === 0 && names.length === 0) return;
 
-    const [jcrMap, cassMap, warningMap, beallsMap] = await Promise.all([
+    const [jcrMap, cassMap, xrMap, warningMap, beallsMap] = await Promise.all([
       issns.length
         ? JCRStore.batchLookupByIssn(issns)
         : Promise.resolve(new Map()),
       issns.length && cassEnabled
         ? CASSStore.batchLookupByIssn(issns)
+        : Promise.resolve(new Map()),
+      issns.length && cassEnabled
+        ? XRStore.batchLookupByIssn(issns)
         : Promise.resolve(new Map()),
       names.length
         ? WarningListStore.batchLookupWarnings(names)
@@ -84,6 +88,7 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
 
       const jcr = issnKey ? jcrMap.get(issnKey) : undefined;
       const cass = issnKey ? cassMap.get(issnKey) : undefined;
+      const xr = issnKey ? xrMap.get(issnKey) : undefined;
       const warn = nameKey ? warningMap.get(nameKey) : undefined;
       const beallsHit = nameKey ? beallsMap.get(nameKey) : undefined;
 
@@ -102,6 +107,10 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
         a.cassCategory =
           (!zhUi && cass.major_category_en) || cass.major_category || undefined;
         a.cassIsTop = cass.is_top === true;
+      }
+      if (xr) {
+        a.xrQuartile = xr.major_quartile ?? undefined;
+        a.xrUnderReview = xr.is_under_review === true || undefined;
       }
       // 2024/2025 版预警名单不带级别（warning_level=null，论文工厂类）——
       // 记录存在即告警；级别按界面语言取值（中文界面中文、其余默认英文），

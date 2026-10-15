@@ -52,6 +52,7 @@ export function JournalMetricCard({
   const hasJcr =
     metric.jif != null || metric.jifQuartile != null || metric.jci != null;
   const hasCass = metric.cassQuartile != null;
+  const hasXr = metric.xrQuartile != null || !!metric.xrUnderReview;
   const hasRisk = !!metric.warningLevel || !!metric.isPredatory;
 
   // Overview section: research scope + academic indices + publishing metadata.
@@ -309,6 +310,65 @@ export function JournalMetricCard({
                 </div>
               </div>
             )}
+        </MetricSection>
+      )}
+
+      {/* 新锐分区（2026 起）——官方中科院分区表停更后的接续体系，独立成节，
+          不与 CASS 合并：两套口径并存，混排会让「分区」一词失去指称。 */}
+      {hasXr && (
+        <MetricSection title={getString("journal-xr-section")}>
+          {metric.xrQuartile != null && (
+            <MetricRow
+              label={getString("journal-xr-quartile-label")}
+              value={
+                <span
+                  className={QUARTILE_TONE}
+                  data-quartile={normalizeQuartile(metric.xrQuartile) ?? ""}
+                >
+                  {formatQuartile(metric.xrQuartile)}
+                </span>
+              }
+            />
+          )}
+          {metric.xrCategory && (
+            <MetricRow
+              label={getString("journal-cass-category-label")}
+              value={formatCassCategoryPair(
+                metric.xrCategory,
+                metric.xrCategoryEn,
+              )}
+            />
+          )}
+          {metric.xrIsTop != null && metric.xrIsTop && (
+            <MetricRow label={getString("journal-is-top-label")} value="★" />
+          )}
+          {metric.xrUnderReview && (
+            <div className="flex items-center gap-[var(--space-2)] flex-wrap">
+              <span className="inline-flex items-center py-[var(--space-0-5)] px-[var(--space-1-5)] rounded-[var(--radius-sm)] text-[length:var(--text-xs)] font-semibold bg-[var(--signal-yellow-bg)] text-[color:var(--signal-yellow-text)]">
+                {getString("journal-xr-under-review-label")}
+              </span>
+            </div>
+          )}
+          {metric.xrMinorCategories && metric.xrMinorCategories.length > 0 && (
+            <div className="flex flex-col gap-[var(--space-1)]">
+              <span className="text-[color:var(--text-secondary)]">
+                {getString("journal-minor-categories-label")}
+              </span>
+              <div className="flex flex-col gap-[var(--space-0-5)]">
+                {metric.xrMinorCategories.map((m, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[length:var(--text-sm)] text-[color:var(--text-primary)]"
+                  >
+                    <span data-quartile={normalizeQuartile(m.quartile) ?? ""}>
+                      {formatQuartile(m.quartile)}
+                    </span>{" "}
+                    {isZhUi() ? m.nameCn || m.name : m.name || m.nameCn}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </MetricSection>
       )}
 

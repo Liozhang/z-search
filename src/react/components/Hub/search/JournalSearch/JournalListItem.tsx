@@ -48,7 +48,9 @@ export function JournalListItemView({
     item.isPredatory ||
     item.jifQuartile ||
     item.cassQuartile != null ||
-    item.cassIsTop
+    item.cassIsTop ||
+    item.xrQuartile != null ||
+    item.xrUnderReview
   );
 
   return (
@@ -137,6 +139,25 @@ export function JournalListItemView({
           {item.cassIsTop && (
             <span className={`${TAG_BASE} ${TAG_KIND.top}`}>
               {getString("lit-top")}
+            </span>
+          )}
+          {item.xrUnderReview && (
+            <span
+              className={`${TAG_BASE} ${TAG_KIND.warning}`}
+              title={getString("journal-xr-under-review-label")}
+            >
+              {getString("journal-xr-under-review-label")}
+            </span>
+          )}
+          {item.xrQuartile != null && (
+            <span
+              className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+              title={getString("journal-xr-quartile-label")}
+            >
+              <span aria-hidden="true" className={QUARTILE_DOT} />
+              {getString(
+                `lit-quartile-xr-${normalizeQuartile(item.xrQuartile)}`,
+              )}
             </span>
           )}
         </div>

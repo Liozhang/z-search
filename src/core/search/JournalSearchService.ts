@@ -21,6 +21,7 @@
 
 import JCRStore from "../data/JCRStore";
 import CASSStore from "../data/CASSStore";
+import XRStore from "../data/XRStore";
 import WarningListStore from "../data/WarningListStore";
 import BeallsListStore from "../data/BeallsListStore";
 import OpenAlexJournalCacheStore from "../data/OpenAlexJournalCacheStore";
@@ -113,14 +114,15 @@ class JournalSearchService {
     const inputIsISSN = isISSN(input);
 
     // 中科院分区是中国科研评价体系的数据（区域限定功能）——按区域/用户选择
-    // 显隐；隐藏时 CASS 维度整体缺席，hasLocalHit/名称回填只由其余三表承担
-    // （JCR 是国际通用数据，不门控）。
+    // 显隐；隐藏时 CASS/XR 维度整体缺席，hasLocalHit/名称回填只由其余表承担
+    // （JCR 是国际通用数据，不门控）。新锐分区同为中文科研评价体系，与 CASS
+    // 同一门控。
     const cassEnabled = isCassPartitionVisible();
 
-    // First pass: JCR/CASS by ISSN-or-name, plus Warning/Bealls by name.
+    // First pass: JCR/CASS/XR by ISSN-or-name, plus Warning/Bealls by name.
     // (Warning table has no ISSN column; Bealls matches by title — so when the
     //  user typed an ISSN, we can't probe them until JCR/CASS gives us a name.)
-    const [jcr, cass] = await Promise.all([
+    const [jcr, cass, xr] = await Promise.all([
       JCRStore.lookup({
         issn: inputIsISSN ? input : undefined,
         eissn: inputIsISSN ? input : undefined,
@@ -133,12 +135,19 @@ class JournalSearchService {
             journalName: inputIsISSN ? undefined : input,
           })
         : Promise.resolve(null),
+      cassEnabled
+        ? XRStore.lookup({
+            issn: inputIsISSN ? input : undefined,
+            eissn: inputIsISSN ? input : undefined,
+            journalName: inputIsISSN ? undefined : input,
+          })
+        : Promise.resolve(null),
     ]);
 
     // Resolve the journal name to use for Warning/Bealls: the typed name, or
     // (for ISSN input) the name from the matched JCR/CASS record.
     const nameForRiskLookup = inputIsISSN
-      ? jcr?.journal_name || cass?.journal_name || null
+      ? jcr?.journal_name || cass?.journal_name || xr?.journal_name || null
       : input;
 
     let warning:
@@ -158,13 +167,19 @@ class JournalSearchService {
       ]);
     }
 
-    const hasLocalHit = !!(jcr || cass || warning || bealls);
+    const hasLocalHit = !!(jcr || cass || xr || warning || bealls);
 
     // ISSN for OpenAlex lookup: prefer the local record's issn/eissn so we
     // resolve the exact source even when the user typed a name.
     const issnForLookup = inputIsISSN
       ? input
-      : jcr?.issn || jcr?.eissn || cass?.issn || cass?.eissn || undefined;
+      : jcr?.issn ||
+        jcr?.eissn ||
+        cass?.issn ||
+        cass?.eissn ||
+        xr?.issn ||
+        xr?.eissn ||
+        undefined;
 
     // OpenAlex is the ONLY source for topics / country / APC / OA / academic
     // indices, so we always fetch it (best-effort) to enrich the metric card —
@@ -223,12 +238,13 @@ class JournalSearchService {
     // （审计 P2-6：warning/bealls-only 命中此前阻断了 JCR/CASS 复探）。
     let finalJcr = jcr,
       finalCass = cass,
+      finalXr = xr,
       finalWarn = warning,
       finalBealls = bealls;
     if (oaSrc) {
       const oaIssn = oaSrc.issn || oaSrc.issnL;
       const probes: Promise<unknown>[] = [];
-      if (!jcr && !cass && oaIssn) {
+      if (!jcr && !cass && !xr && oaIssn) {
         probes.push(
           JCRStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
             finalJcr = r;
@@ -238,6 +254,9 @@ class JournalSearchService {
           probes.push(
             CASSStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
               finalCass = r;
+            }),
+            XRStore.lookup({ issn: oaIssn, eissn: oaIssn }).then((r) => {
+              finalXr = r;
             }),
           );
         }
@@ -264,6 +283,7 @@ class JournalSearchService {
         query: input,
         jcr: finalJcr,
         cass: finalCass,
+        xr: finalXr,
         warning: finalWarn,
         bealls: finalBealls,
         issnForLookup,
@@ -284,6 +304,7 @@ class JournalSearchService {
     query: string;
     jcr: Awaited<ReturnType<typeof JCRStore.lookup>>;
     cass: Awaited<ReturnType<typeof CASSStore.lookup>>;
+    xr: Awaited<ReturnType<typeof XRStore.lookup>>;
     warning: {
       warning_level?: string | null;
       warning_level_en?: string | null;
@@ -294,23 +315,25 @@ class JournalSearchService {
     issnForLookup?: string;
     oaSrc?: OpenAlexJournal | null;
   }): JournalMetric {
-    const { jcr, cass, warning, bealls, oaSrc } = args;
-    const hasLocal = !!(jcr || cass || warning || bealls);
+    const { jcr, cass, xr, warning, bealls, oaSrc } = args;
+    const hasLocal = !!(jcr || cass || xr || warning || bealls);
     return {
       source: hasLocal ? "local" : "openalex",
       name:
         jcr?.journal_name ||
         cass?.journal_name ||
+        xr?.journal_name ||
         oaSrc?.displayName ||
         args.query,
       issn:
         jcr?.issn ||
         cass?.issn ||
+        xr?.issn ||
         args.issnForLookup ||
         oaSrc?.issn ||
         oaSrc?.issnL ||
         undefined,
-      eissn: jcr?.eissn || cass?.eissn || undefined,
+      eissn: jcr?.eissn || cass?.eissn || xr?.eissn || undefined,
       publisher: jcr?.publisher ?? undefined,
       // JCR metrics — local only. "N/A" 分区（2,085/18,871 行）不能进模板串
       // ——卡片会拼出 lit-quartile-jcr-q/A 这类裸 locale key（审计 P1-5）
@@ -327,6 +350,18 @@ class JournalSearchService {
       cassCategoryEn: cass?.major_category_en ?? undefined,
       cassIsTop: cass?.is_top,
       cassMinorCategories: cass?.minor_categories?.map((m) => ({
+        name: m.n,
+        nameCn: m.nc,
+        quartile: m.q,
+      })),
+      // XR（新锐分区）— local only。与 CASS 同结构但独立成节：官方分区表
+      // 已停更，两套体系并存且口径不同，不能混作一谈。
+      xrQuartile: xr?.major_quartile ?? undefined,
+      xrCategory: xr?.major_category,
+      xrCategoryEn: xr?.major_category_en ?? undefined,
+      xrIsTop: xr?.is_top,
+      xrUnderReview: xr?.is_under_review || undefined,
+      xrMinorCategories: xr?.minor_categories?.map((m) => ({
         name: m.n,
         nameCn: m.nc,
         quartile: m.q,
@@ -589,33 +624,46 @@ class JournalSearchService {
   ): Promise<void> {
     if (items.length === 0) return;
 
-    // 区域限定功能（中科院分区）隐藏时，两个 CASS 批查询整段跳过——
-    // 下方的 !cass 按名兜底自然落空（cassQuartileByName 恒为空 Map）。
+    // 区域限定功能（中科院分区/新锐分区）隐藏时，CASS/XR 批查询整段跳过——
+    // 下方的 !cass/!xr 按名兜底自然落空（对应 Map 恒为空）。
     const cassEnabled = isCassPartitionVisible();
 
     const issns = items.map((i) => i.issn).filter((x): x is string => !!x);
     const names = items.map((i) => i.name).filter(Boolean);
 
-    const [jcrMap, cassMap, warnMap, jcrQuartileByName, cassQuartileByName] =
-      await Promise.all([
-        issns.length
-          ? JCRStore.batchLookupByIssn(issns)
-          : Promise.resolve(new Map()),
-        issns.length && cassEnabled
-          ? CASSStore.batchLookupByIssn(issns)
-          : Promise.resolve(new Map()),
-        names.length
-          ? WarningListStore.batchLookupWarnings(names)
-          : Promise.resolve(new Map()),
-        // E3（2026-09-04）：库内期刊条目只有刊名没有 ISSN，ISSN 路径恒
-        // 不命中 → Q 徽章恒缺失、与分区分布并置显矛盾。补按名批量查询。
-        names.length
-          ? JCRStore.batchLookupQuartiles(names)
-          : Promise.resolve(new Map()),
-        names.length && cassEnabled
-          ? CASSStore.batchLookupQuartiles(names)
-          : Promise.resolve(new Map()),
-      ]);
+    const [
+      jcrMap,
+      cassMap,
+      xrMap,
+      warnMap,
+      jcrQuartileByName,
+      cassQuartileByName,
+      xrQuartileByName,
+    ] = await Promise.all([
+      issns.length
+        ? JCRStore.batchLookupByIssn(issns)
+        : Promise.resolve(new Map()),
+      issns.length && cassEnabled
+        ? CASSStore.batchLookupByIssn(issns)
+        : Promise.resolve(new Map()),
+      issns.length && cassEnabled
+        ? XRStore.batchLookupByIssn(issns)
+        : Promise.resolve(new Map()),
+      names.length
+        ? WarningListStore.batchLookupWarnings(names)
+        : Promise.resolve(new Map()),
+      // E3（2026-09-04）：库内期刊条目只有刊名没有 ISSN，ISSN 路径恒
+      // 不命中 → Q 徽章恒缺失、与分区分布并置显矛盾。补按名批量查询。
+      names.length
+        ? JCRStore.batchLookupQuartiles(names)
+        : Promise.resolve(new Map()),
+      names.length && cassEnabled
+        ? CASSStore.batchLookupQuartiles(names)
+        : Promise.resolve(new Map()),
+      names.length && cassEnabled
+        ? XRStore.batchLookupQuartiles(names)
+        : Promise.resolve(new Map()),
+    ]);
 
     // Bealls: per-item (no batch API). Run after the batch lookups to overlap
     // the awaits with the name->warning map build. 断言只认精确层（同 metric
@@ -636,6 +684,7 @@ class JournalSearchService {
       // （"0028-0836"），裸 get 恒 miss（审计 P0-2）
       const jcr = issn ? jcrMap.get(normalizeISSN(issn)) : undefined;
       const cass = issn ? cassMap.get(normalizeISSN(issn)) : undefined;
+      const xr = issn ? xrMap.get(normalizeISSN(issn)) : undefined;
       const warn = item.name
         ? warnMap.get(normalizeJournalName(item.name))
         : undefined;
@@ -648,6 +697,10 @@ class JournalSearchService {
       if (cass) {
         item.cassQuartile = cass.major_quartile;
         item.cassIsTop = cass.is_top;
+      }
+      if (xr) {
+        item.xrQuartile = xr.major_quartile ?? undefined;
+        item.xrUnderReview = xr.is_under_review || undefined;
       }
       // E3：ISSN 未命中时按名兜底。批量查询的结果键 = 库内存储刊名的
       // 大写形式，与输入刊名的大小写/规范化形式可能有别——用候选键组试查。
@@ -664,6 +717,15 @@ class JournalSearchService {
         if (cq) {
           item.cassQuartile = cq.quartile;
           item.cassIsTop = cq.isTop;
+        }
+      }
+      if (!xr && item.name) {
+        const xq =
+          xrQuartileByName.get(item.name.toUpperCase()) ??
+          xrQuartileByName.get(normalizeJournalName(item.name).toUpperCase());
+        if (xq) {
+          item.xrQuartile = xq.quartile;
+          item.xrUnderReview = xq.isUnderReview || undefined;
         }
       }
       if (warn) {

@@ -5,6 +5,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [1.11.0] - 2026-10-15
+
+### Added
+
+- **XinRui partition table 2026 (新锐分区) as a new bundled journal-quality
+  dataset.** The CAS (Chinese Academy of Sciences) partition table stopped
+  publication after its 2025 edition; the original team continues the system
+  as the XinRui Ranking (released 2026-03-24, 22,299 journals, retroactive to
+  2020, with an "Under Review" flag replacing the standalone warning list).
+  The table ships as `xr-2026.json`, imports into a new
+  `zsearch_xr_quartiles` table, and surfaces as a separate badge in the
+  item-tree metrics column, the journal metrics card (quartile, major
+  category, top-journal star, Under Review flag, minor categories), the
+  journal discover rows, and the literature result cards & citation explorer
+  (quartile + Under Review badges) — always as a system distinct from CASS,
+  since the two coexist with different definitions. Region-gated together
+  with CASS.
+  Data source: the publicly mirrored ShowJCR dataset, cross-checked against
+  the official release coverage (22,299 journals).
+
+- Added `zzx-xr-data-probe`, a real-Zotero probe that hard-asserts the
+  imported row counts of both new datasets (JCR 2025 = 22,643; XinRui 2026 =
+  22,299 with 37 Under Review) and the XR field flow through the journal
+  service and literature enrichment layers. It wipes and re-imports the two
+  new datasets first, so it also validates the re-import path and catches any
+  silent row loss from unique-index collisions.
+
+### Changed
+
+- **Impact factors updated to JCR 2025** (the JCR 2026 release, published
+  2026-06-17; 22,643 journals). Both the 2024 and 2025 snapshots now ship
+  side by side (`jcr-2024.json` + `jcr-2025.json`) and import per-year on
+  startup; all lookups read the latest year, so existing installs pick up
+  2025 impact factors on upgrade without a full re-import.
+
 ## [1.10.0] - 2026-10-14
 
 ### Changed

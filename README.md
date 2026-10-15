@@ -30,8 +30,9 @@ and outside your library into one window: parallel search across academic
 databases with one-click import into your library, web-search source management,
 GitHub repository search, and in-library vector & full-text search powered by
 local or cloud embedding models. Result cards carry built-in journal quality
-information — citation count, impact factor, JCR/CASS quartiles, top-journal
-flag, international warning list, and predatory-journal markers — all served
+information — citation count, impact factor, JCR/CASS/XR quartiles,
+top-journal flag, international warning list, and predatory-journal markers —
+all served
 from offline databases bundled with the plugin, adding zero network overhead at
 query time.
 
@@ -70,9 +71,13 @@ single/batch import all happen on the same card.
   author, journal, sort order, and cap
 - Journal quality badges (offline bundled databases, zero network cost):
   - Citation count (per-source figures differ; the larger value wins on merge)
-  - Impact factor (highlighted in yellow) and JCR quartile — JCR 2024
+  - Impact factor (highlighted in yellow) and JCR quartile — JCR 2024 and
+    JCR 2025
   - CASS major-category quartile, subject category, and top-journal flag —
-    CASS partition table 2025
+    CASS partition table 2025 (the final official edition)
+  - XR major-category quartile and Under Review flag — XinRui partition table
+    2026 (the successor to the discontinued CAS table, kept as a separate
+    system alongside CASS)
   - International warning list and Beall's predatory-journal list (the latter
     only flags exact journal-name matches, with the list's cutoff date shown on
     the badge, to avoid false accusations)
@@ -96,7 +101,7 @@ single/batch import all happen on the same card.
 
 The same offline badges are available as a column in your library's item
 list (title, authors, … gets a "Journal Metrics" column showing IF, JCR/CAS
-quartiles, top-journal star, and warning/predatory flags) — no API key, no
+quartiles, XR quartile, top-journal star, and warning/predatory flags) — no API key, no
 network.
 
 Type a journal name or ISSN to get a full profile: JCR impact factor and
@@ -112,7 +117,7 @@ Optional Chinese core-journal badges (PKU Core / CSCD / CSSCI / Tech Core)
 light up when you set a free easyScholar API key.
 
 The discover mode lists journals matching a research field as compact rows —
-name, ISSN, JIF, works count, and inline JCR/CAS quartile badges with
+name, ISSN, JIF, works count, and inline JCR/CAS/XR quartile badges with
 top-journal stars — sortable by relevance, JIF, works count, or h5-index;
 clicking a row drills into that journal's full metrics card.
 

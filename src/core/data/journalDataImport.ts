@@ -22,7 +22,7 @@ import { setPrefDynamic } from "../../utils/prefs";
 import { loadDataFile } from "./DataLoader";
 
 export type JournalDataStageName =
-  "schema" | "jcr" | "cass" | "warning" | "bealls";
+  "schema" | "jcr" | "cass" | "xr" | "warning" | "bealls";
 
 export interface JournalDataStageResult {
   stage: JournalDataStageName;
@@ -69,6 +69,8 @@ async function doRun(): Promise<JournalDataImportResult> {
       { default: JCRStore },
       { default: CASSSchema },
       { default: CASSStore },
+      { default: XRSchema },
+      { default: XRStore },
       { default: WarningListSchema },
       { default: WarningListStore },
       { default: BeallsListSchema },
@@ -80,6 +82,8 @@ async function doRun(): Promise<JournalDataImportResult> {
       import("./JCRStore"),
       import("./CASSSchema"),
       import("./CASSStore"),
+      import("./XRSchema"),
+      import("./XRStore"),
       import("./WarningListSchema"),
       import("./WarningListStore"),
       import("./BeallsListSchema"),
@@ -89,7 +93,7 @@ async function doRun(): Promise<JournalDataImportResult> {
     ]);
     const initTargets: Array<{
       name: string;
-      /** 对应导入 stage；OpenAlex 缓存不属于四数据集，置 null 只落日志。 */
+      /** 对应导入 stage；OpenAlex 缓存不属于内置数据集，置 null 只落日志。 */
       stage: JournalDataStageName | null;
       init: () => Promise<void>;
     }> = [
@@ -99,6 +103,7 @@ async function doRun(): Promise<JournalDataImportResult> {
         stage: "cass",
         init: () => CASSSchema.initialize(),
       },
+      { name: "XRSchema", stage: "xr", init: () => XRSchema.initialize() },
       {
         name: "WarningListSchema",
         stage: "warning",
@@ -156,18 +161,18 @@ async function doRun(): Promise<JournalDataImportResult> {
     // 可关闭；一轮全部成功即复位。
 
     // 1. JCR data — check the DB year BEFORE reading the large JSON.
+    // 多年份（2026-10-15）：随版本内置逐年快照（2024 全字段 + 2025 起的
+    // 精简快照），按年独立判存补导——期望年份存在即跳过，库里已有更新年份
+    // 不触发重导；查询层取 MAX(jcr_year) 自动用上最新年份。
     try {
-      const JCR_EXPECTED_YEAR = 2024; // matches jcr-2024.json's embedded `year`
-      // 门控谓词是「期望年份存在」而非「最大年份恰等于期望」：库里一旦
-      // 出现更新年份（未来版本导入 2025），不等式会让每次启动都全量重导。
       const schemaFailed = schemaFailedStage("jcr");
       if (schemaFailed) {
         stages.push(schemaFailed);
-      } else if (!(await JCRStore.hasData(JCR_EXPECTED_YEAR))) {
-        const jcr = await loadDataFile<{
-          year: number;
-          data: (string | number | null)[][];
-        }>("jcr-2024.json");
+      } else {
+        const JCR_YEARS: Array<{ year: number; file: string }> = [
+          { year: 2024, file: "jcr-2024.json" },
+          { year: 2025, file: "jcr-2025.json" },
+        ];
         const JCR_COLUMNS = [
           "jcr_year",
           "journal_name",
@@ -187,24 +192,32 @@ async function doRun(): Promise<JournalDataImportResult> {
           "jif_quartile",
           "jif_rank",
         ];
-        const objRows = jcr.data.map((tuple) => {
-          const o: Record<string, unknown> = {};
-          JCR_COLUMNS.forEach((c, i) => {
-            o[c] = tuple[i];
+        for (const expected of JCR_YEARS) {
+          if (await JCRStore.hasData(expected.year)) {
+            stages.push({ stage: "jcr", status: "skipped" });
+            continue;
+          }
+          const jcr = await loadDataFile<{
+            year: number;
+            data: (string | number | null)[][];
+          }>(expected.file);
+          const objRows = jcr.data.map((tuple) => {
+            const o: Record<string, unknown> = {};
+            JCR_COLUMNS.forEach((c, i) => {
+              o[c] = tuple[i];
+            });
+            return o;
           });
-          return o;
-        });
-        const result = await JCRStore.importRows(objRows);
-        stages.push({
-          stage: "jcr",
-          status: "imported",
-          detail: `inserted=${result.inserted} (year ${jcr.year})`,
-        });
-        safeDebug(
-          `[z-search] JCR data imported: ${result.inserted} records (year ${jcr.year})`,
-        );
-      } else {
-        stages.push({ stage: "jcr", status: "skipped" });
+          const result = await JCRStore.importRows(objRows);
+          stages.push({
+            stage: "jcr",
+            status: "imported",
+            detail: `inserted=${result.inserted} (year ${jcr.year})`,
+          });
+          safeDebug(
+            `[z-search] JCR data imported: ${result.inserted} records (year ${jcr.year})`,
+          );
+        }
       }
     } catch (e) {
       warn("startup.jcr_import_failed", { error: String(e) });
@@ -273,7 +286,65 @@ async function doRun(): Promise<JournalDataImportResult> {
       });
     }
 
-    // 3. Warning list data
+    // 3. XR (新锐分区) quartile data — 中科院分区表官方停更后的接续体系
+    try {
+      const XR_EXPECTED_YEAR = 2026; // matches xr-2026.json's embedded `year`
+      const xrSchemaFailed = schemaFailedStage("xr");
+      if (xrSchemaFailed) {
+        stages.push(xrSchemaFailed);
+      } else if (!(await XRStore.hasData(XR_EXPECTED_YEAR))) {
+        const xr = await loadDataFile<{
+          year: number;
+          data: (string | number | null)[][];
+        }>("xr-2026.json");
+        const XR_COLUMNS = [
+          "xr_year",
+          "journal_name",
+          "chinese_name",
+          "issn",
+          "eissn",
+          "cn",
+          "wos_database",
+          "is_under_review",
+          "major_category",
+          "major_category_en",
+          "major_quartile",
+          "is_top",
+          "major2_category",
+          "major2_category_en",
+          "major2_quartile",
+          "minor_categories",
+        ];
+        const objRows = xr.data.map((tuple) => {
+          const o: Record<string, unknown> = {};
+          XR_COLUMNS.forEach((c, i) => {
+            o[c] = tuple[i];
+          });
+          return o;
+        });
+        const result = await XRStore.importRows(objRows);
+        stages.push({
+          stage: "xr",
+          status: "imported",
+          detail: `inserted=${result.inserted} (year ${xr.year})`,
+        });
+        safeDebug(
+          `[z-search] XR data imported: ${result.inserted} records (year ${xr.year})`,
+        );
+      } else {
+        stages.push({ stage: "xr", status: "skipped" });
+      }
+    } catch (e) {
+      warn("startup.xr_import_failed", { error: String(e) });
+      markJournalDataFailure();
+      stages.push({
+        stage: "xr",
+        status: "failed",
+        detail: String((e as any)?.message ?? e).slice(0, 300),
+      });
+    }
+
+    // 4. Warning list data
     try {
       const warningSchemaFailed = schemaFailedStage("warning");
       if (warningSchemaFailed) {
@@ -322,7 +393,7 @@ async function doRun(): Promise<JournalDataImportResult> {
       });
     }
 
-    // 4. Beall's list data (predatory journals/publishers/misleading metrics)
+    // 5. Beall's list data (predatory journals/publishers/misleading metrics)
     try {
       const beallsSchemaFailed = schemaFailedStage("bealls");
       if (beallsSchemaFailed) {

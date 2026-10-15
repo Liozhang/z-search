@@ -56,6 +56,15 @@ export interface JournalMetric {
   cassIsTop?: boolean;
   cassMinorCategories?: JournalMinorCategory[];
 
+  // --- XR quartile (from zsearch_xr_quartiles; 新锐分区 2026，中科院分区表
+  //     官方停更后的接续体系；Under Review 取代独立预警名单) ---
+  xrQuartile?: number;
+  xrCategory?: string;
+  xrCategoryEn?: string;
+  xrIsTop?: boolean;
+  xrUnderReview?: boolean;
+  xrMinorCategories?: JournalMinorCategory[];
+
   // --- Risk flags (from zsearch_journal_warnings / zsearch_bealls_journals) ---
   warningLevel?: string;
   warningReason?: string;
@@ -88,6 +97,8 @@ export interface JournalListItem {
   jifQuartile?: string;
   cassQuartile?: number;
   cassIsTop?: boolean;
+  xrQuartile?: number;
+  xrUnderReview?: boolean;
   warningLevel?: string;
   isPredatory?: boolean;
 
