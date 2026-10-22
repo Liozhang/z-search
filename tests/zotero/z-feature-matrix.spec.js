@@ -1311,7 +1311,9 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
         `BOM keeps Excel CJK-safe (first bytes: ${Array.from(csvBytes.slice(0, 3))})`,
       ).to.be.true;
       const csv = await blobs[0].text();
-      expect(csv).to.contain(firstTitle.slice(0, 24));
+      // 标题含半角引号时 csvEscape 按 RFC 4180 把引号翻倍并整体加引号，
+      // 断言必须按转义后的字段形态找——未转义的子串永远匹配不上（实测踩坑）
+      expect(csv).to.contain(`"${firstTitle.replace(/"/g, '""')}"`);
       expect(csv.split("\r\n").length, "one row per result").to.be.at.least(2);
     } catch (e) {
       reportError("export", e);
