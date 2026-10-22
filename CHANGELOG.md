@@ -5,6 +5,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [2.0.1] - 2026-10-23
+
+### Fixed
+
+- **Real-device integration tests now receive an OpenAlex API key.** The test
+  runner empties its profile directory on every run, so a key written into
+  `prefs.js` by hand never survived a single round and the suite fell back to
+  OpenAlex's shared anonymous quota. Once that quota ran out, the journal
+  discover lists (en-US and zh-CN), the journal service probe, the XR data
+  probe, the per-source latency probe, and citation merging on re-import all
+  failed. The key is now injected through the scaffold's `test.prefs` from the
+  `ZSEARCH_OPENALEX_API_KEY` environment variable (`.env`, not committed);
+  without it the suite still runs against the anonymous quota.
+- **CSV export assertion matches RFC 4180 escaping.** `csvEscape` doubles
+  embedded double quotes and wraps the field, which is correct; the test was
+  looking for the unescaped substring and could never match once a title
+  contained a quote, so the "copy list + export CSV" case stayed permanently
+  red. It now asserts the escaped field form.
+
 ## [2.0.0] - 2026-10-22
 
 ### Added
