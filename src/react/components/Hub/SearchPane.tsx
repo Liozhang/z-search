@@ -162,7 +162,11 @@ export function SearchPane({
             activeView === "literature",
             <LiteratureSearchPage
               isActive={isActive}
-              scope={activeTab === "journal" ? litScope : activeTab}
+              scope={
+                activeTab === "web" || activeTab === "local"
+                  ? activeTab
+                  : litScope
+              }
               onScopeChange={changeLitScope}
             />,
           )}

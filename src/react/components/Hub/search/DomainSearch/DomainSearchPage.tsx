@@ -16,13 +16,14 @@ import React, { useMemo } from "react";
 import { getString } from "../../../../utils/locale";
 import { useDomainSearch } from "./useDomainSearch";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { EmptyState } from "@/components/ui/EmptyState";
+import EmptyState from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DatasetMetaFields } from "./DatasetMetaFields";
-import type { DomainId, DomainResult, DATASET_DISCIPLINES } from "./types";
+import { DATASET_DISCIPLINES } from "./types";
+import type { DomainId, DomainResult } from "./types";
 
 export function DomainSearchPage({
   domainId,
@@ -71,13 +72,27 @@ export function DomainSearchPage({
       <div className="shrink-0 flex gap-2 p-4">
         <SearchInput
           value={query}
-          onChange={setQuery}
-          onSearch={() => handleSearch()}
-          onClear={handleClear}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !isSearching) handleSearch();
+          }}
           placeholder={getString(placeholderKey)}
-          isSearching={isSearching}
           className="flex-1"
         />
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => handleSearch()}
+          loading={isSearching}
+          loadingText={getString("domain-importing")}
+        >
+          {getString("domain-import-btn")}
+        </Button>
+        {(query || results.length > 0) && (
+          <Button variant="ghost" size="sm" onClick={handleClear}>
+            {getString("btn-clear")}
+          </Button>
+        )}
       </div>
 
       {/* 数据集域：学科选择器（先选学科，再在该学科的源中检索） */}
@@ -148,7 +163,7 @@ export function DomainSearchPage({
                   ) : f.type === "select" ? (
                     <select
                       className="text-xs border rounded px-1 py-0.5"
-                      value={filters[f.key] ?? ""}
+                      value={(filters as Record<string, any>)[f.key] ?? ""}
                       onChange={(e) =>
                         setFilters({
                           ...filters,
@@ -195,7 +210,7 @@ export function DomainSearchPage({
           results.length === 0 && (
             <EmptyState
               title={getString("domain-no-results")}
-              description={getString("domain-no-results-hint")}
+              desc={getString("domain-no-results-hint")}
             />
           )}
 
@@ -210,21 +225,19 @@ export function DomainSearchPage({
               </span>
               {selectedIds.size > 0 && (
                 <>
-                  <button
-                    className={button("sm", "primary")}
+                  <Button
+                    variant="default"
+                    size="sm"
                     onClick={handleBatchImport}
                     disabled={importingIds.size > 0}
                   >
                     {getString("domain-import-selected", {
                       args: { count: selectedIds.size },
                     })}
-                  </button>
-                  <button
-                    className={button("sm", "ghost")}
-                    onClick={() => selectAll()}
-                  >
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => selectAll()}>
                     {getString("domain-select-all")}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -312,7 +325,15 @@ function DomainResultCard({
             )}
           </div>
 
-          {/* 域特定字段 */}
+          {/* 数据集域：按来源渲染特色字段 */}
+          {domainId === "dataset" && <DatasetMetaFields result={result} />}
+          {/* 学科专用数据集源（bio/chemistry/geoscience/social-science） */}
+          {(domainId as string) !== "dataset" &&
+            ["geo", "pubchem", "pangaea", "icpsr", "gbif"].includes(
+              result.source,
+            ) && <DatasetMetaFields result={result} />}
+
+          {/* 专利域：专利号 + IPC 分类 */}
           {domainId === "patent" && result.patentNumber && (
             <div className="mt-1 text-xs text-muted-foreground">
               <span className="font-mono">{result.patentNumber}</span>
@@ -324,13 +345,8 @@ function DomainResultCard({
                 )}
             </div>
           )}
-          {/* 数据集域：按来源渲染特色字段 */}
-          {domainId === "dataset" && <DatasetMetaFields result={result} />}
-          {/* 学科专用数据集源（bio/chemistry/geoscience/social-science） */}
-          {(domainId as string) !== "dataset" &&
-            ["geo", "pubchem", "pangaea", "icpsr", "gbif"].includes(
-              result.source,
-            ) && <DatasetMetaFields result={result} />}
+
+          {/* 研究者域：h-index / 引用数 / works / 机构 */}
           {domainId === "researcher" && (
             <div className="mt-1 text-xs text-muted-foreground">
               {result.metrics?.hIndex != null && (
@@ -350,6 +366,8 @@ function DomainResultCard({
                 )}
             </div>
           )}
+
+          {/* 基金域：资助机构 / 金额 / 执行期 / 状态 / PI */}
           {domainId === "grant" && (
             <div className="mt-1 text-xs text-muted-foreground">
               {result.extra?.fundingAgency && (
@@ -379,8 +397,9 @@ function DomainResultCard({
         </div>
 
         {/* 导入按钮 */}
-        <button
-          className={button("sm", "outline")}
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onImport}
           disabled={importing || imported || result.inLibrary}
         >
@@ -389,7 +408,7 @@ function DomainResultCard({
             : imported
               ? getString("domain-imported")
               : getString("domain-import-btn")}
-        </button>
+        </Button>
       </div>
     </div>
   );
