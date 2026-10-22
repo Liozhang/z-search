@@ -5,6 +5,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [Unreleased]
+
+### Changed
+
+- **Literature result cards: year, impact factor, citation count, and
+  GitHub stars are now badges** in the same syntax as the JCR/CASS/XR
+  quartile badges, replacing the plain-text meta row (only the journal
+  name remains there). The badge row is ordered risk-first — warning,
+  predatory, and Under Review (all red) — then metadata (year), the two
+  headline impact numbers (IF in yellow, citation count in neutral gray),
+  the journal-quality classification cluster (JCR/CASS/XR quartiles, top
+  journal, Chinese core lists), and repository stars last. IF keeps its
+  yellow emphasis from the 2026-08-26 decision; year, citation count, and
+  stars use a neutral gray so yellow, blue, and red each carry a single
+  meaning. The citation badge remains clickable when a DOI is present.
+
+- **Literature result cards: every badge now carries a hover tooltip**
+  explaining what it means. The journal-metric badges (impact factor, JCR /
+  CASS / XR quartiles, top journal) reuse the item-tree column's existing
+  wording so one concept has one explanation; warning, search source,
+  GitHub stars, and the OA / PDF / PMC tags get purpose-written tooltips.
+  The source tooltip shows the localized source name. Badges that already
+  had explanations (predatory, Under Review, citation count, Chinese core,
+  in-library) keep theirs.
+
 ## [1.11.0] - 2026-10-15
 
 ### Added

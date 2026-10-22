@@ -184,7 +184,11 @@ export class HubWindowBridge extends BaseWindowBridge {
         await handleSemanticRequest(this, method, payload, id, source);
         return;
       }
-      if (method.startsWith("literature.") || method.startsWith("journal.")) {
+      if (
+        method.startsWith("literature.") ||
+        method.startsWith("journal.") ||
+        method.startsWith("domain.")
+      ) {
         await handleLiteratureRequest(this as any, method, payload, id, source);
         return;
       }

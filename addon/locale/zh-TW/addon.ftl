@@ -317,6 +317,9 @@ brain-export = 匯出 { $count ->
 hub-search-tab-label = 搜尋範圍
 hub-search-tab-web = 學術檢索
 hub-search-tab-local = 本地搜尋
+# 學術子域 tab（Phase 1：專利 + 資料集）
+hub-domain-tab-patent = 專利
+hub-domain-tab-dataset = 資料集
 # 本地 tab 無索引時搜尋鈕的禁用提示（2026-09-29 巡檢 P2-a）
 hub-search-local-unavailable-tip = 建立全文索引後才能檢索館內內容
 # 兩個 tab 各自的輸入框佔位符
@@ -761,6 +764,15 @@ itemtree-metrics-top-tip = 頂刊（中科院）
 itemtree-metrics-xr-label = 新銳
 itemtree-metrics-xr-tip = 新銳分區大類（2026，官方分區表停更後的接續體系）
 
+# ── 結果卡徽章說明（2026-10-22 徽章化補齊：IF/分區/頂刊/新銳的說明複用條目樹
+    itemtree-metrics-*-tip 口徑，同一概念不寫兩套解釋；其餘徽章各自成條）──
+lit-warning-tip = 命中國際期刊預警名單（2020-2025 歷年版本）
+lit-source-tip = 本條結果來自 { $source }
+lit-stars-tip = GitHub 倉庫星數
+lit-tag-oa-tip = 開放獲取——全文可免費取得
+lit-tag-pdf-tip = 提供 PDF 全文連結
+lit-tag-pmc-tip = PMC 編號——有開放獲取全文
+
 # ── 中文核心期刊名單（P1-4，配 easyScholar key 後可選啟用）──
 lit-core-pku = 北大核心
 lit-core-cscd = CSCD
@@ -792,3 +804,42 @@ semantic-model-download-unavailable = 目前沒有可下載的本地嵌入模型
 journal-mode-seg-aria = 檢索模式
 search-sources-reachable = 可達
 aria-select-result = 選擇 { $title }
+
+# ── 學術子域搜尋（專利 / 資料集）──
+hub-domain-patent-placeholder = 輸入專利號、標題或關鍵字…
+hub-domain-dataset-placeholder = 輸入資料集名稱、關鍵字或任務類型…
+domain-sources-failed = 部分資料源檢索失敗
+domain-no-results = 未找到結果
+domain-no-results-hint = 請嘗試其他關鍵字，或在設定中檢查資料源可用性
+domain-result-count = 共 { $count } 條結果
+domain-import-btn = 匯入
+domain-importing = 匯入中…
+domain-imported = 已匯入
+domain-in-library = 已在庫
+domain-import-selected = 匯入選中（{ $count }）
+domain-select-all = 全選
+domain-import-success = 已將「{ $title }」匯入文獻庫
+domain-batch-import-done = 已匯入 { $total } 條中的 { $count } 條
+domain-batch-import-error = 批次匯入失敗：{ $error }
+hub-domain-tab-researcher = 研究者
+hub-domain-researcher-placeholder = 輸入研究者姓名或機構名稱…
+hub-domain-tab-grant = 研究計畫
+hub-domain-grant-placeholder = 輸入計畫標題、主持人姓名或關鍵字…
+
+# ── 資料集學科選擇器 ──
+domain-discipline-label = 學科
+domain-discipline-all = 全部
+domain-discipline-general = 通用儲存庫
+domain-discipline-ml = 機器學習
+domain-discipline-life-science = 生命科學
+domain-discipline-chemistry = 化學
+domain-discipline-geoscience = 地球科學
+domain-discipline-social-science = 社會科學
+domain-discipline-economics = 經濟學
+domain-discipline-health = 公共衛生
+domain-discipline-registry = 註冊目錄
+domain-filter-year = 年份
+domain-filter-license = 授權條款
+domain-filter-oa = 開放取用類型
+domain-filter-task = 任務
+domain-filter-country = 國家

@@ -332,6 +332,9 @@ tracker-state-n-unread = { $count } 条未读变化
 hub-search-tab-label = 搜索范围
 hub-search-tab-web = 学术检索
 hub-search-tab-local = 本地搜索
+# 学术子域 tab（Phase 1：专利 + 数据集）
+hub-domain-tab-patent = 专利
+hub-domain-tab-dataset = 数据集
 # 本地 tab 无索引时搜索钮的禁用提示（2026-09-29 巡检 P2-a）
 hub-search-local-unavailable-tip = 构建全文索引后才能检索库内内容
 # 两个 tab 各自的输入框占位符
@@ -762,6 +765,15 @@ itemtree-metrics-top-tip = 顶刊（中科院）
 itemtree-metrics-xr-label = 新锐
 itemtree-metrics-xr-tip = 新锐分区大类（2026，官方分区表停更后的接续体系）
 
+# ── 结果卡徽章说明（2026-10-22 徽章化补齐：IF/分区/顶刊/新锐的说明复用条目树
+    itemtree-metrics-*-tip 口径，同一概念不写两套解释；其余徽章各自成条）──
+lit-warning-tip = 命中国际期刊预警名单（2020-2025 历年版本）
+lit-source-tip = 本条结果来自 { $source }
+lit-stars-tip = GitHub 仓库星数
+lit-tag-oa-tip = 开放获取——全文可免费获取
+lit-tag-pdf-tip = 提供 PDF 全文链接
+lit-tag-pmc-tip = PMC 编号——有开放获取全文
+
 # ── 中文核心期刊名单（P1-4，配 easyScholar key 后可选启用）──
 lit-core-pku = 北大核心
 lit-core-cscd = CSCD
@@ -793,3 +805,42 @@ semantic-model-download-unavailable = 当前没有可下载的本地嵌入模型
 journal-mode-seg-aria = 检索模式
 search-sources-reachable = 可达
 aria-select-result = 选择 { $title }
+
+# ── 学术子域搜索（专利 / 数据集）──
+hub-domain-patent-placeholder = 输入专利号、标题或关键词…
+hub-domain-dataset-placeholder = 输入数据集名称、关键词或任务类型…
+domain-sources-failed = 部分数据源检索失败
+domain-no-results = 未找到结果
+domain-no-results-hint = 请尝试其他关键词，或在设置中检查数据源可用性
+domain-result-count = 共 { $count } 条结果
+domain-import-btn = 导入
+domain-importing = 导入中…
+domain-imported = 已导入
+domain-in-library = 已在库
+domain-import-selected = 导入选中（{ $count }）
+domain-select-all = 全选
+domain-import-success = 已将「{ $title }」导入文献库
+domain-batch-import-done = 已导入 { $total } 条中的 { $count } 条
+domain-batch-import-error = 批量导入失败：{ $error }
+hub-domain-tab-researcher = 研究者
+hub-domain-researcher-placeholder = 输入研究者姓名或机构名称…
+hub-domain-tab-grant = 基金项目
+hub-domain-grant-placeholder = 输入项目标题、主持人姓名或关键词…
+
+# ── 数据集学科选择器 ──
+domain-discipline-label = 学科
+domain-discipline-all = 全部
+domain-discipline-general = 通用仓储
+domain-discipline-ml = 机器学习
+domain-discipline-life-science = 生命科学
+domain-discipline-chemistry = 化学
+domain-discipline-geoscience = 地球科学
+domain-discipline-social-science = 社会科学
+domain-discipline-economics = 经济学
+domain-discipline-health = 公共卫生
+domain-discipline-registry = 注册目录
+domain-filter-year = 年份
+domain-filter-license = 许可证
+domain-filter-oa = 开放获取类型
+domain-filter-task = 任务
+domain-filter-country = 国家

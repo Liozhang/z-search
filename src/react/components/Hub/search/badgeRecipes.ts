@@ -17,9 +17,17 @@ export const TAG_KIND: Record<string, string> = {
      （Beall's 名单精确命中），tooltip 披露名单截止时间。 */
   predatory: "bg-[var(--signal-red-bg)] text-[color:var(--signal-red-strong)]",
   top: "bg-[var(--signal-yellow-bg)] text-[color:var(--signal-yellow-text)]",
+  /* IF 黄徽章与 top 同色同配（2026-08-26 用户裁决：黄强调从被引移回 IF，
+     2026-10-22 徽章化后保持该色不动摇）——IF 与顶刊同为期刊质量信号，
+     黄是这一信号家族的语义色，两者并置不构成歧义。 */
+  if: "bg-[var(--signal-yellow-bg)] text-[color:var(--signal-yellow-text)]",
   pdf: "bg-[var(--signal-green-bg)] text-[color:var(--signal-green-dark)]",
   oa: "bg-[var(--data-blue-bg)] text-[color:var(--data-blue-dark)]",
   source: "bg-[var(--border-strong)] text-[color:var(--text-secondary)]",
+  /* 中性事实徽章（年份/被引/星数）：与 source 芯片同配方的灰底灰字——
+     不带价值判断的事实数字不参与语义色竞争，黄留给 IF 与顶刊、蓝留给
+     分区与开放获取，配色账才不会乱。 */
+  fact: "bg-[var(--border-strong)] text-[color:var(--text-secondary)]",
 };
 /* 2026-08-31 C3：Q1-Q4 同形态不分级（原型 .q :635-636）——
    白底（bg-background）+ 1px 发丝边 var(--border) + 蓝字 --data-blue-dark；

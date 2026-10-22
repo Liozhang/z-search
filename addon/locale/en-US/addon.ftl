@@ -345,6 +345,9 @@ tracker-state-n-unread = { $count ->
 hub-search-tab-label = Search scope
 hub-search-tab-web = Academic Search
 hub-search-tab-local = Local Search
+# Academic subdomain tabs (Phase 1: patent + dataset)
+hub-domain-tab-patent = Patents
+hub-domain-tab-dataset = Datasets
 # Disabled search-button tooltip when the local tab has no index (ui audit P2-a)
 hub-search-local-unavailable-tip = Build the full-text index to search your library
 # Per-tab input placeholders
@@ -776,6 +779,16 @@ itemtree-metrics-top-tip = Top journal (CAS)
 itemtree-metrics-xr-label = XR
 itemtree-metrics-xr-tip = XinRui major-category quartile (2026, successor to the discontinued CAS table)
 
+# ── Result-card badge tooltips (2026-10-22: IF/quartile/top/XR reuse the
+    item-tree itemtree-metrics-*-tip wording — one concept, one explanation;
+    the rest of the badges live here) ──
+lit-warning-tip = On the International Journal Warning List (2020-2025 editions)
+lit-source-tip = This result comes from { $source }
+lit-stars-tip = GitHub repository stars
+lit-tag-oa-tip = Open access — the full text is free to read
+lit-tag-pdf-tip = A PDF full-text link is available
+lit-tag-pmc-tip = PMC identifier — open-access full text is available
+
 # ── Chinese core journal lists (P1-4, optional via easyScholar key) ──
 lit-core-pku = PKU Core
 lit-core-cscd = CSCD
@@ -807,3 +820,42 @@ semantic-model-download-unavailable = No local embedding model available to down
 journal-mode-seg-aria = Search mode
 search-sources-reachable = Reachable
 aria-select-result = Select { $title }
+
+# ── Academic subdomain search (patent / dataset) ──
+hub-domain-patent-placeholder = Enter a patent number, title, or keyword…
+hub-domain-dataset-placeholder = Enter a dataset name, keyword, or task…
+domain-sources-failed = Some sources failed
+domain-no-results = No results found
+domain-no-results-hint = Try different keywords, or check source availability in settings
+domain-result-count = { $count } results
+domain-import-btn = Import
+domain-importing = Importing…
+domain-imported = Imported
+domain-in-library = In library
+domain-import-selected = Import selected ({ $count })
+domain-select-all = Select all
+domain-import-success = Imported "{ $title }" to your library
+domain-batch-import-done = Imported { $count } of { $total } entries
+domain-batch-import-error = Batch import failed: { $error }
+hub-domain-tab-researcher = Researchers
+hub-domain-researcher-placeholder = Enter a researcher name or institution…
+hub-domain-tab-grant = Grants
+hub-domain-grant-placeholder = Enter a grant title, PI name, or keyword…
+
+# ── Dataset discipline selector ──
+domain-discipline-label = Discipline
+domain-discipline-all = All
+domain-discipline-general = General Repositories
+domain-discipline-ml = ML / AI
+domain-discipline-life-science = Life Sciences
+domain-discipline-chemistry = Chemistry
+domain-discipline-geoscience = Geosciences
+domain-discipline-social-science = Social Sciences
+domain-discipline-economics = Economics
+domain-discipline-health = Health
+domain-discipline-registry = Registries
+domain-filter-year = Year
+domain-filter-license = License
+domain-filter-oa = OA Type
+domain-filter-task = Task
+domain-filter-country = Country

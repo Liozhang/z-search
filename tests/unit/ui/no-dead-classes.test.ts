@@ -36,7 +36,7 @@ const REPO = path.resolve(
 );
 
 /** 有意无样式的标记类前缀（家族级豁免，新家族在此登记）。 */
-const MARKER_PREFIXES = ["lit-", "semantic-"] as const;
+const MARKER_PREFIXES = ["lit-", "semantic-", "domain-"] as const;
 
 /** 有意无样式的单点标记类（逐个登记，附缘由）。 */
 const MARKER_CLASSES = [

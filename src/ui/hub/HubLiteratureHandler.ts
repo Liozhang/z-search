@@ -1,8 +1,13 @@
 /**
- * HubLiteratureHandler — literature.* + journal.* RPC handlers（z-search 精简版）。
+ * HubLiteratureHandler — literature.* + journal.* + domain.* RPC handlers
+ * （z-search 精简版）。
  *
  * 从上游复制时移除 translate（依赖整体翻译 API）与 chat.open
  * （聊天窗不属于本插件）。
+ *
+ * domain.* 方法族走 DomainSearchEngine 总线（见 core/search/），统一承载
+ * 专利 / 数据集等学术子域搜索；与 literature.search 的逐源并行 RPC 模式
+ * 并存，互不影响。
  */
 
 import type { HubWindowBridge } from "./HubWindowBridge";
@@ -21,6 +26,15 @@ import {
   classifySourceError,
   isSourceAvailable,
 } from "../../core/sources/academic-search/utils";
+import type { DomainResult } from "../../core/search/domainTypes";
+
+// 注册所有学术子域（patent / dataset / researcher）——副作用模块，import 即完成注册
+import "../../core/search/DomainRegistry";
+import {
+  getDomainDef,
+  searchDomain,
+  getDomainProfile,
+} from "../../core/search/DomainSearchEngine";
 
 const {
   callSearchAPI,
@@ -984,10 +998,276 @@ export async function handleLiteratureRequest(
         }
         break;
       }
+
+      case "domain.search": {
+        // 学术子域搜索（patent / dataset / ...）——走 DomainSearchEngine 总线。
+        // 与 literature.search 的区别：结果按 DomainDef.dedupKey 去重（专利号 /
+        // DOI / 源 ID），域 enricher 补全（同族 / DataCite），库内标记按域
+        // 专属键（patentNumber / DOI）。失败名单沿用 failedSources + failedReasons
+        // 口径，绝不谎报空结果。
+        const domainId = payload?.domainId;
+        if (!domainId || typeof domainId !== "string") {
+          error = "domain.search: missing domainId";
+          break;
+        }
+        const def = getDomainDef(domainId);
+        if (!def) {
+          error = `domain.search: unknown domain "${domainId}"`;
+          break;
+        }
+        if (!payload?.query || typeof payload.query !== "string") {
+          error = "domain.search: missing query";
+          break;
+        }
+
+        try {
+          const { results, metadata } = await searchDomain(domainId, {
+            query: payload.query,
+            maxResults: payload.maxResults ?? 20,
+            filters: payload.filters || undefined,
+          });
+          result = {
+            articles: results,
+            ...metadata,
+          };
+        } catch (e: any) {
+          error = toErrorMessage(e);
+        }
+        break;
+      }
+
+      case "domain.import": {
+        // 学术子域导入：把 DomainResult[] 按 DomainDef.importItemType 映射
+        // 到 Zotero itemType 建条目，Extra 字段按域写入聚合信息。
+        // 幂等：按去重键预检库内已有条目（专利号 / DOI），命中不重复建条目。
+        const domainId = payload?.domainId;
+        if (!domainId || typeof domainId !== "string") {
+          error = "domain.import: missing domainId";
+          break;
+        }
+        const def = getDomainDef(domainId);
+        if (!def) {
+          error = `domain.import: unknown domain "${domainId}"`;
+          break;
+        }
+        const entries: DomainResult[] = Array.isArray(payload?.entries)
+          ? payload.entries
+          : [];
+        if (entries.length === 0) {
+          error = "domain.import: missing entries array";
+          break;
+        }
+
+        // 解析导入目标（复用 literature.import 的同款逻辑）
+        let collectionId: number | undefined;
+        let targetLibraryId: number | undefined;
+        try {
+          const t = payload?.target;
+          if (t && typeof t === "object") {
+            const colId = Number(t.collectionID);
+            if (Number.isInteger(colId) && colId > 0) {
+              const col = Zotero.Collections.get(colId);
+              if (col && !col.deleted) {
+                collectionId = colId;
+                targetLibraryId = col.libraryID;
+              }
+            } else {
+              const libId = Number(t.libraryID);
+              if (
+                Number.isInteger(libId) &&
+                libId > 0 &&
+                Zotero.Libraries.get(libId)
+              ) {
+                targetLibraryId = libId;
+              }
+            }
+          }
+        } catch (e) {
+          safeDebug("[z-search] domain.import target invalid: " + e);
+        }
+
+        const importResults: ImportResult[] = new Array(entries.length);
+        const RESOLVE_CONCURRENCY = 5;
+        for (let i = 0; i < entries.length; i += RESOLVE_CONCURRENCY) {
+          const chunk = entries.slice(i, i + RESOLVE_CONCURRENCY);
+          await Promise.all(
+            chunk.map(async (entry, j) => {
+              const idx = i + j;
+              try {
+                // 幂等预检：按去重键查库内已有条目
+                const dedupKey = def.dedupKey(entry);
+                let existingId: number | null = null;
+                if (dedupKey) {
+                  if (domainId === "patent" && entry.patentNumber) {
+                    const s = new Zotero.Search();
+                    s.addCondition("patentNumber", "is", entry.patentNumber.toLowerCase());
+                    const ids = await s.search();
+                    if (ids?.length) existingId = ids[0];
+                  } else if (entry.doi) {
+                    const s = new Zotero.Search();
+                    s.addCondition("DOI", "is", entry.doi.toLowerCase());
+                    const ids = await s.search();
+                    if (ids?.length) existingId = ids[0];
+                  }
+                }
+
+                if (existingId != null) {
+                  // 幂等命中：补写 Extra（异步，不阻塞回执）
+                  const extra = def.buildExtraFields?.(entry);
+                  if (extra) {
+                    void applyDomainExtra(existingId, extra);
+                  }
+                  const item = Zotero.Items.get(existingId);
+                  importResults[idx] = {
+                    success: true,
+                    itemId: existingId,
+                    title: item?.getField("title") || entry.title,
+                    imported: true,
+                  };
+                  return;
+                }
+
+                // 新建条目：直接用 MetadataExtractor.createItemFromMetadata，
+                // 构造 metadata 对象传入（绕过翻译器提取路线）
+                const { default: MetadataExtractor } = await import(
+                  "../../core/metadata/MetadataExtractor"
+                );
+                const creators = buildDomainCreators(entry, domainId);
+                const metadata = {
+                  success: true,
+                  title: entry.title || "",
+                  itemType: def.importItemType,
+                  url: entry.url || undefined,
+                  abstract: entry.snippet || entry.extra?.abstract || undefined,
+                  date: entry.year || undefined,
+                  creators,
+                  ...(entry.doi ? { doi: entry.doi } : {}),
+                  ...(entry.patentNumber
+                    ? { patentNumber: entry.patentNumber }
+                    : {}),
+                };
+                const itemId = await MetadataExtractor.createItemFromMetadata(
+                  metadata,
+                  collectionId,
+                  targetLibraryId,
+                );
+                if (!itemId) {
+                  importResults[idx] = {
+                    success: false,
+                    title: entry.title,
+                    error: "Failed to create item",
+                    imported: false,
+                  };
+                  return;
+                }
+
+                // 写入域 Extra 字段（异步，不阻塞回执）
+                const extra = def.buildExtraFields?.(entry);
+                if (extra) {
+                  void applyDomainExtra(itemId, extra);
+                }
+
+                importResults[idx] = {
+                  success: true,
+                  itemId,
+                  title: entry.title,
+                  imported: true,
+                };
+              } catch (e: any) {
+                importResults[idx] = {
+                  success: false,
+                  title: entry.title,
+                  error: toErrorMessage(e),
+                  imported: false,
+                };
+              }
+            }),
+          );
+        }
+        result = importResults;
+        break;
+      }
+
+      case "domain.profile": {
+        // 学术子域详情查询（researcher.profile / grant.profile）。
+        // 对 DomainDef.sources 中每个支持 profile() 的适配器依次尝试，
+        // 返回首个非空结果。
+        const domainId = payload?.domainId;
+        if (!domainId || typeof domainId !== "string") {
+          error = "domain.profile: missing domainId";
+          break;
+        }
+        const def = getDomainDef(domainId);
+        if (!def) {
+          error = `domain.profile: unknown domain "${domainId}"`;
+          break;
+        }
+        const sourceId = payload?.sourceId;
+        if (!sourceId || typeof sourceId !== "string") {
+          error = "domain.profile: missing sourceId";
+          break;
+        }
+
+        try {
+          const profile = await getDomainProfile(domainId, sourceId);
+          result = profile;
+        } catch (e: any) {
+          error = toErrorMessage(e);
+        }
+        break;
+      }
     }
   } catch (e: any) {
     error = toErrorMessage(e);
   }
 
   bridge.respond(id, result, error, source);
+}
+
+/**
+ * 从 DomainResult 构造 Zotero creators 数组。
+ * 专利：inventors 作 inventor；数据集：creators 作 author。
+ */
+function buildDomainCreators(
+  entry: DomainResult,
+  domainId: string,
+): Array<{ firstName: string; lastName: string; creatorType: string }> {
+  const names: string[] = [];
+  if (domainId === "patent") {
+    if (Array.isArray(entry.extra?.inventors)) {
+      names.push(...entry.extra.inventors.filter(Boolean));
+    }
+  } else {
+    if (Array.isArray(entry.extra?.creators)) {
+      names.push(...entry.extra.creators.filter(Boolean));
+    }
+  }
+  return names.map((name) => {
+    const parts = name.trim().split(/\s+/);
+    const lastName = parts.length > 1 ? parts.pop()! : "";
+    const firstName = parts.join(" ");
+    return {
+      firstName,
+      lastName: lastName || name,
+      creatorType: domainId === "patent" ? "inventor" : "author",
+    };
+  });
+}
+
+/** 把域 Extra 字段写入条目（fire-and-forget，不阻塞导入回执）。 */
+async function applyDomainExtra(
+  itemId: number,
+  fields: Record<string, string>,
+): Promise<void> {
+  try {
+    const item = Zotero.Items.get(itemId);
+    if (!item) return;
+    const existing = item.getField("extra");
+    const merged = mergeExtraLines(existing, fields);
+    if (merged === existing) return;
+    item.setField("extra", merged);
+    await item.saveTx();
+  } catch (e) {
+    safeDebug("[z-search] domain.import extra write failed: " + e);
+  }
 }

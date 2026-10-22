@@ -20,6 +20,7 @@ import { ICON } from "../../../../utils/iconSizes";
 import { highlightSegments } from "../../../../utils/highlight";
 import { SourceLogo } from "../SourceLogo";
 import type { ArticleResult, FulltextResult, ImportResult } from "./types";
+import { AVAILABLE_SOURCES } from "./types";
 /* 徽章壳配方单源（2026-10-09 期刊行并入时上提）——配方与出处注释见
    ../badgeRecipes.ts，本文件不再持有副本。 */
 import {
@@ -104,6 +105,11 @@ export function LiteratureResultCard({
 }: LiteratureResultCardProps): React.ReactElement {
   // JA-7：导入成功才有可信 itemId（ImportResult 契约），提起局部变量供收窄
   const openedItemId = importResult?.itemId;
+  // 检索源徽章提示名：本地化展示名单源 AVAILABLE_SOURCES（与筛选片同源），
+  // 未注册源回落原值、不设提示。
+  const sourceLabelKey = AVAILABLE_SOURCES.find(
+    (s) => s.value === article.source,
+  )?.labelKey;
   // 全文解析可用标识（任有其一即可尝试 PMC/DOI 解析或 OA 网页抓取）。
   const hasFulltextSource = !!(
     article.doi ||
@@ -172,62 +178,42 @@ export function LiteratureResultCard({
           <div className="lit-result-authors text-[length:var(--text-xs)] text-[color:var(--text-secondary)] mb-[var(--space-1)] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
             {article.authors || "—"}
           </div>
+          {/* 元信息行只留刊名——年份、IF、被引、星数已于 2026-10-22 徽章化，
+              迁入下方 lit-result-metrics 行（与 JCR 分区同语法），此处不再
+              持有副本。 */}
           <div className="lit-result-meta flex items-center gap-[var(--space-2)] text-[length:var(--text-xs)] text-[color:var(--text-secondary)] mb-[var(--space-1)] opacity-80">
             <span className="lit-result-journal italic">
               {article.journal || "—"}
             </span>
-            {article.year && (
-              <span className="lit-result-year opacity-70">
-                ({article.year})
-              </span>
-            )}
-            {article.jif != null && (
-              /* IF 黄字（原型 :1663；2026-08-26 用户裁决——黄强调从被引移回 IF） */
-              <span className="lit-result-if text-[color:var(--signal-yellow-text)] font-[var(--font-weight-medium)]">
-                {getString("lit-if-label")}{" "}
-                <strong className="font-[var(--font-weight-semibold)]">
-                  {article.jif.toFixed(1)}
-                </strong>
-              </span>
-            )}
-            {/* 被引 0 不显示（审计 P2-6）：arxiv/pubmed 等源恒 0，成排「被引 0」
-                是噪音；真实计数由跨源字段合并取大后到达 */}
-            {!!article.citationCount &&
-              (onCitations && article.doi ? (
-                <button
-                  type="button"
-                  className="lit-result-citations underline decoration-[var(--border)] underline-offset-2 hover:text-[color:var(--accent)] cursor-pointer bg-transparent border-0 p-0"
-                  title={getString("lit-cited-by-tip")}
-                  onClick={() => onCitations(article, "cited-by")}
-                >
-                  {getString("lit-citations", {
-                    args: { count: article.citationCount },
-                  })}
-                </button>
-              ) : (
-                <span className="lit-result-citations">
-                  {getString("lit-citations", {
-                    args: { count: article.citationCount },
-                  })}
-                </span>
-              ))}
-            {/* GitHub 仓库星数——与被引语义分离，★ 符号语言中立 */}
-            {!!article.stars && (
-              <span className="lit-result-stars">★ {article.stars}</span>
-            )}
           </div>
+          {/* 徽章行排序（2026-10-22 徽章化时定档）：风险信号（红）置首——
+              预警、掠夺性、Under Review 同为需先看见的告警，聚在一起不必在
+              分类簇里辨认红色；其后依次是元数据（年份，灰）、影响数字（IF
+              黄、被引灰——期刊级与文献级两个可直接扫读比较的数字）、期刊
+              质量分类簇（JCR/CASS/XR 分区、顶刊、中文核心）；星数最专，收尾。
+              提示口径：IF/分区/顶刊/新锐复用条目树 itemtree-metrics-*-tip
+              （同一概念一处解释），预警/来源/星数/OA/PDF/PMC 用 lit-*-tip，
+              年份是自明数字不设提示；掠夺性/Under Review/被引/中文核心/
+              已在库此前已有提示，不动。 */}
           {(article.warningLevel ||
             article.beallsHit ||
+            article.xrUnderReview ||
+            article.year ||
+            article.jif != null ||
+            article.citationCount ||
             article.jcrQuartile ||
             article.cassQuartile ||
             article.cassIsTop ||
-            article.cassCategory ||
             article.xrQuartile ||
-            article.xrUnderReview ||
-            article.chineseCore?.length) && (
+            article.chineseCore?.length ||
+            article.stars ||
+            article.cassCategory) && (
             <div className="lit-result-metrics flex flex-wrap items-center gap-[var(--space-1-5)] mb-[var(--space-1)]">
               {article.warningLevel && (
-                <span className={`${TAG_BASE} ${TAG_KIND.warning}`}>
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.warning}`}
+                  title={getString("lit-warning-tip")}
+                >
                   ⚠ {getString("lit-warning")}
                 </span>
               )}
@@ -239,29 +225,9 @@ export function LiteratureResultCard({
                   {getString("journal-predatory-label")}
                 </span>
               )}
-              {article.jcrQuartile && (
-                <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
-                  {/* C3 原型 .q::before 4px 蓝点（:636） */}
-                  <span aria-hidden="true" className={QUARTILE_DOT} />
-                  {getString(
-                    `lit-quartile-jcr-q${article.jcrQuartile.slice(1)}`,
-                  )}
-                </span>
-              )}
-              {article.cassQuartile && (
-                <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
-                  {/* C3 原型 .q::before 4px 蓝点（:636） */}
-                  <span aria-hidden="true" className={QUARTILE_DOT} />
-                  {getString(`lit-quartile-cass-${article.cassQuartile}`)}
-                </span>
-              )}
-              {article.cassIsTop && (
-                <span className={`${TAG_BASE} ${TAG_KIND.top}`}>
-                  {getString("lit-top")}
-                </span>
-              )}
-              {/* 新锐分区（2026 接续体系）——与 CAS 徽章同语法、独立成键，
-                  文案本身带「新锐」字样区分两套分区。 */}
+              {/* Under Review（2026 起取代独立预警名单）同属风险信号，与
+                  预警/掠夺性同组前置——红徽章聚在一起，扫读时不必在分类
+                  簇里辨认红色告警。 */}
               {article.xrUnderReview && (
                 <span
                   className={`${TAG_BASE} ${TAG_KIND.warning}`}
@@ -270,8 +236,87 @@ export function LiteratureResultCard({
                   {getString("journal-xr-under-review-label")}
                 </span>
               )}
+              {article.year && (
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.fact} lit-result-year`}
+                >
+                  {article.year}
+                </span>
+              )}
+              {article.jif != null && (
+                /* IF 黄徽章（2026-08-26 用户裁决——黄强调从被引移回 IF；
+                   徽章化后该色保持不动摇，与顶刊同色同配） */
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.if} lit-result-if`}
+                  title={getString("itemtree-metrics-if-tip")}
+                >
+                  {getString("lit-if-label")}{" "}
+                  <strong className="font-[var(--font-weight-semibold)]">
+                    {article.jif.toFixed(1)}
+                  </strong>
+                </span>
+              )}
+              {/* 被引 0 不显示（审计 P2-6）：arxiv/pubmed 等源恒 0，成排「被引 0」
+                  是噪音；真实计数由跨源字段合并取大后到达。有 DOI 时整枚
+                  徽章即被引钻取入口。 */}
+              {!!article.citationCount &&
+                (onCitations && article.doi ? (
+                  <button
+                    type="button"
+                    className={`${TAG_BASE} ${TAG_KIND.fact} lit-result-citations border-0 cursor-pointer hover:opacity-85`}
+                    title={getString("lit-cited-by-tip")}
+                    onClick={() => onCitations(article, "cited-by")}
+                  >
+                    {getString("lit-citations", {
+                      args: { count: article.citationCount },
+                    })}
+                  </button>
+                ) : (
+                  <span
+                    className={`${TAG_BASE} ${TAG_KIND.fact} lit-result-citations`}
+                  >
+                    {getString("lit-citations", {
+                      args: { count: article.citationCount },
+                    })}
+                  </span>
+                ))}
+              {article.jcrQuartile && (
+                <span
+                  className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+                  title={getString("itemtree-metrics-jcr-tip")}
+                >
+                  {/* C3 原型 .q::before 4px 蓝点（:636） */}
+                  <span aria-hidden="true" className={QUARTILE_DOT} />
+                  {getString(
+                    `lit-quartile-jcr-q${article.jcrQuartile.slice(1)}`,
+                  )}
+                </span>
+              )}
+              {article.cassQuartile && (
+                <span
+                  className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+                  title={getString("itemtree-metrics-cass-tip")}
+                >
+                  {/* C3 原型 .q::before 4px 蓝点（:636） */}
+                  <span aria-hidden="true" className={QUARTILE_DOT} />
+                  {getString(`lit-quartile-cass-${article.cassQuartile}`)}
+                </span>
+              )}
+              {article.cassIsTop && (
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.top}`}
+                  title={getString("itemtree-metrics-top-tip")}
+                >
+                  {getString("lit-top")}
+                </span>
+              )}
+              {/* 新锐分区（2026 接续体系）——与 CAS 徽章同语法、独立成键，
+                  文案本身带「新锐」字样区分两套分区。 */}
               {article.xrQuartile && (
-                <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
+                <span
+                  className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+                  title={getString("itemtree-metrics-xr-tip")}
+                >
                   <span aria-hidden="true" className={QUARTILE_DOT} />
                   {getString(`lit-quartile-xr-${article.xrQuartile}`)}
                 </span>
@@ -286,6 +331,15 @@ export function LiteratureResultCard({
                   {getString(`lit-core-${code}`)}
                 </span>
               ))}
+              {/* GitHub 仓库星数——与被引语义分离，★ 符号语言中立 */}
+              {!!article.stars && (
+                <span
+                  className={`${TAG_BASE} ${TAG_KIND.fact} lit-result-stars`}
+                  title={getString("lit-stars-tip")}
+                >
+                  ★ {article.stars}
+                </span>
+              )}
               {article.cassCategory && (
                 <span className="lit-result-category text-[length:var(--text-xs)] text-[color:var(--text-secondary)] opacity-[var(--opacity-secondary)]">
                   {article.cassCategory}
@@ -352,25 +406,41 @@ export function LiteratureResultCard({
           )}
           <div className="lit-result-tags flex gap-[var(--space-1-5)] flex-wrap">
             {article.pdfUrl && (
-              <span className={`${TAG_BASE} ${TAG_KIND.pdf}`}>
+              <span
+                className={`${TAG_BASE} ${TAG_KIND.pdf}`}
+                title={getString("lit-tag-pdf-tip")}
+              >
                 {getString("lit-tag-pdf")}
               </span>
             )}
             {article.isOpenAccess && (
-              <span className={`${TAG_BASE} ${TAG_KIND.oa}`}>
+              <span
+                className={`${TAG_BASE} ${TAG_KIND.oa}`}
+                title={getString("lit-tag-oa-tip")}
+              >
                 {getString("lit-tag-oa")}
               </span>
             )}
             {/* PMC 编号在库 = 有开放获取全文可拉（NCBI E-utilities）——
                 形态借 QUARTILE_STYLE（白底发丝边蓝点）与 OA 蓝底区分 */}
             {article.pmcid && (
-              <span className={`${TAG_BASE} ${QUARTILE_STYLE}`}>
+              <span
+                className={`${TAG_BASE} ${QUARTILE_STYLE}`}
+                title={getString("lit-tag-pmc-tip")}
+              >
                 <span aria-hidden="true" className={QUARTILE_DOT} />
                 PMC
               </span>
             )}
             <span
               className={`${TAG_BASE} ${TAG_KIND.source} inline-flex items-center gap-[var(--space-1)]`}
+              title={
+                sourceLabelKey
+                  ? getString("lit-source-tip", {
+                      args: { source: getString(sourceLabelKey) },
+                    })
+                  : undefined
+              }
             >
               <SourceLogo source={article.source} state="hit" size={12} />
               {article.source}

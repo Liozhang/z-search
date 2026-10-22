@@ -31,19 +31,26 @@ import {
   type SearchScope,
 } from "./search/LiteratureSearchPage";
 import { JournalSearchDashboard } from "./search/JournalSearch/JournalSearchDashboard";
+import { DomainSearchPage } from "./search/DomainSearch/DomainSearchPage";
+import type { DomainId } from "./search/DomainSearch/types";
 import { PaneHeader } from "./PaneHeader";
 
 /** 三段 tab：web/local 两段同落 LiteratureSearchPage（scope 受控），
- *  journal 独占 JournalSearchDashboard。 */
-type SearchTab = "web" | "local" | "journal";
+ *  journal 独占 JournalSearchDashboard，patent/dataset/researcher/grant
+ *  各占 DomainSearchPage（domainId 受控）。 */
+type SearchTab = "web" | "local" | "journal" | "patent" | "dataset" | "researcher" | "grant";
 
-/** keep-alive 仍按视图粒度（两槽）：web/local 同属文献视图，互切不换槽。 */
-type SearchPaneViewId = "literature" | "journal";
+/** keep-alive 仍按视图粒度：web/local/journal/patent/dataset/researcher/grant 各一槽。 */
+type SearchPaneViewId = "literature" | "journal" | "patent" | "dataset" | "researcher" | "grant";
 
 const SEARCH_TABS: ReadonlyArray<{ id: SearchTab; labelKey: string }> = [
   { id: "web", labelKey: "hub-search-tab-web" },
   { id: "local", labelKey: "hub-search-tab-local" },
   { id: "journal", labelKey: "hub-search-seg-journal" },
+  { id: "patent", labelKey: "hub-domain-tab-patent" },
+  { id: "dataset", labelKey: "hub-domain-tab-dataset" },
+  { id: "researcher", labelKey: "hub-domain-tab-researcher" },
+  { id: "grant", labelKey: "hub-domain-tab-grant" },
 ];
 
 export function SearchPane({
@@ -67,12 +74,12 @@ export function SearchPane({
       window.removeEventListener("zsearch:find-similar", onFindSimilar);
   }, []);
 
-  // tab 即域：web/local 点击即改文献腿 scope；期刊只换视图不动文献腿。
+  // tab 即域：web/local 点击即改文献腿 scope；期刊/专利/数据集只换视图。
   // 文献页的程序化写回（深链切本地/navigateHome 回网络）走 changeLitScope，
   // tab 行高亮随真实 scope 走，避免两处状态各说各话。
   const switchTab = (tab: SearchTab) => {
     setActiveTab(tab);
-    if (tab !== "journal") setLitScope(tab);
+    if (tab === "web" || tab === "local") setLitScope(tab);
   };
   const changeLitScope = (scope: SearchScope) => {
     setLitScope(scope);
@@ -84,7 +91,17 @@ export function SearchPane({
   // 此前广播端从未实现，切回时会残留。web/local 互切同视图不广播——
   // 与原页内 tab 行为一致（弹层开着时 tab 本就不可达）。
   const activeView: SearchPaneViewId =
-    activeTab === "journal" ? "journal" : "literature";
+    activeTab === "journal"
+      ? "journal"
+      : activeTab === "patent"
+        ? "patent"
+        : activeTab === "dataset"
+          ? "dataset"
+          : activeTab === "researcher"
+            ? "researcher"
+            : activeTab === "grant"
+              ? "grant"
+              : "literature";
   const prevViewRef = useRef(activeView);
   useEffect(() => {
     if (prevViewRef.current !== activeView) {
@@ -150,6 +167,14 @@ export function SearchPane({
           )}
         {mounted.has("journal") &&
           slot(activeView === "journal", <JournalSearchDashboard />)}
+        {mounted.has("patent") &&
+          slot(activeView === "patent", <DomainSearchPage domainId="patent" />)}
+        {mounted.has("dataset") &&
+          slot(activeView === "dataset", <DomainSearchPage domainId="dataset" />)}
+        {mounted.has("researcher") &&
+          slot(activeView === "researcher", <DomainSearchPage domainId="researcher" />)}
+        {mounted.has("grant") &&
+          slot(activeView === "grant", <DomainSearchPage domainId="grant" />)}
       </div>
     </ErrorBoundary>
   );

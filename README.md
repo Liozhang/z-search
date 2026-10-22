@@ -71,7 +71,7 @@ single/batch import all happen on the same card.
   author, journal, sort order, and cap
 - Journal quality badges (offline bundled databases, zero network cost):
   - Citation count (per-source figures differ; the larger value wins on merge)
-  - Impact factor (highlighted in yellow) and JCR quartile — JCR 2024 and
+  - Impact factor (yellow badge) and JCR quartile — JCR 2024 and
     JCR 2025
   - CASS major-category quartile, subject category, and top-journal flag —
     CASS partition table 2025 (the final official edition)
