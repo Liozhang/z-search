@@ -124,6 +124,16 @@ if (typeof Buffer === "undefined") {
     waitForPlugin: "() => Zotero.ZSearch?.data?.initialized === true",
     mocha: { timeout: 30000 },
     watch: false,
+    // 实机测试的 OpenAlex API Key。脚手架每轮运行都会清空测试 profile 的
+    // prefs.js（emptyDir(TESTER_PROFILE_DIR)），直接改那个文件无效，只能经
+    // customPrefs 落入。密钥从环境变量读（.env 已 gitignore），避免入库；
+    // 未设置时留空，测试退回匿名额度（可能因共享额度耗尽而失败）。
+    prefs: process.env.ZSEARCH_OPENALEX_API_KEY
+      ? {
+          "extensions.zotero.zsearch.apis.openalex.apiKey":
+            process.env.ZSEARCH_OPENALEX_API_KEY,
+        }
+      : {},
   },
 
   release: {
