@@ -5,7 +5,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
-## [Unreleased]
+## [2.0.0] - 2026-10-22
+
+### Added
+
+- **Academic subdomain search framework: 16 new domains and 38 open data
+  sources.** A new `DomainSearchEngine` bus plus a declarative
+  `DomainRegistry` extend the Hub search window from three tabs to seven —
+  Academic / Local / Journal / Patents / Datasets / Researchers / Grants —
+  with each domain registering its own sources, dedup keys, enrichers, and
+  Zotero itemType mapping, so adding a domain needs no bus changes.
+  New domains and their sources:
+
+  - **Patents** (4): EPO Open Patent Services, Google Patents, USPTO
+    PatentsView, WIPO PATENTSCOPE. Imports as Zotero `patent` items with
+    patent number, inventors, assignees, IPC/CPC, legal status, and
+    application date written to structured fields.
+  - **Datasets** (19): HuggingFace, Kaggle, UCI, OpenML, Zenodo, Figshare,
+    Harvard Dataverse, OSF, Dryad, DataCite Search, re3data, World Bank
+    Indicators, GBIF, WHO Global Health Observatory, OECD, NASA Open Data,
+    Eurostat, IMF, UK Data Service. Imports as `dataset` items with
+    creators, license, publisher, and source-specific metrics in Extra.
+  - **Researchers** (4): OpenAlex Authors, OpenAlex Institutions, ORCID,
+    Semantic Scholar Authors. Imports as `person` items with ORCID,
+    h-index, i10-index, citation count, institutions, and research areas.
+  - **Grants** (3): NSF Award Search, EU CORDIS, NIH RePORTER. Imports as
+    notes with grant ID, PI, institution, agency, amount, period, and
+    status.
+  - **Clinical trials** (1): ClinicalTrials.gov API v2.
+  - **Theses** (1): OATD (Open Access Theses and Dissertations).
+  - **CS bibliography** (1): DBLP.
+  - **Open-access full text** (1): Unpaywall (DOI → OA status + best PDF).
+  - **Preprints** (2): ChemRxiv, SocArXiv.
+  - **Life sciences** (1): GEO (Gene Expression Omnibus).
+  - **Chemistry** (1): PubChem.
+  - **Geosciences** (1): PANGAEA.
+  - **Social sciences** (1): ICPSR.
+  - **Physics** (2): INSPIRE-HEP, NASA ADS.
+  - **Mathematics** (1): zbMATH Open.
+  - **Economics** (1): RePEc/IDEAS.
+
+  Shared infrastructure: per-domain dedup keys (patent number / DOI /
+  ORCID / grant ID) with in-library idempotency checks, domain enrichers
+  (patent family & legal status, DataCite metadata completion, researcher
+  activity tiers, grant status normalization), and honest failure reporting
+  (`failedSources` + `failedReasons`, never faking empty results).
+
+- **Dataset domain: discipline selector with advanced query filters.** The
+  dataset tab opens with a discipline segmented control — General
+  Repositories, ML/AI, Life Sciences, Chemistry, Geosciences, Social
+  Sciences, Economics, Health, Registries, or All — and each discipline
+  renders the advanced query fields its sources actually support (year
+  range, license, OA type, task tags, country). Selecting a discipline
+  narrows the fan-out to that discipline's sources only.
+
+- **Dataset result cards: source-specific metadata fields.** Each of the
+  19 dataset sources (plus GEO, PubChem, PANGAEA, ICPSR, GBIF) now renders
+  its two-to-four most informative fields on the result card — for example
+  HuggingFace shows downloads/likes/task tags/license, GBIF shows the
+  taxonomy path (kingdom › phylum › order › family › genus), GEO shows
+  organism/sample count/platform, PubChem shows molecular formula and
+  weight, and Eurostat shows data source and last update. Large counts are
+  abbreviated (1.5M / 25.0k) and file sizes formatted (1.2 GB / 500 MB).
 
 ### Changed
 
