@@ -1,11 +1,13 @@
 /**
- * DomainSearchPage — 学术子域搜索页（专利/数据集）。
+ * DomainSearchPage — 学术子域搜索页（专利/数据集/研究者/基金）。
  *
  * 输入框 + 搜索按钮 + 结果列表。结果卡显示域特定字段：
  *  - 专利：专利号、申请人、IPC/CPC、法律状态
- *  - 数据集：许可证、任务标签、下载量
+ *  - 数据集：按来源渲染特色字段（见 DatasetMetaFields）
+ *  - 研究者：h-index、引用数、works、机构
+ *  - 基金：资助机构、金额、执行期、状态、PI
  *
- * 复用 SearchInput（ui/SearchInput）与现有卡片样式。
+ * 数据集 Tab 内置学科选择器（先选学科再检索）与各学科高级查询字段。
  *
  * @module react/components/Hub/search/DomainSearch/DomainSearchPage
  */
@@ -20,6 +22,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { toast } from "@/components/ui/toast";
 import { button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { DatasetMetaFields } from "./DatasetMetaFields";
 import type { DomainId, DomainResult, DATASET_DISCIPLINES } from "./types";
 
 export function DomainSearchPage({
@@ -316,17 +319,13 @@ function DomainResultCard({
                 )}
             </div>
           )}
-          {domainId === "dataset" && result.extra?.license && (
-            <div className="mt-1 text-xs text-muted-foreground">
-              License: {result.extra.license}
-              {Array.isArray(result.extra?.taskTags) &&
-                result.extra.taskTags.length > 0 && (
-                  <span className="ml-2">
-                    {result.extra.taskTags.join(", ")}
-                  </span>
-                )}
-            </div>
-          )}
+          {/* 数据集域：按来源渲染特色字段 */}
+          {domainId === "dataset" && <DatasetMetaFields result={result} />}
+          {/* 学科专用数据集源（bio/chemistry/geoscience/social-science） */}
+          {(domainId as string) !== "dataset" &&
+            ["geo", "pubchem", "pangaea", "icpsr", "gbif"].includes(
+              result.source,
+            ) && <DatasetMetaFields result={result} />}
           {domainId === "researcher" && (
             <div className="mt-1 text-xs text-muted-foreground">
               {result.metrics?.hIndex != null && (
