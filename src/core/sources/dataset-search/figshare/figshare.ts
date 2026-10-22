@@ -17,7 +17,6 @@ import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { normalizeDoi } from "../../../search/literatureSearchHelpers";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const FIGSHARE_API = "https://api.figshare.com/v2/articles/search";
@@ -72,7 +71,9 @@ export class FigshareAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "[]");
     } catch (e) {
-      throw new Error(`Figshare API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`Figshare API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const items: any[] = Array.isArray(data) ? data : [];
@@ -90,7 +91,8 @@ export class FigshareAdapter extends DomainSourceAdapter {
         ? item.authors.map((a: any) => a.full_name || "").filter(Boolean)
         : [];
 
-      const url = item.url_public_html || `https://figshare.com/articles/dataset/${id}`;
+      const url =
+        item.url_public_html || `https://figshare.com/articles/dataset/${id}`;
 
       results.push({
         title,
@@ -98,9 +100,7 @@ export class FigshareAdapter extends DomainSourceAdapter {
         snippet: (item.description || "").slice(0, 300),
         source: "figshare",
         sourceId: id,
-        year: item.published_date
-          ? item.published_date.slice(0, 4)
-          : undefined,
+        year: item.published_date ? item.published_date.slice(0, 4) : undefined,
         doi: doi || undefined,
         dedupKey: doi || `figshare:${id}`,
         metrics: {

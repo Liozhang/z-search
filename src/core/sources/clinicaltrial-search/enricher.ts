@@ -30,9 +30,12 @@ export async function enrichClinicalTrialResults(
       const status = (r.extra?.status || "").toLowerCase();
       if (status) {
         if (/recruit/i.test(status)) r.extra.statusNormalized = "recruiting";
-        else if (/complet/i.test(status)) r.extra.statusNormalized = "completed";
-        else if (/terminat/i.test(status)) r.extra.statusNormalized = "terminated";
-        else if (/withdraw/i.test(status)) r.extra.statusNormalized = "withdrawn";
+        else if (/complet/i.test(status))
+          r.extra.statusNormalized = "completed";
+        else if (/terminat/i.test(status))
+          r.extra.statusNormalized = "terminated";
+        else if (/withdraw/i.test(status))
+          r.extra.statusNormalized = "withdrawn";
         else r.extra.statusNormalized = "unknown";
       }
     } catch (e) {

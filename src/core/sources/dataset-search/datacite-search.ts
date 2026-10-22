@@ -17,7 +17,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizeDoi } from "../../search/literatureSearchHelpers";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const DATACITE_SEARCH_API = "https://api.datacite.org/dois";
@@ -65,7 +64,10 @@ export class DataCiteSearchAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`DataCite Search API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(
+        `DataCite Search API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
+      );
     }
 
     const items: any[] = data.data || [];
@@ -85,7 +87,9 @@ export class DataCiteSearchAdapter extends DomainSourceAdapter {
         : [];
 
       const license = Array.isArray(attrs.rightsList)
-        ? attrs.rightsList.find((r: any) => r?.rightsIdentifier?.startsWith("cc-"))?.rightsIdentifier || ""
+        ? attrs.rightsList.find((r: any) =>
+            r?.rightsIdentifier?.startsWith("cc-"),
+          )?.rightsIdentifier || ""
         : "";
 
       const url = `https://doi.org/${doi}`;
@@ -96,9 +100,7 @@ export class DataCiteSearchAdapter extends DomainSourceAdapter {
         snippet: (attrs.descriptions?.[0]?.description || "").slice(0, 300),
         source: "datacite-search",
         sourceId: doi,
-        year: attrs.publicationYear
-          ? String(attrs.publicationYear)
-          : undefined,
+        year: attrs.publicationYear ? String(attrs.publicationYear) : undefined,
         doi,
         dedupKey: doi,
         metrics: {

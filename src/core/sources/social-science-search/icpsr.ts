@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const ICPSR_API = "https://www.icpsr.umich.edu/web/api/v1";
@@ -56,7 +55,9 @@ export class IcpsrAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`ICPSR API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`ICPSR API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const studies: any[] = data.data || data.studies || [];

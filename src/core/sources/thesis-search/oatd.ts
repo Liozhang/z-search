@@ -15,8 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
-import { toErrorMessage } from "../../../utils/error";
 
 const OATD_SEARCH = "https://oatd.org/oatd/search";
 

@@ -32,16 +32,17 @@ import {
 } from "./search/LiteratureSearchPage";
 import { JournalSearchDashboard } from "./search/JournalSearch/JournalSearchDashboard";
 import { DomainSearchPage } from "./search/DomainSearch/DomainSearchPage";
-import type { DomainId } from "./search/DomainSearch/types";
 import { PaneHeader } from "./PaneHeader";
 
 /** 三段 tab：web/local 两段同落 LiteratureSearchPage（scope 受控），
  *  journal 独占 JournalSearchDashboard，patent/dataset/researcher/grant
  *  各占 DomainSearchPage（domainId 受控）。 */
-type SearchTab = "web" | "local" | "journal" | "patent" | "dataset" | "researcher" | "grant";
+type SearchTab =
+  "web" | "local" | "journal" | "patent" | "dataset" | "researcher" | "grant";
 
 /** keep-alive 仍按视图粒度：web/local/journal/patent/dataset/researcher/grant 各一槽。 */
-type SearchPaneViewId = "literature" | "journal" | "patent" | "dataset" | "researcher" | "grant";
+type SearchPaneViewId =
+  "literature" | "journal" | "patent" | "dataset" | "researcher" | "grant";
 
 const SEARCH_TABS: ReadonlyArray<{ id: SearchTab; labelKey: string }> = [
   { id: "web", labelKey: "hub-search-tab-web" },
@@ -170,9 +171,15 @@ export function SearchPane({
         {mounted.has("patent") &&
           slot(activeView === "patent", <DomainSearchPage domainId="patent" />)}
         {mounted.has("dataset") &&
-          slot(activeView === "dataset", <DomainSearchPage domainId="dataset" />)}
+          slot(
+            activeView === "dataset",
+            <DomainSearchPage domainId="dataset" />,
+          )}
         {mounted.has("researcher") &&
-          slot(activeView === "researcher", <DomainSearchPage domainId="researcher" />)}
+          slot(
+            activeView === "researcher",
+            <DomainSearchPage domainId="researcher" />,
+          )}
         {mounted.has("grant") &&
           slot(activeView === "grant", <DomainSearchPage domainId="grant" />)}
       </div>

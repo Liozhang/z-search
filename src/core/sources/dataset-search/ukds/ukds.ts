@@ -16,8 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
-import { toErrorMessage } from "../../../../utils/error";
 
 const UKDS_SEARCH = "https://beta.ukdataservice.ac.uk/datastudies";
 

@@ -8,16 +8,12 @@
  * @module react/components/Hub/search/DomainSearch/useDomainSearch
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { getString, friendlyErrorMessage } from "../../../../utils/locale";
 import { toErrorMessage } from "../../../../utils/error";
 import { semanticRequest } from "../../../../utils/semanticBridge";
 import { useToast } from "@/components/ui/toast";
-import type {
-  DomainResult,
-  DomainId,
-  DomainSearchResponse,
-} from "./types";
+import type { DomainResult, DomainId, DomainSearchResponse } from "./types";
 
 /** 高级查询参数（与后端 DomainFilters 对齐）。 */
 export interface DomainQueryFilters {
@@ -46,7 +42,9 @@ export function useDomainSearch(domainId: DomainId) {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [importingIds, setImportingIds] = useState<Set<string>>(new Set());
-  const [importResults, setImportResults] = useState<Map<string, any>>(new Map());
+  const [importResults, setImportResults] = useState<Map<string, any>>(
+    new Map(),
+  );
 
   const requestId = useRef(0);
 
@@ -195,11 +193,7 @@ export function useDomainSearch(domainId: DomainId) {
 
   const selectAll = useCallback(() => {
     setSelectedIds(
-      new Set(
-        results
-          .filter((r) => !r.inLibrary)
-          .map((r) => r.dedupKey),
-      ),
+      new Set(results.filter((r) => !r.inLibrary).map((r) => r.dedupKey)),
     );
   }, [results]);
 

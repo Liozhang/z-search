@@ -18,7 +18,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const NSF_API = "https://api.nsf.gov/services/v1/awards.json";
@@ -66,7 +65,9 @@ export class NsfGrantAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`NSF API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`NSF API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const awards: any[] = data.response?.award || [];

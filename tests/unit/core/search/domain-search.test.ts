@@ -22,7 +22,10 @@ import {
   registerDomain,
   registerDomainAdapter,
 } from "../../../../src/core/search/DomainSearchEngine";
-import type { DomainResult, DomainDef } from "../../../../src/core/search/domainTypes";
+import type {
+  DomainResult,
+  DomainDef,
+} from "../../../../src/core/search/domainTypes";
 import type { DomainSourceAdapter } from "../../../../src/core/search/DomainSourceAdapter";
 
 /** 构造一个 mock 适配器。 */
@@ -150,9 +153,7 @@ describe("DomainSearchEngine", () => {
       dedupKey: `key-${i}`,
     }));
 
-    registerDomainAdapter(
-      mockAdapter("test3", "src", async () => manyResults),
-    );
+    registerDomainAdapter(mockAdapter("test3", "src", async () => manyResults));
 
     const { results, metadata } = await searchDomain("test3", {
       query: "test",

@@ -18,8 +18,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizePatentNumber } from "../../patent/PatentNumberNormalizer";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
-import { toErrorMessage } from "../../../utils/error";
 
 const WIPO_SEARCH = "https://patentscope.wipo.int/search/en/result.jsf";
 
@@ -68,9 +66,7 @@ export class WipoPatentAdapter extends DomainSourceAdapter {
     const results: DomainResult[] = [];
 
     // 正则提取专利号链接：<a href="/search/en/detail.jsf?docId=WO...">
-    const docIdMatches = html.matchAll(
-      /docId=([A-Z]{2}\d+[A-Z]?\d*)/g,
-    );
+    const docIdMatches = html.matchAll(/docId=([A-Z]{2}\d+[A-Z]?\d*)/g);
 
     const seen = new Set<string>();
     for (const match of docIdMatches) {

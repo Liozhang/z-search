@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const OPENML_API = "https://www.openml.org/api/v1/json";
@@ -54,7 +53,9 @@ export class OpenMLDatasetAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`OpenML API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`OpenML API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const datasets: any[] = data?.data?.dataset || [];

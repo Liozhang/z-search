@@ -19,7 +19,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { openalexRequest } from "../academic-search/openalex";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const OPENALEX_AUTHORS_API = "https://api.openalex.org/authors";
@@ -55,6 +54,7 @@ export class OpenAlexAuthorAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `OpenAlex Authors API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 
@@ -62,10 +62,7 @@ export class OpenAlexAuthorAdapter extends DomainSourceAdapter {
     const results: DomainResult[] = [];
 
     for (const author of authors.slice(0, maxResults)) {
-      const id = String(author.id || "").replace(
-        "https://openalex.org/",
-        "",
-      );
+      const id = String(author.id || "").replace("https://openalex.org/", "");
       if (!id) continue;
 
       const displayName = author.display_name || "";
@@ -73,7 +70,9 @@ export class OpenAlexAuthorAdapter extends DomainSourceAdapter {
 
       // 机构归属：last_known_institutions 数组
       const institutions = Array.isArray(author.last_known_institutions)
-        ? author.last_known_institutions.map((inst: any) => inst.display_name || "")
+        ? author.last_known_institutions.map(
+            (inst: any) => inst.display_name || "",
+          )
         : [];
 
       // 研究领域：x_concepts top 5（按 score 排序）
@@ -128,7 +127,9 @@ export class OpenAlexAuthorAdapter extends DomainSourceAdapter {
     if (!author?.id) return null;
 
     const institutions = Array.isArray(author.last_known_institutions)
-      ? author.last_known_institutions.map((inst: any) => inst.display_name || "")
+      ? author.last_known_institutions.map(
+          (inst: any) => inst.display_name || "",
+        )
       : [];
 
     const topics: string[] = Array.isArray(author.x_concepts)

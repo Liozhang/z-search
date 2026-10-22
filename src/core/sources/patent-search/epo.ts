@@ -16,7 +16,10 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizePatentNumber } from "../../patent/PatentNumberNormalizer";
-import { isEpoConfigured, getEpoAccessToken } from "../../patent/EpoOAuthClient";
+import {
+  isEpoConfigured,
+  getEpoAccessToken,
+} from "../../patent/EpoOAuthClient";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
 import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
@@ -73,9 +76,9 @@ export class EpoPatentAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "");
     } catch (e) {
-      throw new Error(
-        `EPO OPS invalid JSON: ${toErrorMessage(e)}`,
-      );
+      throw new Error(`EPO OPS invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     // OPS 返回结构：ops:world-patent-data → ops:biblio-search → ops:search-result
@@ -122,12 +125,12 @@ export class EpoPatentAdapter extends DomainSourceAdapter {
       // 申请人：applicants → applicant → applicant-name → name
       const applicantsEl = bib?.["exchange:parties"]?.["exchange:applicants"];
       const applicantEls = applicantsEl?.["exchange:applicant"] || [];
-      const applicants = (Array.isArray(applicantEls)
-        ? applicantEls
-        : [applicantEls]
+      const applicants = (
+        Array.isArray(applicantEls) ? applicantEls : [applicantEls]
       )
         .map((a: any) => {
-          const name = a?.["exchange:applicant-data"]?.["exchange:applicant-name"];
+          const name =
+            a?.["exchange:applicant-data"]?.["exchange:applicant-name"];
           if (!name) return "";
           if (Array.isArray(name)) {
             return name[0]?.name?.["$"] || name[0]?.name || "";
@@ -139,12 +142,12 @@ export class EpoPatentAdapter extends DomainSourceAdapter {
       // 发明人：inventors → inventor → inventor-name
       const inventorsEl = bib?.["exchange:parties"]?.["exchange:inventors"];
       const inventorEls = inventorsEl?.["exchange:inventor"] || [];
-      const inventors = (Array.isArray(inventorEls)
-        ? inventorEls
-        : [inventorEls]
+      const inventors = (
+        Array.isArray(inventorEls) ? inventorEls : [inventorEls]
       )
         .map((inv: any) => {
-          const name = inv?.["exchange:inventor-data"]?.["exchange:inventor-name"];
+          const name =
+            inv?.["exchange:inventor-data"]?.["exchange:inventor-name"];
           if (!name) return "";
           if (Array.isArray(name)) {
             return name[0]?.name?.["$"] || name[0]?.name || "";
@@ -162,10 +165,9 @@ export class EpoPatentAdapter extends DomainSourceAdapter {
 
       // 摘要：abstract → p（数组或单值）
       const abstractEl = bib?.["exchange:abstract"];
-      const abstract =
-        Array.isArray(abstractEl)
-          ? abstractEl[0]?.p?.["$"] || abstractEl[0]?.p || ""
-          : abstractEl?.p?.["$"] || abstractEl?.p || "";
+      const abstract = Array.isArray(abstractEl)
+        ? abstractEl[0]?.p?.["$"] || abstractEl[0]?.p || ""
+        : abstractEl?.p?.["$"] || abstractEl?.p || "";
 
       // IPC 分类：classifications-ipcr → classification-ipcr → text
       const ipcEl = bib?.["exchange:classifications-ipcr"];

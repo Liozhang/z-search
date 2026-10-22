@@ -69,9 +69,7 @@ export abstract class DomainSourceAdapter {
    * 单源详情查询（profile 用，如 researcher.profile / grant.profile）。
    * 默认返回 null（源不支持详情）；子类可覆写。
    */
-  async profile(
-    _sourceId: string,
-  ): Promise<DomainResult | null> {
+  async profile(_sourceId: string): Promise<DomainResult | null> {
     return null;
   }
 }

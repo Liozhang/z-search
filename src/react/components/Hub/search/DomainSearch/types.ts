@@ -162,8 +162,24 @@ export const DOMAIN_TABS: ReadonlyArray<{
   /** 输入框 placeholder 的 locale key */
   placeholderKey: string;
 }> = [
-  { id: "patent", labelKey: "hub-domain-tab-patent", placeholderKey: "hub-domain-patent-placeholder" },
-  { id: "dataset", labelKey: "hub-domain-tab-dataset", placeholderKey: "hub-domain-dataset-placeholder" },
-  { id: "researcher", labelKey: "hub-domain-tab-researcher", placeholderKey: "hub-domain-researcher-placeholder" },
-  { id: "grant", labelKey: "hub-domain-tab-grant", placeholderKey: "hub-domain-grant-placeholder" },
+  {
+    id: "patent",
+    labelKey: "hub-domain-tab-patent",
+    placeholderKey: "hub-domain-patent-placeholder",
+  },
+  {
+    id: "dataset",
+    labelKey: "hub-domain-tab-dataset",
+    placeholderKey: "hub-domain-dataset-placeholder",
+  },
+  {
+    id: "researcher",
+    labelKey: "hub-domain-tab-researcher",
+    placeholderKey: "hub-domain-researcher-placeholder",
+  },
+  {
+    id: "grant",
+    labelKey: "hub-domain-tab-grant",
+    placeholderKey: "hub-domain-grant-placeholder",
+  },
 ];

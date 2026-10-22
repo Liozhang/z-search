@@ -16,8 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
-import { toErrorMessage } from "../../../../utils/error";
 
 const EUROSTAT_API = "https://ec.europa.eu/eurostat/api/dissemination";
 
@@ -36,7 +34,6 @@ export class EurostatAdapter extends DomainSourceAdapter {
     maxResults: number,
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
-    const limit = Math.min(maxResults, 100);
     // 获取数据集目录，然后按查询词过滤
     const url = `${EUROSTAT_API}/catalogue/toc/txt?lang=en`;
 

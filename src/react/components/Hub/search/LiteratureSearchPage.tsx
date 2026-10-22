@@ -396,7 +396,14 @@ export function LiteratureSearchPage({
         ? { ...e, sourceIndex: origIndex.get(e.article) ?? e.sourceIndex }
         : e,
     );
-  }, [lit.results, lit.sortBy, displaySort, lit.query, sourceFilter, keywordFilter]);
+  }, [
+    lit.results,
+    lit.sortBy,
+    displaySort,
+    lit.query,
+    sourceFilter,
+    keywordFilter,
+  ]);
 
   // 来源 logo 片的命中计数（13 源常驻显示——命中的亮色、未命中的灰化，
   // 计数只对命中源展示）。固定按 AVAILABLE_SOURCES 顺序，不随命中数重排。

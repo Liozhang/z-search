@@ -17,7 +17,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const WB_API = "https://api.worldbank.org/v2";
@@ -58,11 +57,14 @@ export class WorldBankAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "[]");
     } catch (e) {
-      throw new Error(`World Bank API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`World Bank API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     // World Bank API 返回 [metadata, indicators]
-    const indicators: any[] = Array.isArray(data) && data.length > 1 ? data[1] : [];
+    const indicators: any[] =
+      Array.isArray(data) && data.length > 1 ? data[1] : [];
     const results: DomainResult[] = [];
 
     // 按查询词过滤指标名称

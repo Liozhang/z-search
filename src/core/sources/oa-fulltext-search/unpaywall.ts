@@ -20,7 +20,6 @@ import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizeDoi } from "../../search/literatureSearchHelpers";
 import { getPrefDynamic } from "../../../utils/prefs";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const UNPAYWALL_API = "https://api.unpaywall.org/v2";
@@ -39,7 +38,7 @@ export class UnpaywallAdapter extends DomainSourceAdapter {
 
   async search(
     query: string,
-    maxResults: number,
+    _maxResults: number,
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
     // Unpaywall 只支持 DOI 查询，不支持关键词搜索
@@ -75,7 +74,9 @@ export class UnpaywallAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`Unpaywall API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`Unpaywall API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     if (!data?.doi) return [];

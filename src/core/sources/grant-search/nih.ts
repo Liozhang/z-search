@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const NIH_API = "https://api.reporter.nih.gov/v2/projects/search";
@@ -90,7 +89,9 @@ export class NihGrantAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`NIH RePORTER API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`NIH RePORTER API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const projects: any[] = data.results || [];
@@ -105,9 +106,9 @@ export class NihGrantAdapter extends DomainSourceAdapter {
 
       // PI：principal_investigators 数组
       const pis: string[] = Array.isArray(project.principal_investigators)
-        ? project.principal_investigators.map(
-            (pi: any) => pi.full_name || "",
-          ).filter(Boolean)
+        ? project.principal_investigators
+            .map((pi: any) => pi.full_name || "")
+            .filter(Boolean)
         : [];
 
       // 机构
@@ -124,9 +125,7 @@ export class NihGrantAdapter extends DomainSourceAdapter {
         snippet: (project.abstract_text || "").slice(0, 300),
         source: "nih",
         sourceId: projectNum,
-        year: project.fiscal_year
-          ? String(project.fiscal_year)
-          : undefined,
+        year: project.fiscal_year ? String(project.fiscal_year) : undefined,
         dedupKey: `nih:${projectNum}`,
         metrics: {
           amount: amount,
@@ -194,9 +193,9 @@ export class NihGrantAdapter extends DomainSourceAdapter {
     if (!project) return null;
 
     const pis: string[] = Array.isArray(project.principal_investigators)
-      ? project.principal_investigators.map(
-          (pi: any) => pi.full_name || "",
-        ).filter(Boolean)
+      ? project.principal_investigators
+          .map((pi: any) => pi.full_name || "")
+          .filter(Boolean)
       : [];
 
     return {
@@ -205,9 +204,7 @@ export class NihGrantAdapter extends DomainSourceAdapter {
       snippet: (project.abstract_text || "").slice(0, 300),
       source: "nih",
       sourceId,
-      year: project.fiscal_year
-        ? String(project.fiscal_year)
-        : undefined,
+      year: project.fiscal_year ? String(project.fiscal_year) : undefined,
       dedupKey: `nih:${sourceId}`,
       metrics: {
         amount: project.award_amount ?? 0,

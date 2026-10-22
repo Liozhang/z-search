@@ -11,10 +11,7 @@
  * @module core/search/DomainRegistry
  */
 
-import {
-  registerDomain,
-  registerDomainAdapter,
-} from "./DomainSearchEngine";
+import { registerDomain, registerDomainAdapter } from "./DomainSearchEngine";
 import type { DomainDef, DomainResult } from "./domainTypes";
 import { normalizePatentNumber } from "../patent/PatentNumberNormalizer";
 import { EpoPatentAdapter } from "../sources/patent-search/epo";
@@ -127,7 +124,27 @@ const patentDef: DomainDef = {
 const datasetDef: DomainDef = {
   id: "dataset",
   label: "Datasets",
-  sources: ["huggingface", "zenodo", "kaggle", "uci", "openml", "dryad", "datacite-search", "re3data", "figshare", "dataverse", "osf", "worldbank", "gbif", "who-gho", "oecd", "nasa", "eurostat", "imf", "ukds"],
+  sources: [
+    "huggingface",
+    "zenodo",
+    "kaggle",
+    "uci",
+    "openml",
+    "dryad",
+    "datacite-search",
+    "re3data",
+    "figshare",
+    "dataverse",
+    "osf",
+    "worldbank",
+    "gbif",
+    "who-gho",
+    "oecd",
+    "nasa",
+    "eurostat",
+    "imf",
+    "ukds",
+  ],
   dedupKey: (r: DomainResult) =>
     r.doi || (r.sourceId ? `${r.source}:${r.sourceId}` : ""),
   importItemType: "dataset",
@@ -158,7 +175,12 @@ const datasetDef: DomainDef = {
 const researcherDef: DomainDef = {
   id: "researcher",
   label: "Researchers",
-  sources: ["openalex-author", "openalex-institution", "orcid", "semantic-scholar-author"],
+  sources: [
+    "openalex-author",
+    "openalex-institution",
+    "orcid",
+    "semantic-scholar-author",
+  ],
   dedupKey: (r: DomainResult) => r.dedupKey || "",
   importItemType: "person",
   enrich: enrichResearcherResults,
@@ -195,11 +217,13 @@ const grantDef: DomainDef = {
     if (r.dedupKey) fields["Grant ID"] = r.dedupKey;
     if (r.extra?.pi) fields["Principal Investigator"] = r.extra.pi;
     if (r.extra?.institution) fields["Institution"] = r.extra.institution;
-    if (r.extra?.fundingAgency) fields["Funding Agency"] = r.extra.fundingAgency;
+    if (r.extra?.fundingAgency)
+      fields["Funding Agency"] = r.extra.fundingAgency;
     if (r.extra?.amountFormatted) fields["Amount"] = r.extra.amountFormatted;
     if (r.extra?.period) fields["Period"] = r.extra.period;
     if (r.extra?.statusNormalized) fields["Status"] = r.extra.statusNormalized;
-    if (r.extra?.frameworkProgramme) fields["Framework"] = r.extra.frameworkProgramme;
+    if (r.extra?.frameworkProgramme)
+      fields["Framework"] = r.extra.frameworkProgramme;
     return fields;
   },
 };
@@ -351,7 +375,8 @@ const chemistryDef: DomainDef = {
     const fields: Record<string, string> = {};
     if (r.extra?.cid) fields["PubChem CID"] = r.extra.cid;
     if (r.extra?.molecularFormula) fields["Formula"] = r.extra.molecularFormula;
-    if (r.extra?.molecularWeight) fields["MW"] = String(r.extra.molecularWeight);
+    if (r.extra?.molecularWeight)
+      fields["MW"] = String(r.extra.molecularWeight);
     if (r.extra?.iupacName) fields["IUPAC Name"] = r.extra.iupacName;
     if (r.extra?.smiles) fields["SMILES"] = r.extra.smiles;
     return fields;
@@ -396,7 +421,8 @@ const socialScienceDef: DomainDef = {
   enrich: enrichDomainResults,
   buildExtraFields: (r: DomainResult) => {
     const fields: Record<string, string> = {};
-    if (r.extra?.geographicCoverage) fields["Geographic Coverage"] = r.extra.geographicCoverage;
+    if (r.extra?.geographicCoverage)
+      fields["Geographic Coverage"] = r.extra.geographicCoverage;
     if (r.extra?.timePeriod) fields["Time Period"] = r.extra.timePeriod;
     if (Array.isArray(r.extra?.topics) && r.extra.topics.length) {
       fields["Topics"] = r.extra.topics.join("; ");
@@ -428,7 +454,10 @@ const physicsDef: DomainDef = {
     const fields: Record<string, string> = {};
     if (r.extra?.arxivId) fields["arXiv"] = r.extra.arxivId;
     if (r.extra?.bibcode) fields["Bibcode"] = r.extra.bibcode;
-    if (Array.isArray(r.extra?.collaborations) && r.extra.collaborations.length) {
+    if (
+      Array.isArray(r.extra?.collaborations) &&
+      r.extra.collaborations.length
+    ) {
       fields["Collaborations"] = r.extra.collaborations.join("; ");
     }
     if (r.metrics?.citations) fields["Citations"] = String(r.metrics.citations);

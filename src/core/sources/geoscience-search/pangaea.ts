@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const PANGAEA_API = "https://www.pangaea.de/api/v1";
@@ -55,7 +54,9 @@ export class PangaeaAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`PANGAEA API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`PANGAEA API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const results_data: any[] = data.results || [];
@@ -69,7 +70,9 @@ export class PangaeaAdapter extends DomainSourceAdapter {
       if (!title) continue;
 
       const authors: string[] = Array.isArray(item.authors)
-        ? item.authors.map((a: any) => `${a.lastname || ""}, ${a.firstname || ""}`.trim()).filter(Boolean)
+        ? item.authors
+            .map((a: any) => `${a.lastname || ""}, ${a.firstname || ""}`.trim())
+            .filter(Boolean)
         : [];
 
       const url = `https://doi.org/10.1594/PANGAEA.${id}`;

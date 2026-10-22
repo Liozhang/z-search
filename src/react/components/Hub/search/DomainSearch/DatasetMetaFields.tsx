@@ -136,7 +136,9 @@ export function DatasetMetaFields({
 
     case "openml":
       return wrap([
-        r.metrics?.samples ? `${fmtCount(Number(r.metrics.samples))} samples` : null,
+        r.metrics?.samples
+          ? `${fmtCount(Number(r.metrics.samples))} samples`
+          : null,
         r.metrics?.features ? `${r.metrics.features} features` : null,
         r.extra?.format || null,
       ]);
@@ -228,7 +230,9 @@ export function DatasetMetaFields({
       ]);
 
     case "who-gho":
-      return wrap([r.extra?.indicatorCode ? `Code: ${r.extra.indicatorCode}` : null]);
+      return wrap([
+        r.extra?.indicatorCode ? `Code: ${r.extra.indicatorCode}` : null,
+      ]);
 
     case "nasa":
       return wrap([
@@ -249,7 +253,9 @@ export function DatasetMetaFields({
     case "geo":
       return wrap([
         r.extra?.organism || null,
-        r.metrics?.samples ? `${fmtCount(Number(r.metrics.samples))} samples` : null,
+        r.metrics?.samples
+          ? `${fmtCount(Number(r.metrics.samples))} samples`
+          : null,
         r.extra?.platform ? `Platform: ${r.extra.platform}` : null,
         r.extra?.entryType || null,
       ]);
@@ -279,9 +285,7 @@ export function DatasetMetaFields({
       ]);
 
     case "ukds":
-      return wrap([
-        r.extra?.studyId ? `Study: ${r.extra.studyId}` : null,
-      ]);
+      return wrap([r.extra?.studyId ? `Study: ${r.extra.studyId}` : null]);
 
     // ── 注册目录 ──
     case "re3data":

@@ -37,7 +37,9 @@ const httpRequest = vi.fn();
   Items: { get: vi.fn(() => null) },
   Search: class {
     addCondition() {}
-    async search() { return []; }
+    async search() {
+      return [];
+    }
   },
   Prefs: { clear: vi.fn() },
 };
@@ -80,24 +82,27 @@ describe("Dataset source adapters", () => {
     });
 
     it("parses Zenodo dataset response with DOI as dedupKey", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        hits: {
-          hits: [
-            {
-              id: "12345",
-              metadata: {
-                title: "Climate Observations 2020",
-                doi: "10.5281/zenodo.12345",
-                creators: [{ name: "Alice Smith" }],
-                rights: [{ id: "cc-by-4.0" }],
-                publication_date: "2021-03-15",
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          hits: {
+            hits: [
+              {
+                id: "12345",
+                metadata: {
+                  title: "Climate Observations 2020",
+                  doi: "10.5281/zenodo.12345",
+                  creators: [{ name: "Alice Smith" }],
+                  rights: [{ id: "cc-by-4.0" }],
+                  publication_date: "2021-03-15",
+                },
+                files: [{ size: 1024000 }],
+                stats: { views: 100, downloads: 50 },
               },
-              files: [{ size: 1024000 }],
-              stats: { views: 100, downloads: 50 },
-            },
-          ],
-        },
-      }));
+            ],
+          },
+        }),
+      );
       const a = new ZenodoDatasetAdapter();
       const results = await a.search("climate", 10);
       expect(results).toHaveLength(1);
@@ -118,17 +123,20 @@ describe("Dataset source adapters", () => {
   // ── HuggingFace ──
   describe("HuggingFaceDatasetAdapter", () => {
     it("parses HF datasets response with sourceId as dedupKey", async () => {
-      mockHttpResponse(200, JSON.stringify([
-        {
-          id: "squad",
-          description: "Stanford Question Answering Dataset",
-          downloads: 500000,
-          likes: 1200,
-          cardData: { license: "cc-by-4.0" },
-          pipeline_tag: "question-answering",
-          author: "rajpurkar",
-        },
-      ]));
+      mockHttpResponse(
+        200,
+        JSON.stringify([
+          {
+            id: "squad",
+            description: "Stanford Question Answering Dataset",
+            downloads: 500000,
+            likes: 1200,
+            cardData: { license: "cc-by-4.0" },
+            pipeline_tag: "question-answering",
+            author: "rajpurkar",
+          },
+        ]),
+      );
       const a = new HuggingFaceDatasetAdapter();
       const results = await a.search("squad", 10);
       expect(results).toHaveLength(1);
@@ -143,18 +151,21 @@ describe("Dataset source adapters", () => {
   // ── Figshare ──
   describe("FigshareAdapter", () => {
     it("parses Figshare dataset response", async () => {
-      mockHttpResponse(200, JSON.stringify([
-        {
-          id: 12345,
-          title: "Genomic Sequences Dataset",
-          doi: "10.6084/m9.figshare.12345",
-          description: "A dataset of genomic sequences",
-          authors: [{ full_name: "Jane Doe" }],
-          license: { name: "CC BY 4.0" },
-          published_date: "2022-06-01",
-          url_public_html: "https://figshare.com/articles/dataset/12345",
-        },
-      ]));
+      mockHttpResponse(
+        200,
+        JSON.stringify([
+          {
+            id: 12345,
+            title: "Genomic Sequences Dataset",
+            doi: "10.6084/m9.figshare.12345",
+            description: "A dataset of genomic sequences",
+            authors: [{ full_name: "Jane Doe" }],
+            license: { name: "CC BY 4.0" },
+            published_date: "2022-06-01",
+            url_public_html: "https://figshare.com/articles/dataset/12345",
+          },
+        ]),
+      );
       const a = new FigshareAdapter();
       const results = await a.search("genomic", 10);
       expect(results).toHaveLength(1);
@@ -165,24 +176,88 @@ describe("Dataset source adapters", () => {
     });
   });
 
+  // ── Dataverse ──
+  describe("DataverseAdapter", () => {
+    it("parses Harvard Dataverse search response", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: {
+            items: [
+              {
+                name: "Survey Consumer Finances 2023",
+                global_id: "doi:10.7910/DVN/ABCDEF",
+                description: "Consumer finance survey microdata",
+                author: [{ name: "Federal Reserve Board" }],
+                license: "CC0 1.0",
+                url: "https://doi.org/10.7910/DVN/ABCDEF",
+                publishedAt: "2024-01-15",
+              },
+            ],
+          },
+        }),
+      );
+      const a = new DataverseAdapter();
+      const results = await a.search("consumer finance", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("Survey Consumer Finances 2023");
+      expect(results[0].source).toBe("dataverse");
+      expect(results[0].doi).toBe("10.7910/DVN/ABCDEF");
+      expect(results[0].dedupKey).toBe("10.7910/DVN/ABCDEF");
+      expect(results[0].extra.license).toBe("CC0 1.0");
+    });
+  });
+
+  // ── OSF ──
+  describe("OsfAdapter", () => {
+    it("parses OSF node search response", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: [
+            {
+              id: "abcd1",
+              attributes: {
+                title: "Replication Data for Psych Study",
+                description: "Data and code for replication",
+                date_created: "2023-05-20T10:00:00Z",
+                public: true,
+              },
+            },
+          ],
+        }),
+      );
+      const a = new OsfAdapter();
+      const results = await a.search("replication", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("Replication Data for Psych Study");
+      expect(results[0].source).toBe("osf");
+      expect(results[0].dedupKey).toBe("osf:abcd1");
+      expect(results[0].year).toBe("2023");
+    });
+  });
+
   // ── Dryad ──
   describe("DryadDatasetAdapter", () => {
     it("parses Dryad search response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        _embedded: {
-          "stash:datasets": [
-            {
-              id: "dryad.abc123",
-              title: "Field Survey Data",
-              doi: "10.5061/dryad.abc123",
-              abstract: "Field survey results",
-              authors: [{ name: "Bob Jones" }],
-              license: "CC0",
-              publicationDate: "2023-01-10",
-            },
-          ],
-        },
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          _embedded: {
+            "stash:datasets": [
+              {
+                id: "dryad.abc123",
+                title: "Field Survey Data",
+                doi: "10.5061/dryad.abc123",
+                abstract: "Field survey results",
+                authors: [{ name: "Bob Jones" }],
+                license: "CC0",
+                publicationDate: "2023-01-10",
+              },
+            ],
+          },
+        }),
+      );
       const a = new DryadDatasetAdapter();
       const results = await a.search("survey", 10);
       expect(results).toHaveLength(1);
@@ -195,20 +270,23 @@ describe("Dataset source adapters", () => {
   // ── DataCite Search ──
   describe("DataCiteSearchAdapter", () => {
     it("parses DataCite search response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        data: [
-          {
-            attributes: {
-              doi: "10.5281/zenodo.99999",
-              titles: [{ title: "DataCite Dataset" }],
-              creators: [{ name: "Carol White" }],
-              rightsList: [{ rightsIdentifier: "cc-by-4.0" }],
-              publicationYear: 2023,
-              descriptions: [{ description: "A test dataset" }],
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: [
+            {
+              attributes: {
+                doi: "10.5281/zenodo.99999",
+                titles: [{ title: "DataCite Dataset" }],
+                creators: [{ name: "Carol White" }],
+                rightsList: [{ rightsIdentifier: "cc-by-4.0" }],
+                publicationYear: 2023,
+                descriptions: [{ description: "A test dataset" }],
+              },
             },
-          },
-        ],
-      }));
+          ],
+        }),
+      );
       const a = new DataCiteSearchAdapter();
       const results = await a.search("datacite", 10);
       expect(results).toHaveLength(1);
@@ -222,15 +300,18 @@ describe("Dataset source adapters", () => {
   // ── re3data ──
   describe("Re3dataAdapter", () => {
     it("parses re3data repository list", async () => {
-      mockHttpResponse(200, JSON.stringify([
-        {
-          id: "r3d100010371",
-          repositoryName: "Zenodo",
-          repositoryURL: "https://zenodo.org",
-          description: "Open research data repository",
-          subjects: [{ subject: "Multidisciplinary" }],
-        },
-      ]));
+      mockHttpResponse(
+        200,
+        JSON.stringify([
+          {
+            id: "r3d100010371",
+            repositoryName: "Zenodo",
+            repositoryURL: "https://zenodo.org",
+            description: "Open research data repository",
+            subjects: [{ subject: "Multidisciplinary" }],
+          },
+        ]),
+      );
       const a = new Re3dataAdapter();
       const results = await a.search("zenodo", 10);
       expect(results).toHaveLength(1);
@@ -243,17 +324,21 @@ describe("Dataset source adapters", () => {
   // ── World Bank ──
   describe("WorldBankAdapter", () => {
     it("parses World Bank indicator list", async () => {
-      mockHttpResponse(200, JSON.stringify([
-        { page: 1 },
-        [
-          {
-            id: "SP.POP.TOTL",
-            name: "Population, total",
-            source: { value: "World Development Indicators" },
-            sourceNote: "Total population is based on the de facto definition",
-          },
-        ],
-      ]));
+      mockHttpResponse(
+        200,
+        JSON.stringify([
+          { page: 1 },
+          [
+            {
+              id: "SP.POP.TOTL",
+              name: "Population, total",
+              source: { value: "World Development Indicators" },
+              sourceNote:
+                "Total population is based on the de facto definition",
+            },
+          ],
+        ]),
+      );
       const a = new WorldBankAdapter();
       const results = await a.search("population", 10);
       expect(results).toHaveLength(1);
@@ -266,21 +351,24 @@ describe("Dataset source adapters", () => {
   // ── GBIF ──
   describe("GbifAdapter", () => {
     it("parses GBIF species search response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        results: [
-          {
-            key: 2480946,
-            scientificName: "Panthera leo",
-            canonicalName: "Panthera leo",
-            kingdom: "Animalia",
-            phylum: "Chordata",
-            class: "Mammalia",
-            order: "Carnivora",
-            family: "Felidae",
-            rank: "SPECIES",
-          },
-        ],
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          results: [
+            {
+              key: 2480946,
+              scientificName: "Panthera leo",
+              canonicalName: "Panthera leo",
+              kingdom: "Animalia",
+              phylum: "Chordata",
+              class: "Mammalia",
+              order: "Carnivora",
+              family: "Felidae",
+              rank: "SPECIES",
+            },
+          ],
+        }),
+      );
       const a = new GbifAdapter();
       const results = await a.search("lion", 10);
       expect(results).toHaveLength(1);
@@ -293,15 +381,18 @@ describe("Dataset source adapters", () => {
   // ── WHO GHO ──
   describe("WhoGhoAdapter", () => {
     it("parses WHO GHO indicator response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        value: [
-          {
-            IndicatorCode: "WHS4_100",
-            IndicatorName: "Population (in thousands) total",
-            Language: "EN",
-          },
-        ],
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          value: [
+            {
+              IndicatorCode: "WHS4_100",
+              IndicatorName: "Population (in thousands) total",
+              Language: "EN",
+            },
+          ],
+        }),
+      );
       const a = new WhoGhoAdapter();
       const results = await a.search("population", 10);
       expect(results).toHaveLength(1);
@@ -314,18 +405,21 @@ describe("Dataset source adapters", () => {
   // ── OECD ──
   describe("OecdAdapter", () => {
     it("parses OECD dataflow list", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        data: {
-          dataflows: [
-            {
-              id: "DF_GDP",
-              name: "GDP and main components",
-              agencyID: "OECD.SDD",
-              version: "1.0",
-            },
-          ],
-        },
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: {
+            dataflows: [
+              {
+                id: "DF_GDP",
+                name: "GDP and main components",
+                agencyID: "OECD.SDD",
+                version: "1.0",
+              },
+            ],
+          },
+        }),
+      );
       const a = new OecdAdapter();
       const results = await a.search("GDP", 10);
       expect(results).toHaveLength(1);
@@ -338,33 +432,41 @@ describe("Dataset source adapters", () => {
   // ── NASA ──
   describe("NasaOpenDataAdapter", () => {
     it("parses NASA CKAN package search response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        result: {
-          results: [
-            {
-              name: "nasa-near-earth-object-observations",
-              title: "Near Earth Object Observations",
-              notes: "Observations of near earth objects",
-              organization: { title: "NASA" },
-              tags: [{ name: "astronomy" }],
-              license_title: "Public Domain",
-            },
-          ],
-        },
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          result: {
+            results: [
+              {
+                name: "nasa-near-earth-object-observations",
+                title: "Near Earth Object Observations",
+                notes: "Observations of near earth objects",
+                organization: { title: "NASA" },
+                tags: [{ name: "astronomy" }],
+                license_title: "Public Domain",
+              },
+            ],
+          },
+        }),
+      );
       const a = new NasaOpenDataAdapter();
       const results = await a.search("near earth", 10);
       expect(results).toHaveLength(1);
       expect(results[0].title).toBe("Near Earth Object Observations");
       expect(results[0].source).toBe("nasa");
-      expect(results[0].dedupKey).toBe("nasa:nasa-near-earth-object-observations");
+      expect(results[0].dedupKey).toBe(
+        "nasa:nasa-near-earth-object-observations",
+      );
     });
   });
 
   // ── Eurostat ──
   describe("EurostatAdapter", () => {
     it("parses Eurostat TOC text response", async () => {
-      mockHttpResponse(200, "nama_10_gdp\tGDP and main components (output, expenditure and income)\tEurostat\t2024-01-15\nnama_10_pop\tPopulation and social conditions\tEurostat\t2024-02-01\n");
+      mockHttpResponse(
+        200,
+        "nama_10_gdp\tGDP and main components (output, expenditure and income)\tEurostat\t2024-01-15\nnama_10_pop\tPopulation and social conditions\tEurostat\t2024-02-01\n",
+      );
       const a = new EurostatAdapter();
       const results = await a.search("GDP", 10);
       expect(results.length).toBeGreaterThanOrEqual(1);
@@ -376,18 +478,21 @@ describe("Dataset source adapters", () => {
   // ── IMF ──
   describe("ImfAdapter", () => {
     it("parses IMF SDMX dataflow response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        data: {
-          dataflows: [
-            {
-              id: "IFS",
-              name: "International Financial Statistics",
-              agencyID: "IMF",
-              version: "1.0",
-            },
-          ],
-        },
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: {
+            dataflows: [
+              {
+                id: "IFS",
+                name: "International Financial Statistics",
+                agencyID: "IMF",
+                version: "1.0",
+              },
+            ],
+          },
+        }),
+      );
       const a = new ImfAdapter();
       const results = await a.search("financial", 10);
       expect(results).toHaveLength(1);
@@ -400,7 +505,10 @@ describe("Dataset source adapters", () => {
   // ── UK Data Service ──
   describe("UkDataServiceAdapter", () => {
     it("parses UKDS HTML search response", async () => {
-      mockHttpResponse(200, '<a href="/study/854339">Understanding Society Dataset</a><a href="/study/854340">Labour Force Survey</a>');
+      mockHttpResponse(
+        200,
+        '<a href="/study/854339">Understanding Society Dataset</a><a href="/study/854340">Labour Force Survey</a>',
+      );
       const a = new UkDataServiceAdapter();
       const results = await a.search("society", 10);
       expect(results).toHaveLength(2);
@@ -419,18 +527,21 @@ describe("Dataset source adapters", () => {
     });
 
     it("parses Kaggle dataset list response", async () => {
-      mockHttpResponse(200, JSON.stringify([
-        {
-          ref: "user/dataset-name",
-          title: "Test Dataset",
-          subtitle: "A test dataset",
-          creatorName: "testuser",
-          licenseName: "CC0",
-          downloadCount: 1000,
-          voteCount: 50,
-          totalBytes: 5000000,
-        },
-      ]));
+      mockHttpResponse(
+        200,
+        JSON.stringify([
+          {
+            ref: "user/dataset-name",
+            title: "Test Dataset",
+            subtitle: "A test dataset",
+            creatorName: "testuser",
+            licenseName: "CC0",
+            downloadCount: 1000,
+            voteCount: 50,
+            totalBytes: 5000000,
+          },
+        ]),
+      );
       const a = new KaggleDatasetAdapter();
       const results = await a.search("test", 10);
       expect(results).toHaveLength(1);
@@ -443,17 +554,20 @@ describe("Dataset source adapters", () => {
   // ── UCI ──
   describe("UciDatasetAdapter", () => {
     it("parses UCI dataset list response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        data: [
-          {
-            id: "iris",
-            name: "Iris",
-            abstract: "The famous Iris flower dataset",
-            area: "Life Science",
-            tasks: ["Classification"],
-          },
-        ],
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: [
+            {
+              id: "iris",
+              name: "Iris",
+              abstract: "The famous Iris flower dataset",
+              area: "Life Science",
+              tasks: ["Classification"],
+            },
+          ],
+        }),
+      );
       const a = new UciDatasetAdapter();
       const results = await a.search("iris", 10);
       expect(results).toHaveLength(1);
@@ -466,21 +580,24 @@ describe("Dataset source adapters", () => {
   // ── OpenML ──
   describe("OpenMLDatasetAdapter", () => {
     it("parses OpenML dataset list response", async () => {
-      mockHttpResponse(200, JSON.stringify({
-        data: {
-          dataset: [
-            {
-              did: "61",
-              name: "iris",
-              format: "ARFF",
-              quality: [
-                { name: "NumberOfInstances", value: 150 },
-                { name: "NumberOfFeatures", value: 4 },
-              ],
-            },
-          ],
-        },
-      }));
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: {
+            dataset: [
+              {
+                did: "61",
+                name: "iris",
+                format: "ARFF",
+                quality: [
+                  { name: "NumberOfInstances", value: 150 },
+                  { name: "NumberOfFeatures", value: 4 },
+                ],
+              },
+            ],
+          },
+        }),
+      );
       const a = new OpenMLDatasetAdapter();
       const results = await a.search("iris", 10);
       expect(results).toHaveLength(1);

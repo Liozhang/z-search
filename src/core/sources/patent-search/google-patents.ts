@@ -17,7 +17,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizePatentNumber } from "../../patent/PatentNumberNormalizer";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const GOOGLE_PATENTS_SEARCH = "https://patents.google.com/";
@@ -79,6 +78,7 @@ export class GooglePatentsAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `Google Patents: metadata JSON parse failed: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 
@@ -100,8 +100,7 @@ export class GooglePatentsAdapter extends DomainSourceAdapter {
       const title = patent.title || "";
 
       // 申请人 / assignee
-      const assignee =
-        patent.assignee || patent.applicant || "";
+      const assignee = patent.assignee || patent.applicant || "";
 
       // 摘要：snippet（搜索结果页通常带）
       const snippet = patent.snippet || patent.abstract || "";
@@ -124,7 +123,11 @@ export class GooglePatentsAdapter extends DomainSourceAdapter {
         snippet: snippet.slice(0, 300),
         source: "google-patents",
         sourceId: pubNumber,
-        year: pubDate ? pubDate.slice(0, 4) : filingDate ? filingDate.slice(0, 4) : undefined,
+        year: pubDate
+          ? pubDate.slice(0, 4)
+          : filingDate
+            ? filingDate.slice(0, 4)
+            : undefined,
         patentNumber,
         dedupKey: patentNumber,
         extra: {
@@ -185,7 +188,9 @@ export class GooglePatentsAdapter extends DomainSourceAdapter {
       patentNumber,
       dedupKey: patentNumber,
       extra: {
-        inventor: Array.isArray(ld.inventor) ? ld.inventor : [ld.inventor].filter(Boolean),
+        inventor: Array.isArray(ld.inventor)
+          ? ld.inventor
+          : [ld.inventor].filter(Boolean),
         assignee: ld.assignee,
         filingDate: ld.dateFiled || "",
         publicationDate: ld.datePublished || "",

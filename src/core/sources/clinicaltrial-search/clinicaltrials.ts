@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const CT_API = "https://clinicaltrials.gov/api/v2/studies";
@@ -62,6 +61,7 @@ export class ClinicalTrialsAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `ClinicalTrials.gov API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 
@@ -190,9 +190,7 @@ export class ClinicalTrialsAdapter extends DomainSourceAdapter {
               .map((int: any) => int.name || "")
               .filter(Boolean)
           : [],
-        phases: Array.isArray(designModule.phases)
-          ? designModule.phases
-          : [],
+        phases: Array.isArray(designModule.phases) ? designModule.phases : [],
         sponsor: sponsorModule.leadSponsor?.name || "",
         startDate: statusModule.startDateStruct?.date || "",
         completionDate: statusModule.completionDateStruct?.date || "",

@@ -21,9 +21,8 @@ describe("z-search dataset domain (real Zotero integration)", function () {
   });
 
   it("verifies dataset domain is registered with 19 sources", async function () {
-    const { getDomainDef } = await import(
-      "../../src/core/search/DomainSearchEngine.js"
-    );
+    const { getDomainDef } =
+      await import("../../src/core/search/DomainSearchEngine.js");
     const def = getDomainDef("dataset");
     Zotero.debug(
       "[z-search-test] dataset domain def: " + JSON.stringify(def?.sources),
@@ -40,9 +39,8 @@ describe("z-search dataset domain (real Zotero integration)", function () {
   });
 
   it("verifies domain.search RPC routes correctly", async function () {
-    const { handleLiteratureRequest } = await import(
-      "../../src/ui/hub/HubLiteratureHandler.js"
-    );
+    const { handleLiteratureRequest } =
+      await import("../../src/ui/hub/HubLiteratureHandler.js");
 
     let result = null;
     let error = null;
@@ -62,8 +60,10 @@ describe("z-search dataset domain (real Zotero integration)", function () {
     );
 
     Zotero.debug(
-      "[z-search-test] domain.search result: " + JSON.stringify(result) +
-      " error: " + error,
+      "[z-search-test] domain.search result: " +
+        JSON.stringify(result) +
+        " error: " +
+        error,
     );
 
     if (error && error.includes("unknown domain")) {
@@ -71,15 +71,15 @@ describe("z-search dataset domain (real Zotero integration)", function () {
     }
     if (!result || !Array.isArray(result.articles)) {
       throw new Error(
-        "domain.search did not return articles array: " + JSON.stringify(result),
+        "domain.search did not return articles array: " +
+          JSON.stringify(result),
       );
     }
   });
 
   it("verifies domain.import RPC rejects empty entries", async function () {
-    const { handleLiteratureRequest } = await import(
-      "../../src/ui/hub/HubLiteratureHandler.js"
-    );
+    const { handleLiteratureRequest } =
+      await import("../../src/ui/hub/HubLiteratureHandler.js");
 
     let error = null;
     const mockBridge = {

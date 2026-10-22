@@ -53,9 +53,7 @@ export async function enrichGrantResults(
         }
       }
     } catch (e) {
-      safeDebug(
-        `[z-search] grantEnricher failed for ${r.sourceId}: ${e}`,
-      );
+      safeDebug(`[z-search] grantEnricher failed for ${r.sourceId}: ${e}`);
       /* 单条失败跳过 */
     }
   }

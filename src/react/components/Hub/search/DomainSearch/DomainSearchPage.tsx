@@ -19,7 +19,6 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { toast } from "@/components/ui/toast";
 import { button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DatasetMetaFields } from "./DatasetMetaFields";
@@ -27,10 +26,8 @@ import type { DomainId, DomainResult, DATASET_DISCIPLINES } from "./types";
 
 export function DomainSearchPage({
   domainId,
-  isActive = true,
 }: {
   domainId: DomainId;
-  isActive?: boolean;
 }): React.ReactElement {
   const {
     query,
@@ -64,8 +61,7 @@ export function DomainSearchPage({
 
   // 数据集域：当前选中的学科分组（决定可用源与高级查询字段）
   const activeDiscipline = useMemo(
-    () =>
-      DATASET_DISCIPLINES.find((d) => d.id === filters.discipline) ?? null,
+    () => DATASET_DISCIPLINES.find((d) => d.id === filters.discipline) ?? null,
     [filters.discipline],
   );
 
@@ -126,7 +122,10 @@ export function DomainSearchPage({
 
           {/* 高级查询字段（根据当前学科的能力渲染） */}
           {activeDiscipline && activeDiscipline.filters.length > 0 && (
-            <div className="flex flex-wrap gap-2 border-t" style={{ marginTop: "0.5rem", paddingTop: "0.5rem" }}>
+            <div
+              className="flex flex-wrap gap-2 border-t"
+              style={{ marginTop: "0.5rem", paddingTop: "0.5rem" }}
+            >
               {activeDiscipline.filters.map((f) => (
                 <div key={f.key} className="flex items-center gap-1">
                   <label className="text-xs text-muted-foreground">
@@ -140,7 +139,10 @@ export function DomainSearchPage({
                       placeholder="2020-2024"
                       value={filters.year ?? ""}
                       onChange={(e) =>
-                        setFilters({ ...filters, year: e.target.value || undefined })
+                        setFilters({
+                          ...filters,
+                          year: e.target.value || undefined,
+                        })
                       }
                     />
                   ) : f.type === "select" ? (
@@ -187,12 +189,15 @@ export function DomainSearchPage({
           <ErrorState message={searchError} onRetry={() => handleSearch()} />
         )}
 
-        {!isSearching && !searchError && searchPerformed && results.length === 0 && (
-          <EmptyState
-            title={getString("domain-no-results")}
-            description={getString("domain-no-results-hint")}
-          />
-        )}
+        {!isSearching &&
+          !searchError &&
+          searchPerformed &&
+          results.length === 0 && (
+            <EmptyState
+              title={getString("domain-no-results")}
+              description={getString("domain-no-results-hint")}
+            />
+          )}
 
         {!isSearching && !searchError && results.length > 0 && (
           <>
@@ -341,9 +346,7 @@ function DomainResultCard({
               )}
               {Array.isArray(result.extra?.institutions) &&
                 result.extra.institutions.length > 0 && (
-                  <span className="ml-2">
-                    {result.extra.institutions[0]}
-                  </span>
+                  <span className="ml-2">{result.extra.institutions[0]}</span>
                 )}
             </div>
           )}

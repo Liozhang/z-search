@@ -16,7 +16,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizeDoi } from "../../search/literatureSearchHelpers";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const DRYAD_API = "https://datadryad.org/api/v2/search";
@@ -64,7 +63,9 @@ export class DryadDatasetAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`Dryad API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`Dryad API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const items: any[] = data._embedded?.["stash:datasets"] || [];

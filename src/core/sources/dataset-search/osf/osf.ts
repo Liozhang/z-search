@@ -17,7 +17,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const OSF_API = "https://api.osf.io/v2";
@@ -58,7 +57,9 @@ export class OsfAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`OSF API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`OSF API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const items: any[] = data.data || [];
@@ -81,7 +82,8 @@ export class OsfAdapter extends DomainSourceAdapter {
           const users = c?.embeds?.users?.data;
           if (Array.isArray(users)) {
             for (const u of users) {
-              if (u?.attributes?.full_name) authors.push(u.attributes.full_name);
+              if (u?.attributes?.full_name)
+                authors.push(u.attributes.full_name);
             }
           }
         }
@@ -93,9 +95,7 @@ export class OsfAdapter extends DomainSourceAdapter {
         snippet: (attrs.description || "").slice(0, 300),
         source: "osf",
         sourceId: id,
-        year: attrs.date_created
-          ? attrs.date_created.slice(0, 4)
-          : undefined,
+        year: attrs.date_created ? attrs.date_created.slice(0, 4) : undefined,
         dedupKey: `osf:${id}`,
         metrics: {
           views: 0,

@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const ZBMATH_API = "https://api.zbmath.org/v1/documents/_search";
@@ -56,7 +55,9 @@ export class ZbmathAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`zbMATH API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`zbMATH API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const documents: any[] = data.result || [];
@@ -71,9 +72,7 @@ export class ZbmathAdapter extends DomainSourceAdapter {
 
       // 作者
       const authors: string[] = Array.isArray(doc.contributors?.authors)
-        ? doc.contributors.authors
-            .map((a: any) => a.name || "")
-            .filter(Boolean)
+        ? doc.contributors.authors.map((a: any) => a.name || "").filter(Boolean)
         : [];
 
       // MSC 分类
@@ -108,7 +107,7 @@ export class ZbmathAdapter extends DomainSourceAdapter {
     return results;
   }
 
-  async profile(sourceId: string): Promise<DomainResult | null> {
+  async profile(_sourceId: string): Promise<DomainResult | null> {
     return null;
   }
 }

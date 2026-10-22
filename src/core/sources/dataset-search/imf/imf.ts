@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const IMF_API = "https://dataservices.imf.org/REST/SDMX_JSON.svc";
@@ -56,7 +55,9 @@ export class ImfAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`IMF API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`IMF API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     // SDMX Dataflow 结构：data.dataflows[]

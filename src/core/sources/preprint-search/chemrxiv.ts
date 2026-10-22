@@ -15,10 +15,10 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
-const CHEM_RXIV_API = "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orchestrate/Article/advanced-search";
+const CHEM_RXIV_API =
+  "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orchestrate/Article/advanced-search";
 
 export class ChemRxivAdapter extends DomainSourceAdapter {
   readonly id = "chemrxiv";
@@ -63,7 +63,9 @@ export class ChemRxivAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`ChemRxiv API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`ChemRxiv API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const items: any[] = data.result?.items || data.items || [];
@@ -89,9 +91,7 @@ export class ChemRxivAdapter extends DomainSourceAdapter {
         snippet: (item.description || "").slice(0, 300),
         source: "chemrxiv",
         sourceId: id,
-        year: item.publishedDate
-          ? item.publishedDate.slice(0, 4)
-          : undefined,
+        year: item.publishedDate ? item.publishedDate.slice(0, 4) : undefined,
         doi: doi || undefined,
         dedupKey: `chemrxiv:${id}`,
         extra: {

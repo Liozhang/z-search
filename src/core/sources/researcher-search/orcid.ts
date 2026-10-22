@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const ORCID_API = "https://pub.orcid.org/v3.0";
@@ -56,7 +55,9 @@ export class OrcidAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`ORCID API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`ORCID API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const results_data: any[] = data["expanded-result"] || [];
@@ -126,8 +127,7 @@ export class OrcidAdapter extends DomainSourceAdapter {
       .filter(Boolean);
 
     // 作品数量
-    const works =
-      data?.["activities-summary"]?.works?.group?.length ?? 0;
+    const works = data?.["activities-summary"]?.works?.group?.length ?? 0;
 
     return {
       title: displayName,

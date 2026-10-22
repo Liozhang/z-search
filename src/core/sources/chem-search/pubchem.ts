@@ -17,7 +17,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const PUBCHEM_API = "https://pubchem.ncbi.nlm.nih.gov/rest/pug";
@@ -53,7 +52,9 @@ export class PubChemAdapter extends DomainSourceAdapter {
     try {
       searchData = JSON.parse(searchResp.responseText || "{}");
     } catch (e) {
-      throw new Error(`PubChem search invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`PubChem search invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const cids: number[] = searchData?.IdentifierList?.CID || [];
@@ -78,7 +79,9 @@ export class PubChemAdapter extends DomainSourceAdapter {
     try {
       propData = JSON.parse(propResp.responseText || "{}");
     } catch (e) {
-      throw new Error(`PubChem property invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`PubChem property invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const properties: any[] = propData?.PropertyTable?.Properties || [];

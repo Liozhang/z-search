@@ -21,13 +21,17 @@ vi.mock("../../../../src/utils/prefs", () => ({
 
 // Mock Zotero globals
 (globalThis as any).Zotero = {
-  HTTP: { request: vi.fn(() => Promise.resolve({ status: 200, responseText: "{}" })) },
+  HTTP: {
+    request: vi.fn(() => Promise.resolve({ status: 200, responseText: "{}" })),
+  },
   Items: { get: vi.fn(() => null) },
   Collections: { get: vi.fn(() => null) },
   Libraries: { get: vi.fn(() => null) },
   Search: class {
     addCondition() {}
-    async search() { return []; }
+    async search() {
+      return [];
+    }
   },
   Prefs: { clear: vi.fn() },
   getActiveZoteroPane: vi.fn(() => null),
@@ -49,9 +53,25 @@ describe("domain.* RPC routing", () => {
     expect(def!.sources).toHaveLength(19);
     // 验证学科选择器声明的源都在
     const expected = [
-      "huggingface", "zenodo", "kaggle", "uci", "openml", "dryad",
-      "datacite-search", "re3data", "figshare", "dataverse", "osf",
-      "worldbank", "gbif", "who-gho", "oecd", "nasa", "eurostat", "imf", "ukds",
+      "huggingface",
+      "zenodo",
+      "kaggle",
+      "uci",
+      "openml",
+      "dryad",
+      "datacite-search",
+      "re3data",
+      "figshare",
+      "dataverse",
+      "osf",
+      "worldbank",
+      "gbif",
+      "who-gho",
+      "oecd",
+      "nasa",
+      "eurostat",
+      "imf",
+      "ukds",
     ];
     for (const src of expected) {
       expect(def!.sources).toContain(src);
@@ -113,10 +133,8 @@ describe("domain.* RPC routing", () => {
 
   it("domain.profile routes correctly for dataset domain", async () => {
     let capturedError: string | null = null;
-    let capturedResult: any = null;
     const mockBridge = {
-      respond: (_id: any, result: any, error: string | null) => {
-        capturedResult = result;
+      respond: (_id: any, _result: any, error: string | null) => {
         capturedError = error;
       },
     };

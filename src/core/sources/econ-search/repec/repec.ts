@@ -18,8 +18,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
-import { toErrorMessage } from "../../../../utils/error";
 
 const IDEAS_SEARCH = "https://ideas.repec.org/cgi-bin/htsearch";
 
@@ -96,7 +94,7 @@ export class RepecAdapter extends DomainSourceAdapter {
     return results;
   }
 
-  async profile(sourceId: string): Promise<DomainResult | null> {
+  async profile(_sourceId: string): Promise<DomainResult | null> {
     return null;
   }
 }

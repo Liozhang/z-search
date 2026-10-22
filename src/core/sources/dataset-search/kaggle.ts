@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { getPrefDynamic } from "../../../utils/prefs";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const KAGGLE_API = "https://www.kaggle.com/api/v1/datasets/list";
@@ -36,7 +35,7 @@ export class KaggleDatasetAdapter extends DomainSourceAdapter {
   async search(
     query: string,
     maxResults: number,
-    filters?: DomainFilters,
+    _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
     const username = getPrefDynamic("search.dataset.kaggle.username") as string;
     const apiKey = getPrefDynamic("search.dataset.kaggle.apiKey") as string;
@@ -66,7 +65,9 @@ export class KaggleDatasetAdapter extends DomainSourceAdapter {
     try {
       datasets = JSON.parse(resp.responseText || "[]");
     } catch (e) {
-      throw new Error(`Kaggle API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`Kaggle API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     if (!Array.isArray(datasets)) return [];

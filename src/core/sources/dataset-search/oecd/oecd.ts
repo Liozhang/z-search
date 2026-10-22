@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const OECD_API = "https://sdmx.oecd.org/public/rest/dataflow";
@@ -36,7 +35,6 @@ export class OecdAdapter extends DomainSourceAdapter {
     maxResults: number,
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
-    const limit = Math.min(maxResults, 100);
     // 列出所有数据流，然后按查询词过滤
     const url = `${OECD_API}/all/latest?format=json&detail=allstubs`;
 
@@ -57,7 +55,9 @@ export class OecdAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`OECD API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`OECD API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const dataflows: any[] = data?.data?.dataflows || [];

@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const DBLP_API = "https://dblp.org/search/publ/api";
@@ -63,7 +62,9 @@ export class DblpAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`DBLP API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`DBLP API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const hits: any[] = data?.result?.hits?.hit || [];

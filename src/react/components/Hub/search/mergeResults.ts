@@ -187,7 +187,10 @@ function resultCitations(entry: MixedResult): number {
  *  标题 "HLA-HD: a pipeline" 归一为 "hla hd a pipeline" 即命中；分隔符写法
  *  差异（连字符/空格/破折号）不影响判定，中日韩等非拉丁字母同样保留。 */
 function normalizePhrase(s: string): string {
-  return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  return s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
 }
 
 /** 梯队号：标题含完整查询短语 → 0（第一梯队），否则 1。phrase 需已归一化；

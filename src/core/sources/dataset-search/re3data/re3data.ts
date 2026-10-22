@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const RE3DATA_API = "https://www.re3data.org/api/beta/repositories";
@@ -36,7 +35,6 @@ export class Re3dataAdapter extends DomainSourceAdapter {
     maxResults: number,
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
-    const limit = Math.min(maxResults, 50);
     const url = `${RE3DATA_API}?query=${encodeURIComponent(query)}`;
 
     const resp = await Zotero.HTTP.request("GET", url, {
@@ -56,7 +54,9 @@ export class Re3dataAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`re3data API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`re3data API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     // re3data API 返回结构：[{ id, repositoryName, ... }]
@@ -70,7 +70,8 @@ export class Re3dataAdapter extends DomainSourceAdapter {
       const name = repo.repositoryName || "";
       if (!name) continue;
 
-      const url = repo.repositoryURL || `https://www.re3data.org/repository/${id}`;
+      const url =
+        repo.repositoryURL || `https://www.re3data.org/repository/${id}`;
 
       // 学科：disciplines 数组
       const disciplines: string[] = Array.isArray(repo.subjects)

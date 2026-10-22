@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const S2_API = "https://api.semanticscholar.org/graph/v1/author";
@@ -36,7 +35,8 @@ export class SemanticScholarAuthorAdapter extends DomainSourceAdapter {
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
     const limit = Math.min(maxResults, 100);
-    const fields = "name,affiliations,paperCount,citationCount,hIndex,homepage,url";
+    const fields =
+      "name,affiliations,paperCount,citationCount,hIndex,homepage,url";
     const url = `${S2_API}/search?query=${encodeURIComponent(query)}&fields=${fields}&limit=${limit}`;
 
     const resp = await Zotero.HTTP.request("GET", url, {
@@ -58,6 +58,7 @@ export class SemanticScholarAuthorAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `Semantic Scholar API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 
@@ -101,7 +102,8 @@ export class SemanticScholarAuthorAdapter extends DomainSourceAdapter {
   }
 
   async profile(sourceId: string): Promise<DomainResult | null> {
-    const fields = "name,affiliations,paperCount,citationCount,hIndex,homepage,url";
+    const fields =
+      "name,affiliations,paperCount,citationCount,hIndex,homepage,url";
     const url = `${S2_API}/${sourceId}?fields=${fields}`;
 
     const resp = await Zotero.HTTP.request("GET", url, {
@@ -127,7 +129,7 @@ export class SemanticScholarAuthorAdapter extends DomainSourceAdapter {
     return {
       title: author.name || sourceId,
       url: author.url || `https://www.semanticscholar.org/author/${sourceId}`,
-      snippet: (author.affiliations?.[0]) || "",
+      snippet: author.affiliations?.[0] || "",
       source: "semantic-scholar-author",
       sourceId,
       dedupKey: `s2-author:${sourceId}`,

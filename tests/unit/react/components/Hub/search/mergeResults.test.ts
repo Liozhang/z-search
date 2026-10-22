@@ -235,7 +235,9 @@ describe("sortMixedResults 标题排序的完整词组优先（HLA-HD 报障修�
     );
     const expected = ["Alpha", "Beta"];
     expect(sortMixedResults(merged, "title").map(titleOf)).toEqual(expected);
-    expect(sortMixedResults(merged, "title", "").map(titleOf)).toEqual(expected);
+    expect(sortMixedResults(merged, "title", "").map(titleOf)).toEqual(
+      expected,
+    );
     // 纯符号查询归一后为空串 → 不设优先级
     expect(sortMixedResults(merged, "title", "-").map(titleOf)).toEqual(
       expected,

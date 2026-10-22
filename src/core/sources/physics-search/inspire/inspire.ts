@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const INSPIRE_API = "https://inspirehep.net/api/literature";
@@ -36,7 +35,8 @@ export class InspireHepAdapter extends DomainSourceAdapter {
     _filters?: DomainFilters,
   ): Promise<DomainResult[]> {
     const limit = Math.min(maxResults, 100);
-    const fields = "titles,authors,collaborations,arxiv_eprints,citation_count,publication_info,control_number";
+    const fields =
+      "titles,authors,collaborations,arxiv_eprints,citation_count,publication_info,control_number";
     const url = `${INSPIRE_API}?q=${encodeURIComponent(query)}&size=${limit}&fields=${fields}`;
 
     const resp = await Zotero.HTTP.request("GET", url, {
@@ -56,7 +56,9 @@ export class InspireHepAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`INSPIRE-HEP API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`INSPIRE-HEP API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const hits: any[] = data.hits?.hits || [];
@@ -111,7 +113,8 @@ export class InspireHepAdapter extends DomainSourceAdapter {
   }
 
   async profile(sourceId: string): Promise<DomainResult | null> {
-    const fields = "titles,authors,collaborations,arxiv_eprints,citation_count,publication_info,control_number";
+    const fields =
+      "titles,authors,collaborations,arxiv_eprints,citation_count,publication_info,control_number";
     const url = `${INSPIRE_API}/${sourceId}?fields=${fields}`;
     const resp = await Zotero.HTTP.request("GET", url, {
       headers: {

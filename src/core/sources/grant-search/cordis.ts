@@ -17,7 +17,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const CORDIS_API = "https://cordis.europa.eu/api/projects";
@@ -65,7 +64,9 @@ export class CordisGrantAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`CORDIS API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`CORDIS API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const projects: any[] = data.payload?.projects || data.projects || [];

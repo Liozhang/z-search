@@ -16,7 +16,6 @@ import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { normalizeDoi } from "../../../search/literatureSearchHelpers";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const DATAVERSE_API = "https://dataverse.harvard.edu/api/search";
@@ -66,6 +65,7 @@ export class DataverseAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `Harvard Dataverse API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 

@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const HF_DATASETS_API = "https://huggingface.co/api/datasets";
@@ -56,9 +55,9 @@ export class HuggingFaceDatasetAdapter extends DomainSourceAdapter {
     try {
       datasets = JSON.parse(resp.responseText || "[]");
     } catch (e) {
-      throw new Error(
-        `Hugging Face API invalid JSON: ${toErrorMessage(e)}`,
-      );
+      throw new Error(`Hugging Face API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     if (!Array.isArray(datasets)) return [];

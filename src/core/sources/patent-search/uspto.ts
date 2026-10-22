@@ -18,7 +18,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizePatentNumber } from "../../patent/PatentNumberNormalizer";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const USPTO_API = "https://search.patentsview.org/api/v1/patent/";
@@ -75,6 +74,7 @@ export class UsptoPatentAdapter extends DomainSourceAdapter {
     } catch (e) {
       throw new Error(
         `USPTO PatentsView API invalid JSON: ${toErrorMessage(e)}`,
+        { cause: e },
       );
     }
 
@@ -121,9 +121,7 @@ export class UsptoPatentAdapter extends DomainSourceAdapter {
         snippet: "",
         source: "uspto",
         sourceId: patentId,
-        year: patent.patent_date
-          ? patent.patent_date.slice(0, 4)
-          : undefined,
+        year: patent.patent_date ? patent.patent_date.slice(0, 4) : undefined,
         patentNumber,
         dedupKey: patentNumber,
         metrics: {

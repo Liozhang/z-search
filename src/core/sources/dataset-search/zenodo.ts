@@ -15,7 +15,6 @@ import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { normalizeDoi } from "../../search/literatureSearchHelpers";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const ZENODO_API = "https://zenodo.org/api/records";
@@ -61,7 +60,9 @@ export class ZenodoDatasetAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`Zenodo API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`Zenodo API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const hits: any[] = data.hits?.hits || [];

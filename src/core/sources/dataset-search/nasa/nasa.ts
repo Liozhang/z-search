@@ -15,7 +15,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const NASA_API = "https://data.nasa.gov/api/3/action/package_search";
@@ -55,7 +54,9 @@ export class NasaOpenDataAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`NASA Open Data API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`NASA Open Data API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const results_data: any[] = data?.result?.results || [];

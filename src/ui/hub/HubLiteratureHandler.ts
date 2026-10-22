@@ -1100,7 +1100,11 @@ export async function handleLiteratureRequest(
                 if (dedupKey) {
                   if (domainId === "patent" && entry.patentNumber) {
                     const s = new Zotero.Search();
-                    s.addCondition("patentNumber", "is", entry.patentNumber.toLowerCase());
+                    s.addCondition(
+                      "patentNumber",
+                      "is",
+                      entry.patentNumber.toLowerCase(),
+                    );
                     const ids = await s.search();
                     if (ids?.length) existingId = ids[0];
                   } else if (entry.doi) {
@@ -1129,9 +1133,8 @@ export async function handleLiteratureRequest(
 
                 // 新建条目：直接用 MetadataExtractor.createItemFromMetadata，
                 // 构造 metadata 对象传入（绕过翻译器提取路线）
-                const { default: MetadataExtractor } = await import(
-                  "../../core/metadata/MetadataExtractor"
-                );
+                const { default: MetadataExtractor } =
+                  await import("../../core/metadata/MetadataExtractor");
                 const creators = buildDomainCreators(entry, domainId);
                 const metadata = {
                   success: true,

@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 import { toErrorMessage } from "../../../../utils/error";
 
 const GBIF_API = "https://api.gbif.org/v1";
@@ -56,7 +55,9 @@ export class GbifAdapter extends DomainSourceAdapter {
     try {
       data = JSON.parse(resp.responseText || "{}");
     } catch (e) {
-      throw new Error(`GBIF API invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`GBIF API invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const species: any[] = data.results || [];

@@ -22,9 +22,7 @@ export async function enrichPreprintResults(
       r.extra.documentType = "preprint";
       r.extra.peerReviewed = false;
     } catch (e) {
-      safeDebug(
-        `[z-search] preprintEnricher failed for ${r.sourceId}: ${e}`,
-      );
+      safeDebug(`[z-search] preprintEnricher failed for ${r.sourceId}: ${e}`);
     }
   }
 }

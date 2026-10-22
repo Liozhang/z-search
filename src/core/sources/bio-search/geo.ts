@@ -16,7 +16,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { ZSEARCH_HTTP_HEADERS } from "../../../utils/httpHeaders";
-import { safeDebug } from "../../../utils/logger";
 import { toErrorMessage } from "../../../utils/error";
 
 const NCBI_EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
@@ -54,7 +53,9 @@ export class GeoAdapter extends DomainSourceAdapter {
     try {
       searchData = JSON.parse(searchResp.responseText || "{}");
     } catch (e) {
-      throw new Error(`GEO esearch invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`GEO esearch invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const ids: string[] = searchData?.esearchresult?.idlist || [];
@@ -77,7 +78,9 @@ export class GeoAdapter extends DomainSourceAdapter {
     try {
       summaryData = JSON.parse(summaryResp.responseText || "{}");
     } catch (e) {
-      throw new Error(`GEO esummary invalid JSON: ${toErrorMessage(e)}`);
+      throw new Error(`GEO esummary invalid JSON: ${toErrorMessage(e)}`, {
+        cause: e,
+      });
     }
 
     const result = summaryData?.result || {};

@@ -17,7 +17,6 @@
 import { DomainSourceAdapter } from "../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../search/domainTypes";
 import { searchOpenAlexInstitutions } from "../academic-search/openalex";
-import { safeDebug } from "../../../utils/logger";
 
 export class OpenAlexInstitutionAdapter extends DomainSourceAdapter {
   readonly id = "openalex-institution";

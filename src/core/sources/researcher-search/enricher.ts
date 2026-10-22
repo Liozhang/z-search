@@ -39,7 +39,10 @@ export async function enrichResearcherResults(
       }
 
       // 机构消歧：OpenAlex 已带 display_name，补国家代码
-      if (Array.isArray(r.extra?.institutions) && r.extra.institutions.length > 0) {
+      if (
+        Array.isArray(r.extra?.institutions) &&
+        r.extra.institutions.length > 0
+      ) {
         // 机构名已是 display_name 字符串数组，无需额外处理
         // 如有国家代码则拼接
         if (r.extra.countryCode && r.extra.institutions[0]) {
@@ -47,9 +50,7 @@ export async function enrichResearcherResults(
         }
       }
     } catch (e) {
-      safeDebug(
-        `[z-search] researcherEnricher failed for ${r.sourceId}: ${e}`,
-      );
+      safeDebug(`[z-search] researcherEnricher failed for ${r.sourceId}: ${e}`);
       /* 单条失败跳过 */
     }
   }

@@ -41,9 +41,7 @@ export async function enrichDomainResults(
         r.extra.dataType = DOMAIN_DATA_TYPES[domain];
       }
     } catch (e) {
-      safeDebug(
-        `[z-search] domainEnricher failed for ${r.sourceId}: ${e}`,
-      );
+      safeDebug(`[z-search] domainEnricher failed for ${r.sourceId}: ${e}`);
     }
   }
 }

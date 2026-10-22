@@ -18,7 +18,6 @@ import { DomainSourceAdapter } from "../../../search/DomainSourceAdapter";
 import type { DomainResult, DomainFilters } from "../../../search/domainTypes";
 import { getPrefDynamic } from "../../../../utils/prefs";
 import { ZSEARCH_HTTP_HEADERS } from "../../../../utils/httpHeaders";
-import { safeDebug } from "../../../../utils/logger";
 
 const ADS_API = "https://api.adsabs.harvard.edu/v1/search/query";
 
@@ -76,14 +75,10 @@ export class NasaAdsAdapter extends DomainSourceAdapter {
       const bibcode = doc.bibcode || "";
       if (!bibcode) continue;
 
-      const title = Array.isArray(doc.title)
-        ? doc.title[0] || ""
-        : "";
+      const title = Array.isArray(doc.title) ? doc.title[0] || "" : "";
       if (!title) continue;
 
-      const authors: string[] = Array.isArray(doc.author)
-        ? doc.author
-        : [];
+      const authors: string[] = Array.isArray(doc.author) ? doc.author : [];
 
       const url = `https://ui.adsabs.harvard.edu/abs/${bibcode}/abstract`;
 
@@ -109,7 +104,7 @@ export class NasaAdsAdapter extends DomainSourceAdapter {
     return results;
   }
 
-  async profile(sourceId: string): Promise<DomainResult | null> {
+  async profile(_sourceId: string): Promise<DomainResult | null> {
     return null;
   }
 }
