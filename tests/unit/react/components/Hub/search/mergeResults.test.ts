@@ -160,6 +160,89 @@ describe("sortMixedResults", () => {
   });
 });
 
+describe("sortMixedResults 标题排序的完整词组优先（HLA-HD 报障修复）", () => {
+  const titleOf = (e: ReturnType<typeof mergeResults>[number]) =>
+    e.kind === "article" ? e.article.title : e.result.title;
+
+  it("标题含完整查询短语的排最前，其余随后（梯队内仍字典序）", () => {
+    const merged = mergeResults(
+      [],
+      [
+        art({ title: "- unrelated note" }),
+        art({ title: "HLA typing and HD screening study" }),
+        art({ title: "HLA-HD: a long-read typing pipeline" }),
+        art({ title: "Another paper on genotyping" }),
+      ],
+    );
+    const titles = sortMixedResults(merged, "title", "HLA-HD").map(titleOf);
+    expect(titles).toEqual([
+      "HLA-HD: a long-read typing pipeline",
+      "- unrelated note",
+      "Another paper on genotyping",
+      "HLA typing and HD screening study",
+    ]);
+  });
+
+  it("完整词组命中优先于纯字典序（连字符开头标题不再顶到最前）", () => {
+    const merged = mergeResults(
+      [],
+      [art({ title: "- leading dash" }), art({ title: "HLA-HD toolkit" })],
+    );
+    // 无 query：纯字典序，"-" 开头第一
+    expect(sortMixedResults(merged, "title").map(titleOf)[0]).toBe(
+      "- leading dash",
+    );
+    // 带 query：完整词组命中排前
+    expect(sortMixedResults(merged, "title", "HLA-HD").map(titleOf)[0]).toBe(
+      "HLA-HD toolkit",
+    );
+  });
+
+  it("分隔符写法不敏感：hla hd / hla-hd / HLA HD 同判命中", () => {
+    const merged = mergeResults(
+      [],
+      [
+        art({ title: "HLA HD without hyphen" }),
+        art({ title: "hla-hd lowercase" }),
+        art({ title: "HLA-DR typing" }),
+      ],
+    );
+    const titles = sortMixedResults(merged, "title", "HLA-HD").map(titleOf);
+    // 前两条是完整词组的不同写法（梯队 0，按字典序），第三条不含完整短语
+    expect(titles).toEqual([
+      "HLA HD without hyphen",
+      "hla-hd lowercase",
+      "HLA-DR typing",
+    ]);
+  });
+
+  it("库内命中同样参与完整词组梯队", () => {
+    const merged = mergeResults(
+      [
+        lib({ itemID: 1, title: "Zebra typing" }),
+        lib({ itemID: 2, title: "HLA-HD library copy" }),
+      ],
+      [],
+    );
+    const titles = sortMixedResults(merged, "title", "HLA-HD").map(titleOf);
+    expect(titles).toEqual(["HLA-HD library copy", "Zebra typing"]);
+  });
+
+  it("无 query 或纯符号 query 时行为与纯字典序一致", () => {
+    const merged = mergeResults(
+      [],
+      [art({ title: "Beta" }), art({ title: "Alpha" })],
+    );
+    const expected = ["Alpha", "Beta"];
+    expect(sortMixedResults(merged, "title").map(titleOf)).toEqual(expected);
+    expect(sortMixedResults(merged, "title", "").map(titleOf)).toEqual(expected);
+    // 纯符号查询归一后为空串 → 不设优先级
+    expect(sortMixedResults(merged, "title", "-").map(titleOf)).toEqual(
+      expected,
+    );
+  });
+});
+
 describe("countMixed", () => {
   it("counts each kind", () => {
     const merged = mergeResults(

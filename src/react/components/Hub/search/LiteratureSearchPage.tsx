@@ -391,12 +391,12 @@ export function LiteratureSearchPage({
       }
       return matchKeywordFilter(e.article, keywordFilter);
     });
-    return sortMixedResults(merged, displaySort).map((e) =>
+    return sortMixedResults(merged, displaySort, lit.query).map((e) =>
       e.kind === "article"
         ? { ...e, sourceIndex: origIndex.get(e.article) ?? e.sourceIndex }
         : e,
     );
-  }, [lit.results, lit.sortBy, displaySort, sourceFilter, keywordFilter]);
+  }, [lit.results, lit.sortBy, displaySort, lit.query, sourceFilter, keywordFilter]);
 
   // 来源 logo 片的命中计数（13 源常驻显示——命中的亮色、未命中的灰化，
   // 计数只对命中源展示）。固定按 AVAILABLE_SOURCES 顺序，不随命中数重排。
@@ -410,8 +410,13 @@ export function LiteratureSearchPage({
     return counts;
   }, [lit.results]);
   const localList = useMemo(
-    () => sortMixedResults(mergeResults(sem.searchResults, []), displaySort),
-    [sem.searchResults, displaySort],
+    () =>
+      sortMixedResults(
+        mergeResults(sem.searchResults, []),
+        displaySort,
+        sem.searchQuery,
+      ),
+    [sem.searchResults, sem.searchQuery, displaySort],
   );
   const list = scope === "web" ? webList : localList;
   // 复制清单/导出 CSV 的取数序（2026-10-09）：跟随用户当前看到的排序（结果头

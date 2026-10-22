@@ -10,7 +10,8 @@
  *     within the external set is already done by the backend)
  *   - relevance order (default): library hits (similarity desc) →
  *     external articles in backend response order
- *   - date / title order: client-side sort across the whole merged list
+ *   - date / citations order: client-side sort across the whole merged list
+ *   - title order: 完整词组命中优先（标题含查询短语者排前），梯队内字典序
  *   - DOI comparison is case-insensitive with a https://doi.org/ prefix
  *     strip — sources disagree on DOI casing more often than one would hope
  *
@@ -181,14 +182,34 @@ function resultCitations(entry: MixedResult): number {
   return Number(entry.article.citationCount) || 0;
 }
 
+/** 短语归一化：小写、非字母数字（标点/连字符/空白等）折叠为单个空格、
+ *  去首尾空白。用于「完整词组命中」判定——查询 "HLA-HD" 归一为 "hla hd"，
+ *  标题 "HLA-HD: a pipeline" 归一为 "hla hd a pipeline" 即命中；分隔符写法
+ *  差异（连字符/空格/破折号）不影响判定，中日韩等非拉丁字母同样保留。 */
+function normalizePhrase(s: string): string {
+  return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+/** 梯队号：标题含完整查询短语 → 0（第一梯队），否则 1。phrase 需已归一化；
+ *  空短语（无 query 或查询纯符号）时全部返回 1，等价于不设优先级。 */
+function phraseTier(entry: MixedResult, phrase: string): number {
+  if (!phrase) return 1;
+  return normalizePhrase(resultTitle(entry)).includes(phrase) ? 0 : 1;
+}
+
 /** Sort the merged list for display. `relevance` (default) keeps the merge
  *  order: library hits (similarity desc, as returned by the backend) first,
  *  then external articles in response order. `date` / `title` / `citations`
  *  sort the whole list client-side (date desc / title asc / citations desc,
- *  ties keep the previous order — Array.sort is stable per spec). */
+ *  ties keep the previous order — Array.sort is stable per spec).
+ *
+ *  `title` 带可选 query 时先按完整词组命中分梯队（2026-10-22 用户报障修复）：
+ *  标题含查询短语（分隔符不敏感）的条目排最前，其余随后，梯队内保持既有
+ *  的大小写与本地化感知字典序。不传 query 时行为与历史实现逐字节一致。 */
 export function sortMixedResults(
   merged: MixedResult[],
   sortBy: MixedSortBy,
+  query?: string,
 ): MixedResult[] {
   if (sortBy === "relevance") return merged;
   const arr = [...merged];
@@ -197,7 +218,16 @@ export function sortMixedResults(
   } else if (sortBy === "citations") {
     arr.sort((a, b) => resultCitations(b) - resultCitations(a));
   } else {
-    arr.sort((a, b) => resultTitle(a).localeCompare(resultTitle(b)));
+    // 纯字典序会把 "-" 等标点开头的标题顶到最前（连字符的排序权重低于
+    // 所有字母），完整词组命中（如 "HLA-HD: ..."）反而沉底——先分梯队
+    // 再梯队内字典序，兑现「完整词组先、分词命中后」的展示语义。
+    const phrase = normalizePhrase(query ?? "");
+    arr.sort((a, b) => {
+      const ta = phraseTier(a, phrase);
+      const tb = phraseTier(b, phrase);
+      if (ta !== tb) return ta - tb;
+      return resultTitle(a).localeCompare(resultTitle(b));
+    });
   }
   return arr;
 }
