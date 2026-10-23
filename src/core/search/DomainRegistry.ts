@@ -144,6 +144,13 @@ const datasetDef: DomainDef = {
     "eurostat",
     "imf",
     "ukds",
+    // 学科专用源：适配器归属 bio/chemistry/geoscience/social-science 域，
+    // 由 DomainSearchEngine 的跨域索引在 dataset 域下解析（前端数据集
+    // 标签页的学科分组按源 id 引用它们）。
+    "geo",
+    "pubchem",
+    "pangaea",
+    "icpsr",
   ],
   dedupKey: (r: DomainResult) =>
     r.doi || (r.sourceId ? `${r.source}:${r.sourceId}` : ""),

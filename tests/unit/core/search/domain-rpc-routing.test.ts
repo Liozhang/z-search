@@ -47,10 +47,10 @@ describe("domain.* RPC routing", () => {
     vi.clearAllMocks();
   });
 
-  it("dataset domain is registered with 19 sources", () => {
+  it("dataset domain is registered with 23 sources", () => {
     const def = getDomainDef("dataset");
     expect(def).toBeDefined();
-    expect(def!.sources).toHaveLength(19);
+    expect(def!.sources).toHaveLength(23);
     // 验证学科选择器声明的源都在
     const expected = [
       "huggingface",
@@ -72,6 +72,12 @@ describe("domain.* RPC routing", () => {
       "eurostat",
       "imf",
       "ukds",
+      // 学科专用源：适配器归属 bio/chemistry/geoscience/social-science 域，
+      // 经跨域索引在 dataset 域下解析
+      "geo",
+      "pubchem",
+      "pangaea",
+      "icpsr",
     ];
     for (const src of expected) {
       expect(def!.sources).toContain(src);

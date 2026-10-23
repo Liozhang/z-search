@@ -25,6 +25,7 @@ export class IcpsrAdapter extends DomainSourceAdapter {
   readonly domainId = "social-science";
   readonly label = "ICPSR";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "country"] as const;
 
   async isAvailable() {
     return { available: true };

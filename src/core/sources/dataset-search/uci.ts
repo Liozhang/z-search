@@ -25,6 +25,7 @@ export class UciDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "UCI ML Repository";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "taskTags"] as const;
 
   async isAvailable() {
     return { available: true };

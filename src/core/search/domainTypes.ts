@@ -44,8 +44,13 @@ export interface DomainResult {
   extra?: Record<string, any>;
 }
 
-/** 域特定筛选器（各域在 DomainDef.filters 中声明支持的键）。 */
+/** 域特定筛选器（各域在 DomainDef.fields 中声明支持的键）。 */
 export interface DomainFilters {
+  /**
+   * 显式收敛的源 id 列表（前端学科分组带来）。缺省或空 = 域内全部源；
+   * 非空时总线只向列表内的源扇出——未在列表中出现的源不发起请求。
+   */
+  sources?: string[];
   /** 年份范围 "2020-2024"（专利/数据集/基金） */
   year?: string;
   /** 国家/地区（专利/基金） */
@@ -113,4 +118,10 @@ export interface DomainSearchMetadata {
   failedReasons: Record<string, string>;
   /** 缺 API Key 未发起请求的源名单 */
   skippedNoKey: string[];
+  /**
+   * 声明了高级筛选（license/oaType/taskTags/country）而源不支持时的跳过
+   * 名单——不支持筛选的源若照查，等于悄悄违反筛选承诺（结果未经筛选
+   * 混入），故显式跳过并归因。
+   */
+  skippedNoFilter: string[];
 }

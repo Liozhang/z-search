@@ -25,6 +25,7 @@ export class DataverseAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Harvard Dataverse";
   readonly noKey = true;
+  readonly supportedFilters = ["license"] as const;
 
   async isAvailable() {
     return { available: true };

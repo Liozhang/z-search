@@ -26,6 +26,7 @@ export class FigshareAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Figshare";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "oaType"] as const;
 
   async isAvailable() {
     return { available: true };
@@ -111,6 +112,7 @@ export class FigshareAdapter extends DomainSourceAdapter {
         extra: {
           authors,
           license: item.license?.name || "",
+          oaType: "open",
           tags: Array.isArray(item.tags) ? item.tags : [],
           categories: Array.isArray(item.categories)
             ? item.categories.map((c: any) => c.title || "").filter(Boolean)

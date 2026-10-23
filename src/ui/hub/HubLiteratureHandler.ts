@@ -32,6 +32,7 @@ import type { DomainResult } from "../../core/search/domainTypes";
 import "../../core/search/DomainRegistry";
 import {
   getDomainDef,
+  getDomainDefForResult,
   searchDomain,
   getDomainProfile,
 } from "../../core/search/DomainSearchEngine";
@@ -1093,6 +1094,11 @@ export async function handleLiteratureRequest(
           await Promise.all(
             chunk.map(async (entry, j) => {
               const idx = i + j;
+              // 归属域优先：跨域源（数据集标签页里的 geo/pubchem/pangaea/
+              // icpsr）的 itemType 与 Extra 字段映射以其归属域为准——
+              // GEO 的 Accession/Platform/Organism 写在 bio 域定义里，
+              // 用标签页域（dataset）的 buildExtraFields 会丢掉这些字段。
+              const ownerDef = getDomainDefForResult(entry) ?? def;
               try {
                 // 幂等预检：按去重键查库内已有条目
                 const dedupKey = def.dedupKey(entry);
@@ -1117,7 +1123,7 @@ export async function handleLiteratureRequest(
 
                 if (existingId != null) {
                   // 幂等命中：补写 Extra（异步，不阻塞回执）
-                  const extra = def.buildExtraFields?.(entry);
+                  const extra = ownerDef.buildExtraFields?.(entry);
                   if (extra) {
                     void applyDomainExtra(existingId, extra);
                   }
@@ -1139,7 +1145,7 @@ export async function handleLiteratureRequest(
                 const metadata = {
                   success: true,
                   title: entry.title || "",
-                  itemType: def.importItemType,
+                  itemType: ownerDef.importItemType,
                   url: entry.url || undefined,
                   abstract: entry.snippet || entry.extra?.abstract || undefined,
                   date: entry.year || undefined,
@@ -1165,7 +1171,7 @@ export async function handleLiteratureRequest(
                 }
 
                 // 写入域 Extra 字段（异步，不阻塞回执）
-                const extra = def.buildExtraFields?.(entry);
+                const extra = ownerDef.buildExtraFields?.(entry);
                 if (extra) {
                   void applyDomainExtra(itemId, extra);
                 }

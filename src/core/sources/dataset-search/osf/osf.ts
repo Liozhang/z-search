@@ -26,6 +26,7 @@ export class OsfAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "OSF (Open Science Framework)";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "oaType"] as const;
 
   async isAvailable() {
     return { available: true };
@@ -103,6 +104,7 @@ export class OsfAdapter extends DomainSourceAdapter {
         extra: {
           authors,
           license: attrs.node_license?.name || "",
+          oaType: attrs.public === false ? "closed" : "open",
           tags: Array.isArray(attrs.tags) ? attrs.tags : [],
           dateCreated: attrs.date_created || "",
           dateModified: attrs.date_modified || "",

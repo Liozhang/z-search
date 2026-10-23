@@ -33,12 +33,19 @@ export class GeoAdapter extends DomainSourceAdapter {
   async search(
     query: string,
     maxResults: number,
-    _filters?: DomainFilters,
+    filters?: DomainFilters,
   ): Promise<DomainResult[]> {
     const limit = Math.min(maxResults, 100);
 
     // Step 1: esearch 获取 GEO DataSets 的 UID 列表
-    const searchUrl = `${NCBI_EUTILS}/esearch.fcgi?db=gds&term=${encodeURIComponent(query)}&retmax=${limit}&retmode=json`;
+    let searchUrl = `${NCBI_EUTILS}/esearch.fcgi?db=gds&term=${encodeURIComponent(query)}&retmax=${limit}&retmode=json`;
+    // 年份范围 "2020-2024" → Entrez mindate/maxdate（按出版日期 pdat 过滤）
+    if (filters?.year) {
+      const [start, end] = filters.year.split("-");
+      if (start && end) {
+        searchUrl += `&mindate=${encodeURIComponent(start.trim())}&maxdate=${encodeURIComponent(end.trim())}&datetype=pdat`;
+      }
+    }
     const searchResp = await Zotero.HTTP.request("GET", searchUrl, {
       headers: { ...ZSEARCH_HTTP_HEADERS },
       timeout: 15000,

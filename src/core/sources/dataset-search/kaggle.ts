@@ -24,6 +24,7 @@ export class KaggleDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Kaggle Datasets";
   readonly noKey = false;
+  readonly supportedFilters = ["license"] as const;
 
   async isAvailable() {
     const username = getPrefDynamic("search.dataset.kaggle.username") as string;

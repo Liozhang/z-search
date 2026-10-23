@@ -68,6 +68,10 @@ import { UkDataServiceAdapter } from "../../../../src/core/sources/dataset-searc
 import { KaggleDatasetAdapter } from "../../../../src/core/sources/dataset-search/kaggle";
 import { UciDatasetAdapter } from "../../../../src/core/sources/dataset-search/uci";
 import { OpenMLDatasetAdapter } from "../../../../src/core/sources/dataset-search/openml";
+import { GeoAdapter } from "../../../../src/core/sources/bio-search/geo";
+import { PubChemAdapter } from "../../../../src/core/sources/chem-search/pubchem";
+import { PangaeaAdapter } from "../../../../src/core/sources/geoscience-search/pangaea";
+import { IcpsrAdapter } from "../../../../src/core/sources/social-science-search/icpsr";
 
 describe("Dataset source adapters", () => {
   beforeEach(() => {
@@ -94,6 +98,7 @@ describe("Dataset source adapters", () => {
                   doi: "10.5281/zenodo.12345",
                   creators: [{ name: "Alice Smith" }],
                   rights: [{ id: "cc-by-4.0" }],
+                  access_right: "open",
                   publication_date: "2021-03-15",
                 },
                 files: [{ size: 1024000 }],
@@ -111,6 +116,7 @@ describe("Dataset source adapters", () => {
       expect(results[0].doi).toBe("10.5281/zenodo.12345");
       expect(results[0].dedupKey).toBe("10.5281/zenodo.12345");
       expect(results[0].extra.creators).toEqual(["Alice Smith"]);
+      expect(results[0].extra.oaType).toBe("open");
     });
 
     it("throws on HTTP error", async () => {
@@ -234,6 +240,25 @@ describe("Dataset source adapters", () => {
       expect(results[0].source).toBe("osf");
       expect(results[0].dedupKey).toBe("osf:abcd1");
       expect(results[0].year).toBe("2023");
+      expect(results[0].extra.oaType).toBe("open");
+    });
+
+    it("maps public=false to closed OA type", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: [
+            {
+              id: "priv1",
+              attributes: { title: "Embargoed Dataset", public: false },
+            },
+          ],
+        }),
+      );
+      const a = new OsfAdapter();
+      const results = await a.search("embargo", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].extra.oaType).toBe("closed");
     });
   });
 
@@ -605,6 +630,209 @@ describe("Dataset source adapters", () => {
       expect(results[0].source).toBe("openml");
       expect(results[0].dedupKey).toBe("openml:61");
       expect(results[0].metrics.samples).toBe(150);
+    });
+  });
+
+  // ── GEO（NCBI Entrez gds 库，归属 bio 域、经数据集标签页生命科学学科检索）──
+  describe("GeoAdapter", () => {
+    /** esearch + esummary 两段式响应的 mock 辅助。 */
+    function mockGeoResponses() {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          esearchresult: { idlist: ["200000001", "200000002"] },
+        }),
+      );
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          result: {
+            uids: ["200000001", "200000002"],
+            "200000001": {
+              accession: "GSE123456",
+              title: "Breast cancer transcriptome cohorts",
+              summary: "Gene expression profiling of breast tumor samples.",
+              platform: "GPL570",
+              n_samples: 120,
+              taxon: "Homo sapiens",
+              entrytype: "Series",
+              pdat: "2023-05-01",
+            },
+            "200000002": {
+              accession: "GSE999999",
+              title: "Mouse liver time course",
+              summary: "Liver expression across development.",
+              platform: "GPL19057",
+              n_samples: 36,
+              taxon: "Mus musculus",
+              entrytype: "Series",
+              pdat: "2018-02-10",
+            },
+          },
+        }),
+      );
+    }
+
+    it("isAvailable returns true (no key)", async () => {
+      const a = new GeoAdapter();
+      expect(await a.isAvailable()).toEqual({ available: true });
+    });
+
+    it("parses esearch + esummary two-step response", async () => {
+      mockGeoResponses();
+      const a = new GeoAdapter();
+      const results = await a.search("breast cancer", 10);
+      expect(results).toHaveLength(2);
+      expect(results[0].title).toBe("Breast cancer transcriptome cohorts");
+      expect(results[0].source).toBe("geo");
+      expect(results[0].sourceId).toBe("GSE123456");
+      expect(results[0].dedupKey).toBe("geo:GSE123456");
+      expect(results[0].year).toBe("2023");
+      expect(results[0].url).toContain("acc=GSE123456");
+      expect(results[0].extra.organism).toBe("Homo sapiens");
+      expect(results[0].extra.platform).toBe("GPL570");
+      expect(results[0].extra.entryType).toBe("Series");
+      expect(results[0].metrics.samples).toBe(120);
+    });
+
+    it("first request hits esearch on db=gds", async () => {
+      mockGeoResponses();
+      const a = new GeoAdapter();
+      await a.search("breast cancer", 10);
+      const firstUrl = httpRequest.mock.calls[0][1] as string;
+      expect(firstUrl).toContain("esearch.fcgi");
+      expect(firstUrl).toContain("db=gds");
+      expect(firstUrl).toContain("term=breast%20cancer");
+    });
+
+    it("year filter adds Entrez mindate/maxdate with datetype=pdat", async () => {
+      mockGeoResponses();
+      const a = new GeoAdapter();
+      await a.search("breast cancer", 10, { year: "2020-2024" });
+      const firstUrl = httpRequest.mock.calls[0][1] as string;
+      expect(firstUrl).toContain("mindate=2020");
+      expect(firstUrl).toContain("maxdate=2024");
+      expect(firstUrl).toContain("datetype=pdat");
+    });
+
+    it("omits date params when no year filter", async () => {
+      mockGeoResponses();
+      const a = new GeoAdapter();
+      await a.search("breast cancer", 10);
+      const firstUrl = httpRequest.mock.calls[0][1] as string;
+      expect(firstUrl).not.toContain("mindate");
+      expect(firstUrl).not.toContain("datetype");
+    });
+
+    it("returns empty array when esearch finds nothing", async () => {
+      mockHttpResponse(200, JSON.stringify({ esearchresult: { idlist: [] } }));
+      const a = new GeoAdapter();
+      const results = await a.search("zzzznonexistent", 10);
+      expect(results).toHaveLength(0);
+    });
+  });
+
+  // ── PubChem（归属 chemistry 域，经数据集标签页化学学科检索）──
+  describe("PubChemAdapter", () => {
+    it("parses name→cids→property two-step response", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({ IdentifierList: { CID: [2244, 2519] } }),
+      );
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          PropertyTable: {
+            Properties: [
+              {
+                CID: 2244,
+                MolecularFormula: "C9H8O4",
+                MolecularWeight: 180.16,
+                IUPACName: "2-acetyloxybenzoic acid",
+                CanonicalSMILES: "CC(=O)Oc1ccccc1C(=O)O",
+              },
+            ],
+          },
+        }),
+      );
+      const a = new PubChemAdapter();
+      const results = await a.search("aspirin", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("2-acetyloxybenzoic acid");
+      expect(results[0].source).toBe("pubchem");
+      expect(results[0].sourceId).toBe("2244");
+      expect(results[0].dedupKey).toBe("pubchem:2244");
+      expect(results[0].extra.molecularFormula).toBe("C9H8O4");
+      expect(results[0].metrics.molecularWeight).toBe(180.16);
+    });
+  });
+
+  // ── PANGAEA（归属 geoscience 域，经数据集标签页地球科学学科检索）──
+  describe("PangaeaAdapter", () => {
+    it("parses PANGAEA search response with DOI as url", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          results: [
+            {
+              id: "842574",
+              title: "Trace metal concentrations in seawater",
+              abstract: "Water column samples from the Atlantic.",
+              authors: [
+                { lastname: "Muller", firstname: "Anna" },
+                { lastname: "Lee", firstname: "Jun" },
+              ],
+              yearOfPublication: 2019,
+              license: "CC-BY-4.0",
+              eventCount: 3,
+              parameterCount: 12,
+              topics: ["Geochemistry", "Water column"],
+            },
+          ],
+        }),
+      );
+      const a = new PangaeaAdapter();
+      const results = await a.search("trace metal", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("Trace metal concentrations in seawater");
+      expect(results[0].source).toBe("pangaea");
+      expect(results[0].dedupKey).toBe("pangaea:842574");
+      expect(results[0].year).toBe("2019");
+      expect(results[0].url).toBe("https://doi.org/10.1594/PANGAEA.842574");
+      expect(results[0].extra.authors).toEqual(["Muller, Anna", "Lee, Jun"]);
+      expect(results[0].metrics.events).toBe(3);
+    });
+  });
+
+  // ── ICPSR（归属 social-science 域，经数据集标签页社会科学学科检索）──
+  describe("IcpsrAdapter", () => {
+    it("parses ICPSR studies response", async () => {
+      mockHttpResponse(
+        200,
+        JSON.stringify({
+          data: [
+            {
+              id: "35218",
+              title: "General Social Survey, 2022",
+              abstract: "National survey of social attitudes.",
+              authors: [{ name: "Smith, John" }],
+              dateOfPublication: "2015-06-01",
+              geographicCoverage: "United States",
+              timePeriod: "2022",
+              topics: ["Social attitudes"],
+            },
+          ],
+        }),
+      );
+      const a = new IcpsrAdapter();
+      const results = await a.search("social survey", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].title).toBe("General Social Survey, 2022");
+      expect(results[0].source).toBe("icpsr");
+      expect(results[0].dedupKey).toBe("icpsr:35218");
+      expect(results[0].year).toBe("2015");
+      expect(results[0].extra.geographicCoverage).toBe("United States");
+      expect(results[0].url).toContain("/studies/35218");
     });
   });
 });

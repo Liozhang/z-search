@@ -24,6 +24,7 @@ export class OpenMLDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "OpenML";
   readonly noKey = true;
+  readonly supportedFilters = ["license"] as const;
 
   async isAvailable() {
     return { available: true };

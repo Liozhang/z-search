@@ -24,6 +24,7 @@ export class ZenodoDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Zenodo (datasets)";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "oaType"] as const;
 
   async isAvailable() {
     return { available: true };
@@ -118,6 +119,7 @@ export class ZenodoDatasetAdapter extends DomainSourceAdapter {
         extra: {
           creators,
           license,
+          oaType: meta.access_right || "",
           publicationDate: meta.publication_date || "",
           version: h.version || "1",
           fileCount: files.length,

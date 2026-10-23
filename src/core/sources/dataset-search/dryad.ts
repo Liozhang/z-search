@@ -25,6 +25,7 @@ export class DryadDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Dryad";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "oaType"] as const;
 
   async isAvailable() {
     return { available: true };
@@ -107,6 +108,7 @@ export class DryadDatasetAdapter extends DomainSourceAdapter {
         extra: {
           creators,
           license,
+          oaType: "open",
           publicationDate: item.publicationDate || "",
         },
       });

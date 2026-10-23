@@ -42,6 +42,15 @@ export abstract class DomainSourceAdapter {
   abstract readonly noKey: boolean;
 
   /**
+   * 本源能兑现的高级筛选键（license/oaType/taskTags/country）。
+   * 总线据此做能力闸：激活了某筛选而源不在支持名单时跳过该源
+   * （进 skippedNoFilter），不让无法应用筛选的源把未过滤结果混进列表。
+   * 年份不在其列——年份由总线统一后过滤，所有源天然支持。
+   * 缺省（未声明）= 不支持任何高级筛选。
+   */
+  readonly supportedFilters?: ReadonlyArray<string>;
+
+  /**
    * 可用性检查。默认实现：免 key 源恒可用；需 key 源检查
    * getPrefDynamic(keyPref) 是否配置。子类可覆写（如加网络探测）。
    */

@@ -24,6 +24,7 @@ export class HuggingFaceDatasetAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "Hugging Face Datasets";
   readonly noKey = true;
+  readonly supportedFilters = ["license", "taskTags"] as const;
 
   async isAvailable() {
     return { available: true };
