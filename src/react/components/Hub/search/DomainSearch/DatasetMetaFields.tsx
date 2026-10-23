@@ -41,26 +41,15 @@ function taxonomyPath(r: DomainResult): string {
   return parts.join(" › ");
 }
 
-/** 行内字段片段（统一 text-xs text-muted-foreground 样式）。 */
+/** 行内字段片段（meta 字体 + 次级墨色，文献卡 meta 行同制式）。 */
 function Field({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  return <span className="text-xs text-muted-foreground">{children}</span>;
-}
-
-/** 字段间距（首个字段不带 ml-2）。 */
-function Gap({
-  first,
-  children,
-}: {
-  first: boolean;
-  children: React.ReactNode;
-}): React.ReactElement {
   return (
-    <span className={first ? "" : "ml-2"}>
-      <Field>{children}</Field>
+    <span className="[font:var(--ui-font-meta)] text-[color:var(--text-secondary)]">
+      {children}
     </span>
   );
 }
@@ -83,16 +72,14 @@ export function DatasetMetaFields({
     (Array.isArray(r.extra?.creators) && r.extra.creators[0]) ||
     "";
 
-  /** 把字段片段数组包进统一的 div。 */
+  /** 把字段片段数组包进统一的行容器（间距由容器 gap 承担）。 */
   const wrap = (fields: React.ReactNode[]) => {
     const visible = fields.filter(Boolean);
     if (visible.length === 0) return null;
     return (
-      <div className="mt-1 flex flex-wrap items-center">
+      <div className="mt-[var(--space-1)] flex flex-wrap items-center gap-x-[var(--space-2)] gap-y-[var(--space-0-5)]">
         {visible.map((f, i) => (
-          <Gap key={i} first={i === 0}>
-            {f}
-          </Gap>
+          <Field key={i}>{f}</Field>
         ))}
       </div>
     );

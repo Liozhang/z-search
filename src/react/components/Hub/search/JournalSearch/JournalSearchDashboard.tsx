@@ -322,14 +322,13 @@ export function JournalSearchDashboard(): React.ReactElement {
   const showSortSelect = isDiscoverMode && list.length > 1 && hasSearched;
   const sortOptions = DISCOVER_SORT_OPTIONS;
 
-  // 2026-09-01 用户裁决：外层节奏归位 --space-4 对齐文献页（原 space-2-5 无立法）
+  // 外层节奏与文献页逐值同构（2026-10-23 统一批）：文献页 2026-10-12 压缩
+  // 固定区后为 顶 space-2 / 段 space-3 / 底 space-6，期刊页此前停在更早的
+  // space-4/space-12 配方——两页同一 pane 内切换时上下节距会跳变，本页追平。
   return (
     // 水平轨道唯一归 pane 根 --page-inline-pad（R11-D5；2026-09-09 清双 pad 回归，
-    // 与文献页同批）：本层只管纵向。2026-09-22 节奏统一收口：上下律从原型
-    // .pane（上 24/下 48 全页统一），32 顶距配方退役。2026-09-28：pane 级
-    // 域 tab 行落地后顶距 24→16——与文献页同批（tab 行自带 --space-6 顶距，
-    // 视图与 tab 行之间保持原 seg→内容 16px 节奏）。
-    <div className="flex flex-col gap-[var(--space-4)] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] pt-[var(--space-4)] pb-[var(--space-12)]">
+    // 与文献页同批）：本层只管纵向。
+    <div className="flex flex-col gap-[var(--space-3)] flex-1 min-h-0 overflow-y-auto [scrollbar-width:thin] pt-[var(--space-2)] pb-[var(--space-6)]">
       {/* 模式切换 seg——2026-09-01 用户裁决：underline TabBar→seg（原注释误写
           pill，semantic-mode-segmented 死类零 CSS），与 pane 级 网络/本地/期刊
           域 tab 同款白片轨道，同屏同形；单选清空 no-op 防御与 SearchPane 同款。 */}
@@ -402,9 +401,11 @@ export function JournalSearchDashboard(): React.ReactElement {
 
       {/* Input row——2026-09-01 清死类（semantic-search-row/journal-search-row
           全 CSS 零规则）改显式 flex 行对齐文献页工具行；is-anchor-mode 同为死类
-          删除（禁用态走 SearchInput disabled 本态）。 */}
-      <div className="flex items-center gap-[var(--space-2)] relative">
+          删除（禁用态走 SearchInput disabled 本态）。2026-10-23：主输入升 lg
+          档（§21.2 独立搜索页主输入）与文献页/域页面同制；relative 死类清除。 */}
+      <div className="flex items-center gap-[var(--space-2)]">
         <SearchInput
+          size="lg"
           placeholder={getString(placeholderKey)}
           value={inputDisabled ? "" : query}
           disabled={inputDisabled}

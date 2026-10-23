@@ -34,6 +34,8 @@ export interface DomainSearchMetadata {
   failedSources: string[];
   failedReasons: Record<string, string>;
   skippedNoKey: string[];
+  /** 声明了高级筛选而源不支持时的跳过名单（后端能力闸归因） */
+  skippedNoFilter: string[];
 }
 
 /** 域搜索响应。 */
@@ -44,6 +46,7 @@ export interface DomainSearchResponse {
   failedSources: string[];
   failedReasons: Record<string, string>;
   skippedNoKey: string[];
+  skippedNoFilter: string[];
 }
 
 /** 支持的学术子域（Phase 1-3）。 */
@@ -77,8 +80,32 @@ export const DATASET_DISCIPLINES: ReadonlyArray<DatasetDiscipline> = [
     sources: ["zenodo", "figshare", "dataverse", "osf", "dryad"],
     filters: [
       { key: "year", labelKey: "domain-filter-year", type: "year-range" },
-      { key: "license", labelKey: "domain-filter-license", type: "select" },
-      { key: "oaType", labelKey: "domain-filter-oa", type: "select" },
+      {
+        key: "license",
+        labelKey: "domain-filter-license",
+        type: "select",
+        options: [
+          { value: "cc-by", labelKey: "domain-filter-license-cc-by" },
+          { value: "cc-by-sa", labelKey: "domain-filter-license-cc-by-sa" },
+          { value: "cc-by-nc", labelKey: "domain-filter-license-cc-by-nc" },
+          {
+            value: "cc-by-nc-sa",
+            labelKey: "domain-filter-license-cc-by-nc-sa",
+          },
+          { value: "cc0", labelKey: "domain-filter-license-cc0" },
+          { value: "other", labelKey: "domain-filter-license-other" },
+        ],
+      },
+      {
+        key: "oaType",
+        labelKey: "domain-filter-oa",
+        type: "select",
+        options: [
+          { value: "open", labelKey: "domain-filter-oa-open" },
+          { value: "restricted", labelKey: "domain-filter-oa-restricted" },
+          { value: "closed", labelKey: "domain-filter-oa-closed" },
+        ],
+      },
     ],
   },
   {
@@ -87,8 +114,57 @@ export const DATASET_DISCIPLINES: ReadonlyArray<DatasetDiscipline> = [
     sources: ["huggingface", "kaggle", "uci", "openml"],
     filters: [
       { key: "year", labelKey: "domain-filter-year", type: "year-range" },
-      { key: "taskTags", labelKey: "domain-filter-task", type: "multi-select" },
-      { key: "license", labelKey: "domain-filter-license", type: "select" },
+      {
+        key: "taskTags",
+        labelKey: "domain-filter-task",
+        type: "multi-select",
+        options: [
+          {
+            value: "classification",
+            labelKey: "domain-filter-task-classification",
+          },
+          { value: "regression", labelKey: "domain-filter-task-regression" },
+          { value: "clustering", labelKey: "domain-filter-task-clustering" },
+          {
+            value: "recommendation",
+            labelKey: "domain-filter-task-recommendation",
+          },
+          {
+            value: "question-answering",
+            labelKey: "domain-filter-task-question-answering",
+          },
+          { value: "translation", labelKey: "domain-filter-task-translation" },
+          {
+            value: "summarization",
+            labelKey: "domain-filter-task-summarization",
+          },
+          {
+            value: "text-generation",
+            labelKey: "domain-filter-task-text-generation",
+          },
+          {
+            value: "speech-recognition",
+            labelKey: "domain-filter-task-speech-recognition",
+          },
+          { value: "time-series", labelKey: "domain-filter-task-time-series" },
+        ],
+      },
+      {
+        key: "license",
+        labelKey: "domain-filter-license",
+        type: "select",
+        options: [
+          { value: "cc-by", labelKey: "domain-filter-license-cc-by" },
+          { value: "cc-by-sa", labelKey: "domain-filter-license-cc-by-sa" },
+          { value: "cc-by-nc", labelKey: "domain-filter-license-cc-by-nc" },
+          {
+            value: "cc-by-nc-sa",
+            labelKey: "domain-filter-license-cc-by-nc-sa",
+          },
+          { value: "cc0", labelKey: "domain-filter-license-cc0" },
+          { value: "other", labelKey: "domain-filter-license-other" },
+        ],
+      },
     ],
   },
   {
@@ -119,25 +195,59 @@ export const DATASET_DISCIPLINES: ReadonlyArray<DatasetDiscipline> = [
     sources: ["icpsr", "ukds"],
     filters: [
       { key: "year", labelKey: "domain-filter-year", type: "year-range" },
-      { key: "country", labelKey: "domain-filter-country", type: "select" },
+      {
+        key: "country",
+        labelKey: "domain-filter-country",
+        type: "select",
+        options: [
+          {
+            value: "United States",
+            labelKey: "domain-filter-country-united-states",
+          },
+          {
+            value: "United Kingdom",
+            labelKey: "domain-filter-country-united-kingdom",
+          },
+          { value: "China", labelKey: "domain-filter-country-china" },
+          { value: "Germany", labelKey: "domain-filter-country-germany" },
+          { value: "France", labelKey: "domain-filter-country-france" },
+          { value: "Japan", labelKey: "domain-filter-country-japan" },
+          { value: "India", labelKey: "domain-filter-country-india" },
+          { value: "Brazil", labelKey: "domain-filter-country-brazil" },
+          {
+            value: "South Africa",
+            labelKey: "domain-filter-country-south-africa",
+          },
+          {
+            value: "Australia",
+            labelKey: "domain-filter-country-australia",
+          },
+          { value: "Canada", labelKey: "domain-filter-country-canada" },
+          {
+            value: "South Korea",
+            labelKey: "domain-filter-country-south-korea",
+          },
+        ],
+      },
     ],
   },
   {
     id: "economics",
     labelKey: "domain-discipline-economics",
     sources: ["worldbank", "oecd", "imf", "eurostat"],
+    // 国别筛选退役（2026-10-23）：四源均为跨国指标汇总库，检索结果不携带
+    // 国别维度，筛选项无从兑现——挂一个必然失效的筛选项比不放更误导。
     filters: [
       { key: "year", labelKey: "domain-filter-year", type: "year-range" },
-      { key: "country", labelKey: "domain-filter-country", type: "select" },
     ],
   },
   {
     id: "health",
     labelKey: "domain-discipline-health",
     sources: ["who-gho"],
+    // 同 economics：WHO 指标为全球汇总口径，国别筛选无从兑现。
     filters: [
       { key: "year", labelKey: "domain-filter-year", type: "year-range" },
-      { key: "country", labelKey: "domain-filter-country", type: "select" },
     ],
   },
   {
