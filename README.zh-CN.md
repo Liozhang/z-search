@@ -23,11 +23,12 @@
 [![Downloads](https://img.shields.io/github/downloads/Liozhang/z-search/total?color=orange)](https://github.com/Liozhang/z-search/releases)
 [![Zotero 10](https://img.shields.io/badge/Zotero-10-CC6633.svg)](https://www.zotero.org/)
 
-**学术搜索 · 网络搜索 · 仓库搜索 · 向量搜索 — 一站式 Zotero 搜索插件。**
+**学术搜索 · 网络搜索 · 仓库搜索 · 向量搜索 · 专利 · 数据集 · 研究者 · 基金项目 — 一站式 Zotero 搜索插件。**
 
 z-search 是一个独立的 Zotero 插件，把图书馆内外的全部检索能力收进一个窗口：
 外部学术数据库检索并一键导入文献库、网页搜索源管理、GitHub 仓库搜索、
-基于本地/云端嵌入模型的库内向量与全文检索。结果卡直接内置期刊质量信息——
+基于本地/云端嵌入模型的库内向量与全文检索，以及专利、数据集、研究者、
+基金项目四个专属域标签页——合计再覆盖 34 个开放数据源。结果卡直接内置期刊质量信息——
 引用数、影响因子、JCR/中科院/新锐分区、顶刊、国际预警、掠夺性期刊标记，
 全部来自随包分发的离线数据库，检索时零额外网络开销。
 
@@ -131,7 +132,40 @@ h5 指数排序；点击任意行即钻取到该刊的完整指标卡。
   可选 `created:` 年份窗），命中映射为统一文章结构进入学术检索流
 - 支持个人 access token 提升速率限额
 
-### 5. 向量搜索（库内检索）
+### 5. 域搜索（专利 · 数据集 · 研究者 · 基金项目）
+
+2.0.0 起，搜索窗共七个标签页。学术、本地、期刊三路之外，新增四个域标签页
+共用同一条检索总线（`DomainSearchEngine`）——每个域各自注册源、去重键、
+富集钩子与 Zotero itemType 映射，命中结果按正确的条目类型直接导入文献库：
+
+- **专利**——EPO 开放专利服务、Google Patents、USPTO PatentsView、
+  WIPO PATENTSCOPE。导入为 Zotero `patent` 条目，专利号、发明人、受让人、
+  IPC/CPC 分类、法律状态、申请日写入结构化字段；EPO consumer key/secret
+  为可选配置（设置项），用于提升 EPO 配额
+- **数据集**——标签页打开先选学科（通用仓储 / 机器学习 / 生命科学 / 化学 /
+  地球科学 / 社会科学 / 经济学 / 公共卫生 / 注册目录 / 全部），每个学科
+  只渲染其各源真正支持的高级查询字段（年份区间、许可、开放获取类型、
+  任务标签、国家），选定学科后只在该学科的源中扇出检索。合计 23 个源：
+  通用仓储含 Zenodo、Figshare、Harvard Dataverse、OSF、Dryad；机器学习含
+  HuggingFace、Kaggle、UCI、OpenML；生命科学含 GEO、GBIF；化学含
+  PubChem；地球科学含 PANGAEA、NASA Open Data；社会科学含 ICPSR、
+  UK Data Service；经济学含世界银行指标、OECD、IMF、Eurostat；公共卫生含
+  WHO 全球卫生观察站；注册目录含 DataCite Search、re3data。导入为
+  `dataset` 条目，创建者、许可、出版方与各源特有指标写入 Extra；结果卡
+  按源展示特色字段——HuggingFace 下载量/点赞/任务标签/许可、GBIF 分类阶元
+  路径（界 › 门 › 纲 › 目 › 科 › 属）、GEO 物种/样本数/平台、PubChem 分子式
+  与分子量、Eurostat 数据来源与更新日期——大数字缩写显示（1.5M / 25.0k）
+- **研究者**——OpenAlex Authors、OpenAlex Institutions、ORCID、
+  Semantic Scholar Authors。导入为 `person` 条目，含 ORCID、h 指数、
+  i10 指数、引用数、所属机构与研究领域
+- **基金项目**——NSF Award Search、EU CORDIS、NIH RePORTER。导入为笔记，
+  含项目编号、主持人、机构、资助机构、金额、执行期与状态
+
+四个域各自按专属键去重（专利号 / DOI / ORCID / 项目编号），入库前做幂等
+预检；总线对失败源显式归因（`failedSources` + `failedReasons`），失败绝不
+谎报为空结果。
+
+### 6. 向量搜索（库内检索）
 
 - 库内语义检索：标题/摘要元数据向量 + PDF 全文分块向量两路（笔记与
   PDF 注释一并索引），RRF 融合排序

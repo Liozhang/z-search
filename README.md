@@ -23,13 +23,15 @@
 [![Downloads](https://img.shields.io/github/downloads/Liozhang/z-search/total?color=orange)](https://github.com/Liozhang/z-search/releases)
 [![Zotero 10](https://img.shields.io/badge/Zotero-10-CC6633.svg)](https://www.zotero.org/)
 
-**Academic Search · Web Search · Repository Search · Vector Search — an all-in-one Zotero search plugin.**
+**Academic Search · Web Search · Repository Search · Vector Search · Patents · Datasets · Researchers · Grants — an all-in-one Zotero search plugin.**
 
 z-search is a standalone Zotero plugin that brings every search capability inside
 and outside your library into one window: parallel search across academic
 databases with one-click import into your library, web-search source management,
-GitHub repository search, and in-library vector & full-text search powered by
-local or cloud embedding models. Result cards carry built-in journal quality
+GitHub repository search, in-library vector & full-text search powered by
+local or cloud embedding models, and four dedicated domain tabs — patents,
+datasets, researchers, and grants — covering 34 further open sources.
+Result cards carry built-in journal quality
 information — citation count, impact factor, JCR/CASS/XR quartiles,
 top-journal flag, international warning list, and predatory-journal markers —
 all served
@@ -164,7 +166,49 @@ clicking a row drills into that journal's full metrics card.
   structure and flow into the academic pipeline
 - Personal access token supported to raise rate limits
 
-### 5. Vector Search (in-library)
+### 5. Domain Search (Patents · Datasets · Researchers · Grants)
+
+Since 2.0.0 the search window carries seven tabs. Beyond the academic, local,
+and journal lanes, four new domain tabs share one search bus
+(`DomainSearchEngine`) — each domain registers its own sources, dedup key,
+enricher, and Zotero itemType mapping, so hits import straight into the library
+with the right entry type:
+
+- **Patents** — EPO Open Patent Services, Google Patents, USPTO PatentsView,
+  and WIPO PATENTSCOPE. Imports as Zotero `patent` items with patent number,
+  inventors, assignees, IPC/CPC classes, legal status, and application date
+  written to structured fields; an optional EPO consumer key/secret pair
+  (settings) lifts the EPO quota
+- **Datasets** — the tab opens with a discipline selector (General
+  Repositories / ML·AI / Life Sciences / Chemistry / Geosciences / Social
+  Sciences / Economics / Health / Registries / All), and each discipline
+  renders the advanced query fields its sources actually support (year range,
+  license, OA type, task tags, country); picking one narrows the fan-out to
+  that discipline's sources only. 23 sources in all: Zenodo, Figshare, Harvard
+  Dataverse, OSF, and Dryad (General); HuggingFace, Kaggle, UCI, and OpenML
+  (ML/AI); GEO and GBIF (Life Sciences); PubChem (Chemistry); PANGAEA and NASA
+  Open Data (Geosciences); ICPSR and UK Data Service (Social Sciences); World
+  Bank Indicators, OECD, IMF, and Eurostat (Economics); WHO Global Health
+  Observatory (Health); DataCite Search and re3data (Registries). Imports as
+  `dataset` items with creators, license, publisher, and source-specific
+  metrics in Extra; each card shows its source's signature fields —
+  HuggingFace downloads/likes/task tags/license, GBIF's taxonomy path
+  (kingdom › phylum › order › family › genus), GEO organism/sample
+  count/platform, PubChem molecular formula and weight, Eurostat data source
+  and last update — with large counts abbreviated (1.5M / 25.0k)
+- **Researchers** — OpenAlex Authors, OpenAlex Institutions, ORCID, and
+  Semantic Scholar Authors. Imports as `person` items with ORCID, h-index,
+  i10-index, citation count, institutions, and research areas
+- **Grants** — NSF Award Search, EU CORDIS, and NIH RePORTER. Imports as notes
+  with grant ID, principal investigator, institution, agency, amount, period,
+  and status
+
+All four domains dedup by their own key (patent number / DOI / ORCID / grant
+ID) with in-library idempotency checks, and the bus attributes failures
+explicitly (`failedSources` + `failedReasons`) — failures never masquerade as
+empty results.
+
+### 6. Vector Search (in-library)
 
 - In-library semantic search over two vectors lanes — title/abstract metadata
   and PDF full-text chunks (notes and PDF annotations included) — fused and

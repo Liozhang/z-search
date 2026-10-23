@@ -5,6 +5,116 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [Unreleased]
+
+### Added
+
+- **Dataset advanced filters now work: license, OA type, task tags, and
+  country.** The 2.0.0 discipline selector rendered its advanced query
+  fields as empty dropdowns — no option vocabularies existed and no adapter
+  implemented the filters. They are now real:
+  - _License_ (General Repositories + ML/AI) — options CC BY / CC BY-SA /
+    CC BY-NC / CC BY-NC-SA / CC0 / Other; the bus normalizes each source's
+    raw license string ("cc-by-4.0", "CC BY", "UCI ML Repository", …) onto
+    the same vocabulary before exact matching.
+  - _OA type_ (General Repositories) — open / restricted / closed. Zenodo
+    populates it from `access_right`, OSF from its public flag; Figshare and
+    Dryad are open repositories by nature. Harvard Dataverse's search
+    response carries no access flag, so it does not claim the capability.
+  - _Task tags_ (ML/AI) — ten-task chip multi-select (union semantics,
+    matching the literature page's source filter); substring matching
+    bridges the vocabularies of HuggingFace pipeline tags and UCI tasks.
+  - _Country_ (Social Sciences only) — twelve-country list matched by
+    substring against ICPSR's geographic coverage.
+    Filtering is capability-gated: each adapter declares which advanced
+    filters it can honor (`supportedFilters`), and when a filter is active
+    the bus skips sources that cannot honor it instead of letting unfiltered
+    results into the list — the skips surface in the status strip via a new
+    `domain-sources-nofilter` message (`skippedNoFilter` metadata), keeping
+    the "failures are never faked" contract. The country filter was removed
+    from the Economics and Health disciplines outright: World Bank / OECD /
+    IMF / Eurostat / WHO results carry no country dimension, so the option
+    could never be honored there. Task tags render as filter chips (the
+    multi-select control type was previously unimplemented in the UI).
+
+### Changed
+
+- **The domain search pages now speak the same design language as the
+  literature and journal pages.** The 2.0.0 domain tabs (Patents / Datasets /
+  Researchers / Grants) were the only search views still on their own recipe:
+  page-level `px-4` padding (the other two views removed theirs under the
+  R11-D5 single-track rule), raw HTML controls, a hardcoded
+  `bg-blue-100`/`bg-green-100` chip palette, and a default-size search input.
+  They now use the hub-redesign token system end to end: vertical rhythm
+  `space-2`/`space-3`/`space-6` matching the literature page's 2026-10-12
+  compression, `SearchInput` lg primary input, `ToggleGroup` filter chips for
+  the dataset discipline selector (previously the default seg variant with
+  hand-written `text-xs` overrides), the shared `Input`/`Select` for the
+  advanced query fields, the literature card recipe for result rows
+  (divider rows, `--hub-bg-hover` hover, selection indicator, `Checkbox`,
+  `Badge` with tones instead of raw colors, query-hit highlighting in
+  titles), the shared `LoadingState`/`EmptyState` placeholders, and the
+  journal page's persistent slim error row with retry (the previous
+  `ErrorState` was also missing its `retryLabel`, so the retry button never
+  rendered). The journal page in turn adopts the literature page's newer
+  vertical rhythm and lg input, so the two long-standing pages are identical
+  too. Unused utilities (`bg-blue-100`, `ml-2`, …) dropped out of the
+  generated `tw.css` with their last consumers.
+
+### Fixed
+
+- **The domain tabs' search button said "Import".** All four domain pages
+  rendered the primary action with the `domain-import-btn` message
+  ("Import"/"导入") and the `domain-importing` loading text — a copy-paste
+  from the per-card import button. The button now uses `common-search` /
+  `common-searching`, and `domain-importing` is back to being the per-card
+  importing state.
+- **The domain pages ignored IME composition on Enter.** Pressing Enter to
+  confirm a candidate word in a Chinese/Japanese IME fired the search with
+  the half-composed string; the pages now guard with `isIMEComposing`, the
+  same guard the literature and journal pages have had since 2026-09-09.
+- **The domain pages hid skipped sources.** `skippedNoKey` arrived with
+  every `domain.search` response but was never rendered, so a source
+  skipped for a missing API key was indistinguishable from "not searched".
+  A new `domain-sources-nokey` message reports it in the engine status
+  strip next to failed sources (the literature page's `hub-search-sources-nokey`
+  was not reused: it points at the literature settings section, which is
+  the wrong place for EPO / NASA ADS keys).
+
+- **Dataset tab discipline selection now actually narrows the search, and the
+  four discipline-specific sources are reachable.** The 2.0.0 dataset
+  disciplines sent their source list (`filters.sources`) with every
+  `domain.search` call, but `DomainSearchEngine` fanned out to the whole
+  domain regardless — and GEO, PubChem, PANGAEA, and ICPSR were never in the
+  dataset domain at all: their adapters are registered under the bio /
+  chemistry / geoscience / social-science domains, so selecting "Life
+  Sciences" in the Datasets tab still queried all 19 dataset sources and
+  could never return a GEO hit. The bus now honors `filters.sources`
+  (unlisted sources are not requested), resolves a domain's source list
+  through a cross-domain source-id index, and the dataset domain lists all
+  23 sources the discipline selector advertises. Adapters keep their home
+  domain, so `domain.import` maps each result's itemType and Extra fields
+  through its owner domain — GEO hits now import as `dataset` items with
+  Accession / Platform / Organism / Data Type / Samples instead of the
+  generic dataset fields, same as the 2.0.0 card rendering already
+  promised.
+- **Dataset year filter works for every source.** The year range declared by
+  nine of the ten dataset disciplines was implemented by only five adapters
+  (Zenodo / Figshare / Dataverse / Dryad / DataCite); GEO ignored it
+  entirely. GEO now passes the range to Entrez as
+  `mindate`/`maxdate` with `datetype=pdat`, and the bus applies a generic
+  post-filter on result year after dedup, so the filter holds for sources
+  whose upstream API has no date parameter (the post-filter is a no-op for
+  sources that already filter server-side).
+
+### Added
+
+- Unit coverage for the four cross-domain dataset sources (GEO two-step
+  esearch/esummary parsing, Entrez date parameters, PubChem property
+  parsing, PANGAEA and ICPSR response parsing) and for the bus's new
+  discipline narrowing, cross-domain resolution, and year post-filter
+  behavior.
+
 ## [2.0.1] - 2026-10-23
 
 ### Fixed

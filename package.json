@@ -9,7 +9,7 @@
     "./src/react/utils/gcsGuard.ts",
     "./src/core/search/DomainRegistry.ts"
   ],
-  "description": "Academic, web, repository and vector search for Zotero — standalone search plugin",
+  "description": "Academic, web, repository, vector, patent, dataset, researcher and grant search for Zotero — standalone search plugin",
   "config": {
     "addonName": "Z-Search",
     "addonID": "zsearch@z-search.dev",
