@@ -5,6 +5,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [2.2.0] - 2026-10-26
+
+### Fixed
+
+- **Text inputs in the settings pane accept typing again.** Zotero 10's engine
+  no longer ships the XUL `textbox` element (the toolkit custom-element registry
+  only keeps `search-textbox`), so every `<textbox>` in the pane — the
+  web-search and academic API key rows, the region-locked endpoint rows, and
+  the two translation cache/limit fields — rendered as an inert element you
+  could see but not type into. All of them are now `html:input` fields (the
+  same idiom Zotero's own preference panes use), which also means placeholders
+  render natively instead of hiding in a tooltip. The Azure Translator region
+  field was an editable `menulist`, a form Zotero 10 equally no longer
+  supports; it is a plain text input whose tooltip lists the common region
+  codes. Field hints and saved values are unchanged.
+- The CAS-partition visibility picker no longer throws when changed: its
+  change handler referenced an undefined `doc` variable (a `ReferenceError`
+  on every pick).
+- Two stale integration-test assertions: the dataset-domain smoke expected the
+  source registry of an earlier release (19, now 23), and the CSV-export test
+  demanded a quoted title cell although RFC 4180 escaping only quotes cells
+  that contain a comma, quote, or newline — the live first result has neither.
+  Three timing-sensitive probes (source-chip gray-out, Extra-field merge,
+  import-target popup) gained bounded retries; under load their fixed windows
+  intermittently missed a UI that settles late, with failures rotating across
+  runs of identical code.
+
+### Changed
+
+- **The add-on name renders verbatim as "z-search".** The display name used
+  by the plugin manager and the settings sidebar/heading is no longer re-cased
+  to "Z-Search"; the lowercase brand is displayed as-is in every locale.
+
+### Added
+
+- **A switch to hide China-mainland-related settings and features.** The
+  Network Region group gains "Hide China-mainland-related settings and
+  features" (`region.hideChinaContent`, default off). When enabled, the pane
+  drops the Mainland-China region choice, the CAS partition row, the
+  easyScholar and MinerU cloud endpoint rows and the easyScholar API key row,
+  and swaps the region description for one that does not discuss
+  mainland-only services. Feature-side, China-region data (CAS and
+  rising-journal rankings via every existing consumer, and the easyScholar
+  Chinese-core lists) is disabled regardless of region or per-item overrides.
+  Saved values are kept and everything returns when the switch is turned back
+  off; if the region was set to Mainland China it self-heals to International
+  so the picker never holds a value that is no longer selectable.
+- **External links now open in the system browser.** Result-card links live in
+  a chrome:// iframe inside Zotero's privileged window, where
+  `<a target="_blank">` is a dead click — the privileged context has no
+  default external-URL handling. A shared `openExternal` helper routes
+  http(s) URLs over the bridge (`hub.openExternal`) for the host to pass to
+  `Zotero.launchURL` (with a direct-launch fallback outside iframes), and
+  every exit point is wired to it: literature result titles (when there is no
+  abstract to expand) and DOI links, domain result titles (falling back to a
+  non-clickable title when a source gives no URL), the journal homepage link,
+  and the citation-explorer DOI links. Non-http(s) schemes are rejected on
+  both sides.
+
 ## [2.1.0] - 2026-10-23
 
 ### Added
