@@ -10,6 +10,7 @@
 
 import React from "react";
 import { getString, getLocaleTag } from "../../../../utils/locale";
+import { externalAnchorClick } from "../../../../utils/openExternal";
 import { StatFigure } from "@/components/ui/StatFigure";
 import type { JournalMetric } from "../../../../../types/journalSearch";
 import { normalizeQuartile, formatQuartile } from "./types";
@@ -189,6 +190,7 @@ export function JournalMetricCard({
                 href={metric.homepageUrl}
                 target="_blank"
                 rel="noreferrer"
+                onClick={externalAnchorClick(metric.homepageUrl)}
               >
                 {metric.homepageUrl}
               </a>

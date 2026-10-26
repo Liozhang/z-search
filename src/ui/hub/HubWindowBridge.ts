@@ -139,6 +139,21 @@ export class HubWindowBridge extends BaseWindowBridge {
       }
       return;
     }
+    if (event === "hub.openExternal") {
+      // 结果卡/链接点击在系统浏览器打开（跳转批 2026-10-26）：chrome://
+      // iframe 里 <a target="_blank"> 是死点击——Zotero 特权上下文无默认
+      // 外链处理，必须宿主代调 Zotero.launchURL。协议白名单只放行 http(s)，
+      // 防 chrome: 等特权协议从界面侧注入。
+      const url = typeof payload?.url === "string" ? payload.url : "";
+      if (/^https?:\/\//i.test(url)) {
+        try {
+          Zotero.launchURL(url);
+        } catch (e) {
+          safeDebug("[z-search] hub.openExternal failed: " + e);
+        }
+      }
+      return;
+    }
     void payload;
     // 其余 notify 静默丢弃（搜索面无此需求）
   }

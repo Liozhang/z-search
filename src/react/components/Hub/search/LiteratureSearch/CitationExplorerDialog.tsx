@@ -35,6 +35,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { getString } from "../../../../utils/locale";
 import { semanticRequest } from "../../../../utils/semanticBridge";
+import { externalAnchorClick } from "../../../../utils/openExternal";
 import type { ArticleResult, ImportResult } from "./types";
 
 export type CitationDirection = "cited-by" | "references";
@@ -229,6 +230,9 @@ export function CitationExplorerDialog({
                     href={`https://doi.org/${current.doi}`}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={externalAnchorClick(
+                      `https://doi.org/${current.doi}`,
+                    )}
                     className="text-[length:var(--text-xs)] text-[color:var(--data-blue-dark)] no-underline hover:underline [overflow-wrap:anywhere]"
                   >
                     DOI: {current.doi}
@@ -397,6 +401,9 @@ export function CitationExplorerDialog({
                           href={`https://doi.org/${a.doi}`}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={externalAnchorClick(
+                            `https://doi.org/${a.doi}`,
+                          )}
                           className="text-[color:var(--data-blue-dark)] no-underline hover:underline [overflow-wrap:anywhere]"
                         >
                           DOI: {a.doi}

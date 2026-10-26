@@ -24,6 +24,7 @@ import { getString } from "../../../../utils/locale";
 import { SearchIconSvg, BroomIcon } from "../../../../utils/icons";
 import { isIMEComposing } from "../../../../../utils/ime";
 import { highlightSegments } from "../../../../utils/highlight";
+import { externalAnchorClick } from "../../../../utils/openExternal";
 import { useDomainSearch } from "./useDomainSearch";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Input } from "@/components/ui/input";
@@ -407,23 +408,41 @@ function DomainResultCard({
         />
 
         <div className="flex-1 min-w-0">
-          {/* 标题：显示字体 + 检索词命中品牌红高亮（文献卡同款） */}
-          <a
-            href={result.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-[length:var(--text-base)] font-[var(--font-weight-semibold)] font-[family-name:var(--ui-family-display)] text-[color:var(--text-primary)] leading-[var(--leading-tight)] break-words hover:underline [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden"
-          >
-            {highlightSegments(result.title, query).map((seg, i) =>
-              seg.hit ? (
-                <span key={i} className="text-[color:var(--accent)]">
-                  {seg.text}
-                </span>
-              ) : (
-                <React.Fragment key={i}>{seg.text}</React.Fragment>
-              ),
-            )}
-          </a>
+          {/* 标题：显示字体 + 检索词命中品牌红高亮（文献卡同款）。
+              点击 = 系统浏览器打开来源页（跳转批 2026-10-26）：chrome://
+              iframe 里 <a target="_blank"> 是死点击，统一拦截走桥上行；
+              源未给 url 时降级为纯标题（不可点形态，不留死链）。 */}
+          {result.url ? (
+            <a
+              href={result.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={externalAnchorClick(result.url)}
+              className="block text-[length:var(--text-base)] font-[var(--font-weight-semibold)] font-[family-name:var(--ui-family-display)] text-[color:var(--text-primary)] leading-[var(--leading-tight)] break-words hover:underline [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden"
+            >
+              {highlightSegments(result.title, query).map((seg, i) =>
+                seg.hit ? (
+                  <span key={i} className="text-[color:var(--accent)]">
+                    {seg.text}
+                  </span>
+                ) : (
+                  <React.Fragment key={i}>{seg.text}</React.Fragment>
+                ),
+              )}
+            </a>
+          ) : (
+            <div className="text-[length:var(--text-base)] font-[var(--font-weight-semibold)] font-[family-name:var(--ui-family-display)] text-[color:var(--text-primary)] leading-[var(--leading-tight)] break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+              {highlightSegments(result.title, query).map((seg, i) =>
+                seg.hit ? (
+                  <span key={i} className="text-[color:var(--accent)]">
+                    {seg.text}
+                  </span>
+                ) : (
+                  <React.Fragment key={i}>{seg.text}</React.Fragment>
+                ),
+              )}
+            </div>
+          )}
 
           {/* 元信息行：年份 + 来源徽章 + 库内/已导入状态徽章（徽章化，
               取代旧裸文字与硬编码色板） */}

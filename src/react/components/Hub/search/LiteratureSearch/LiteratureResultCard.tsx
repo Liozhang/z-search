@@ -18,6 +18,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { ICON } from "../../../../utils/iconSizes";
 import { highlightSegments } from "../../../../utils/highlight";
+import {
+  externalAnchorClick,
+  openExternalUrl,
+} from "../../../../utils/openExternal";
 import { SourceLogo } from "../SourceLogo";
 import type { ArticleResult, FulltextResult, ImportResult } from "./types";
 import { AVAILABLE_SOURCES } from "./types";
@@ -118,6 +122,13 @@ export function LiteratureResultCard({
     article.oaUrl
   );
   const fulltextOpen = isFulltextOpen && fulltext?.status === "success";
+  // 标题点击出逃生门（跳转批 2026-10-26）：有摘要 = 摘要展开收起（既有行为
+  // 不动，跳转由 DOI 链接承担）；无摘要时点标题在系统浏览器打开原文——
+  // doi → oaUrl → pdfUrl 择一，皆缺时标题保持不可点形态（与既有一致）。
+  const articleUrl = article.doi
+    ? `https://doi.org/${article.doi}`
+    : article.oaUrl || article.pdfUrl || "";
+  const titleNavigates = !article.abstract && !!articleUrl;
   return (
     /* 竖条（§10.6 白名单②选中态=交互蓝 2px，走 tokens --hub-indicator-color
        单源；§5.3 品牌红禁入 UI）：「已导入」绿竖条非白名单三用，退役——
@@ -139,10 +150,24 @@ export function LiteratureResultCard({
           {/* 2026-08-31 C3：标题色 --data-blue-dark → --text-primary
               （原型 .result-title ink-strong :280；命中片段品牌红保留 :280 `.q` 条款） */}
           <div
-            className={`lit-result-title text-[length:var(--text-base)] font-[var(--font-weight-semibold)] font-[family-name:var(--ui-family-display)] text-[color:var(--text-primary)] leading-[var(--leading-tight)] mb-[var(--space-1)] break-words${article.abstract ? " expandable cursor-pointer flex items-baseline gap-[var(--space-1)] hover:opacity-85" : ""}`}
-            onClick={article.abstract ? () => onToggleExpand(key) : undefined}
-            role={article.abstract ? "button" : undefined}
-            tabIndex={article.abstract ? 0 : undefined}
+            className={`lit-result-title text-[length:var(--text-base)] font-[var(--font-weight-semibold)] font-[family-name:var(--ui-family-display)] text-[color:var(--text-primary)] leading-[var(--leading-tight)] mb-[var(--space-1)] break-words${
+              article.abstract
+                ? " expandable cursor-pointer flex items-baseline gap-[var(--space-1)] hover:opacity-85"
+                : titleNavigates
+                  ? " cursor-pointer hover:underline"
+                  : ""
+            }`}
+            onClick={
+              article.abstract
+                ? () => onToggleExpand(key)
+                : titleNavigates
+                  ? () => openExternalUrl(articleUrl)
+                  : undefined
+            }
+            role={
+              article.abstract ? "button" : titleNavigates ? "link" : undefined
+            }
+            tabIndex={article.abstract || titleNavigates ? 0 : undefined}
             onKeyDown={
               article.abstract
                 ? (e) => {
@@ -151,7 +176,14 @@ export function LiteratureResultCard({
                       onToggleExpand(key);
                     }
                   }
-                : undefined
+                : titleNavigates
+                  ? (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        openExternalUrl(articleUrl);
+                      }
+                    }
+                  : undefined
             }
           >
             {highlightSegments(article.title, query ?? "").map((seg, i) =>
@@ -354,6 +386,7 @@ export function LiteratureResultCard({
                 href={`https://doi.org/${article.doi}`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={externalAnchorClick(`https://doi.org/${article.doi}`)}
                 className="lit-result-doi-link focus-ring-subtle text-[color:var(--data-blue-dark)] no-underline hover:underline"
               >
                 {article.doi}
