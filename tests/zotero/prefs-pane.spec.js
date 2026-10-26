@@ -238,12 +238,21 @@ describe("z-search preferences pane (real Zotero integration)", function () {
     const first = rows.firstChild;
     expect(first.querySelector(".key-label"), "label rendered").to.be.ok;
     const input = first.querySelector(".key-input");
-    expect(input, "textbox rendered").to.be.ok;
-    // 取键途径/限速提示走 tooltiptext：XUL textbox 不渲染 placeholder，
-    // 悬停说明是原生 idiom（同源行 tooltiptext）。
-    const tip = input.getAttribute("tooltiptext");
-    expect(tip && tip.length > 0, "key hint carried as tooltiptext").to.be.ok;
-    expect(tip, "tooltip is localized text, not a bare key").to.not.match(
+    expect(input, "key input rendered").to.be.ok;
+    // Zotero 10 的引擎已删除 XUL textbox（渲染为不可输入的死元素）——
+    // 文本输入必须是 html 命名空间的 input 才真的能打字。
+    expect(
+      input.namespaceURI,
+      "key input is an html:input (XUL textbox is gone in Zotero 10)",
+    ).to.equal("http://www.w3.org/1999/xhtml");
+    expect(input.tagName.toLowerCase(), "key input is <input>").to.equal(
+      "input",
+    );
+    // 取键途径/限速提示走 placeholder（html:input 原生渲染，取代 XUL
+    // textbox 时代只能走 tooltiptext 的做法）。
+    const tip = input.getAttribute("placeholder");
+    expect(tip && tip.length > 0, "key hint carried as placeholder").to.be.ok;
+    expect(tip, "placeholder is localized text, not a bare key").to.not.match(
       /^pref-api-key-/,
     );
     const status = first.querySelector(".key-status");
@@ -268,8 +277,8 @@ describe("z-search preferences pane (real Zotero integration)", function () {
       "openalex label says API Key, not email",
     ).to.equal("OpenAlex · API Key");
     expect(
-      oaRow.querySelector(".key-input").getAttribute("tooltiptext"),
-      "openalex tooltip explains the mailto deprecation",
+      oaRow.querySelector(".key-input").getAttribute("placeholder"),
+      "openalex hint explains the mailto deprecation",
     ).to.contain("mailto");
 
     // 必填行在未填时必须是 warn 色档（否则用户会静默丢源）
@@ -282,6 +291,53 @@ describe("z-search preferences pane (real Zotero integration)", function () {
           `required key ${f.prefKey} warns while unset`,
         ).to.contain("tone-warn");
       }
+    }
+  });
+
+  it("hides China-mainland-related rows when the hide switch is on", async function () {
+    const doc = prefWin.document;
+    const api = prefWin.Zotero.ZSearch.api;
+    // 起点恢复出厂：区域 auto、隐藏关——上一条用例可能改过（面板只加载
+    // 一次，状态跨用例存留）。
+    api.setPrefDynamic("region.hideChinaContent", false);
+    api.setNetworkRegion("auto");
+    const cb = doc.getElementById("zsearch-hide-china");
+    cb.setAttribute("checked", "true");
+    cb.dispatchEvent(new Event("command"));
+
+    try {
+      // 区域菜单不再有「中国大陆」档
+      const regionValues = Array.from(
+        doc.getElementById("zsearch-region-popup").children,
+      ).map((mi) => mi.getAttribute("value"));
+      expect(regionValues, "cn option removed from region menu").to.not.include(
+        "cn",
+      );
+      // 中科院分区行隐藏
+      expect(doc.getElementById("zsearch-cass-row").hidden).to.be.true;
+      // CN 专属端点行缺席（easyScholar / MinerU 云），其余三条仍在
+      expect(
+        doc.getElementById("zsearch-endpoints-rows").children.length,
+        "CN-only endpoint rows removed",
+      ).to.equal(3);
+      // easyScholar 密钥行缺席（学术组 7 - 1）
+      expect(
+        doc.getElementById("zsearch-academic-keys-rows").children.length,
+        "easyScholar key row removed",
+      ).to.equal(6);
+      // 区域是中国大陆时自愈切回国际
+      api.setPrefDynamic("region.hideChinaContent", false);
+      api.setNetworkRegion("cn");
+      cb.setAttribute("checked", "true");
+      cb.dispatchEvent(new Event("command"));
+      expect(api.getNetworkRegion(), "region self-heals to global").to.equal(
+        "global",
+      );
+    } finally {
+      // 收尾还原，不把开关状态漏给后续用例
+      cb.setAttribute("checked", "false");
+      cb.dispatchEvent(new Event("command"));
+      api.setNetworkRegion("auto");
     }
   });
 });

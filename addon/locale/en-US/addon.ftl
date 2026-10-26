@@ -622,6 +622,15 @@ prefs-region-cass-auto = Auto - follow the network region
 prefs-region-cass-show = Show
 prefs-region-cass-hide = Hide
 prefs-region-cass-applied = CAS journal ranking → { $value }; applies immediately to journal searches, scoring and item-tree badges from now on.
+# Hide China-mainland-related settings and features (region.hideChinaContent)
+prefs-hide-china = Hide China-mainland-related settings and features
+prefs-hide-china-desc =
+    Hides the mainland-China-only options in this pane: the "Mainland China" region choice, the CAS journal ranking row, the easyScholar and MinerU cloud endpoints, and the easyScholar API key. China-region data (CAS and rising-journal rankings, Chinese core journal lists) is disabled at the same time. Saved values are kept and come back when unchecked.
+prefs-region-desc-nochina =
+    Declare which part of the internet you are on and the add-on picks reachable defaults; China-mainland-related options are hidden per your choice.
+prefs-hide-china-on = China-mainland-related settings and features are now hidden.
+prefs-hide-china-off = China-mainland-related settings and features are shown again.
+prefs-hide-china-region-cleared = network region switched from Mainland China to Global
 prefs-endpoints-title = Region-locked Endpoints
 prefs-endpoints-desc =
     These services live in one region only. Leave a field blank to keep the built-in endpoint, or fill one in to use a mirror / self-hosted proxy. Changes apply to the next request.

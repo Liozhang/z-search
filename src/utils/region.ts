@@ -47,6 +47,28 @@ export type RegionFeatureChoice = (typeof REGION_FEATURE_PREF_CHOICES)[number];
 
 export const CASS_PARTITION_PREF_KEY = "region.cassPartition";
 
+/**
+ * 「不显示中国大陆相关的设置信息与相关功能」pref（用户显式要求的整组
+ * 显隐，比单项覆盖粗一档）：true 时设置面板隐藏中国大陆专属选项（区域
+ * 菜单的「中国大陆」档、中科院分区行、CN 专属端点/密钥行），运行时停用
+ * 中国区数据（中科院分区、新锐分区、中文核心名单）。
+ */
+export const HIDE_CHINA_PREF_KEY = "region.hideChinaContent";
+
+/**
+ * 中国大陆相关内容当前是否被用户要求隐藏。
+ *
+ * 与 isCassPartitionVisible 同一容错策略：读 pref 异常一律回落 false
+ * （保留现状），绝不拖垮调用方。
+ */
+export function isChinaContentHidden(): boolean {
+  try {
+    return getPrefDynamic(HIDE_CHINA_PREF_KEY) === true;
+  } catch {
+    return false;
+  }
+}
+
 /** 归一化：非法值（含空串/旧版残留）一律回落 auto。 */
 export function normalizeRegionFeatureChoice(
   value: unknown,
@@ -61,15 +83,17 @@ export function normalizeRegionFeatureChoice(
  * 中科院分区（CASS，2025 年度快照；中国科研评价体系的数据）当前是否
  * 参与富集/评分/徽章展示。
  *
- * `show`/`hide` 是用户的最终决定；`auto` 跟随网络区域——`cn` 显示，
- * `global` 隐藏，区域未声明（auto）沿用 1.x 的历史行为：本地离线数据，
- * 默认展示（不猜测用户身份）。
+ * 用户要求隐藏中国大陆相关内容时无条件缺席（粗于 cassPartition 的整组
+ * 显隐）；`show`/`hide` 是用户的最终决定；`auto` 跟随网络区域——`cn`
+ * 显示，`global` 隐藏，区域未声明（auto）沿用 1.x 的历史行为：本地离线
+ * 数据，默认展示（不猜测用户身份）。
  *
  * 本函数在富集/评分/渲染热路径上被同步调用且调用方的 catch 多为「整段
  * 放弃」——故任何读 pref 异常都回落 true（历史行为），绝不拖垮调用方。
  */
 export function isCassPartitionVisible(): boolean {
   try {
+    if (isChinaContentHidden()) return false;
     const choice = normalizeRegionFeatureChoice(
       getPrefDynamic(CASS_PARTITION_PREF_KEY),
     );

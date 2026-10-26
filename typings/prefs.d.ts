@@ -21,6 +21,7 @@ declare namespace _ZoteroTypes {
       "ai.model.maxContext": number;
       "region": string;
       "region.cassPartition": string;
+      "region.hideChinaContent": boolean;
       "search.queryRewrite": boolean;
       "search.rerankEnabled": boolean;
       "search.rerankModel": string;

@@ -25,6 +25,11 @@ export interface EndpointField {
   placeholderKey: string;
   /** 合法值形状：url = http(s):// 开头；host = 裸主机名。 */
   kind: "url" | "host";
+  /**
+   * 服务只在指定区域运营（"cn" = 中国大陆专属）。设置面板在用户勾选
+   * 「不显示中国大陆相关的设置与功能」时过滤这些行（region.hideChinaContent）。
+   */
+  region?: "cn";
   /** 内置端点（留空时生效）；display 用，逻辑侧各自持有同一常量。 */
   builtin: string;
 }
@@ -36,6 +41,7 @@ export const ENDPOINT_FIELDS: EndpointField[] = [
     labelKey: "pref-endpoint-easyscholar",
     placeholderKey: "pref-endpoint-easyscholar-placeholder",
     kind: "url",
+    region: "cn",
     builtin: "https://www.easyscholar.cc/openapi/api/paper/query",
   },
   {
@@ -44,6 +50,7 @@ export const ENDPOINT_FIELDS: EndpointField[] = [
     labelKey: "pref-endpoint-mineru",
     placeholderKey: "pref-endpoint-mineru-placeholder",
     kind: "url",
+    region: "cn",
     builtin: "https://mineru.net/api/v4",
   },
   {

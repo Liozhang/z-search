@@ -34,12 +34,14 @@ vi.hoisted(() => {
 });
 
 import {
+  HIDE_CHINA_PREF_KEY,
   NETWORK_REGIONS,
   REGION_PROFILES,
   applyRegionRecommendations,
   getNetworkRegion,
   getRegionProfile,
   isCassPartitionVisible,
+  isChinaContentHidden,
   normalizeRegion,
   normalizeRegionFeatureChoice,
   regionRecommendation,
@@ -278,6 +280,50 @@ describe("isCassPartitionVisible（中科院分区 = 中国区数据的显隐）
     g.Zotero = {}; // 无 Prefs —— getPref 会抛，getPrefDynamic 返回 undefined
     try {
       expect(isCassPartitionVisible()).toBe(true);
+    } finally {
+      g.Zotero = prev;
+    }
+  });
+});
+
+describe("isChinaContentHidden（不显示中国大陆相关的设置与功能）", () => {
+  beforeEach(() => {
+    h.prefs.clear();
+    h.prefs.set("extensions.zotero.zsearch.region", "auto");
+  });
+
+  it("缺省关闭（false / 未设置都算不隐藏）", () => {
+    expect(isChinaContentHidden()).toBe(false);
+    h.prefs.set(`extensions.zotero.zsearch.${HIDE_CHINA_PREF_KEY}`, false);
+    expect(isChinaContentHidden()).toBe(false);
+  });
+
+  it("开启后中科院分区无条件缺席（优先于区域与显式 show 覆盖）", () => {
+    h.prefs.set(`extensions.zotero.zsearch.${HIDE_CHINA_PREF_KEY}`, true);
+    // 区域未声明（历史行为本该展示）
+    expect(isCassPartitionVisible()).toBe(false);
+    // 区域 = cn（区域推荐本该展示）
+    h.prefs.set("extensions.zotero.zsearch.region", "cn");
+    expect(isCassPartitionVisible()).toBe(false);
+    // 用户显式 show 覆盖（整组显隐粗于单项覆盖）
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "show");
+    expect(isCassPartitionVisible()).toBe(false);
+  });
+
+  it("关闭时一切照旧（区域与单项覆盖语义不变）", () => {
+    expect(isCassPartitionVisible()).toBe(true);
+    h.prefs.set("extensions.zotero.zsearch.region", "global");
+    expect(isCassPartitionVisible()).toBe(false);
+    h.prefs.set("extensions.zotero.zsearch.region.cassPartition", "show");
+    expect(isCassPartitionVisible()).toBe(true);
+  });
+
+  it("pref 环境不可用时回落 false（保留现状），绝不抛错", () => {
+    const g = globalThis as any;
+    const prev = g.Zotero;
+    g.Zotero = {}; // 无 Prefs —— getPrefDynamic 返回 undefined
+    try {
+      expect(isChinaContentHidden()).toBe(false);
     } finally {
       g.Zotero = prev;
     }

@@ -27,6 +27,34 @@ function xul(tag) {
 }
 
 /**
+ * XHTML 命名空间（html:input 等表单件）。Zotero 10 的引擎已删除 XUL
+ * textbox 自定义元素（toolkit 侧只剩 search-textbox），`xul("textbox")`
+ * 与片段里的 <textbox> 渲染为**不可输入的死元素**——一切文本输入改用
+ * html:input（Zotero 自带面板同款；设置窗 preferences.css 自带 input 的
+ * Material 制式与 flex:1 0 伸展）。
+ */
+var HTML_NS = "http://www.w3.org/1999/xhtml";
+function html(tag) {
+  return document.createElementNS(HTML_NS, tag);
+}
+
+/**
+ * 文本输入工厂：类型（text/password）、占位与悬停提示、初值。
+ * placeholder 在 html:input 上原生渲染（XUL textbox 不渲染 placeholder、
+ * 只能走 tooltiptext 的时代限制不复存在）；title 提供原生悬停说明。
+ */
+function textInput(opts) {
+  var input = html("input");
+  input.setAttribute("type", opts.type || "text");
+  input.setAttribute("class", opts.className || "key-input");
+  if (opts.placeholder) input.setAttribute("placeholder", opts.placeholder);
+  if (opts.tooltip) input.setAttribute("title", opts.tooltip);
+  if (opts.value !== undefined && opts.value !== null)
+    input.value = String(opts.value);
+  return input;
+}
+
+/**
  * 网络区域选项（值 = region pref；文案走 FTL）。
  * 顺序即菜单顺序：auto 在最前（缺省 = 不声明）。
  */
@@ -189,7 +217,7 @@ var ZSearchPrefs = {
 
   // ── 网络区域 ═══════════════════════════════════════════════════════════
 
-  /** 区域组静态文案 + 菜单 + 两个写入口（切选即套用推荐值 / 按钮 force 重套）。 */
+  /** 区域组静态文案 + 菜单 + 三个写入口（切选即套用推荐值 / 按钮 force 重套 / 隐藏中国区内容）。 */
   initRegion() {
     var doc = document;
     doc.getElementById("zsearch-region-title").textContent =
@@ -204,6 +232,12 @@ var ZSearchPrefs = {
     doc
       .getElementById("zsearch-cass-label")
       .setAttribute("value", this.t("prefs-region-cass-label"));
+    doc
+      .getElementById("zsearch-hide-china")
+      .setAttribute("label", this.t("prefs-hide-china"));
+    doc.getElementById("zsearch-hide-china-desc").textContent = this.t(
+      "prefs-hide-china-desc",
+    );
     this.renderRegionMenu();
     doc
       .getElementById("zsearch-region-popup")
@@ -213,6 +247,10 @@ var ZSearchPrefs = {
     doc
       .getElementById("zsearch-cass-popup")
       .addEventListener("popuphidden", () => this.onCassPicked());
+    doc
+      .getElementById("zsearch-hide-china")
+      .addEventListener("command", () => this.onHideChinaToggled());
+    this.applyChinaVisibility();
   },
 
   // ── 区域限定端点 ═══════════════════════════════════════════════════════
@@ -258,12 +296,12 @@ var ZSearchPrefs = {
         api.setPrefDynamic("translate.engineType", engine);
         this.syncBingRegionEnabled(engine);
       });
-    // 可编辑菜单：手输 region 未必触发 popuphidden，change 事件兜底落盘
+    // 可手输的文本输入：常用订阅区列在 tooltip，change 即落盘
     doc
       .getElementById("zsearch-translate-bingregion")
       .addEventListener("change", () => {
-        var ml = doc.getElementById("zsearch-translate-bingregion");
-        api.setPrefDynamic("translate.bing.region", ml.value.trim());
+        var input = doc.getElementById("zsearch-translate-bingregion");
+        api.setPrefDynamic("translate.bing.region", input.value.trim());
       });
 
     // ── 持久缓存与截断上限（2026-09-30 优化批）──
@@ -473,12 +511,12 @@ var ZSearchPrefs = {
         label.setAttribute("flex", "1");
         row.appendChild(label);
 
-        var input = xul("textbox");
-        input.setAttribute("class", "key-input");
-        input.setAttribute("type", self.keysVisible ? "text" : "password");
-        input.setAttribute("size", "28");
-        input.setAttribute("flex", "1");
-        input.value = f.value || "";
+        var input = textInput({
+          type: self.keysVisible ? "text" : "password",
+          placeholder: self.t(f.placeholderKey),
+          tooltip: self.t(f.placeholderKey),
+          value: f.value || "",
+        });
         // 即填即存（Zotero 设置面字段级秒存制式）；写路径走 api，不经
         // <preference> 绑定（动态行 + 统一审计通路）。
         input.addEventListener("change", function () {
@@ -517,6 +555,11 @@ var ZSearchPrefs = {
     var api = window.Zotero.ZSearch.api;
     var fields =
       (api && api.getAcademicKeyFields && api.getAcademicKeyFields()) || [];
+    // 隐藏中国区内容时，CN 专属密钥行（easyScholar）一并缺席
+    var hidden = this.chinaHidden();
+    fields = fields.filter(function (f) {
+      return !(hidden && f.region === "cn");
+    });
 
     fields.forEach(function (f) {
       var value = String(
@@ -534,18 +577,12 @@ var ZSearchPrefs = {
       label.setAttribute("flex", "1");
       row.appendChild(label);
 
-      var input = xul("textbox");
-      input.setAttribute("class", "key-input");
-      input.setAttribute(
-        "type",
-        f.type === "text" || self.keysVisible ? "text" : "password",
-      );
-      input.setAttribute("size", "28");
-      input.setAttribute("flex", "1");
-      // XUL textbox 不渲染 placeholder 属性（Zotero 自身也只给 html:input
-      // 用），取键途径/限速提示改走 tooltiptext——原生 XUL 的悬停说明位。
-      input.setAttribute("tooltiptext", self.t(f.placeholderKey));
-      input.value = value;
+      var input = textInput({
+        type: f.type === "text" || self.keysVisible ? "text" : "password",
+        placeholder: self.t(f.placeholderKey),
+        tooltip: self.t(f.placeholderKey),
+        value: value,
+      });
       input.addEventListener("change", function () {
         api.setPrefDynamic(f.prefKey, input.value);
         // 只重渲本组：整面板重渲会打断正在编辑的另一行
@@ -597,13 +634,21 @@ var ZSearchPrefs = {
 
   // ── 网络区域 ────────────────────────────────────────────────────────────
 
-  /** 区域菜单项（label 走 FTL，值即 region pref）。 */
+  /** 当前是否隐藏中国大陆相关的设置与功能（宿主侧 region.hideChinaContent）。 */
+  chinaHidden() {
+    var api = window.Zotero.ZSearch.api;
+    return !!(api && api.isChinaContentHidden && api.isChinaContentHidden());
+  },
+
+  /** 区域菜单项（label 走 FTL，值即 region pref）。隐藏中国区内容时「中国大陆」档不出。 */
   renderRegionMenu() {
     var popup = document.getElementById("zsearch-region-popup");
     while (popup.firstChild) popup.removeChild(popup.firstChild);
     var self = this;
     var cur = this.regionValue();
+    var hidden = this.chinaHidden();
     REGION_OPTIONS.forEach(function (o) {
+      if (hidden && o.value === "cn") return;
       var mi = xul("menuitem");
       mi.setAttribute("label", self.t(o.labelKey));
       mi.setAttribute("value", o.value);
@@ -731,6 +776,58 @@ var ZSearchPrefs = {
     );
   },
 
+  // ── 隐藏中国大陆相关的设置与功能（region.hideChinaContent）────────────
+
+  /**
+   * 按当前 hideChinaContent 状态重排区域组与受影响字段行：
+   * 中国大陆区域档、中科院分区行、CN 专属端点/密钥行的显隐，以及区域组
+   * 说明文案的替换（原说明整段在讲中国大陆服务，隐藏时继续展示就成了
+   * 「藏了功能不藏信息」）。
+   *
+   * 自愈：隐藏开启而区域仍是中国大陆（如经配置编辑器改的 pref）时切回
+   * 国际——「中国大陆」档已从菜单移除，留着旧值会让 menulist 显示空。
+   *
+   * @returns 是否发生了区域自愈切换（调用方据此提示）
+   */
+  applyChinaVisibility() {
+    var doc = document;
+    var api = window.Zotero.ZSearch.api;
+    var hidden = this.chinaHidden();
+    var cb = doc.getElementById("zsearch-hide-china");
+    cb.setAttribute("checked", hidden ? "true" : "false");
+    doc.getElementById("zsearch-cass-row").hidden = hidden;
+    doc.getElementById("zsearch-region-desc").textContent = this.t(
+      hidden ? "prefs-region-desc-nochina" : "prefs-region-desc",
+    );
+    var cleared = hidden && this.regionValue() === "cn";
+    if (cleared && api.setNetworkRegion) api.setNetworkRegion("global");
+    this.renderEndpoints();
+    this.renderAcademicKeys();
+    this.renderRegionMenu();
+    return cleared;
+  },
+
+  /**
+   * 开关落盘：写 pref 后重排面板；区域自愈切换（开启且当前是中国大陆）
+   * 的提示与开关本身的提示一并写入区域组提示行。
+   */
+  onHideChinaToggled() {
+    var api = window.Zotero.ZSearch.api;
+    var on =
+      document.getElementById("zsearch-hide-china").getAttribute("checked") ===
+      "true";
+    api.setPrefDynamic("region.hideChinaContent", on);
+    var cleared = this.applyChinaVisibility();
+    var notes = [];
+    if (cleared) notes.push(this.t("prefs-hide-china-region-cleared"));
+    notes.push(this.t(on ? "prefs-hide-china-on" : "prefs-hide-china-off"));
+    this.setNoteEl(
+      document.getElementById("zsearch-region-note"),
+      notes.join("；"),
+      "ok",
+    );
+  },
+
   // ── 区域限定端点 ────────────────────────────────────────────────────────
 
   /**
@@ -746,6 +843,11 @@ var ZSearchPrefs = {
     var self = this;
     var api = window.Zotero.ZSearch.api;
     var fields = (api.getEndpointFields && api.getEndpointFields()) || [];
+    // 隐藏中国区内容时，CN 专属端点行（easyScholar / MinerU 云）一并缺席
+    var hidden = this.chinaHidden();
+    fields = fields.filter(function (f) {
+      return !(hidden && f.region === "cn");
+    });
     fields.forEach(function (f) {
       var row = xul("hbox");
       row.setAttribute("class", "key-row");
@@ -757,13 +859,11 @@ var ZSearchPrefs = {
       label.setAttribute("flex", "1");
       row.appendChild(label);
 
-      var input = xul("textbox");
-      input.setAttribute("class", "key-input");
-      input.setAttribute("type", "text");
-      input.setAttribute("size", "28");
-      input.setAttribute("flex", "1");
-      input.setAttribute("tooltiptext", self.t(f.placeholderKey));
-      input.value = String(api.getPrefDynamic(f.prefKey) ?? "");
+      var input = textInput({
+        placeholder: self.t(f.placeholderKey),
+        tooltip: self.t(f.placeholderKey),
+        value: String(api.getPrefDynamic(f.prefKey) ?? ""),
+      });
       input.addEventListener("change", function () {
         var raw = input.value;
         // 校验与归一化都问宿主（endpointSchema 单一事实源）：面板沙箱不持正则，
@@ -817,31 +917,25 @@ var ZSearchPrefs = {
 
   /** Azure 订阅区只对 Azure Translator 引擎有意义——其余引擎置灰。 */
   syncBingRegionEnabled(engine) {
-    var ml = document.getElementById("zsearch-translate-bingregion");
-    var lab = document.getElementById("zsearch-translate-bingregion-label");
-    if (engine === "bing") {
-      ml.removeAttribute("disabled");
-      if (lab) lab.removeAttribute("disabled");
-    } else {
-      ml.setAttribute("disabled", "true");
-      if (lab) lab.setAttribute("disabled", "true");
+    var doc = document;
+    var input = doc.getElementById("zsearch-translate-bingregion");
+    var lab = doc.getElementById("zsearch-translate-bingregion-label");
+    var on = engine === "bing";
+    input.disabled = !on;
+    if (lab) {
+      if (on) lab.removeAttribute("disabled");
+      else lab.setAttribute("disabled", "true");
     }
   },
 
   renderTranslateBingRegion() {
-    var popup = document.getElementById("zsearch-translate-bingregion-popup");
-    while (popup.firstChild) popup.removeChild(popup.firstChild);
     var api = window.Zotero.ZSearch.api;
+    var input = document.getElementById("zsearch-translate-bingregion");
     var cur =
       String(api.getPrefDynamic("translate.bing.region") ?? "") || "global";
-    AZURE_REGIONS.forEach(function (r) {
-      var mi = xul("menuitem");
-      mi.setAttribute("label", r);
-      mi.setAttribute("value", r);
-      if (r === cur) mi.setAttribute("selected", "true");
-      popup.appendChild(mi);
-    });
-    document.getElementById("zsearch-translate-bingregion").value = cur;
+    input.value = cur;
+    // Zotero 10 无 editable menulist：常用值在 tooltip 里给全
+    input.setAttribute("title", AZURE_REGIONS.join(" / "));
   },
 
   // ── 交互 ────────────────────────────────────────────────────────────────

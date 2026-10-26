@@ -36,12 +36,14 @@
       </menulist>
       <button id="zsearch-region-apply" class="pane-button" />
     </hbox>
-    <hbox align="center" class="sources-toolbar">
+    <hbox id="zsearch-cass-row" align="center" class="sources-toolbar">
       <label id="zsearch-cass-label" control="zsearch-cass-picker" />
       <menulist id="zsearch-cass-picker" class="pane-menulist" native="true">
         <menupopup id="zsearch-cass-popup" />
       </menulist>
     </hbox>
+    <checkbox id="zsearch-hide-china" class="pane-checkbox" />
+    <description id="zsearch-hide-china-desc" class="pane-desc" />
     <description id="zsearch-region-note" class="pane-note" role="status" />
   </groupbox>
 
@@ -110,14 +112,14 @@
         id="zsearch-translate-bingregion-label"
         control="zsearch-translate-bingregion"
       />
-      <menulist
+      <!-- Zotero 10 的 XUL menulist 已无 editable 形态（toolkit 侧该绑定
+           退役，输入框不再是 menulist 的一部分）——订阅区改为纯文本输入，
+           常用值列在 tooltip 里。 -->
+      <html:input
+        type="text"
         id="zsearch-translate-bingregion"
-        class="pane-menulist"
-        editable="true"
-        native="true"
-      >
-        <menupopup id="zsearch-translate-bingregion-popup" />
-      </menulist>
+        class="pane-input"
+      />
     </hbox>
     <checkbox id="zsearch-translate-cache-enabled" class="pane-checkbox" />
     <description id="zsearch-translate-cache-desc" class="pane-desc" />
@@ -128,7 +130,14 @@
         control="zsearch-translate-maxchars"
         flex="1"
       />
-      <textbox id="zsearch-translate-maxchars" class="key-input" flex="1" />
+      <!-- XUL textbox 元素在 Zotero 10 引擎中已删除（无自定义元素/样式，
+           渲染为不可输入的死元素）——文本输入一律用 html:input（Zotero 自带
+           面板同款）。 -->
+      <html:input
+        type="text"
+        id="zsearch-translate-maxchars"
+        class="key-input"
+      />
     </hbox>
     <hbox align="center" class="key-row">
       <label
@@ -137,7 +146,11 @@
         control="zsearch-translate-cache-maxmb"
         flex="1"
       />
-      <textbox id="zsearch-translate-cache-maxmb" class="key-input" flex="1" />
+      <html:input
+        type="text"
+        id="zsearch-translate-cache-maxmb"
+        class="key-input"
+      />
     </hbox>
     <description id="zsearch-translate-note" class="pane-note" role="status" />
   </groupbox>

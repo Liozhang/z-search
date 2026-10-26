@@ -610,6 +610,15 @@ prefs-region-cass-auto = 自动——跟随网络区域
 prefs-region-cass-show = 显示
 prefs-region-cass-hide = 隐藏
 prefs-region-cass-applied = 中科院分区 → { $value }；对后续的期刊检索、评分与条目树徽章即时生效。
+# 不显示中国大陆相关的设置信息与功能（region.hideChinaContent，整组显隐）
+prefs-hide-china = 不显示与中国大陆相关的设置信息及功能
+prefs-hide-china-desc =
+    隐藏本面板里的中国大陆专属选项：网络区域的「中国大陆」档、中科院分区、easyScholar 与 MinerU 云端端点、easyScholar API key；中国区数据（中科院分区、新锐分区、中文核心名单）同时停用。已保存的设置会保留，取消勾选后恢复。
+prefs-region-desc-nochina =
+    声明所在网络后，插件据此选取可达的默认值；与中国大陆相关的选项已按你的选择隐藏。
+prefs-hide-china-on = 已隐藏与中国大陆相关的设置信息及功能。
+prefs-hide-china-off = 已恢复显示与中国大陆相关的设置信息及功能。
+prefs-hide-china-region-cleared = 网络区域已从中国大陆切换为国际
 prefs-endpoints-title = 区域限定端点
 prefs-endpoints-desc =
     这些服务只在各自所属区域运营。留空即用内置端点；填入则改用镜像或自建代理，改动在下次请求时生效。

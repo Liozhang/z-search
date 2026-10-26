@@ -29,6 +29,7 @@ import {
 import {
   applyRegionRecommendations,
   getNetworkRegion,
+  isChinaContentHidden,
   normalizeRegion,
   setNetworkRegion,
 } from "../utils/region";
@@ -184,6 +185,10 @@ export async function servicesInit(): Promise<void> {
     applyRegionRecommendations(normalizeRegion(region), {
       force: !!force,
     }) as string[];
+  // 中国大陆相关内容的整组显隐（region.hideChinaContent）：读侧单一事实源
+  // 在宿主（与区域读写同制式），面板据此过滤 CN 专属行。
+  (_globalThis as any).addon.api.isChinaContentHidden = (): boolean =>
+    isChinaContentHidden();
   (_globalThis as any).addon.api.t = (
     key: string,
     args?: Record<string, unknown>,

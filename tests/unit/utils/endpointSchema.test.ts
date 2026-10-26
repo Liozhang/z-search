@@ -37,6 +37,10 @@ describe("ENDPOINT_FIELDS", () => {
     expect(field("endpoint-jre-mirror").builtin).toBe(
       "https://api.adoptium.net/v3",
     );
+    // CN 专属端点带区域标记（设置面板 region.hideChinaContent 据此过滤行）
+    expect(field("endpoint-easyscholar").region).toBe("cn");
+    expect(field("endpoint-mineru-cloud").region).toBe("cn");
+    expect(field("endpoint-jre-mirror").region).toBeUndefined();
   });
 
   it("嵌入模型镜像无内置值（默认按区域动态求值）", () => {

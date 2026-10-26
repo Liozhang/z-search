@@ -23,7 +23,10 @@
  * Exported + exposed via testAccess for integration testing.
  */
 import { safeDebug } from "../../utils/logger";
-import { isCassPartitionVisible } from "../../utils/region";
+import {
+  isCassPartitionVisible,
+  isChinaContentHidden,
+} from "../../utils/region";
 
 export async function enrichJournalMetrics(articles: any[]): Promise<void> {
   try {
@@ -70,12 +73,13 @@ export async function enrichJournalMetrics(articles: any[]): Promise<void> {
     // 未翻译的第三语言）默认取英文列——CASS 大类名/预警级别否则会在英文
     // 界面上露出中文。
     // 中文核心名单（P1-4，可选）：仅当 easyScholar key 已配置时才发起；
-    // 未命中/未配置都静默——卡片徽章只是缺席，不是错误。
+    // 未命中/未配置都静默——卡片徽章只是缺席，不是错误。用户要求隐藏
+    // 中国大陆相关内容时同样缺席（easyScholar 是国内专属服务）。
     const { batchLookupChineseCore } =
       await import("../data/EasyScholarClient");
-    const coreMap = await batchLookupChineseCore(
-      names.filter((n: string) => n.length > 0),
-    );
+    const coreMap = isChinaContentHidden()
+      ? new Map()
+      : await batchLookupChineseCore(names.filter((n: string) => n.length > 0));
 
     const zhUi = String((globalThis as any).Zotero?.locale ?? "")
       .toLowerCase()

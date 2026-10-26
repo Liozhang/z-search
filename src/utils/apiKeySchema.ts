@@ -29,6 +29,11 @@ export interface ApiKeyField {
   placeholderKey: string;
   /** input type：password 默认；少数(google-cx / searxng)用 text。openalex 早年收 mailto 邮箱故曾是 text，其 mailto 池 2026 年初已废、现为 API Key，回归掩码。 */
   type?: "password" | "text";
+  /**
+   * 服务只在指定区域运营（"cn" = 中国大陆专属）。设置面板在用户勾选
+   * 「不显示中国大陆相关的设置与功能」时过滤这些行（region.hideChinaContent）。
+   */
+  region?: "cn";
 }
 
 export interface ApiKeyFieldGroup {
@@ -173,11 +178,13 @@ export const API_KEY_GROUPS: ApiKeyFieldGroup[] = [
         placeholderKey: "pref-api-key-github-placeholder",
       },
       {
-        // easyScholar 免费 key（中文核心期刊标识的可选数据源，P1-4）
+        // easyScholar 免费 key（中文核心期刊标识的可选数据源，P1-4；国内
+        // 专属服务——region.hideChinaContent 开启时行随面板隐藏）
         fieldId: "apis-easyscholar-apiKey",
         prefKey: "apis.easyscholar.apiKey",
         labelKey: "pref-api-key-easyscholar",
         placeholderKey: "pref-api-key-easyscholar-placeholder",
+        region: "cn",
       },
     ],
   },

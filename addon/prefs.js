@@ -26,6 +26,10 @@ pref("region", "auto"); // "auto" | "global" | "cn"
 // （cn 显示 / global 隐藏 / 未声明沿用历史行为——默认展示），show/hide 为
 // 用户显式覆盖（全球用户同样可能在研究中国期刊，绝不硬性剥夺）
 pref("region.cassPartition", "auto"); // "auto" | "show" | "hide"
+// 不显示中国大陆相关的设置信息与功能（整组显隐，粗于单项覆盖）：隐藏设置
+// 面板里的 CN 专属行（区域菜单「中国大陆」档、中科院分区、easyScholar 与
+// MinerU 云端端点、easyScholar key），停用中国区数据（分区/中文核心名单）
+pref("region.hideChinaContent", false);
 
 // ── Search ──────────────────────────────────────────────────────────
 pref("search.queryRewrite", true);
