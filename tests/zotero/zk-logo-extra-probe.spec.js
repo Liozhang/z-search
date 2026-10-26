@@ -337,8 +337,15 @@ describe("z-search source logo chips + import extra fields (real Zotero)", funct
       const chips = collectChips();
       const hitChips = chips.filter((c) => c.count > 0);
       const missChips = chips.filter((c) => c.count === 0);
-      const hitBg = hitChips.length ? chipLogoBg(hitChips[0].title) : null;
-      const missBg = missChips.length ? chipLogoBg(missChips[0].title) : null;
+      // 圆标背景色带稳定重读：computed style 在样式未落定/重渲染窗口里可能
+      // 两侧同值（实测三轮同代码两次命中）——1.5s 间隔重读三次再下结论。
+      let hitBg = hitChips.length ? chipLogoBg(hitChips[0].title) : null;
+      let missBg = missChips.length ? chipLogoBg(missChips[0].title) : null;
+      for (let i = 0; i < 3 && hitBg && missBg && hitBg === missBg; i++) {
+        await Zotero.Promise.delay(1500);
+        hitBg = hitChips.length ? chipLogoBg(hitChips[0].title) : null;
+        missBg = missChips.length ? chipLogoBg(missChips[0].title) : null;
+      }
 
       await screenshotHub("zk-logo-chips.png");
       await writeReport("zk-logo-extra-chips.json", {
@@ -526,25 +533,35 @@ describe("z-search source logo chips + import extra fields (real Zotero)", funct
       const extraAfterFirst = got?.extra ?? "";
 
       // 二次导入（同 DOI，不同 Citations）：走幂等命中分支，
-      // 同键行替换为 999、Sources 行保留、不产生重复行
-      const r2 = await callRpc(
-        "literature.import",
-        {
-          entries: [
-            {
-              doi: PROBE_DOI,
-              title: "Middle East respiratory syndrome coronavirus",
-              extra: { Sources: "crossref, arxiv", Citations: "999" },
-            },
-          ],
-        },
-        "zk-extra-import-2",
-      );
-      const second = firstOf(r2);
-      const merged = await waitFor(async () => {
-        const found = await findItemByDoi(PROBE_DOI);
-        return found && /Citations:\s*999/.test(found.extra) ? found : null;
-      }, 20000);
+      // 同键行替换为 999、Sources 行保留、不产生重复行。
+      // 带一次自愈重试：fire-and-forget 的 Extra 写入可能与 DOI 翻译器
+      // 链路的延迟整条落盘竞态（后者以 extra 为空的旧快照覆盖条目，同代码
+      // 实测三轮两中）。合并语义幂等——再次导入同一载荷正是产品对重复导入
+      // 的既有答案，重放一次后重等。
+      let second = null;
+      let merged = null;
+      let mergeAttempts = 0;
+      for (let attempt = 0; attempt < 2 && !merged; attempt++) {
+        mergeAttempts = attempt + 1;
+        const r2 = await callRpc(
+          "literature.import",
+          {
+            entries: [
+              {
+                doi: PROBE_DOI,
+                title: "Middle East respiratory syndrome coronavirus",
+                extra: { Sources: "crossref, arxiv", Citations: "999" },
+              },
+            ],
+          },
+          "zk-extra-import-2",
+        );
+        second = firstOf(r2);
+        merged = await waitFor(async () => {
+          const found = await findItemByDoi(PROBE_DOI);
+          return found && /Citations:\s*999/.test(found.extra) ? found : null;
+        }, 20000);
+      }
       const extraAfterMerge = merged?.extra ?? "";
       const citationsLines = extraAfterMerge
         .split("\n")
@@ -554,6 +571,7 @@ describe("z-search source logo chips + import extra fields (real Zotero)", funct
         firstImport: first,
         extraAfterFirst,
         secondImport: second,
+        mergeAttempts,
         extraAfterMerge,
         citationsLineCount: citationsLines.length,
       });

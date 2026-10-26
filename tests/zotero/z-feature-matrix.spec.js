@@ -1311,9 +1311,14 @@ describe("z-search feature matrix (real Zotero end-to-end)", function () {
         `BOM keeps Excel CJK-safe (first bytes: ${Array.from(csvBytes.slice(0, 3))})`,
       ).to.be.true;
       const csv = await blobs[0].text();
-      // 标题含半角引号时 csvEscape 按 RFC 4180 把引号翻倍并整体加引号，
-      // 断言必须按转义后的字段形态找——未转义的子串永远匹配不上（实测踩坑）
-      expect(csv).to.contain(`"${firstTitle.replace(/"/g, '""')}"`);
+      // csvEscape 按 RFC 4180 条件转义：标题含逗号/引号/换行才整体加引号
+      // （引号再翻倍）。实时检索的第一名标题内容不受控——两种形态都按各自
+      // 的合法形态断言，不能硬性要求带引号（"AlphaFold predicts the most
+      // complex protein knot…" 无逗号时裸写才是对的，实测踩坑）。
+      const csvTitleCell = /[",\r\n]/.test(firstTitle)
+        ? `"${firstTitle.replace(/"/g, '""')}"`
+        : firstTitle;
+      expect(csv).to.contain(csvTitleCell);
       expect(csv.split("\r\n").length, "one row per result").to.be.at.least(2);
     } catch (e) {
       reportError("export", e);

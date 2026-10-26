@@ -257,18 +257,30 @@ describe("z-search import-target select regression (real Zotero + real network)"
       win.addEventListener("error", onError);
 
       // 点第一项（跟随主窗选择）：受控 onChange → chooseImportTarget(null)
-      // → pref 写空串（等于默认态），对用户配置无副作用。
-      const item = doc.querySelector('[data-slot="select-item"]');
-      if (!item) throw { message: "select item not found" };
-      const opts = { bubbles: true, cancelable: true, view: win };
-      item.dispatchEvent(new win.MouseEvent("mousedown", opts));
-      item.dispatchEvent(new win.MouseEvent("mouseup", opts));
-      item.dispatchEvent(new win.MouseEvent("click", opts));
-
-      const closed = await waitFor(
+      // → pref 写空串（等于默认态，对用户配置无副作用）。
+      // 合成事件序列带一次重放：同一 tick 内连发 mousedown/mouseup/click，
+      // 负载高时 select 的 pointer 链可能未就绪而吞掉点击（实测弹层不关、
+      // 三轮同代码偶发）——弹层 10s 未关则重放一次再等。
+      const clickItem = () => {
+        const target = doc.querySelector('[data-slot="select-item"]');
+        if (!target) throw { message: "select item not found" };
+        const ev = { bubbles: true, cancelable: true, view: win };
+        target.dispatchEvent(new win.MouseEvent("mousedown", ev));
+        target.dispatchEvent(new win.MouseEvent("mouseup", ev));
+        target.dispatchEvent(new win.MouseEvent("click", ev));
+      };
+      clickItem();
+      let closed = await waitFor(
         () => !doc.querySelector('[data-slot="select-content"]'),
         10000,
       );
+      if (!closed) {
+        clickItem();
+        closed = await waitFor(
+          () => !doc.querySelector('[data-slot="select-content"]'),
+          10000,
+        );
+      }
       win.removeEventListener("error", onError);
 
       const rootText = hubRoot()?.textContent || "";
