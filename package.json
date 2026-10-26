@@ -11,7 +11,7 @@
   ],
   "description": "Academic, web, repository, vector, patent, dataset, researcher and grant search for Zotero — standalone search plugin",
   "config": {
-    "addonName": "Z-Search",
+    "addonName": "z-search",
     "addonID": "zsearch@z-search.dev",
     "addonRef": "zsearch",
     "addonInstance": "ZSearch",
