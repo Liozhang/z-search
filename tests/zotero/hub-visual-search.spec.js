@@ -257,20 +257,40 @@ describe("z-search hub visual search verification (real Zotero + real network)",
         await Zotero.Promise.delay(800);
       }
     }
-    const canvas = doc.createElementNS(
-      "http://www.w3.org/1999/xhtml",
-      "canvas",
-    );
-    canvas.width = w;
-    canvas.height = h;
-    canvas.getContext("2d").drawWindow(hubWin, 0, 0, w, h, "rgb(255,255,255)");
-    const b64 = canvas.toDataURL("image/png").split(",")[1];
-    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    await ensureOutDir();
-    const path = PathUtils.join(OUT_DIR, name);
-    // putContentsAsync 不收 Uint8Array——二进制走 IOUtils.write
-    await IOUtils.write(path, bin);
-    OUTPUTS[name] = path;
+    // 捕获前隐去滚动条：Hub 视图的悬浮滚动条拇指在列表刚渲染完时未必
+    // 已淡出，drawWindow 会把它一并栅格进图（1px 竖线压在结果头上）。
+    // 悬浮式不占布局，隐掉不改排版。
+    const iframeDoc = doc.getElementById("zsearch-hub-iframe")?.contentDocument;
+    let hideScrollbars = null;
+    if (iframeDoc?.head) {
+      hideScrollbars = iframeDoc.createElementNS(
+        "http://www.w3.org/1999/xhtml",
+        "style",
+      );
+      hideScrollbars.textContent = "* { scrollbar-width: none !important; }";
+      iframeDoc.head.appendChild(hideScrollbars);
+      await Zotero.Promise.delay(200);
+    }
+    try {
+      const canvas = doc.createElementNS(
+        "http://www.w3.org/1999/xhtml",
+        "canvas",
+      );
+      canvas.width = w;
+      canvas.height = h;
+      canvas
+        .getContext("2d")
+        .drawWindow(hubWin, 0, 0, w, h, "rgb(255,255,255)");
+      const b64 = canvas.toDataURL("image/png").split(",")[1];
+      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      await ensureOutDir();
+      const path = PathUtils.join(OUT_DIR, name);
+      // putContentsAsync 不收 Uint8Array——二进制走 IOUtils.write
+      await IOUtils.write(path, bin);
+      OUTPUTS[name] = path;
+    } finally {
+      hideScrollbars?.remove();
+    }
   }
 
   // 切走前的应用 locale（after() 恢复）——本套件按字母序最先跑，后面还有
@@ -390,6 +410,10 @@ describe("z-search hub visual search verification (real Zotero + real network)",
       );
       // 等检索收尾（「取消」钮变回「搜索」，状态条脱离「检索中」置灰态）
       await waitFor(() => !!findBtn(/^(Search|搜索)$/), 60000);
+      // README 图切「引用最多」（客户端按被引降序）：相关度序的首屏常被
+      // 缺期刊/作者元数据的 ahead-of-print 条目占满，图注承诺的 IF/分区
+      // 徽章无从展示；被引序首屏稳定是元数据齐全的高被引卡。
+      findBtn(/^(Most Cited|引用最多)$/)?.click();
       await Zotero.Promise.delay(1500);
 
       // 把带 IF 徽章的卡滚进视口（虚拟列表只在视口内挂载行）

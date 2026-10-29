@@ -159,19 +159,39 @@ describe("z-search readme screenshots (journal tab, en-US)", function () {
         await Zotero.Promise.delay(800); // 等 React 按新视口重排
       }
     }
-    const canvas = doc.createElementNS(
-      "http://www.w3.org/1999/xhtml",
-      "canvas",
-    );
-    canvas.width = w;
-    canvas.height = h;
-    canvas.getContext("2d").drawWindow(hubWin, 0, 0, w, h, "rgb(255,255,255)");
-    const b64 = canvas.toDataURL("image/png").split(",")[1];
-    const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    await ensureOutDir();
-    const path = PathUtils.join(OUT_DIR, name);
-    await IOUtils.write(path, bin);
-    OUTPUTS[name] = path;
+    // 捕获前隐去滚动条：Hub 视图的悬浮滚动条拇指在列表刚渲染完时未必
+    // 已淡出，drawWindow 会把它一并栅格进图（1px 竖线压在排序 chips 上
+    // ——2026-10-29 README 图实证）。悬浮式不占布局，隐掉不改排版。
+    const iframeDoc = doc.getElementById("zsearch-hub-iframe")?.contentDocument;
+    let hideScrollbars = null;
+    if (iframeDoc?.head) {
+      hideScrollbars = iframeDoc.createElementNS(
+        "http://www.w3.org/1999/xhtml",
+        "style",
+      );
+      hideScrollbars.textContent = "* { scrollbar-width: none !important; }";
+      iframeDoc.head.appendChild(hideScrollbars);
+      await Zotero.Promise.delay(200);
+    }
+    try {
+      const canvas = doc.createElementNS(
+        "http://www.w3.org/1999/xhtml",
+        "canvas",
+      );
+      canvas.width = w;
+      canvas.height = h;
+      canvas
+        .getContext("2d")
+        .drawWindow(hubWin, 0, 0, w, h, "rgb(255,255,255)");
+      const b64 = canvas.toDataURL("image/png").split(",")[1];
+      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      await ensureOutDir();
+      const path = PathUtils.join(OUT_DIR, name);
+      await IOUtils.write(path, bin);
+      OUTPUTS[name] = path;
+    } finally {
+      hideScrollbars?.remove();
+    }
   }
 
   // ── locale 强制（同 hub-visual-search 的 before/after 机制）──
