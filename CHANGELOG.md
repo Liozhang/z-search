@@ -5,6 +5,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [2.3.0] - 2026-11-07
+
+### Added
+
+- **A detail dialog for researcher results.** Every hit in the researcher
+  domain now has a "Details" button next to Import. It opens a dialog that
+  drills into the scholar's profile on the source that produced the hit (no
+  cross-source merging): a header with the name, source badge, source ID, and
+  an open-in-browser action; a metrics row (works, h-index, citations,
+  i10-index — whichever the source returns); an affiliations section (ORCID
+  employment history with role and years when present, falling back to the
+  institution list); research areas as badges (OpenAlex topics or ORCID
+  keywords); plus biography and homepage when the source provides them.
+  Sections a source does not return are hidden rather than shown empty, and
+  loading, failure (with retry), and no-data states use the shared placeholder
+  trio.
+- The ORCID profile adapter now also extracts the employment history
+  (organization, department, role, start/end years), keywords, and biography
+  from the public record, feeding the dialog's new sections.
+
+### Fixed
+
+- **Profile drill-down routing.** `getDomainProfile(domainId, sourceId)` used
+  a single parameter both as the adapter route key and as the record ID, so
+  every profile lookup returned null. It now takes `(domainId, source,
+  sourceId)`: source locates the adapter, sourceId identifies the record — an
+  ORCID iD is never mistaken for an adapter key. The RPC handler validates and
+  forwards the new `source` field, and routing tests cover exact-endpoint
+  delivery, field mapping, a missing source, and an unknown adapter.
+
 ## [2.2.0] - 2026-10-26
 
 ### Fixed
