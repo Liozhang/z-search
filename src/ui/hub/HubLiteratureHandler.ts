@@ -1199,8 +1199,7 @@ export async function handleLiteratureRequest(
 
       case "domain.profile": {
         // 学术子域详情查询（researcher.profile / grant.profile）。
-        // 对 DomainDef.sources 中每个支持 profile() 的适配器依次尝试，
-        // 返回首个非空结果。
+        // source 定位适配器，sourceId 是源站记录 ID，交由适配器下钻。
         const domainId = payload?.domainId;
         if (!domainId || typeof domainId !== "string") {
           error = "domain.profile: missing domainId";
@@ -1211,6 +1210,11 @@ export async function handleLiteratureRequest(
           error = `domain.profile: unknown domain "${domainId}"`;
           break;
         }
+        const source = payload?.source;
+        if (!source || typeof source !== "string") {
+          error = "domain.profile: missing source";
+          break;
+        }
         const sourceId = payload?.sourceId;
         if (!sourceId || typeof sourceId !== "string") {
           error = "domain.profile: missing sourceId";
@@ -1218,7 +1222,7 @@ export async function handleLiteratureRequest(
         }
 
         try {
-          const profile = await getDomainProfile(domainId, sourceId);
+          const profile = await getDomainProfile(domainId, source, sourceId);
           result = profile;
         } catch (e: any) {
           error = toErrorMessage(e);

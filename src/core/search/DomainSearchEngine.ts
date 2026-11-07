@@ -350,15 +350,18 @@ export async function searchDomain(
 
 /**
  * 域详情查询（profile 用）。
- * 对 DomainDef.sources 中每个支持 profile() 的适配器依次尝试，返回首个非空。
+ * source 定位适配器（domainId:source 精确命中，再按适配器 id 全局兜底），
+ * sourceId 是源站记录 ID，交由 adapter.profile() 下钻——两者职责分离，
+ * 记录 ID（如 ORCID iD）不会被误当适配器路由键。
  */
 export async function getDomainProfile(
   domainId: string,
+  source: string,
   sourceId: string,
 ): Promise<DomainResult | null> {
   const adapter =
-    adapterRegistry.get(`${domainId}:${sourceId}`) ??
-    adapterBySourceId.get(sourceId);
+    adapterRegistry.get(`${domainId}:${source}`) ??
+    adapterBySourceId.get(source);
   if (!adapter) return null;
   try {
     const avail = await adapter.isAvailable();

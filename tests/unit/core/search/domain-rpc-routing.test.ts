@@ -150,6 +150,7 @@ describe("domain.* RPC routing", () => {
       "domain.profile",
       {
         domainId: "dataset",
+        source: "huggingface",
         sourceId: "test-id",
       },
       "test-3",
@@ -158,6 +159,130 @@ describe("domain.* RPC routing", () => {
 
     // 不应该报 "unknown domain"（说明路由正确）
     expect(capturedError ?? "").not.toContain("unknown domain");
+  });
+
+  it("domain.profile rejects missing source", async () => {
+    let capturedError: string | null = null;
+    const mockBridge = {
+      respond: (_id: any, _result: any, error: string | null) => {
+        capturedError = error;
+      },
+    };
+
+    await handleLiteratureRequest(
+      mockBridge as any,
+      "domain.profile",
+      {
+        domainId: "researcher",
+        sourceId: "0000-0002-1825-0097",
+      },
+      "test-5",
+      {} as any,
+    );
+
+    expect(capturedError).toContain("missing source");
+  });
+
+  it("domain.profile routes ORCID iD to ORCID adapter and maps record fields", async () => {
+    // ORCID /record 样例响应（ Josiah Carberry 是 ORCID 官方文档虚构学者）
+    const recordJson = JSON.stringify({
+      person: {
+        name: {
+          "given-names": { value: "Josiah" },
+          "family-name": { value: "Carberry" },
+        },
+        biography: { value: "Fictional professor of psychoceramics." },
+        keywords: { keyword: [{ content: "psychoceramics" }] },
+        employments: {
+          "employment-summary": [
+            {
+              organization: { name: "Alpha University" },
+              "role-title": "Professor",
+              department: "Department of Psychoceramics",
+              "start-date": { year: { value: "2000" } },
+              "end-date": null,
+            },
+          ],
+        },
+      },
+      "activities-summary": {
+        works: { group: [{}, {}] },
+      },
+    });
+    const httpRequest = vi.fn(() =>
+      Promise.resolve({ status: 200, responseText: recordJson }),
+    );
+    (globalThis as any).Zotero.HTTP.request = httpRequest;
+
+    let capturedResult: any = null;
+    let capturedError: string | null = null;
+    const mockBridge = {
+      respond: (_id: any, result: any, error: string | null) => {
+        capturedResult = result;
+        capturedError = error;
+      },
+    };
+
+    await handleLiteratureRequest(
+      mockBridge as any,
+      "domain.profile",
+      {
+        domainId: "researcher",
+        source: "orcid",
+        sourceId: "0000-0002-1825-0097",
+      },
+      "test-6",
+      {} as any,
+    );
+
+    expect(capturedError).toBeNull();
+    // 记录 ID 只发往 ORCID /record 端点，不会被误投 OpenAlex / Semantic Scholar
+    const requestedUrls = httpRequest.mock.calls.map((call: any[]) =>
+      String(call[1]),
+    );
+    expect(requestedUrls.length).toBeGreaterThan(0);
+    for (const url of requestedUrls) {
+      expect(url).toContain("pub.orcid.org/v3.0/0000-0002-1825-0097/record");
+      expect(url).not.toContain("openalex.org");
+      expect(url).not.toContain("semanticscholar.org");
+    }
+    // 字段映射：姓名 / 作品数 / 履历 / 关键词 / 简介
+    expect(capturedResult.title).toBe("Josiah Carberry");
+    expect(capturedResult.metrics.works).toBe(2);
+    expect(capturedResult.extra.employments[0].organization).toBe(
+      "Alpha University",
+    );
+    expect(capturedResult.extra.employments[0].role).toBe("Professor");
+    expect(capturedResult.extra.employments[0].startDate).toBe("2000");
+    expect(capturedResult.extra.keywords).toContain("psychoceramics");
+    expect(capturedResult.extra.biography).toContain("psychoceramics");
+  });
+
+  it("domain.profile returns null for unknown source adapter", async () => {
+    let capturedResult: any = null;
+    let capturedError: string | null = null;
+    const mockBridge = {
+      respond: (_id: any, result: any, error: string | null) => {
+        capturedResult = result;
+        capturedError = error;
+      },
+    };
+
+    await handleLiteratureRequest(
+      mockBridge as any,
+      "domain.profile",
+      {
+        domainId: "researcher",
+        source: "nonexistent-source",
+        sourceId: "some-id",
+      },
+      "test-7",
+      {} as any,
+    );
+
+    // 未知适配器：不报错，返回 null（前端走「暂无详情」空态）
+    expect(capturedError).toBeNull();
+    expect(capturedResult).toBeNull();
   });
 
   it("domain.search rejects unknown domainId", async () => {

@@ -19,7 +19,7 @@
  * @module react/components/Hub/search/DomainSearch/DomainSearchPage
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { getString } from "../../../../utils/locale";
 import { SearchIconSvg, BroomIcon } from "../../../../utils/icons";
 import { isIMEComposing } from "../../../../../utils/ime";
@@ -36,6 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/Badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DatasetMetaFields } from "./DatasetMetaFields";
+import { ResearcherProfileDialog } from "./ResearcherProfileDialog";
 import { DATASET_DISCIPLINES } from "./types";
 import type { DomainId, DomainResult } from "./types";
 import { ICON } from "../../../../utils/iconSizes";
@@ -65,6 +66,9 @@ export function DomainSearchPage({
     toggleSelect,
     selectAll,
   } = useDomainSearch(domainId);
+
+  // 学者详情弹窗种子（researcher 域「详情」按钮下钻入口）。
+  const [profileSeed, setProfileSeed] = useState<DomainResult | null>(null);
 
   const placeholderKey =
     domainId === "patent"
@@ -358,12 +362,25 @@ export function DomainSearchPage({
                   importResult={importResults.get(r.dedupKey)}
                   onToggleSelect={() => toggleSelect(r.dedupKey)}
                   onImport={() => handleImport(r)}
+                  onDetail={
+                    domainId === "researcher"
+                      ? () => setProfileSeed(r)
+                      : undefined
+                  }
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      {/* 学者详情弹窗（researcher 域）：seed=null 时组件返回 null 不挂载。 */}
+      {domainId === "researcher" && (
+        <ResearcherProfileDialog
+          seed={profileSeed}
+          onClose={() => setProfileSeed(null)}
+        />
+      )}
     </div>
   );
 }
@@ -378,6 +395,7 @@ function DomainResultCard({
   importResult,
   onToggleSelect,
   onImport,
+  onDetail,
 }: {
   result: DomainResult;
   query: string;
@@ -387,6 +405,8 @@ function DomainResultCard({
   importResult: any;
   onToggleSelect: () => void;
   onImport: () => void;
+  /** 详情下钻回调（researcher 域传入；其他域不显示详情按钮）。 */
+  onDetail?: () => void;
 }): React.ReactElement {
   const imported = importResult?.imported === true;
 
@@ -530,19 +550,32 @@ function DomainResultCard({
           )}
         </div>
 
-        {/* 导入按钮：导入中 = Spinner + 「导入中…」，成功后禁用并显示「已导入」 */}
-        <Button
-          variant="outline"
-          size="sm"
-          loading={importing}
-          loadingText={getString("domain-importing")}
-          onClick={onImport}
-          disabled={imported || result.inLibrary}
-        >
-          {imported
-            ? getString("domain-imported")
-            : getString("domain-import-btn")}
-        </Button>
+        {/* 动作列：研究者域多一个「详情」下钻（弹窗），后接导入按钮 */}
+        <div className="flex flex-col gap-[var(--space-1-5)] items-stretch shrink-0">
+          {onDetail && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onDetail}
+              aria-label={getString("domain-profile-detail-btn")}
+            >
+              {getString("domain-profile-detail-btn")}
+            </Button>
+          )}
+          {/* 导入按钮：导入中 = Spinner + 「导入中…」，成功后禁用并显示「已导入」 */}
+          <Button
+            variant="outline"
+            size="sm"
+            loading={importing}
+            loadingText={getString("domain-importing")}
+            onClick={onImport}
+            disabled={imported || result.inLibrary}
+          >
+            {imported
+              ? getString("domain-imported")
+              : getString("domain-import-btn")}
+          </Button>
+        </div>
       </div>
     </div>
   );

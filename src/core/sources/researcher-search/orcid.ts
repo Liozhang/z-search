@@ -8,7 +8,8 @@
  * 返回 DomainResult：
  *  - sourceId = ORCID iD（如 "0000-0002-1825-0097"）
  *  - dedupKey = "orcid:" + sourceId
- *  - extra 含 givenName、familyName、works 数量、机构归属
+ *  - extra 含 givenName、familyName、works 数量、机构归属，
+ *    profile() 另含 employments 履历、keywords、biography
  *
  * @module core/sources/researcher-search/orcid
  */
@@ -126,6 +127,25 @@ export class OrcidAdapter extends DomainSourceAdapter {
       .map((emp: any) => emp?.organization?.name || "")
       .filter(Boolean);
 
+    // 就职履历（含职务与起止年，详情弹窗用）
+    const employmentHistory = employments
+      .map((emp: any) => ({
+        organization: emp?.organization?.name || "",
+        role: emp?.["role-title"] || "",
+        department: emp?.department || "",
+        startDate: emp?.["start-date"]?.year?.value || "",
+        endDate: emp?.["end-date"]?.year?.value || "",
+      }))
+      .filter((emp: any) => emp.organization);
+
+    // 关键词
+    const keywords: string[] = (person?.keywords?.keyword || [])
+      .map((kw: any) => kw?.content || "")
+      .filter(Boolean);
+
+    // 个人简介
+    const biography = person?.biography?.value || "";
+
     // 作品数量
     const works = data?.["activities-summary"]?.works?.group?.length ?? 0;
 
@@ -144,6 +164,9 @@ export class OrcidAdapter extends DomainSourceAdapter {
         givenName,
         familyName,
         institutions,
+        employments: employmentHistory,
+        keywords,
+        biography,
       },
     };
   }
