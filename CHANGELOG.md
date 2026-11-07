@@ -30,7 +30,7 @@ section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 - **Profile drill-down routing.** `getDomainProfile(domainId, sourceId)` used
   a single parameter both as the adapter route key and as the record ID, so
   every profile lookup returned null. It now takes `(domainId, source,
-  sourceId)`: source locates the adapter, sourceId identifies the record — an
+sourceId)`: source locates the adapter, sourceId identifies the record — an
   ORCID iD is never mistaken for an adapter key. The RPC handler validates and
   forwards the new `source` field, and routing tests cover exact-endpoint
   delivery, field mapping, a missing source, and an unknown adapter.
