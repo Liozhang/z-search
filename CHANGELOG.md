@@ -5,6 +5,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [2.4.0] - 2026-11-13
+
+### Added
+
+- **标识符精确检索。** 检索框输入的内容整体是一个文献标识符时，改为走
+  精确反查，不再按关键词检索。DOI（数字对象标识符）支持裸编号、doi.org
+  链接和 doi: 前缀三种写法；arXiv 编号支持新式编号（可带版本号）和
+  arxiv.org 链接；PubMed 文献编号支持 pmid: 前缀和 pubmed 网址。DOI
+  依次经 Crossref 与 OpenAlex 反查，arXiv 编号依次经 arXiv 与 OpenAlex
+  反查，文献编号经 PubMed 反查。检索结果与关键词检索共用同一套题录
+  字段、期刊指标徽章和「已在库」标记。
+- **未命中与接口故障分别提示。** 标识符查无对应文章时，状态条明示「未
+  找到标识符 X 对应的文章」；接口故障时提示「标识符 X 查询失败，请稍后
+  重试」。两种情形都表现为零结果，此前的提示无法区分。
+
+### Fixed
+
+- **DOI 检索返回一堆无关文章。** 标识符此前整串按关键词发给全部数据源：
+  Crossref 的题录检索把 DOI 拆成数字碎片做相关度匹配，实测
+  10.1038/s41586-021-03819-2 返回 666 万条，前列是编号含 03819 即命中
+  的书名章节；OpenAlex 的全文检索实测命中 14896 篇；PubMed、arXiv 等源
+  解析不出检索词而返回空，叠加默认「近 10 年」过滤后，表现为既搜不到
+  目标文章、又混入一堆无关文章。现在标识符查询绕过年限、排序、高级
+  筛选和来源勾选，只返回精确命中的单篇。
+- **深搜路径把标识符拆成碎片。** 智能体深搜此前的关键词抽取会把
+  10.1038/s41586-021-03819-2 切成 s41586-021-03819-2 一个碎片，PubMed
+  查询必然为零；配置了人工智能服务时，标识符还会被当作普通问题改写成
+  一门主题词。现在标识符查询跳过查询扩展、综述检索和查询改写，直接走
+  精确反查。
+
 ## [2.3.0] - 2026-11-07
 
 ### Added
