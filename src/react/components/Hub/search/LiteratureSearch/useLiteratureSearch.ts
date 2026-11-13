@@ -26,8 +26,10 @@ import {
   ImportResult,
   FulltextResult,
   AVAILABLE_SOURCES,
+  IdentifierLookupInfo,
 } from "./types";
 import { mergeExternalArticles } from "../mergeResults";
+import { detectIdentifierQuery } from "../../../../../core/search/identifierQuery";
 import { buildExtraFields } from "../../../../../core/metadata/importExtras";
 import { useClipboard } from "@/hooks/useClipboard";
 import { safeDebug } from "../../../../../utils/logger";
@@ -80,6 +82,11 @@ export function useLiteratureSearch() {
   const [failedReasons, setFailedReasons] = useState<Record<string, string>>(
     {},
   );
+  // 标识符精确反查回执（2026-11-13）：查询词整串是 DOI/arXiv 编号/PMID 时
+  // 宿主侧走精确反查，此字段携带命中情况与未命中归因，页面据此给出
+  // 「未找到该标识符对应的文章」而非笼统的零结果。
+  const [identifierLookup, setIdentifierLookup] =
+    useState<IdentifierLookupInfo | null>(null);
 
   // Filters state
   const now = new Date().getFullYear();
@@ -189,6 +196,7 @@ export function useLiteratureSearch() {
       setSkippedNoKey([]);
       setFailedSources([]);
       setFailedReasons({});
+      setIdentifierLookup(null);
 
       // UX-M25（渐进变体）：旧结果保留（灰显于刷新条之后）直到第一批新结果
       // 落地——首个落地源替换列表，其后各源追加；选择/展开/导入/全文状态
@@ -269,7 +277,13 @@ export function useLiteratureSearch() {
 
       const requestedSources =
         activeSources ?? AVAILABLE_SOURCES.map((s) => s.value);
-      setSearchSourceCount(requestedSources.length);
+      // 标识符查询（2026-11-13）：整串是 DOI/arXiv 编号/PMID 时宿主侧走
+      // 精确反查单篇，与勾选的源无关——只发一次 RPC。逐源扇出会让同一
+      // 标识符被每个源各查一遍（既慢又把同一篇查 N 次）。载荷里的
+      // sources 在标识符路径上不参与路由，占位值只为保持载荷形状合法。
+      const isIdentifierQuery = detectIdentifierQuery(trimmed) !== null;
+      const fanoutSources = isIdentifierQuery ? ["openalex"] : requestedSources;
+      setSearchSourceCount(fanoutSources.length);
 
       // 渐进扇出（2026-09-23）：一次大 RPC 拆成 N 个并行单源 RPC——谁先回来
       // 谁先上屏，慢源（如 30s 级 API）不再拖累其余源；取消走既有
@@ -282,6 +296,7 @@ export function useLiteratureSearch() {
         try {
           const data = await semanticRequest<{
             articles: ArticleResult[];
+            identifierLookup?: IdentifierLookupInfo;
             skippedNoKey?: string[];
             failedSources?: string[];
             failedReasons?: Record<string, string>;
@@ -304,6 +319,10 @@ export function useLiteratureSearch() {
             60000,
           );
           if (myId !== requestId.current) return;
+          // 标识符精确反查回执：携带命中情况与未命中归因（页面据此提示）
+          if (data?.identifierLookup) {
+            setIdentifierLookup(data.identifierLookup);
+          }
           // 缺 Key / 源内失败由回执名单带出（并发 handler 不再以抛错上报）
           if (data?.skippedNoKey?.length) {
             setSkippedNoKey((prev) => [...prev, src]);
@@ -339,10 +358,10 @@ export function useLiteratureSearch() {
       };
 
       try {
-        await Promise.allSettled(requestedSources.map(perSource));
+        await Promise.allSettled(fanoutSources.map(perSource));
         if (myId !== requestId.current) return;
         // 全军覆没 ≠ 「0 条结果」——显式 error 态（SE-1 同款立法：失败不说谎）
-        if (!landedAny && failedCount >= requestedSources.length) {
+        if (!landedAny && failedCount >= fanoutSources.length) {
           setSearchError(getString("lit-all-sources-failed"));
         } else if (!landedAny) {
           // 本次零命中：清掉上一轮结果——否则旧列表继续显示并谎报为本次
@@ -391,6 +410,7 @@ export function useLiteratureSearch() {
     setSkippedNoKey([]);
     setFailedSources([]);
     setFailedReasons({});
+    setIdentifierLookup(null);
     setSelectedIds(new Set());
     setImportResults(new Map());
     setExpandedKeys(new Set());
@@ -899,6 +919,7 @@ export function useLiteratureSearch() {
     sourcesDone,
     failedSources,
     failedReasons,
+    identifierLookup,
     searchGen,
     skippedNoKey,
     handleSearch,

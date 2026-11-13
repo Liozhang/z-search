@@ -23,6 +23,10 @@ import {
   enrichJournalMetrics,
 } from "../../core/search/literatureSearchHelpers";
 import {
+  detectIdentifierQuery,
+  lookupArticleByIdentifier,
+} from "../../core/search/identifierQuery";
+import {
   classifySourceError,
   isSourceAvailable,
 } from "../../core/sources/academic-search/utils";
@@ -42,6 +46,58 @@ const {
   deduplicateArticles,
   importArticle: doImportArticle,
 } = academicSearch;
+
+/**
+ * 题录 → literature.search 回执的文章形状。
+ * 关键词扇出路径与标识符精确反查路径共用同一映射，保证两条路径落到
+ * 前端的字段口径逐字一致。
+ */
+function toArticleResponse(a: any): any {
+  return {
+    title: a.title || "",
+    authors: a.authors || "",
+    // 源侧字段名不统一：Europe PMC/PubMed 回 journalName 或
+    // containerTitle，只有旧 arch 源带 journal——三者取齐，否则
+    // 卡片期刊位恒空。
+    journal: a.journal || a.journalName || a.containerTitle || "",
+    // 多数适配器的 year 是 number（crossref date-parts / openalex /
+    // arxiv getFullYear）——字符串化：前端排序的 localeCompare 只在
+    // string 原型上存在（审计 P0-4）
+    year: a.year != null ? String(a.year) : "",
+    // DOI 归一化：源站会回填 https://doi.org/ 全 URL——不剥前缀则
+    // 展示冗余、href 二次拼接、导入标识带壳。
+    doi: normalizeDoi(a.doi),
+    issn: a.issn || undefined,
+    citationCount: a.citationCount ?? a.citations ?? 0,
+    pdfUrl: a.pdfUrl || a.pdf_url || "",
+    isOpenAccess: a.isOpenAccess || a.openAccess || false,
+    abstract: a.abstract || "",
+    source: a.source || "",
+    // 多源归属（按源筛选）：后端 mergeArticleInfo 已聚合同文跨源
+    // 命中的 sources 数组，转发给前端做「任一来源命中」筛选口径；
+    // 单源命中时缺省，前端以 source 兜底。
+    sources:
+      Array.isArray(a.sources) && a.sources.length ? a.sources : undefined,
+    // 全文解析标识（PMC 标签与「全文」按钮的可用性依据）。
+    pmid: a.pmid || undefined,
+    pmcid: a.pmcid || undefined,
+    oaUrl: a.oaUrl || undefined,
+    // 期刊指标/风险徽章数据（富集未命中则全 undefined，卡片静默不显示）
+    jif: a.jif,
+    jcrQuartile: a.jcrQuartile,
+    cassQuartile: a.cassQuartile,
+    cassCategory: a.cassCategory,
+    cassIsTop: a.cassIsTop,
+    xrQuartile: a.xrQuartile,
+    xrUnderReview: a.xrUnderReview,
+    warningLevel: a.warningLevel,
+    beallsHit: a.beallsHit,
+    stars: a.stars,
+    chineseCore: a.chineseCore,
+    // 已在库（P0-3）：卡片据此显示「已在库」徽章并停用导入钮
+    inLibrary: a.inLibrary === true,
+  };
+}
 
 /**
  * Extra 字段载荷宽松校验：只收 string→string 形状的键值对象（上限 16 键，
@@ -195,6 +251,38 @@ export async function handleLiteratureRequest(
           break;
         }
 
+        // 标识符分流（2026-11-13）：整串是 DOI/arXiv 编号/PMID 时走精确
+        // 反查，不再把标识符当关键词扇出——实测 DOI 走 Crossref query=
+        // 检索返回的是数字碎片匹配的无关文章（详见 core/search/
+        // identifierQuery 模块头）。精确路径绕过年份/排序/高级筛选等
+        // 关键词语义的收口：用户要的就是这一篇，不是"关于它的话题"；
+        // 用户勾选的源也不参与——精确反查的端点由标识符种类决定。
+        const identifier = detectIdentifierQuery(payload.query);
+        if (identifier) {
+          const lookup = await lookupArticleByIdentifier(identifier);
+          const found = lookup.article ? [lookup.article] : [];
+          // 与关键词路径同套富化：期刊指标徽章 + 已在库标记
+          await enrichJournalMetrics(found);
+          await markInLibrary(found);
+          result = {
+            articles: found.map(toArticleResponse),
+            // 前端据此区分"未找到该标识符对应的文章"与"接口故障"——
+            // 两者都表现为零结果，但归因不同（F-31：失败不得谎报为空）
+            identifierLookup: {
+              kind: identifier.kind,
+              value: identifier.value,
+              found: !!lookup.article,
+              source: lookup.source,
+              attempted: lookup.attempted,
+              error: lookup.error,
+            },
+            skippedNoKey: [],
+            failedSources: [],
+            failedReasons: {},
+          };
+          break;
+        }
+
         const maxResults = payload.maxResults ?? 20;
         // 默认源表 = UI 可选全集。「全不选」走这里。
         const sources = payload.sources || [
@@ -308,52 +396,7 @@ export async function handleLiteratureRequest(
           // 索引），best-effort——失败绝不拖垮检索。
           await markInLibrary(page);
           result = {
-            articles: page.map((a: any) => ({
-              title: a.title || "",
-              authors: a.authors || "",
-              // 源侧字段名不统一：Europe PMC/PubMed 回 journalName 或
-              // containerTitle，只有旧 arch 源带 journal——三者取齐，否则
-              // 卡片期刊位恒空。
-              journal: a.journal || a.journalName || a.containerTitle || "",
-              // 多数适配器的 year 是 number（crossref date-parts / openalex /
-              // arxiv getFullYear）——字符串化：前端排序的 localeCompare 只在
-              // string 原型上存在（审计 P0-4）
-              year: a.year != null ? String(a.year) : "",
-              // DOI 归一化：源站会回填 https://doi.org/ 全 URL——不剥前缀则
-              // 展示冗余、href 二次拼接、导入标识带壳。
-              doi: normalizeDoi(a.doi),
-              issn: a.issn || undefined,
-              citationCount: a.citationCount ?? a.citations ?? 0,
-              pdfUrl: a.pdfUrl || a.pdf_url || "",
-              isOpenAccess: a.isOpenAccess || a.openAccess || false,
-              abstract: a.abstract || "",
-              source: a.source || "",
-              // 多源归属（按源筛选）：后端 mergeArticleInfo 已聚合同文跨源
-              // 命中的 sources 数组，转发给前端做「任一来源命中」筛选口径；
-              // 单源命中时缺省，前端以 source 兜底。
-              sources:
-                Array.isArray(a.sources) && a.sources.length
-                  ? a.sources
-                  : undefined,
-              // 全文解析标识（PMC 标签与「全文」按钮的可用性依据）。
-              pmid: a.pmid || undefined,
-              pmcid: a.pmcid || undefined,
-              oaUrl: a.oaUrl || undefined,
-              // 期刊指标/风险徽章数据（富集未命中则全 undefined，卡片静默不显示）
-              jif: a.jif,
-              jcrQuartile: a.jcrQuartile,
-              cassQuartile: a.cassQuartile,
-              cassCategory: a.cassCategory,
-              cassIsTop: a.cassIsTop,
-              xrQuartile: a.xrQuartile,
-              xrUnderReview: a.xrUnderReview,
-              warningLevel: a.warningLevel,
-              beallsHit: a.beallsHit,
-              stars: a.stars,
-              chineseCore: a.chineseCore,
-              // 已在库（P0-3）：卡片据此显示「已在库」徽章并停用导入钮
-              inLibrary: a.inLibrary === true,
-            })),
+            articles: page.map(toArticleResponse),
             skippedNoKey,
             failedSources,
             failedReasons,

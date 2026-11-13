@@ -460,6 +460,8 @@ lit-fulltext-source-pmc = PMC 全文
 lit-fulltext-source-grobid = GROBID 全文
 lit-fulltext-source-html = 网页全文
 lit-all-sources-failed = 所有外部来源均检索失败，请检查网络连接
+lit-identifier-not-found = 未找到标识符 { $value } 对应的文章
+lit-identifier-lookup-failed = 标识符 { $value } 查询失败，请稍后重试
 
 
 Requires real-time processing

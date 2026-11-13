@@ -338,21 +338,34 @@ export function LiteratureSearchPage({
       }
     : lit.searchError
       ? { tone: "error", text: getString("hub-search-engine-error") }
-      : lit.failedSources.length > 0 && lit.results.length > 0
+      : // 标识符精确反查未命中（2026-11-13）：零结果时分两种归因——
+        // error 为空是"该标识符无对应文章"，error 非空是接口故障。
+        // 混为一句"0 条"会让用户以为插件坏了或 DOI 拼错了也搜不出。
+        lit.identifierLookup && !lit.identifierLookup.found
         ? {
-            tone: "warn",
-            text: getString("hub-search-engine-partial", {
-              args: { count: lit.failedSources.length },
-            }),
+            tone: "error",
+            text: getString(
+              lit.identifierLookup.error
+                ? "lit-identifier-lookup-failed"
+                : "lit-identifier-not-found",
+              { args: { value: lit.identifierLookup.value } },
+            ),
           }
-        : lit.results.length > 0
+        : lit.failedSources.length > 0 && lit.results.length > 0
           ? {
-              tone: "ok",
-              text: getString("hub-search-engine-done", {
-                args: { count: lit.results.length },
+              tone: "warn",
+              text: getString("hub-search-engine-partial", {
+                args: { count: lit.failedSources.length },
               }),
             }
-          : { tone: "idle", text: getString("hub-search-engine-idle") };
+          : lit.results.length > 0
+            ? {
+                tone: "ok",
+                text: getString("hub-search-engine-done", {
+                  args: { count: lit.results.length },
+                }),
+              }
+            : { tone: "idle", text: getString("hub-search-engine-idle") };
 
   // 状态条恒定在位（两 tab 对称，各显示自己那条腿的读数）——「三段稳定
   // 骨架、任何状态高度恒定零跳动」：旧的按需显示会让 web tab 在首次检索

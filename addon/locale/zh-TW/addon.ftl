@@ -445,6 +445,8 @@ lit-fulltext-source-pmc = PMC 全文
 lit-fulltext-source-grobid = GROBID 全文
 lit-fulltext-source-html = 網頁全文
 lit-all-sources-failed = 所有外部來源均檢索失敗，請檢查網路連線
+lit-identifier-not-found = 未找到識別碼 { $value } 對應的文章
+lit-identifier-lookup-failed = 識別碼 { $value } 查詢失敗，請稍後重試
 
 
 # Window initialization failure (shown when iframe fails to init within 10s)

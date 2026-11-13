@@ -6,7 +6,20 @@
  */
 
 import AIProviderRegistry from "../ai/AIProviderRegistry";
+import { detectIdentifierQuery } from "./identifierQuery";
 import { safeDebug } from "../../utils/logger";
+
+/** 标识符查询的适配结果：六个引擎原样透传（不拆词、不改写）。 */
+function identifierAdaptedQueries(query: string): AdaptedQueries {
+  return {
+    openalex: query,
+    "semantic-scholar": query,
+    pubmed: query,
+    arxiv: query,
+    crossref: query,
+    "europe-pmc": query,
+  };
+}
 
 export interface AdaptedQueries {
   openalex: string;
@@ -264,6 +277,13 @@ export class AcademicQueryAdapter {
    * Tries LLM path first, falls back to rule-based path on failure.
    */
   async adapt(query: string): Promise<AdaptedQueries> {
+    // 标识符哨兵（2026-11-13）：DOI/arXiv 编号/PMID 整串查询不过关键词
+    // 抽取，也不送 LLM 改写——前者会把标识符切成无义碎片（实测
+    // 10.1038/s41586-021-03819-2 被切成 s41586-021-03819-2），后者会
+    // 把标识符当"网页搜索问题"翻译成幻觉主题词。调用方（SearchPipeline）
+    // 对标识符查询已分流到精确反查，此处防御后续新增的调用路径。
+    if (detectIdentifierQuery(query)) return identifierAdaptedQueries(query);
+
     // LLM path
     const llmResult = await this.llmAdapt(query);
     if (llmResult) return llmResult;
@@ -281,6 +301,9 @@ export class AcademicQueryAdapter {
    * (openalex/crossref/europe-pmc/pubmed) complement the query-word bias.
    */
   async adaptForReview(query: string): Promise<AdaptedQueries> {
+    // 标识符哨兵：同 adapt()——综述导向的改写对标识符同样不成立。
+    if (detectIdentifierQuery(query)) return identifierAdaptedQueries(query);
+
     // LLM path
     const llmResult = await this.llmAdaptForReview(query);
     if (llmResult) return llmResult;

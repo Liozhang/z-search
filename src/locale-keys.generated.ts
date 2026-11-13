@@ -311,6 +311,8 @@ export const ALL_LOCALE_KEYS: readonly string[] = [
   "lit-fulltext-source-grobid",
   "lit-fulltext-source-html",
   "lit-all-sources-failed",
+  "lit-identifier-not-found",
+  "lit-identifier-lookup-failed",
   "zsearch-hub-window",
   "hub-tab-home",
   "semantic-vector-gap-desc",

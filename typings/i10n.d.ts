@@ -312,6 +312,8 @@ export type FluentMessageId =
   | 'lit-fulltext-title'
   | 'lit-fulltext-truncated'
   | 'lit-fulltext-words'
+  | 'lit-identifier-lookup-failed'
+  | 'lit-identifier-not-found'
   | 'lit-if-label'
   | 'lit-import-btn'
   | 'lit-import-no-doi'

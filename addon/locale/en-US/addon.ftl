@@ -473,6 +473,8 @@ lit-fulltext-source-pmc = PMC full text
 lit-fulltext-source-grobid = GROBID full text
 lit-fulltext-source-html = Web full text
 lit-all-sources-failed = All external sources failed — check your network connection
+lit-identifier-not-found = No article found for identifier { $value }
+lit-identifier-lookup-failed = Lookup failed for identifier { $value } — please try again later
 
 Requires real-time processing
 Data size under 100MB

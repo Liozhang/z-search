@@ -23,6 +23,10 @@ import {
 } from "./DiscoveryEngine";
 import AIProviderRegistry from "../ai/AIProviderRegistry";
 import {
+  detectIdentifierQuery,
+  lookupArticleByIdentifier,
+} from "./identifierQuery";
+import {
   AcademicQueryAdapter,
   type AdaptedQueries,
 } from "./AcademicQueryAdapter";
@@ -148,8 +152,13 @@ class SearchPipeline {
 
     await this.searchLearning.hydrate();
 
-    const { expandedQueries, concepts } =
-      await discoveryEngine.expandQueryWithAI(query);
+    // 标识符查询（2026-11-13）：整串是 DOI/arXiv 编号/PMID 时跳过 AI
+    // 查询扩展——把标识符喂给扩展器只会得到幻觉主题词；该查询的检索
+    // 在 searchRound 内逐条分流到精确反查。
+    const isIdentifierQuery = detectIdentifierQuery(query) !== null;
+    const { expandedQueries, concepts } = isIdentifierQuery
+      ? { expandedQueries: [] as string[], concepts: [] as string[] }
+      : await discoveryEngine.expandQueryWithAI(query);
     this.checkAbort();
     const initialQueries = [query, ...expandedQueries].slice(
       0,
@@ -180,7 +189,8 @@ class SearchPipeline {
     // Uses API type filters (openalex/crossref/europe-pmc/pubmed) + review-oriented
     // query adaptation. Review papers are high-value for landscape mapping because
     // they map the field's structure — replacing the former (disabled) web search.
-    if (this.config.includeReviewSearch) {
+    // 标识符查询跳过：综述检索的前提是把查询改写成主题词，对标识符不成立。
+    if (this.config.includeReviewSearch && !isIdentifierQuery) {
       const {
         papers: reviewPapers,
         searched: reviewSearched,
@@ -782,6 +792,28 @@ class SearchPipeline {
     );
 
     const searchPromises = queries.flatMap((q, qi) => {
+      // 标识符查询（2026-11-13）：走精确反查拿单篇，不扇出到关键词
+      // 检索源——上游会把标识符拆成数字碎片做相关度匹配，返回无关文章
+      // （见 core/search/identifierQuery 模块头）。
+      const identifier = detectIdentifierQuery(q);
+      if (identifier) {
+        return [
+          (async () => {
+            const lookup = await lookupArticleByIdentifier(identifier);
+            if (!lookup.article) {
+              safeDebug(
+                `[z-search] SearchPipeline: identifier lookup found nothing: ` +
+                  `${identifier.kind}=${identifier.value}` +
+                  `${lookup.error ? ` (${lookup.error})` : ""}`,
+              );
+              return { articles: [] as unknown[] };
+            }
+            return {
+              articles: [{ ...lookup.article, _queryOrigin: queries[qi] }],
+            };
+          })(),
+        ];
+      }
       return sources!.map(async (source) => {
         const adaptedQuery = await this.getAdaptedQuery(q, source);
         return academicSearchHandlers

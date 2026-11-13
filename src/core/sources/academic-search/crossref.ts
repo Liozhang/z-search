@@ -4,6 +4,36 @@ import { type SearchFilters } from "./utils";
 import { httpJsonGet } from "../../../utils/http";
 import { stripJatsXml } from "./utils";
 
+/**
+ * 单条 Crossref work → 统一题录字段。
+ *
+ * 列表检索（searchCrossRef）与标识符精确反查（core/search/
+ * identifierQuery 的 DOI 分流）共用同一映射，保证两条路径落到前端的
+ * 字段口径逐字一致。
+ */
+export function mapCrossRefWork(item: any): any {
+  return {
+    title: (item.title || [""])[0] || "",
+    authors: (item.author || [])
+      .map((a: any) => `${a.given || ""} ${a.family || ""}`.trim())
+      .join(", "),
+    year: item.published?.["date-parts"]?.[0]?.[0] || "",
+    abstract: stripJatsXml(item.abstract || ""),
+    doi: item.DOI || "",
+    containerTitle: (item["container-title"] || [""])[0] || "",
+    journalName: (item["container-title"] || [""])[0] || undefined,
+    issn: (item.ISSN || [])[0] || undefined,
+    volume: item.volume || undefined,
+    issue: item.issue || undefined,
+    pages: item.page || undefined,
+    publicationType: item.type || undefined,
+    publisher: item.publisher || undefined,
+    citationCount: item["is-referenced-by-count"] ?? 0,
+    url: item.URL || "",
+    source: "crossref" as const,
+  };
+}
+
 export async function searchCrossRef(
   query: string,
   year?: string,
@@ -105,26 +135,7 @@ export async function searchCrossRef(
   const data = JSON.parse(result.body);
   const items = data.message?.items || [];
 
-  const articles = items.map((item: any) => ({
-    title: (item.title || [""])[0] || "",
-    authors: (item.author || [])
-      .map((a: any) => `${a.given || ""} ${a.family || ""}`.trim())
-      .join(", "),
-    year: item.published?.["date-parts"]?.[0]?.[0] || "",
-    abstract: stripJatsXml(item.abstract || ""),
-    doi: item.DOI || "",
-    containerTitle: (item["container-title"] || [""])[0] || "",
-    journalName: (item["container-title"] || [""])[0] || undefined,
-    issn: (item.ISSN || [])[0] || undefined,
-    volume: item.volume || undefined,
-    issue: item.issue || undefined,
-    pages: item.page || undefined,
-    publicationType: item.type || undefined,
-    publisher: item.publisher || undefined,
-    citationCount: item["is-referenced-by-count"] ?? 0,
-    url: item.URL || "",
-    source: "crossref" as const,
-  }));
+  const articles = items.map(mapCrossRefWork);
 
   return {
     total: data.message?.["total-results"] || articles.length,

@@ -34,3 +34,19 @@ export const SORT_OPTIONS: { value: string; labelKey: string }[] = [
   { value: "published", labelKey: "lit-sort-published" },
   { value: "cited", labelKey: "lit-sort-cited" },
 ];
+
+/**
+ * 标识符精确反查回执（宿主侧 literature.search 的 identifierLookup 字段）。
+ *
+ * 查询词整串是 DOI/arXiv 编号/PMID 时，后端不走关键词扇出而走精确反查。
+ * found=false 分两种归因：error 为空是"该标识符无对应文章"，error 非空是
+ * 接口故障（timeout/network/rate-limited/http）——界面提示不同。
+ */
+export interface IdentifierLookupInfo {
+  kind: "doi" | "arxiv" | "pmid";
+  value: string;
+  found: boolean;
+  source: string | null;
+  attempted: string[];
+  error?: string;
+}
