@@ -5,6 +5,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Release notes published with a version are taken verbatim from that version's
 section in this file (see `release.changelog` in `zotero-plugin.config.ts`).
 
+## [2.4.1] - 2026-11-17
+
+### Fixed
+
+- **子域标签页检索结果与关键词无关。** 检索词此前原样发给每个数据源，
+  而各数据源对连字符的解释不一致。以 HLA-typing 实测：美国国家科学基金
+  会（NSF）的检索是「或」语义，「typing」单独命中的无关项目（反射散射
+  侧信道攻击等）被顶到前列；NASA 开放数据平台把含连字符的查询当作单一
+  检索词宽松匹配，实测返回 2234 条且与单独检索「typing」的 2231 条几乎
+  一致；Dataverse 的相关度排序被高频词干（typing→type）淹没，前列是
+  「威权政体类型数据集」等只命中「类型」的条目；GBIF 的物种检索接口按
+  生物学名模糊匹配，实测返回 505 条任意分类单元。现在数据源可声明查询
+  方言，总线在扇出前统一改写：NSF 与 Dataverse 声明为短语检索（多词
+  整体加引号），NASA、GBIF、ORCID、ClinicalTrials.gov、DataCite 与 GEO
+  声明为分隔符折叠（字母与数字之间的连字符和下划线折叠为空格）。修复
+  后实测：基金标签页只剩 1 条免疫学相关项目；数据集标签页中 Dataverse
+  与 NASA 的无关条目全部消失（诚实空结果）；GBIF 收敛到 1 条；研究者、
+  临床试验与生命科学标签页行为不变。标识符查询（DOI、arXiv 编号、
+  PubMed 文献编号）不改写；未声明方言的数据源行为与历史一致。
+
 ## [2.4.0] - 2026-11-13
 
 ### Added
