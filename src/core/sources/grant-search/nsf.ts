@@ -27,6 +27,10 @@ export class NsfGrantAdapter extends DomainSourceAdapter {
   readonly domainId = "grant";
   readonly label = "NSF Awards";
   readonly noKey = true;
+  // keyword= 是全文「或」检索：HLA-typing 实测把「typing」单独命中的
+  // 无关项目（反射散射侧信道攻击等）顶到前列；短语化 "HLA typing" 实测
+  // 只剩免疫学相关项目。见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "phrase" as const;
 
   async isAvailable() {
     return { available: true };

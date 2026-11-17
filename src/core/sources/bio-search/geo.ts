@@ -25,6 +25,10 @@ export class GeoAdapter extends DomainSourceAdapter {
   readonly domainId = "bio";
   readonly label = "GEO (Gene Expression Omnibus)";
   readonly noKey = true;
+  // Entrez 把连字符等价于空格：HLA-typing 与 HLA typing 实测命中同一批
+  // 数据集（2669 条，词组「与」语义）。折叠保证下划线等写法同样按词组
+  // 解析。见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };

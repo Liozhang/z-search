@@ -9,12 +9,15 @@
  *  5. 失败归因：完全失败的源进 failedSources + failedReasons，缺 key 的进
  *     skippedNoKey——绝不谎报空结果
  *
- * 两个横向机制：
+ * 三个横向机制：
  *  - 跨域源：DomainDef.sources 可引用归属其他域的适配器（经源 id 全局
  *    索引解析）——数据集标签页的学科分组引用 bio/chemistry/geoscience/
  *    social-science 域的 geo/pubchem/pangaea/icpsr
  *  - filters.sources 收敛：前端学科分组显式列出源 id 时，只向这些源扇出；
  *    filters.year 在去重后按结果年份统一收口（覆盖上游不支持日期参数的源）
+ *  - 查询方言：适配器经 queryDialect 声明源站对连字符/下划线的解释方式，
+ *    扇出前统一改写（normalized=折叠为空格 / phrase=短语化），标识符查询
+ *    与未声明方言的源原样透传——见 core/search/domainQuery
  *
  * 与 literature.search 的关系：literature.search 仍走 HubLiteratureHandler
  * 的现有路径（逐源并行 RPC）；域搜索走本总线，两者共存，互不影响。
@@ -30,6 +33,7 @@ import type {
   DomainFilters,
 } from "./domainTypes";
 import type { DomainSourceAdapter } from "./DomainSourceAdapter";
+import { applyQueryDialect } from "./domainQuery";
 import { safeDebug } from "../../utils/logger";
 import { toErrorMessage } from "../../utils/error";
 
@@ -258,8 +262,11 @@ export async function searchDomain(
     }
 
     try {
+      // 查询方言改写（2026-11-17 实测立法）：适配器声明了 normalized/
+      // phrase 时按其源站语义改写查询，标识符查询与缺省方言原样透传。
+      // 见 core/search/domainQuery 模块头。
       const results = await adapter.search(
-        options.query,
+        applyQueryDialect(adapter.queryDialect, options.query),
         perSourceLimit,
         options.filters,
       );

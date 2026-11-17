@@ -24,6 +24,11 @@ export class NasaOpenDataAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "NASA Open Data";
   readonly noKey = true;
+  // CKAN 对含连字符/下划线的查询串按单一检索词宽松匹配：HLA-typing
+  // 实测 2234 条且与 typing 单独检索几乎一致（2231 条）；折叠为空格后
+  // 按「与」语义检索，实测诚实返回 0 条。见 core/search/domainQuery
+  // （2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };

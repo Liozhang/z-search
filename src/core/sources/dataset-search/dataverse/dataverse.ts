@@ -26,6 +26,11 @@ export class DataverseAdapter extends DomainSourceAdapter {
   readonly label = "Harvard Dataverse";
   readonly noKey = true;
   readonly supportedFilters = ["license"] as const;
+  // 多词查询在 Solr 词干（typing→type）+ 相关度排序下被高频词淹没：
+  // HLA-typing 实测前列是「威权政体类型数据集」等只命中「类型」的条目；
+  // 短语化实测 0 条（诚实空结果）。见 core/search/domainQuery
+  // （2026-11-17 实测）。
+  readonly queryDialect = "phrase" as const;
 
   async isAvailable() {
     return { available: true };

@@ -26,6 +26,10 @@ export class OrcidAdapter extends DomainSourceAdapter {
   readonly domainId = "researcher";
   readonly label = "ORCID";
   readonly noKey = true;
+  // Lucene 系「与」语义：HLA-typing 与 HLA typing 实测返回同一批研究者
+  // （移植免疫领域）。折叠保证下划线等写法同样按词组解析。
+  // 见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };

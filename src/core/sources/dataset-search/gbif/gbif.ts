@@ -25,6 +25,11 @@ export class GbifAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "GBIF (Biodiversity)";
   readonly noKey = true;
+  // species 检索是生物学名模糊匹配，天然不适合关键词查询：HLA-typing
+  // 实测返回 505 条任意分类单元，折叠为空格（「与」语义）实测收敛到
+  // 1 条。这是接口语义与关键词检索的错配，折叠只是降噪，不是根治——
+  // 见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };

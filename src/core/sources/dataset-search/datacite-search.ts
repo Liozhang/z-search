@@ -26,6 +26,10 @@ export class DataCiteSearchAdapter extends DomainSourceAdapter {
   readonly domainId = "dataset";
   readonly label = "DataCite Search";
   readonly noKey = true;
+  // 「与」语义：HLA-typing 与 HLA typing 实测返回同批条目（记录全文
+  // 同时含两词）。折叠保证下划线等写法同样按词组解析。
+  // 见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };

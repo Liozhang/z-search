@@ -51,6 +51,18 @@ export abstract class DomainSourceAdapter {
   readonly supportedFilters?: ReadonlyArray<string>;
 
   /**
+   * 查询方言（2026-11-17 实测立法，见 core/search/domainQuery 模块头）：
+   *  - "normalized"：字母/数字间的连字符/下划线折叠为空格——词间「与」
+   *    语义的源（nasa/gbif/orcid/clinicaltrials/datacite/geo 实测两种
+   *    写法返回一致，折叠只影响下划线等罕见输入）；
+   *  - "phrase"：折叠后多词整体加引号——「或」语义或词干淹没的源
+   *    （nsf/dataverse）；
+   *  - 缺省不改写（raw），与历史行为逐字节一致。只有拿到线上实测证据
+   *    的源才显式声明；标识符查询一律绕过改写。
+   */
+  readonly queryDialect?: import("./domainQuery").QueryDialect;
+
+  /**
    * 可用性检查。默认实现：免 key 源恒可用；需 key 源检查
    * getPrefDynamic(keyPref) 是否配置。子类可覆写（如加网络探测）。
    */

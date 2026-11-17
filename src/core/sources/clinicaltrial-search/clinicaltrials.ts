@@ -24,6 +24,10 @@ export class ClinicalTrialsAdapter extends DomainSourceAdapter {
   readonly domainId = "clinicaltrial";
   readonly label = "ClinicalTrials.gov";
   readonly noKey = true;
+  // query.term 按词组「与」语义匹配整份研究记录（入选标准也计入）：
+  // HLA-typing 与 HLA typing 实测返回同一批研究。折叠保证下划线等写法
+  // 同样按词组解析。见 core/search/domainQuery（2026-11-17 实测）。
+  readonly queryDialect = "normalized" as const;
 
   async isAvailable() {
     return { available: true };
